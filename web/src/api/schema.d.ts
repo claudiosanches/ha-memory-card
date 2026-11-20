@@ -36,6 +36,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["runImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import/template.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["importTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platforms": {
         parameters: {
             query?: never;
@@ -170,6 +234,42 @@ export interface components {
             code: string;
             field?: string | null;
         };
+        /** @description A problem with the file as a whole; no rows are read when there is one. */
+        FileIssue: {
+            code: string;
+            column?: string | null;
+            /** Format: int64 */
+            line?: number | null;
+        };
+        ImportPreview: {
+            file_issue?: components["schemas"]["FileIssue"] | null;
+            new_devices: components["schemas"]["NewDeviceReport"][];
+            new_platforms: string[];
+            new_stores: string[];
+            rows: components["schemas"]["RowReport"][];
+            summary: components["schemas"]["ImportSummary"];
+        };
+        ImportResult: {
+            summary: components["schemas"]["ImportSummary"];
+        };
+        ImportSummary: {
+            error_rows: number;
+            game_only_rows: number;
+            new_copies: number;
+            new_games: number;
+            new_releases: number;
+            rows: number;
+            unchanged_copies: number;
+            updated_copies: number;
+            updated_games: number;
+            updated_releases: number;
+            warning_rows: number;
+        };
+        NewDeviceReport: {
+            kind: components["schemas"]["DeviceKind"];
+            name: string;
+            platforms: string[];
+        };
         Platform: {
             abbreviation?: string | null;
             active: boolean;
@@ -197,6 +297,22 @@ export interface components {
         PlatformOrder: {
             /** @description Every platform id, once, in the new order. */
             ids: number[];
+        };
+        /** @enum {string} */
+        RowAction: "new_copy" | "update_copy" | "unchanged" | "game_only" | "error";
+        RowIssue: {
+            code: string;
+            column: string;
+            /** @description Errors block the import; warnings do not. */
+            error: boolean;
+        };
+        RowReport: {
+            action: components["schemas"]["RowAction"];
+            game_title?: string | null;
+            issues: components["schemas"]["RowIssue"][];
+            /** Format: int64 */
+            line: number;
+            platform?: string | null;
         };
         Status: {
             /** Format: int64 */
@@ -365,6 +481,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    exportCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One row per copy, plus games without copies */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    runImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "text/csv": string;
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            /** @description `import_invalid`: preview the file to see why */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    previewImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "text/csv": string;
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreview"];
+                };
+            };
+        };
+    };
+    importTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Header row only */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

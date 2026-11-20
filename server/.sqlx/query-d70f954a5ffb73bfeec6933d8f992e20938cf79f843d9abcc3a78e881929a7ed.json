@@ -1,0 +1,45 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT d.id AS \"id!\", d.name,\n                  (SELECT json_group_array(platform_id) FROM device_platforms\n                   WHERE device_id = d.id) AS \"platform_ids!: sqlx::types::Json<Vec<i64>>\"\n           FROM devices d",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "platform_ids!: sqlx::types::Json<Vec<i64>>",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d70f954a5ffb73bfeec6933d8f992e20938cf79f843d9abcc3a78e881929a7ed"
+}

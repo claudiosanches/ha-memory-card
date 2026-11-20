@@ -179,6 +179,114 @@
         }
       }
     },
+    "/api/export.csv": {
+      "get": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "exportCsv",
+        "responses": {
+          "200": {
+            "description": "One row per copy, plus games without copies",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "runImport",
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`import_invalid`: preview the file to see why",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import/preview": {
+      "post": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "previewImport",
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import/template.csv": {
+      "get": {
+        "tags": [
+          "transfer"
+        ],
+        "operationId": "importTemplate",
+        "responses": {
+          "200": {
+            "description": "Header row only",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platforms": {
       "get": {
         "tags": [
@@ -710,6 +818,177 @@
           }
         }
       },
+      "FileIssue": {
+        "type": "object",
+        "description": "A problem with the file as a whole; no rows are read when there is one.",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "ImportPreview": {
+        "type": "object",
+        "required": [
+          "summary",
+          "new_platforms",
+          "new_devices",
+          "new_stores",
+          "rows"
+        ],
+        "properties": {
+          "file_issue": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FileIssue",
+                "description": "Set when the file cannot be read at all; everything else is then empty."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "new_devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NewDeviceReport"
+            }
+          },
+          "new_platforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "new_stores": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RowReport"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ImportSummary"
+          }
+        }
+      },
+      "ImportResult": {
+        "type": "object",
+        "required": [
+          "summary"
+        ],
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/ImportSummary"
+          }
+        }
+      },
+      "ImportSummary": {
+        "type": "object",
+        "required": [
+          "rows",
+          "new_games",
+          "updated_games",
+          "new_releases",
+          "updated_releases",
+          "new_copies",
+          "updated_copies",
+          "unchanged_copies",
+          "game_only_rows",
+          "error_rows",
+          "warning_rows"
+        ],
+        "properties": {
+          "error_rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "game_only_rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "new_copies": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "new_games": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "new_releases": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unchanged_copies": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updated_copies": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updated_games": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updated_releases": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "warning_rows": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "NewDeviceReport": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "platforms"
+        ],
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DeviceKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "Platform": {
         "type": "object",
         "required": [
@@ -808,6 +1087,72 @@
               "format": "int64"
             },
             "description": "Every platform id, once, in the new order."
+          }
+        }
+      },
+      "RowAction": {
+        "type": "string",
+        "enum": [
+          "new_copy",
+          "update_copy",
+          "unchanged",
+          "game_only",
+          "error"
+        ]
+      },
+      "RowIssue": {
+        "type": "object",
+        "required": [
+          "column",
+          "code",
+          "error"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "column": {
+            "type": "string"
+          },
+          "error": {
+            "type": "boolean",
+            "description": "Errors block the import; warnings do not."
+          }
+        }
+      },
+      "RowReport": {
+        "type": "object",
+        "required": [
+          "line",
+          "action",
+          "issues"
+        ],
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/RowAction"
+          },
+          "game_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RowIssue"
+            }
+          },
+          "line": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

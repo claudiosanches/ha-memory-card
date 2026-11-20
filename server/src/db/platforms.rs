@@ -151,7 +151,7 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
     Ok(())
 }
 
-fn slugify(name: &str) -> String {
+pub(crate) fn slugify(name: &str) -> String {
     let mut slug = String::new();
     for c in name.chars().flat_map(char::to_lowercase) {
         if c.is_alphanumeric() {
@@ -168,7 +168,7 @@ fn slugify(name: &str) -> String {
     }
 }
 
-fn unique_slug(base: &str, taken: &[String]) -> String {
+pub(crate) fn unique_slug(base: &str, taken: &[String]) -> String {
     if !taken.iter().any(|s| s.eq_ignore_ascii_case(base)) {
         return base.to_owned();
     }

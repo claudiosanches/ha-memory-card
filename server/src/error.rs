@@ -28,6 +28,8 @@ pub enum ApiError {
     },
     #[error(transparent)]
     Database(#[from] sqlx::Error),
+    #[error("{0}")]
+    Internal(String),
 }
 
 impl ApiError {
@@ -55,6 +57,10 @@ impl IntoResponse for ApiError {
             Self::Invalid { code, field } => (StatusCode::UNPROCESSABLE_ENTITY, code, field),
             Self::Database(err) => {
                 tracing::error!(error = %err, "database error");
+                (StatusCode::INTERNAL_SERVER_ERROR, "internal", None)
+            }
+            Self::Internal(err) => {
+                tracing::error!(error = %err, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "internal", None)
             }
         };

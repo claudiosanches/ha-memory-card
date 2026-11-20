@@ -3,6 +3,7 @@ mod input;
 pub mod platforms;
 pub mod status;
 pub mod stores;
+pub mod transfer;
 
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -26,6 +27,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(devices::list, devices::create))
         .routes(routes!(devices::update, devices::delete))
         .routes(routes!(stores::list, stores::create))
-        .routes(routes!(stores::update, stores::delete));
+        .routes(routes!(stores::update, stores::delete))
+        .routes(routes!(transfer::export_csv))
+        .routes(routes!(transfer::template_csv))
+        .routes(routes!(transfer::preview))
+        .routes(routes!(transfer::run));
     OpenApiRouter::with_openapi(ApiDoc::openapi()).nest("/api", api)
 }

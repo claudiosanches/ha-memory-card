@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO device_platforms (device_id, platform_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "2b939fa124aa39b68f869bc55454886f2d4847cc77c5c5d0baa2f5ab79c8979e"
+}

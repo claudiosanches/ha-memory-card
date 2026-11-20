@@ -1,0 +1,176 @@
+use sqlx::SqliteConnection;
+
+use super::plan::{Plan, Ref};
+use crate::db::platforms::{slugify, unique_slug};
+use crate::domain::sort_title;
+
+fn resolve(r: Ref, created: &[i64]) -> i64 {
+    match r {
+        Ref::Existing(id) => id,
+        Ref::New(i) => created[i],
+    }
+}
+
+/// Writes the plan. The caller owns the transaction and must not apply a
+/// plan that has errors.
+pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()> {
+    let mut taken: Vec<String> = sqlx::query_scalar!(r#"SELECT slug AS "slug!" FROM platforms"#)
+        .fetch_all(&mut *conn)
+        .await?;
+    let mut platforms = Vec::with_capacity(plan.platforms.len());
+    for name in &plan.platforms {
+        let slug = unique_slug(&slugify(name), &taken);
+        taken.push(slug.clone());
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO platforms (name, slug, active, sort_order)
+               VALUES (?, ?, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
+               RETURNING id AS "id!""#,
+            name,
+            slug
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        platforms.push(id);
+    }
+
+    let mut stores = Vec::with_capacity(plan.stores.len());
+    for name in &plan.stores {
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO stores (name) VALUES (?) RETURNING id AS "id!""#,
+            name
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        stores.push(id);
+    }
+
+    let mut devices = Vec::with_capacity(plan.devices.len());
+    for device in &plan.devices {
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO devices (name, kind) VALUES (?, ?) RETURNING id AS "id!""#,
+            device.name,
+            device.kind
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        for platform in &device.platforms {
+            let platform_id = resolve(*platform, &platforms);
+            sqlx::query!(
+                "INSERT OR IGNORE INTO device_platforms (device_id, platform_id) VALUES (?, ?)",
+                id,
+                platform_id
+            )
+            .execute(&mut *conn)
+            .await?;
+        }
+        devices.push(id);
+    }
+
+    let mut games = Vec::with_capacity(plan.games.len());
+    for game in &plan.games {
+        let sort = sort_title(&game.title);
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO games (igdb_id, title, sort_title, play_status)
+               VALUES (?, ?, ?, ?) RETURNING id AS "id!""#,
+            game.igdb_id,
+            game.title,
+            sort,
+            game.play_status
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        games.push(id);
+    }
+    for (id, status) in &plan.game_statuses {
+        sqlx::query!(
+            "UPDATE games SET play_status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            status,
+            id
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+    for (id, igdb_id) in &plan.game_igdb_links {
+        sqlx::query!(
+            "UPDATE games SET igdb_id = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            igdb_id,
+            id
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+
+    let mut releases = Vec::with_capacity(plan.releases.len());
+    for release in &plan.releases {
+        let game_id = resolve(release.game, &games);
+        let platform_id = resolve(release.platform, &platforms);
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO releases (game_id, platform_id, region, product_code, title)
+               VALUES (?, ?, ?, ?, ?) RETURNING id AS "id!""#,
+            game_id,
+            platform_id,
+            release.region,
+            release.product_code,
+            release.title
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        releases.push(id);
+    }
+    for (id, title) in &plan.release_titles {
+        sqlx::query!(
+            "UPDATE releases SET title = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            title,
+            id
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+
+    for copy in &plan.copies {
+        let release_id = resolve(copy.release, &releases);
+        let device_id = copy.device.map(|d| resolve(d, &devices));
+        let store_id = copy.store.map(|s| resolve(s, &stores));
+        match copy.existing {
+            None => {
+                sqlx::query!(
+                    "INSERT INTO copies (release_id, status, device_id, format, store_id, condition, notes)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    release_id,
+                    copy.status,
+                    device_id,
+                    copy.format,
+                    store_id,
+                    copy.condition,
+                    copy.notes
+                )
+                .execute(&mut *conn)
+                .await?;
+            }
+            Some(id) => {
+                sqlx::query!(
+                    "UPDATE copies
+                     SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,
+                         condition = ?, notes = ?,
+                         updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                     WHERE id = ?",
+                    release_id,
+                    copy.status,
+                    device_id,
+                    copy.format,
+                    store_id,
+                    copy.condition,
+                    copy.notes,
+                    id
+                )
+                .execute(&mut *conn)
+                .await?;
+            }
+        }
+    }
+
+    Ok(())
+}

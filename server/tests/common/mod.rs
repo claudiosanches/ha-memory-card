@@ -86,6 +86,20 @@ impl TestApp {
         (status, value)
     }
 
+    /// Posts a CSV body and parses the JSON reply.
+    pub async fn post_csv(&self, path: &str, csv: &str) -> (StatusCode, Value) {
+        let request = Request::post(path)
+            .header("content-type", "text/csv")
+            .body(Body::from(csv.to_owned()))
+            .unwrap();
+        let (status, bytes) = self.request(SUPERVISOR, request).await;
+        (status, serde_json::from_slice(&bytes).unwrap())
+    }
+
+    pub async fn scalar(&self, sql: &'static str) -> i64 {
+        sqlx::query_scalar(sql).fetch_one(&self.pool).await.unwrap()
+    }
+
     pub async fn platform_id(&self, slug: &str) -> i64 {
         sqlx::query_scalar("SELECT id FROM platforms WHERE slug = ?")
             .bind(slug)
