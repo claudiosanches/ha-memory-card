@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/copies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateCopy"];
+        post?: never;
+        delete: operations["deleteCopy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -44,6 +60,86 @@ export interface paths {
             cookie?: never;
         };
         get: operations["exportCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/game-modes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listGameModes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listGames"];
+        put?: never;
+        post: operations["createGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/games/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGame"];
+        put: operations["updateGame"];
+        post?: never;
+        delete: operations["deleteGame"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/games/{id}/copies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addCopy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/genres": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listGenres"];
         put?: never;
         post?: never;
         delete?: never;
@@ -148,6 +244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/releases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateRelease"];
+        post?: never;
+        delete: operations["deleteRelease"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/status": {
         parameters: {
             query?: never;
@@ -200,6 +312,38 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description Physical copies only.
+         * @enum {string}
+         */
+        Condition: "sealed" | "cib" | "no_manual" | "loose";
+        CopyDetail: {
+            condition?: components["schemas"]["Condition"] | null;
+            /** Format: int64 */
+            device_id?: number | null;
+            format: components["schemas"]["Format"];
+            /** Format: int64 */
+            id: number;
+            notes?: string | null;
+            status: components["schemas"]["CopyStatus"];
+            /** Format: int64 */
+            store_id?: number | null;
+        };
+        CopyInput: {
+            condition?: components["schemas"]["Condition"] | null;
+            /** Format: int64 */
+            device_id?: number | null;
+            format: components["schemas"]["Format"];
+            notes?: string | null;
+            /** Format: int64 */
+            platform_id: number;
+            product_code?: string | null;
+            region: components["schemas"]["Region"];
+            /** Format: int64 */
+            store_id?: number | null;
+        };
+        /** @enum {string} */
+        CopyStatus: "owned" | "wanted";
         Device: {
             active: boolean;
             /**
@@ -241,6 +385,76 @@ export interface components {
             /** Format: int64 */
             line?: number | null;
         };
+        /** @enum {string} */
+        Format: "physical" | "digital";
+        GameDetail: {
+            developers: string[];
+            first_release_date?: string | null;
+            game_mode_ids: number[];
+            genre_ids: number[];
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            igdb_id?: number | null;
+            last_played_at?: string | null;
+            /** Format: int64 */
+            last_played_copy_id?: number | null;
+            local_coop?: boolean | null;
+            /** Format: int64 */
+            local_max_players?: number | null;
+            online_coop?: boolean | null;
+            /** Format: int64 */
+            online_max_players?: number | null;
+            play_status?: components["schemas"]["PlayStatus"] | null;
+            publishers: string[];
+            /** @description In platform list order, then region. */
+            releases: components["schemas"]["ReleaseDetail"][];
+            summary?: string | null;
+            title: string;
+        };
+        GameInput: {
+            game_mode_ids?: number[];
+            /** @description `YYYY-MM-DD`. */
+            last_played_at?: string | null;
+            /**
+             * Format: int64
+             * @description Must be a copy of this game.
+             */
+            last_played_copy_id?: number | null;
+            local_coop?: boolean | null;
+            /** Format: int64 */
+            local_max_players?: number | null;
+            online_coop?: boolean | null;
+            /** Format: int64 */
+            online_max_players?: number | null;
+            play_status?: components["schemas"]["PlayStatus"] | null;
+            summary?: string | null;
+            title: string;
+        };
+        GameMode: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            slug: string;
+        };
+        GameSummary: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            igdb_id?: number | null;
+            last_played_at?: string | null;
+            /** Format: int64 */
+            owned_copies: number;
+            /** @description Platforms with owned copies, in platform list order. */
+            platforms: components["schemas"]["PlatformCount"][];
+            play_status?: components["schemas"]["PlayStatus"] | null;
+            title: string;
+        };
+        Genre: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+        };
         ImportPreview: {
             file_issue?: components["schemas"]["FileIssue"] | null;
             new_devices: components["schemas"]["NewDeviceReport"][];
@@ -270,6 +484,10 @@ export interface components {
             name: string;
             platforms: string[];
         };
+        NewGameInput: {
+            play_status?: components["schemas"]["PlayStatus"] | null;
+            title: string;
+        };
         Platform: {
             abbreviation?: string | null;
             active: boolean;
@@ -289,6 +507,12 @@ export interface components {
             /** Format: int64 */
             sort_order: number;
         };
+        PlatformCount: {
+            /** Format: int64 */
+            copies: number;
+            /** Format: int64 */
+            platform_id: number;
+        };
         PlatformInput: {
             abbreviation?: string | null;
             active?: boolean;
@@ -297,6 +521,45 @@ export interface components {
         PlatformOrder: {
             /** @description Every platform id, once, in the new order. */
             ids: number[];
+        };
+        /**
+         * @description `mastered` means 100% completion.
+         * @enum {string}
+         */
+        PlayStatus: "backlog" | "playing" | "paused" | "completed" | "dropped" | "mastered";
+        /**
+         * @description Release region, matching IGDB's release regions. `ww` also covers region-free.
+         * @enum {string}
+         */
+        Region: "na" | "eu" | "au" | "nz" | "jp" | "cn" | "asia" | "kr" | "br" | "ww";
+        ReleaseDetail: {
+            copies: components["schemas"]["CopyDetail"][];
+            /** Format: int64 */
+            id: number;
+            local_coop?: boolean | null;
+            /** Format: int64 */
+            local_max_players?: number | null;
+            online_coop?: boolean | null;
+            /** Format: int64 */
+            online_max_players?: number | null;
+            /** Format: int64 */
+            platform_id: number;
+            product_code?: string | null;
+            region: components["schemas"]["Region"];
+            release_date?: string | null;
+            title?: string | null;
+        };
+        ReleaseInput: {
+            local_coop?: boolean | null;
+            /** Format: int64 */
+            local_max_players?: number | null;
+            online_coop?: boolean | null;
+            /** Format: int64 */
+            online_max_players?: number | null;
+            product_code?: string | null;
+            /** @description `YYYY-MM-DD`. */
+            release_date?: string | null;
+            title?: string | null;
         };
         /** @enum {string} */
         RowAction: "new_copy" | "update_copy" | "unchanged" | "game_only" | "error";
@@ -346,6 +609,78 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    updateCopy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyInput"];
+            };
+        };
+        responses: {
+            /** @description The copy's game */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteCopy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The copy's game; the release stays */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     listDevices: {
         parameters: {
             query?: never;
@@ -501,6 +836,265 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    listGameModes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameMode"][];
+                };
+            };
+        };
+    };
+    listGames: {
+        parameters: {
+            query?: {
+                /** @description Text in the title. */
+                q?: string;
+                /** @description Platform ids. */
+                platform?: string;
+                /** @description Device ids. */
+                device?: string;
+                /** @description Store ids. */
+                store?: string;
+                /** @description Region codes. */
+                region?: string;
+                /** @description Genre ids. */
+                genre?: string;
+                /** @description Game mode ids. */
+                game_mode?: string;
+                /** @description Play statuses. */
+                play_status?: string;
+                format?: components["schemas"]["Format"];
+                /** @description Local (same screen) players, release value first, then the game's. */
+                min_local_players?: number;
+                ownership?: "owned" | "any";
+                sort?: "title" | "added" | "played";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameSummary"][];
+                };
+            };
+            /** @description `invalid_filter` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    createGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewGameInput"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GameInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted with its releases and copies */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    addCopy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyInput"];
+            };
+        };
+        responses: {
+            /** @description The game with the new copy */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listGenres: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Genre"][];
                 };
             };
         };
@@ -749,6 +1343,87 @@ export interface operations {
             };
             /** @description `platform_in_use`: releases or devices use it */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseInput"];
+            };
+        };
+        responses: {
+            /** @description The release's game */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `release_exists`: same platform, region and product code */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The release's game; the release's copies are deleted too */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

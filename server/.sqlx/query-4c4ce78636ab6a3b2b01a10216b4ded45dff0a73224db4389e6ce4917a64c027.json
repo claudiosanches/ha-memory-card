@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO game_game_modes (game_id, game_mode_id) SELECT ?, value FROM json_each(?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4c4ce78636ab6a3b2b01a10216b4ded45dff0a73224db4389e6ce4917a64c027"
+}

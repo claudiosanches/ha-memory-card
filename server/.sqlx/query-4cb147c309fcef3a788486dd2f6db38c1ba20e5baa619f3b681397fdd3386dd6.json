@@ -1,0 +1,110 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           WHERE r.game_id = ?\n           ORDER BY c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "release_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "release_id"
+          }
+        }
+      },
+      {
+        "name": "status: CopyStatus",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "name": "format: Format",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "format"
+          }
+        }
+      },
+      {
+        "name": "device_id",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "device_id"
+          }
+        }
+      },
+      {
+        "name": "store_id",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "store_id"
+          }
+        }
+      },
+      {
+        "name": "condition: Condition",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "condition"
+          }
+        }
+      },
+      {
+        "name": "notes",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "notes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "4cb147c309fcef3a788486dd2f6db38c1ba20e5baa619f3b681397fdd3386dd6"
+}

@@ -1,4 +1,5 @@
 pub mod devices;
+pub mod games;
 mod input;
 pub mod platforms;
 pub mod status;
@@ -28,6 +29,13 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(devices::update, devices::delete))
         .routes(routes!(stores::list, stores::create))
         .routes(routes!(stores::update, stores::delete))
+        .routes(routes!(games::list, games::create))
+        .routes(routes!(games::get, games::update, games::delete))
+        .routes(routes!(games::add_copy))
+        .routes(routes!(games::update_copy, games::delete_copy))
+        .routes(routes!(games::update_release, games::delete_release))
+        .routes(routes!(games::game_modes))
+        .routes(routes!(games::genres))
         .routes(routes!(transfer::export_csv))
         .routes(routes!(transfer::template_csv))
         .routes(routes!(transfer::preview))

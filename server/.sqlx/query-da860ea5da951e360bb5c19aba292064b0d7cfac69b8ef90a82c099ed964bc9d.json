@@ -1,0 +1,196 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.play_status AS \"play_status: PlayStatus\", g.last_played_at, g.last_played_copy_id,\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\"\n           FROM games g WHERE g.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "igdb_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "igdb_id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "summary",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "summary"
+          }
+        }
+      },
+      {
+        "name": "first_release_date",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "first_release_date"
+          }
+        }
+      },
+      {
+        "name": "developers: Json<Vec<String>>",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "developers"
+          }
+        }
+      },
+      {
+        "name": "publishers: Json<Vec<String>>",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "publishers"
+          }
+        }
+      },
+      {
+        "name": "play_status: PlayStatus",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "play_status"
+          }
+        }
+      },
+      {
+        "name": "last_played_at",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "last_played_at"
+          }
+        }
+      },
+      {
+        "name": "last_played_copy_id",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "last_played_copy_id"
+          }
+        }
+      },
+      {
+        "name": "local_max_players",
+        "ordinal": 10,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "local_max_players"
+          }
+        }
+      },
+      {
+        "name": "online_max_players",
+        "ordinal": 11,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "online_max_players"
+          }
+        }
+      },
+      {
+        "name": "local_coop: bool",
+        "ordinal": 12,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "local_coop"
+          }
+        }
+      },
+      {
+        "name": "online_coop: bool",
+        "ordinal": 13,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "online_coop"
+          }
+        }
+      },
+      {
+        "name": "game_mode_ids!: Json<Vec<i64>>",
+        "ordinal": 14,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "genre_ids!: Json<Vec<i64>>",
+        "ordinal": 15,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "da860ea5da951e360bb5c19aba292064b0d7cfac69b8ef90a82c099ed964bc9d"
+}
