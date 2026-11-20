@@ -39,6 +39,8 @@ pub struct GameDetail {
     pub igdb_id: Option<i64>,
     pub title: String,
     pub summary: Option<String>,
+    /// Relative to the covers URL.
+    pub cover_path: Option<String>,
     pub first_release_date: Option<String>,
     pub developers: Vec<String>,
     pub publishers: Vec<String>,
@@ -94,7 +96,7 @@ pub struct ReleaseFields {
 
 pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     let game = sqlx::query!(
-        r#"SELECT g.id AS "id!", g.igdb_id, g.title, g.summary, g.first_release_date,
+        r#"SELECT g.id AS "id!", g.igdb_id, g.title, g.summary, g.cover_path, g.first_release_date,
                   g.developers AS "developers: Json<Vec<String>>",
                   g.publishers AS "publishers: Json<Vec<String>>",
                   g.play_status AS "play_status: PlayStatus", g.last_played_at, g.last_played_copy_id,
@@ -178,6 +180,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         igdb_id: game.igdb_id,
         title: game.title,
         summary: game.summary,
+        cover_path: game.cover_path,
         first_release_date: game.first_release_date,
         developers: game.developers.0,
         publishers: game.publishers.0,

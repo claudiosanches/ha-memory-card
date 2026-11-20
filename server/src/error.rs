@@ -26,6 +26,11 @@ pub enum ApiError {
         code: &'static str,
         field: Option<&'static str>,
     },
+    /// A feature that needs setup, such as IGDB credentials.
+    #[error("unavailable: {0}")]
+    Unavailable(&'static str),
+    #[error("IGDB request failed: {0}")]
+    Upstream(String),
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error("{0}")]
@@ -55,6 +60,11 @@ impl IntoResponse for ApiError {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found", None),
             Self::Conflict(code) => (StatusCode::CONFLICT, code, None),
             Self::Invalid { code, field } => (StatusCode::UNPROCESSABLE_ENTITY, code, field),
+            Self::Unavailable(code) => (StatusCode::SERVICE_UNAVAILABLE, code, None),
+            Self::Upstream(err) => {
+                tracing::warn!(error = %err, "IGDB request failed");
+                (StatusCode::BAD_GATEWAY, "igdb_failed", None)
+            }
             Self::Database(err) => {
                 tracing::error!(error = %err, "database error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "internal", None)
@@ -65,6 +75,12 @@ impl IntoResponse for ApiError {
             }
         };
         (status, Json(ErrorBody { code, field })).into_response()
+    }
+}
+
+impl From<crate::igdb::IgdbError> for ApiError {
+    fn from(err: crate::igdb::IgdbError) -> Self {
+        Self::Upstream(err.to_string())
     }
 }
 

@@ -21,6 +21,7 @@ pub struct TestApp {
     pub dir: TempDir,
     pub pool: SqlitePool,
     pub config: Arc<Config>,
+    pub state: AppState,
 }
 
 impl TestApp {
@@ -39,20 +40,18 @@ impl TestApp {
         )
         .await
         .unwrap();
+        let config = Arc::new(config);
         Self {
             dir,
+            state: AppState::new(pool.clone(), config.clone()),
             pool,
-            config: Arc::new(config),
+            config,
         }
     }
 
     pub fn router_from(&self, peer: &str) -> Router {
         let peer: SocketAddr = peer.parse().unwrap();
-        memory_card::app(AppState {
-            db: self.pool.clone(),
-            config: self.config.clone(),
-        })
-        .layer(MockConnectInfo(peer))
+        memory_card::app(self.state.clone()).layer(MockConnectInfo(peer))
     }
 
     pub async fn get(&self, path: &str) -> (StatusCode, Vec<u8>) {

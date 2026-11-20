@@ -69,10 +69,7 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
     )
     .await?;
     let listen = config.listen;
-    let app = memory_card::app(AppState {
-        db: pool.clone(),
-        config: Arc::new(config),
-    });
+    let app = memory_card::app(AppState::new(pool.clone(), Arc::new(config)));
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
     tracing::info!(%listen, "listening");

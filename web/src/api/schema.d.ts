@@ -132,6 +132,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/games/{id}/igdb": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Links the game to an IGDB game and fills its metadata. Posting the current
+         *     IGDB id refreshes it.
+         */
+        post: operations["linkGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/genres": {
         parameters: {
             query?: never;
@@ -142,6 +162,38 @@ export interface paths {
         get: operations["listGenres"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/igdb/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["searchIgdb"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/igdb/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSync"];
+        put?: never;
+        post: operations["startSync"];
         delete?: never;
         options?: never;
         head?: never;
@@ -388,6 +440,8 @@ export interface components {
         /** @enum {string} */
         Format: "physical" | "digital";
         GameDetail: {
+            /** @description Relative to the covers URL. */
+            cover_path?: string | null;
             developers: string[];
             first_release_date?: string | null;
             game_mode_ids: number[];
@@ -438,6 +492,8 @@ export interface components {
             slug: string;
         };
         GameSummary: {
+            /** @description Relative to the covers URL. */
+            cover_path?: string | null;
             /** Format: int64 */
             id: number;
             /** Format: int64 */
@@ -478,6 +534,10 @@ export interface components {
             updated_games: number;
             updated_releases: number;
             warning_rows: number;
+        };
+        LinkInput: {
+            /** Format: int64 */
+            igdb_id: number;
         };
         NewDeviceReport: {
             kind: components["schemas"]["DeviceKind"];
@@ -580,6 +640,15 @@ export interface components {
             line: number;
             platform?: string | null;
         };
+        SearchHit: {
+            /** Format: int64 */
+            igdb_id: number;
+            name: string;
+            /** @description Abbreviations where IGDB has them. */
+            platforms: string[];
+            /** Format: int32 */
+            year?: number | null;
+        };
         Status: {
             /** Format: int64 */
             games: number;
@@ -602,6 +671,19 @@ export interface components {
         StoreInput: {
             name: string;
             notes?: string | null;
+        };
+        SyncStatus: {
+            done: number;
+            failed: number;
+            finished_at?: string | null;
+            /** @description Unlinked games matched by exact title. */
+            linked: number;
+            running: boolean;
+            total: number;
+            /** @description Unlinked games without exactly one match; link them by hand. */
+            unmatched: number;
+            /** @description Linked games refreshed. */
+            updated: number;
         };
     };
     responses: never;
@@ -1083,6 +1165,75 @@ export interface operations {
             };
         };
     };
+    linkGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_linked`: another game has this IGDB id */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_not_found` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_failed` */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_not_configured` */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     listGenres: {
         parameters: {
             query?: never;
@@ -1098,6 +1249,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Genre"][];
+                };
+            };
+        };
+    };
+    searchIgdb: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                q: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchHit"][];
+                };
+            };
+            /** @description `igdb_failed` */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_not_configured` */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatus"];
+                };
+            };
+        };
+    };
+    startSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatus"];
+                };
+            };
+            /** @description `sync_running` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_not_configured` */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

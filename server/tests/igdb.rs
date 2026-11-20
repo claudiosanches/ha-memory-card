@@ -1,0 +1,203 @@
+//! IGDB linking and sync against a local stand-in for Twitch and IGDB.
+
+mod common;
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::Router;
+use axum::http::{HeaderMap, StatusCode};
+use axum::routing::{get, post};
+use common::TestApp;
+use memory_card::config::IgdbCredentials;
+use memory_card::igdb::{Endpoints, Igdb};
+use serde_json::{Value, json};
+
+fn odyssey() -> Value {
+    json!({
+        "id": 1, "name": "Super Mario Odyssey", "summary": "Cappy.",
+        "first_release_date": 1509062400, "platforms": [130],
+        "genres": [{"id": 8, "name": "Platform"}],
+        "game_modes": [{"id": 1, "name": "Single player", "slug": "single-player"},
+                       {"id": 3, "name": "Co-operative", "slug": "co-operative"}],
+        "involved_companies": [
+            {"company": {"name": "Nintendo EPD"}, "developer": true, "publisher": false},
+            {"company": {"name": "Nintendo"}, "developer": false, "publisher": true}
+        ],
+        "cover": {"image_id": "co1mxf"},
+        "multiplayer_modes": [{"platform": 130, "offlinecoopmax": 2, "offlinecoop": true}]
+    })
+}
+
+async fn games(headers: HeaderMap, body: String) -> (StatusCode, axum::Json<Value>) {
+    if headers.get("authorization").and_then(|v| v.to_str().ok()) != Some("Bearer token-1")
+        || headers.get("client-id").and_then(|v| v.to_str().ok()) != Some("client")
+    {
+        return (StatusCode::UNAUTHORIZED, axum::Json(json!({})));
+    }
+    let result = if body.starts_with("search") {
+        json!([{"id": 1, "name": "Super Mario Odyssey", "first_release_date": 1509062400,
+                "platforms": [{"name": "Nintendo Switch", "abbreviation": "Switch"}]}])
+    } else if body.contains(r#"name ~ "super mario odyssey""#) || body.contains("where id = (1)") {
+        json!([odyssey()])
+    } else if body.contains(r#"name ~ "Doom""#) {
+        json!([{"id": 2, "name": "Doom", "platforms": [6]}, {"id": 3, "name": "DOOM", "platforms": [48]}])
+    } else {
+        json!([])
+    };
+    (StatusCode::OK, axum::Json(result))
+}
+
+async fn with_igdb() -> TestApp {
+    let stub = Router::new()
+        .route(
+            "/token",
+            post(|| async { axum::Json(json!({"access_token": "token-1", "expires_in": 3600})) }),
+        )
+        .route("/v4/games", post(games))
+        .route(
+            "/img/t_cover_big_2x/co1mxf.jpg",
+            get(|| async { "jpeg bytes" }),
+        );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+
+    let mut app = TestApp::new().await;
+    app.state.igdb = Some(Arc::new(Igdb::new(
+        IgdbCredentials {
+            client_id: "client".into(),
+            client_secret: "secret".into(),
+        },
+        Endpoints {
+            token_url: format!("{base}/token"),
+            api_url: format!("{base}/v4"),
+            image_url: format!("{base}/img"),
+        },
+    )));
+    app
+}
+
+#[tokio::test]
+async fn without_credentials_igdb_is_unavailable() {
+    let app = TestApp::new().await;
+    let (status, body) = app.json("GET", "/api/igdb/search?q=zelda", None).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(body["code"], "igdb_not_configured");
+    let (status, _) = app.json("POST", "/api/igdb/sync", None).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+}
+
+#[tokio::test]
+async fn search_returns_year_and_platforms() {
+    let app = with_igdb().await;
+    let (status, hits) = app.json("GET", "/api/igdb/search?q=odyssey", None).await;
+    assert_eq!(status, StatusCode::OK, "{hits}");
+    assert_eq!(
+        hits,
+        json!([{"igdb_id": 1, "name": "Super Mario Odyssey", "year": 2017, "platforms": ["Switch"]}])
+    );
+}
+
+#[tokio::test]
+async fn linking_fills_metadata_and_keeps_hand_edits() {
+    let app = with_igdb().await;
+    let release = app.release("Odyssey", "switch").await;
+    let game: i64 = sqlx::query_scalar("SELECT game_id FROM releases WHERE id = ?")
+        .bind(release)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE games SET summary = 'Mine.' WHERE id = ?")
+        .bind(game)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+
+    let (status, detail) = app
+        .json(
+            "POST",
+            &format!("/api/games/{game}/igdb"),
+            Some(json!({"igdb_id": 1})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["igdb_id"], 1);
+    assert_eq!(detail["title"], "Odyssey");
+    assert_eq!(detail["summary"], "Mine.");
+    assert_eq!(detail["first_release_date"], "2017-10-27");
+    assert_eq!(detail["developers"], json!(["Nintendo EPD"]));
+    assert_eq!(detail["publishers"], json!(["Nintendo"]));
+    assert_eq!(detail["genre_ids"].as_array().unwrap().len(), 1);
+    // Both modes are seeded with their IGDB ids, so none is added.
+    assert_eq!(detail["game_mode_ids"].as_array().unwrap().len(), 2);
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM game_modes").await, 6);
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM genres").await, 1);
+    assert_eq!(detail["releases"][0]["local_max_players"], 2);
+    assert_eq!(detail["releases"][0]["local_coop"], true);
+
+    let cover = format!("game-{game}/co1mxf.jpg");
+    assert_eq!(detail["cover_path"], cover.as_str());
+    let (status, bytes) = app.get(&format!("/covers/{cover}")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(bytes, b"jpeg bytes");
+
+    // A second game cannot take the same IGDB id.
+    let (_, other) = app
+        .json("POST", "/api/games", Some(json!({"title": "Other"})))
+        .await;
+    let (status, body) = app
+        .json(
+            "POST",
+            &format!("/api/games/{}/igdb", other["id"]),
+            Some(json!({"igdb_id": 1})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(body["code"], "igdb_linked");
+
+    let (status, body) = app
+        .json(
+            "POST",
+            &format!("/api/games/{game}/igdb"),
+            Some(json!({"igdb_id": 99})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body["code"], "igdb_not_found");
+}
+
+#[tokio::test]
+async fn sync_links_exact_titles_and_skips_ambiguous_ones() {
+    let app = with_igdb().await;
+    for title in ["super mario odyssey", "Doom", "Unknown"] {
+        app.json("POST", "/api/games", Some(json!({"title": title})))
+            .await;
+    }
+
+    let (status, started) = app.json("POST", "/api/igdb/sync", None).await;
+    assert_eq!(status, StatusCode::ACCEPTED);
+    assert_eq!(started["running"], true);
+
+    let mut status = Value::Null;
+    for _ in 0..100 {
+        (_, status) = app.json("GET", "/api/igdb/sync", None).await;
+        if status["running"] == false {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert_eq!(status["running"], false, "{status}");
+    assert_eq!(status["total"], 3);
+    assert_eq!(status["linked"], 1);
+    assert_eq!(status["unmatched"], 2);
+    assert_eq!(status["failed"], 0);
+    assert!(status["finished_at"].is_string());
+    assert_eq!(
+        app.scalar(
+            "SELECT COUNT(*) FROM games WHERE igdb_id = 1 AND title = 'super mario odyssey'"
+        )
+        .await,
+        1
+    );
+}

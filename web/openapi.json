@@ -688,6 +688,96 @@
         }
       }
     },
+    "/api/games/{id}/igdb": {
+      "post": {
+        "tags": [
+          "igdb"
+        ],
+        "summary": "Links the game to an IGDB game and fills its metadata. Posting the current\nIGDB id refreshes it.",
+        "operationId": "linkGame",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`igdb_linked`: another game has this IGDB id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`igdb_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`igdb_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`igdb_not_configured`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/genres": {
       "get": {
         "tags": [
@@ -703,6 +793,114 @@
                   "items": {
                     "$ref": "#/components/schemas/Genre"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/igdb/search": {
+      "get": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "searchIgdb",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchHit"
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`igdb_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`igdb_not_configured`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/igdb/sync": {
+      "get": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "getSync",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatus"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "startSync",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatus"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`sync_running`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`igdb_not_configured`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1605,6 +1803,13 @@
           "releases"
         ],
         "properties": {
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative to the covers URL."
+          },
           "developers": {
             "type": "array",
             "items": {
@@ -1819,6 +2024,13 @@
           "platforms"
         ],
         "properties": {
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative to the covers URL."
+          },
           "id": {
             "type": "integer",
             "format": "int64"
@@ -1998,6 +2210,18 @@
           "warning_rows": {
             "type": "integer",
             "minimum": 0
+          }
+        }
+      },
+      "LinkInput": {
+        "type": "object",
+        "required": [
+          "igdb_id"
+        ],
+        "properties": {
+          "igdb_id": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -2379,6 +2603,37 @@
           }
         }
       },
+      "SearchHit": {
+        "type": "object",
+        "required": [
+          "igdb_id",
+          "name",
+          "platforms"
+        ],
+        "properties": {
+          "igdb_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Abbreviations where IGDB has them."
+          },
+          "year": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "Status": {
         "type": "object",
         "required": [
@@ -2446,6 +2701,56 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "SyncStatus": {
+        "type": "object",
+        "required": [
+          "running",
+          "total",
+          "done",
+          "linked",
+          "unmatched",
+          "updated",
+          "failed"
+        ],
+        "properties": {
+          "done": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "linked": {
+            "type": "integer",
+            "description": "Unlinked games matched by exact title.",
+            "minimum": 0
+          },
+          "running": {
+            "type": "boolean"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unmatched": {
+            "type": "integer",
+            "description": "Unlinked games without exactly one match; link them by hand.",
+            "minimum": 0
+          },
+          "updated": {
+            "type": "integer",
+            "description": "Linked games refreshed.",
+            "minimum": 0
           }
         }
       }

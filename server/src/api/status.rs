@@ -35,7 +35,7 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
 
     Ok(Json(Status {
         version: env!("CARGO_PKG_VERSION"),
-        igdb_configured: state.config.igdb.is_some(),
+        igdb_configured: state.igdb.is_some(),
         games,
         owned_copies,
     }))

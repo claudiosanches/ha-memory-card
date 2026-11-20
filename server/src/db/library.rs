@@ -101,6 +101,8 @@ pub struct GameSummary {
     pub id: i64,
     pub title: String,
     pub igdb_id: Option<i64>,
+    /// Relative to the covers URL.
+    pub cover_path: Option<String>,
     pub play_status: Option<PlayStatus>,
     pub last_played_at: Option<String>,
     pub owned_copies: i64,
@@ -113,6 +115,7 @@ struct SummaryRow {
     id: i64,
     title: String,
     igdb_id: Option<i64>,
+    cover_path: Option<String>,
     play_status: Option<PlayStatus>,
     last_played_at: Option<String>,
     owned_copies: i64,
@@ -122,7 +125,7 @@ struct SummaryRow {
 /// Builds the library query. Public so tests can inspect its query plan.
 pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     let mut qb = QueryBuilder::new(
-        "SELECT g.id, g.title, g.igdb_id, g.play_status, g.last_played_at,
+        "SELECT g.id, g.title, g.igdb_id, g.cover_path, g.play_status, g.last_played_at,
                 (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
                  WHERE r.game_id = g.id AND c.status = 'owned') AS owned_copies,
                 (SELECT json_group_array(json_object('platform_id', platform_id, 'copies', n)) FROM (
@@ -215,6 +218,7 @@ pub async fn list(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec
             id: row.id,
             title: row.title,
             igdb_id: row.igdb_id,
+            cover_path: row.cover_path,
             play_status: row.play_status,
             last_played_at: row.last_played_at,
             owned_copies: row.owned_copies,
