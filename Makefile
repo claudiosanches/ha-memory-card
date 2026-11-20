@@ -70,8 +70,8 @@ api: node_modules ## Regenerate web/openapi.json and the TypeScript API types
 	./scripts/gen-api.sh
 
 .PHONY: api-check
-api-check: api ## Fail if the generated API files are out of date
-	git diff --exit-code -- web/openapi.json web/src/api/schema.d.ts
+api-check: node_modules ## Fail if the generated API files are out of date
+	./scripts/gen-api.sh --check
 
 .PHONY: check
 check: lint test licenses api-check e2e ## Everything CI runs except the image

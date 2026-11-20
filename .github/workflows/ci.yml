@@ -68,9 +68,8 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: ./scripts/gen-api.sh
       - name: Generated API files are up to date
-        run: git diff --exit-code -- web/openapi.json web/src/api/schema.d.ts
+        run: ./scripts/gen-api.sh --check
 
   e2e:
     runs-on: ubuntu-24.04
