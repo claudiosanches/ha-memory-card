@@ -809,8 +809,8 @@
         "parameters": [
           {
             "name": "q",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }

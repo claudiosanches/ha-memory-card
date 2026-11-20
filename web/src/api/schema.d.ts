@@ -1255,11 +1255,11 @@ export interface operations {
     };
     searchIgdb: {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                q: string;
+            query?: {
+                q?: string;
             };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

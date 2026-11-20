@@ -20,6 +20,7 @@ fn client(state: &AppState) -> ApiResult<Arc<Igdb>> {
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct SearchQuery {
     #[serde(default)]
     pub q: String,
