@@ -16,24 +16,22 @@ See [DOCS.md](memory-card/DOCS.md) for configuration.
 ## Development
 
 Requirements: the Rust toolchain from `rust-toolchain.toml`, Node.js 24.
+Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
 
-```sh
-npm install
-npm run build                 # web app into web/dist
-cargo run -- serve            # needs the env below outside Home Assistant
-```
+`make` lists the targets. The common ones:
 
-Local run outside Home Assistant:
+| Target | What it does |
+|---|---|
+| `make run` | Server on http://127.0.0.1:8099/ with data in `.data/` |
+| `make proxy` | Serves that server at http://127.0.0.1:18100/api/hassio_ingress/e2e-token/, like Home Assistant ingress |
+| `make web-dev` | Vite with live reload, `/api` proxied to `make run` |
+| `make test` | Rust and web unit tests |
+| `make e2e` | Playwright tests behind the ingress stand-in |
+| `make check` | Everything CI runs except the image |
+| `make smoke` | Builds the amd64 image and runs it like Home Assistant |
+| `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
 
-```sh
-MEMORY_CARD_DATA_DIR=.data \
-MEMORY_CARD_TMP_DIR=.data/tmp \
-MEMORY_CARD_LISTEN=127.0.0.1:8099 \
-MEMORY_CARD_TRUSTED_PEER=127.0.0.1 \
-cargo run -- serve
-```
-
-`npm run dev -w web` starts Vite with `/api` proxied to that server.
+The server reads these variables; `make run` sets the first four.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -44,22 +42,6 @@ cargo run -- serve
 | `MEMORY_CARD_LOG_LEVEL` | from `options.json` | Overrides `log_level` |
 | `MEMORY_CARD_IGDB_CLIENT_ID` | from `options.json` | Overrides `igdb_client_id` |
 | `MEMORY_CARD_IGDB_CLIENT_SECRET` | from `options.json` | Overrides `igdb_client_secret` |
-
-Checks, as CI runs them:
-
-```sh
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo test
-cargo deny check
-npm run lint && npm run typecheck && npm test
-npm run licenses
-./scripts/gen-api.sh && git diff --exit-code web/openapi.json web/src/api/schema.d.ts
-npm run build && cargo build && npx playwright install chromium && npm run e2e
-```
-
-After changing an API handler, run `./scripts/gen-api.sh` to regenerate
-`web/openapi.json` and `web/src/api/schema.d.ts`.
 
 ## Releasing
 
