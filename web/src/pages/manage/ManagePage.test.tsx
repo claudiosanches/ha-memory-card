@@ -16,7 +16,7 @@ function platform(id: number, name: string, extra: Partial<Platform> = {}): Plat
     igdb_platform_id: null,
     active: true,
     sort_order: id * 10,
-    release_count: 0,
+    game_count: 0,
     device_count: 0,
     ...extra,
   };

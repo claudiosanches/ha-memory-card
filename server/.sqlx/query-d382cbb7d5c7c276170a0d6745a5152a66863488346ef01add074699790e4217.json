@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  (SELECT COUNT(*) FROM releases r WHERE r.platform_id = p.id) AS \"release_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\"\n           FROM platforms p\n           ORDER BY p.sort_order, p.name COLLATE NOCASE",
+  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\"\n           FROM platforms p\n           ORDER BY p.sort_order, p.name COLLATE NOCASE",
   "describe": {
     "columns": [
       {
@@ -103,7 +103,7 @@
         }
       },
       {
-        "name": "release_count!: i64",
+        "name": "game_count!: i64",
         "ordinal": 9,
         "type_info": "Integer",
         "origin": "Expression"
@@ -132,5 +132,5 @@
       false
     ]
   },
-  "hash": "a4ffc5391a603f6a3f174dcd97d95c419edc8352260d20eb0f90f1add41af64d"
+  "hash": "d382cbb7d5c7c276170a0d6745a5152a66863488346ef01add074699790e4217"
 }

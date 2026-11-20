@@ -24,7 +24,7 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
   const genres = useGenres();
 
   const platformOptions = (platforms.data ?? [])
-    .filter((p) => p.active || p.release_count > 0 || search.platform?.includes(p.id))
+    .filter((p) => p.active || p.game_count > 0 || search.platform?.includes(p.id))
     .map((p) => ({ value: String(p.id), label: p.name }));
 
   return (

@@ -309,7 +309,15 @@ async fn deleting_a_device_keeps_its_copies() {
 #[tokio::test]
 async fn platform_list_is_in_sort_order_with_usage() {
     let app = TestApp::new().await;
-    app.release("Zelda", "switch").await;
+    let release = app.release("Zelda", "switch").await;
+    sqlx::query(
+        "INSERT INTO releases (game_id, platform_id, region)
+         SELECT game_id, platform_id, 'eu' FROM releases WHERE id = ?",
+    )
+    .bind(release)
+    .execute(&app.pool)
+    .await
+    .unwrap();
 
     let (status, list) = app.json("GET", "/api/platforms", None).await;
     assert_eq!(status, StatusCode::OK);
@@ -318,7 +326,7 @@ async fn platform_list_is_in_sort_order_with_usage() {
     assert_eq!(list[0]["slug"], "pc");
     assert_eq!(list[0]["igdb_platform_id"], 6);
     let switch = list.iter().find(|p| p["slug"] == "switch").unwrap();
-    assert_eq!(switch["release_count"], 1);
+    assert_eq!(switch["game_count"], 1);
     assert_eq!(switch["active"], true);
 }
 

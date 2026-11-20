@@ -494,6 +494,11 @@ export interface components {
             /** Format: int64 */
             device_count: number;
             family?: string | null;
+            /**
+             * Format: int64
+             * @description Games with a release on this platform.
+             */
+            game_count: number;
             /** Format: int64 */
             generation?: number | null;
             /** Format: int64 */
@@ -501,8 +506,6 @@ export interface components {
             /** Format: int64 */
             igdb_platform_id?: number | null;
             name: string;
-            /** Format: int64 */
-            release_count: number;
             slug: string;
             /** Format: int64 */
             sort_order: number;

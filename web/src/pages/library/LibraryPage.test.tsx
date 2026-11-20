@@ -15,7 +15,7 @@ const SWITCH: Platform = {
   igdb_platform_id: 130,
   active: true,
   sort_order: 10,
-  release_count: 1,
+  game_count: 1,
   device_count: 0,
 };
 

@@ -28,7 +28,7 @@ import { useApiErrorHandler } from '../../hooks/useApiForm';
 type Editing = { platform?: Platform } | null;
 
 function inUse(platform: Platform) {
-  return platform.release_count > 0 || platform.device_count > 0;
+  return platform.game_count > 0 || platform.device_count > 0;
 }
 
 export function PlatformsTab() {
@@ -101,7 +101,8 @@ export function PlatformsTab() {
               <Table.Th w={72} />
               <Table.Th>{t('common.name')}</Table.Th>
               <Table.Th>{t('platforms.abbreviation')}</Table.Th>
-              <Table.Th>{t('platforms.usage')}</Table.Th>
+              <Table.Th>{t('platforms.games')}</Table.Th>
+              <Table.Th>{t('platforms.devices')}</Table.Th>
               <Table.Th>{t('common.active')}</Table.Th>
               <Table.Th w={96}>{t('common.actions')}</Table.Th>
             </Table.Tr>
@@ -146,18 +147,8 @@ export function PlatformsTab() {
                   </Group>
                 </Table.Td>
                 <Table.Td>{platform.abbreviation}</Table.Td>
-                <Table.Td>
-                  <Text size="sm" c="dimmed">
-                    {inUse(platform)
-                      ? [
-                          platform.release_count > 0 && t('platforms.releases', { count: platform.release_count }),
-                          platform.device_count > 0 && t('platforms.devices', { count: platform.device_count }),
-                        ]
-                          .filter(Boolean)
-                          .join(', ')
-                      : t('platforms.unused')}
-                  </Text>
-                </Table.Td>
+                <Table.Td>{platform.game_count}</Table.Td>
+                <Table.Td>{platform.device_count}</Table.Td>
                 <Table.Td>
                   <Switch
                     checked={platform.active}

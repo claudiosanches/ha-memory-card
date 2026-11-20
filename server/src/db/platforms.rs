@@ -16,7 +16,8 @@ pub struct Platform {
     pub generation: Option<i64>,
     pub active: bool,
     pub sort_order: i64,
-    pub release_count: i64,
+    /// Games with a release on this platform.
+    pub game_count: i64,
     pub device_count: i64,
 }
 
@@ -31,7 +32,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Platform>> {
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
-                  (SELECT COUNT(*) FROM releases r WHERE r.platform_id = p.id) AS "release_count!: i64",
+                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
            ORDER BY p.sort_order, p.name COLLATE NOCASE"#
@@ -45,7 +46,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
-                  (SELECT COUNT(*) FROM releases r WHERE r.platform_id = p.id) AS "release_count!: i64",
+                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
            WHERE p.id = ?"#,

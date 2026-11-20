@@ -2052,7 +2052,7 @@
           "slug",
           "active",
           "sort_order",
-          "release_count",
+          "game_count",
           "device_count"
         ],
         "properties": {
@@ -2075,6 +2075,11 @@
               "null"
             ]
           },
+          "game_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games with a release on this platform."
+          },
           "generation": {
             "type": [
               "integer",
@@ -2095,10 +2100,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "release_count": {
-            "type": "integer",
-            "format": "int64"
           },
           "slug": {
             "type": "string"
