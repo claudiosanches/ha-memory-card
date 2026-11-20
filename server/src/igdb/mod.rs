@@ -122,6 +122,7 @@ struct RawHit {
     first_release_date: Option<i64>,
     #[serde(default)]
     platforms: Vec<PlatformName>,
+    total_rating_count: Option<i64>,
 }
 
 #[derive(Deserialize)]
@@ -169,10 +170,12 @@ impl Igdb {
 
     pub async fn search(&self, text: &str) -> Result<Vec<SearchHit>, IgdbError> {
         let body = format!(
-            "search \"{}\"; fields name,first_release_date,platforms.name,platforms.abbreviation; limit 20;",
+            "search \"{}\"; fields name,first_release_date,platforms.name,platforms.abbreviation,total_rating_count; limit 20;",
             escape(text)
         );
-        let hits: Vec<RawHit> = self.post("games", &body).await?;
+        let mut hits: Vec<RawHit> = self.post("games", &body).await?;
+        // IGDB ranks fan hacks next to the real game; rated games come first.
+        hits.sort_by_key(|hit| std::cmp::Reverse(hit.total_rating_count.unwrap_or(0)));
         Ok(hits
             .into_iter()
             .map(|hit| SearchHit {

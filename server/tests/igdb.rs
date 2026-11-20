@@ -36,8 +36,10 @@ async fn games(headers: HeaderMap, body: String) -> (StatusCode, axum::Json<Valu
         return (StatusCode::UNAUTHORIZED, axum::Json(json!({})));
     }
     let result = if body.starts_with("search") {
-        json!([{"id": 1, "name": "Super Mario Odyssey", "first_release_date": 1509062400,
-                "platforms": [{"name": "Nintendo Switch", "abbreviation": "Switch"}]}])
+        json!([{"id": 9, "name": "Super Mario Odyssey 64", "platforms": [{"name": "Nintendo 64"}]},
+               {"id": 1, "name": "Super Mario Odyssey", "first_release_date": 1509062400,
+                "platforms": [{"name": "Nintendo Switch", "abbreviation": "Switch"}],
+                "total_rating_count": 900}])
     } else if body.contains(r#"name ~ "super mario odyssey""#) || body.contains("where id = (1)") {
         json!([odyssey()])
     } else if body.contains(r#"name ~ "Doom""#) {
@@ -95,7 +97,10 @@ async fn search_returns_year_and_platforms() {
     assert_eq!(status, StatusCode::OK, "{hits}");
     assert_eq!(
         hits,
-        json!([{"igdb_id": 1, "name": "Super Mario Odyssey", "year": 2017, "platforms": ["Switch"]}])
+        json!([
+            {"igdb_id": 1, "name": "Super Mario Odyssey", "year": 2017, "platforms": ["Switch"]},
+            {"igdb_id": 9, "name": "Super Mario Odyssey 64", "year": null, "platforms": ["Nintendo 64"]}
+        ])
     );
 }
 
