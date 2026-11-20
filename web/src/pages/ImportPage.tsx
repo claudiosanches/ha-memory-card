@@ -1,5 +1,338 @@
-import { PlaceholderPage } from '../components/PlaceholderPage';
+import {
+  Accordion,
+  Alert,
+  Anchor,
+  Badge,
+  Button,
+  Card,
+  Code,
+  FileInput,
+  Group,
+  List,
+  SimpleGrid,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@mantine/core';
+import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../api/client';
+import { call, errorMessage } from '../api/errors';
+import type { components } from '../api/schema';
+import { notifyError } from '../components/notify';
+
+type Preview = components['schemas']['ImportPreview'];
+type Summary = components['schemas']['ImportSummary'];
+
+const COLUMNS = [
+  'copy_id',
+  'status',
+  'igdb_id',
+  'game_title',
+  'play_status',
+  'platform',
+  'region',
+  'release_title',
+  'product_code',
+  'format',
+  'device',
+  'store',
+  'condition',
+  'notes',
+] as const;
+
+const SUMMARY_KEYS = [
+  'new_games',
+  'updated_games',
+  'new_copies',
+  'updated_copies',
+  'unchanged_copies',
+  'game_only_rows',
+  'error_rows',
+  'warning_rows',
+] as const satisfies readonly (keyof Summary)[];
+
+const asCsv = { bodySerializer: (body: string) => body, headers: { 'Content-Type': 'text/csv' } };
 
 export function ImportPage() {
-  return <PlaceholderPage titleKey="nav.import" />;
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [file, setFile] = useState<File | null>(null);
+  const [text, setText] = useState<string | null>(null);
+  const [done, setDone] = useState<Summary | null>(null);
+
+  const preview = useMutation({
+    mutationFn: (body: string) => call(api.POST('/api/import/preview', { body, ...asCsv })),
+    onError: (error) => notifyError(errorMessage(t, error)),
+  });
+
+  const run = useMutation({
+    mutationFn: (body: string) => call(api.POST('/api/import', { body, ...asCsv })),
+    onSuccess: (result) => {
+      setDone(result.summary);
+      setFile(null);
+      setText(null);
+      preview.reset();
+      void queryClient.invalidateQueries();
+    },
+    onError: (error) => notifyError(errorMessage(t, error)),
+  });
+
+  const choose = async (chosen: File | null) => {
+    setFile(chosen);
+    setDone(null);
+    preview.reset();
+    if (!chosen) {
+      setText(null);
+      return;
+    }
+    const content = await chosen.text();
+    setText(content);
+    preview.mutate(content);
+  };
+
+  return (
+    <Stack>
+      <Title order={2}>{t('nav.import')}</Title>
+
+      <Card withBorder>
+        <Stack gap="sm">
+          <Title order={4}>{t('import.exportTitle')}</Title>
+          <Text size="sm" c="dimmed">
+            {t('import.exportText')}
+          </Text>
+          <Group>
+            <Button component="a" href="api/export.csv" download leftSection={<IconDownload size={16} />}>
+              {t('import.exportButton')}
+            </Button>
+            <Button
+              component="a"
+              href="api/import/template.csv"
+              download
+              variant="default"
+              leftSection={<IconFileSpreadsheet size={16} />}
+            >
+              {t('import.templateButton')}
+            </Button>
+          </Group>
+        </Stack>
+      </Card>
+
+      <Card withBorder>
+        <Stack gap="sm">
+          <Title order={4}>{t('import.importTitle')}</Title>
+          <Text size="sm" c="dimmed">
+            {t('import.importText')}
+          </Text>
+          <FileInput
+            label={t('import.file')}
+            placeholder={t('import.filePlaceholder')}
+            accept=".csv,text/csv"
+            leftSection={<IconUpload size={16} />}
+            value={file}
+            onChange={(chosen) => void choose(chosen)}
+            clearable
+          />
+
+          {done && (
+            <Alert color="green" data-testid="import-done">
+              {t('import.done', {
+                games: done.new_games,
+                copies: done.new_copies,
+                updated: done.updated_copies,
+              })}
+            </Alert>
+          )}
+
+          {preview.isPending && <Text size="sm">{t('import.checking')}</Text>}
+
+          {preview.data && text !== null && (
+            <PreviewResult
+              preview={preview.data}
+              importing={run.isPending}
+              onImport={() => run.mutate(text)}
+              onReset={() => void choose(null)}
+            />
+          )}
+        </Stack>
+      </Card>
+
+      <ColumnHelp />
+    </Stack>
+  );
+}
+
+function PreviewResult({
+  preview,
+  importing,
+  onImport,
+  onReset,
+}: {
+  preview: Preview;
+  importing: boolean;
+  onImport: () => void;
+  onReset: () => void;
+}) {
+  const { t } = useTranslation();
+  const issue = preview.file_issue;
+
+  if (issue) {
+    return (
+      <Alert color="red" data-testid="file-issue">
+        {t(`fileIssues.${issue.code}` as 'fileIssues.empty_file', {
+          column: issue.column ?? '',
+          line: issue.line ?? '',
+        })}
+      </Alert>
+    );
+  }
+
+  const { summary } = preview;
+  const hasErrors = summary.error_rows > 0;
+  const changes =
+    summary.new_games +
+    summary.updated_games +
+    summary.new_copies +
+    summary.updated_copies +
+    summary.updated_releases;
+  const flagged = preview.rows.filter((row) => row.issues.length > 0);
+
+  return (
+    <Stack gap="md" data-testid="import-preview">
+      <SimpleGrid cols={{ base: 2, sm: 4 }}>
+        {SUMMARY_KEYS.map((key) => (
+          <Stack key={key} gap={0}>
+            <Text size="xs" c="dimmed">
+              {t(`import.summary.${key}`)}
+            </Text>
+            <Text fw={700} c={key === 'error_rows' && summary[key] > 0 ? 'red' : undefined} data-testid={`summary-${key}`}>
+              {summary[key]}
+            </Text>
+          </Stack>
+        ))}
+      </SimpleGrid>
+
+      {(preview.new_platforms.length > 0 || preview.new_devices.length > 0 || preview.new_stores.length > 0) && (
+        <Stack gap={4}>
+          <Text fw={600} size="sm">
+            {t('import.willCreate')}
+          </Text>
+          {preview.new_platforms.length > 0 && (
+            <Text size="sm">
+              {t('import.newPlatforms')}: {preview.new_platforms.join(', ')}
+            </Text>
+          )}
+          {preview.new_devices.length > 0 && (
+            <Stack gap={0}>
+              <Text size="sm">{t('import.newDevices')}:</Text>
+              <List size="sm">
+                {preview.new_devices.map((device) => (
+                  <List.Item key={device.name}>
+                    {t('import.newDevice', {
+                      name: device.name,
+                      kind: t(`deviceKind.${device.kind}`),
+                      platforms: device.platforms.join(', '),
+                    })}
+                  </List.Item>
+                ))}
+              </List>
+            </Stack>
+          )}
+          {preview.new_stores.length > 0 && (
+            <Text size="sm">
+              {t('import.newStores')}: {preview.new_stores.join(', ')}
+            </Text>
+          )}
+        </Stack>
+      )}
+
+      {flagged.length > 0 && (
+        <Stack gap={4}>
+          <Text fw={600} size="sm">
+            {t('import.issuesTitle')}
+          </Text>
+          <Table.ScrollContainer minWidth={560}>
+            <Table data-testid="import-issues">
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>{t('import.line')}</Table.Th>
+                  <Table.Th>{t('import.game')}</Table.Th>
+                  <Table.Th>{t('import.column')}</Table.Th>
+                  <Table.Th>{t('import.problem')}</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {flagged.flatMap((row) =>
+                  row.issues.map((issue) => (
+                    <Table.Tr key={`${row.line}-${issue.column}-${issue.code}`}>
+                      <Table.Td>{row.line}</Table.Td>
+                      <Table.Td>{row.game_title}</Table.Td>
+                      <Table.Td>
+                        <Code>{issue.column}</Code>
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap="xs" wrap="nowrap">
+                          <Badge size="xs" color={issue.error ? 'red' : 'yellow'}>
+                            {issue.error ? t('common.error') : t('common.warning')}
+                          </Badge>
+                          <Text size="sm">{t(`importIssues.${issue.code}` as 'importIssues.required')}</Text>
+                        </Group>
+                      </Table.Td>
+                    </Table.Tr>
+                  )),
+                )}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+        </Stack>
+      )}
+
+      {hasErrors && (
+        <Alert color="red">{t('import.hasErrors')}</Alert>
+      )}
+      {!hasErrors && changes === 0 && <Alert color="blue">{t('import.nothingToDo')}</Alert>}
+
+      <Group>
+        <Button onClick={onImport} loading={importing} disabled={hasErrors || changes === 0}>
+          {t('import.confirm')}
+        </Button>
+        <Anchor component="button" type="button" size="sm" onClick={onReset}>
+          {t('import.reset')}
+        </Anchor>
+      </Group>
+    </Stack>
+  );
+}
+
+function ColumnHelp() {
+  const { t } = useTranslation();
+  return (
+    <Accordion variant="contained">
+      <Accordion.Item value="columns">
+        <Accordion.Control>{t('import.columnsTitle')}</Accordion.Control>
+        <Accordion.Panel>
+          <Stack gap="xs">
+            <Text size="sm">{t('import.columnsText')}</Text>
+            <Table>
+              <Table.Tbody>
+                {COLUMNS.map((column) => (
+                  <Table.Tr key={column}>
+                    <Table.Td>
+                      <Code>{column}</Code>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm">{t(`import.columns.${column}`)}</Text>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Stack>
+        </Accordion.Panel>
+      </Accordion.Item>
+    </Accordion>
+  );
 }

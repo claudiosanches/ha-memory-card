@@ -18,13 +18,15 @@
     "delete": "Delete",
     "deleted": "Deleted",
     "edit": "Edit",
+    "error": "Error",
     "inactive": "Inactive",
     "moveDown": "Move down",
     "moveUp": "Move up",
     "name": "Name",
     "notes": "Notes",
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "warning": "Warning"
   },
   "placeholder": {
     "notBuilt": "This screen is not built yet."
@@ -100,6 +102,84 @@
     "invalid_body": "The request was not valid.",
     "unknown_platform": "One of the platforms no longer exists.",
     "platform_in_use": "Releases or devices use this platform. Deactivate it instead.",
-    "invalid_order": "The platform list changed. Reload the page."
+    "invalid_order": "The platform list changed. Reload the page.",
+    "import_invalid": "The file has errors. Check it again before importing."
+  },
+  "import": {
+    "exportTitle": "Export",
+    "exportText": "Download every copy as a CSV file. Edit it in a spreadsheet and import it again to update your collection.",
+    "exportButton": "Export collection",
+    "templateButton": "Download blank template",
+    "importTitle": "Import",
+    "importText": "One row per copy. A row with only game columns adds a game with no copies. Nothing changes until you confirm.",
+    "file": "CSV file",
+    "filePlaceholder": "Choose a file",
+    "checking": "Checking the file",
+    "confirm": "Import",
+    "reset": "Choose another file",
+    "nothingToDo": "Nothing in this file changes your collection.",
+    "hasErrors": "Fix the rows below in your spreadsheet, then choose the file again.",
+    "done": "Imported {{games}} new games and {{copies}} new copies, updated {{updated}} copies.",
+    "summary": {
+      "rows": "Rows",
+      "new_games": "New games",
+      "updated_games": "Updated games",
+      "new_releases": "New releases",
+      "new_copies": "New copies",
+      "updated_copies": "Updated copies",
+      "unchanged_copies": "Unchanged copies",
+      "game_only_rows": "Games without copies",
+      "error_rows": "Rows with errors",
+      "warning_rows": "Rows with warnings"
+    },
+    "willCreate": "Will be created",
+    "newPlatforms": "Platforms",
+    "newDevices": "Devices",
+    "newStores": "Stores",
+    "newDevice": "{{name}} ({{kind}}): {{platforms}}",
+    "issuesTitle": "Rows to check",
+    "line": "Line",
+    "game": "Game",
+    "column": "Column",
+    "problem": "Problem",
+    "columnsTitle": "Columns and accepted values",
+    "columnsText": "Column names are not case sensitive and can be in any order. Only game_title is required in every row. Files saved with ; as separator work too.",
+    "columns": {
+      "copy_id": "Filled in by the export. Keep it to update that copy; leave it empty to add a new one.",
+      "status": "owned. Empty means owned.",
+      "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
+      "game_title": "Required.",
+      "play_status": "backlog, playing, paused, completed, dropped, mastered (100%).",
+      "platform": "Platform name, abbreviation or slug, as on the Manage screen. Unknown names are created.",
+      "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",
+      "release_title": "Title on this release, when it differs from the game title.",
+      "product_code": "Serial or product code printed on the box.",
+      "format": "physical or digital.",
+      "device": "Device name, as on the Manage screen. Unknown names are created.",
+      "store": "Store name. Unknown names are created.",
+      "condition": "Physical copies only: sealed, cib, no_manual, loose.",
+      "notes": "Free text."
+    }
+  },
+  "importIssues": {
+    "required": "Needs a value.",
+    "too_long": "Too long.",
+    "invalid_number": "Must be a positive whole number.",
+    "invalid_value": "Not an accepted value.",
+    "unknown_copy": "No copy has this ID. Leave copy_id empty to add a new copy.",
+    "duplicate_copy_id": "Another row uses the same copy_id.",
+    "wanted_unsupported": "Wanted copies are not supported yet.",
+    "condition_digital": "Digital copies have no condition.",
+    "ambiguous_game": "More than one game has this title. Add the igdb_id.",
+    "ambiguous_platform": "More than one platform uses this abbreviation. Use the full name.",
+    "conflicting_play_status": "Another row gives this game a different play status.",
+    "device_platform_mismatch": "This device is not set to play this platform."
+  },
+  "fileIssues": {
+    "not_utf8": "The file is not UTF-8. Save it as \"CSV UTF-8\" and try again.",
+    "empty_file": "The file has no rows.",
+    "missing_column": "The file needs a {{column}} column.",
+    "malformed": "The file could not be read as CSV near line {{line}}.",
+    "too_many_rows": "The file has more than 20,000 rows."
   }
 }

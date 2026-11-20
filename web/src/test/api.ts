@@ -22,7 +22,8 @@ export function mockApi(routes: Record<string, unknown>): ApiCall[] {
     vi.fn(async (request: Request) => {
       const path = new URL(request.url).pathname;
       const text = await request.clone().text();
-      const body: unknown = text ? JSON.parse(text) : undefined;
+      const isJson = request.headers.get('Content-Type')?.includes('json') ?? false;
+      const body: unknown = text ? (isJson ? JSON.parse(text) : text) : undefined;
       calls.push({ method: request.method, path, body });
 
       const route = routes[`${request.method} ${path}`];
