@@ -16,6 +16,8 @@ See [DOCS.md](memory-card/DOCS.md) for configuration.
 ## Development
 
 Requirements: the Rust toolchain from `rust-toolchain.toml`, Node.js 24.
+Changing SQL queries needs sqlx-cli
+(`cargo install sqlx-cli --version 0.9.1 --locked --no-default-features --features sqlite`).
 Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
 
 `make` lists the targets. The common ones:
@@ -30,6 +32,7 @@ Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
 | `make check` | Everything CI runs except the image |
 | `make smoke` | Builds the amd64 image and runs it like Home Assistant |
 | `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
+| `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
 
 The server reads these variables; `make run` sets the first four.
 
