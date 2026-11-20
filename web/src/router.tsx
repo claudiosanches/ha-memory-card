@@ -8,14 +8,22 @@ import {
 import { Layout } from './components/Layout';
 import { DuplicatesPage } from './pages/DuplicatesPage';
 import { ImportPage } from './pages/ImportPage';
-import { LibraryPage } from './pages/LibraryPage';
+import { GamePage } from './pages/game/GamePage';
+import { LibraryPage } from './pages/library/LibraryPage';
+import { validateLibrarySearch } from './pages/library/search';
 import { MANAGE_TABS, ManagePage, type ManageTab } from './pages/manage/ManagePage';
 import { SettingsPage } from './pages/SettingsPage';
 
 const rootRoute = createRootRoute({ component: Layout });
 
 const routeTree = rootRoute.addChildren([
-  createRoute({ getParentRoute: () => rootRoute, path: '/', component: LibraryPage }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: LibraryPage,
+    validateSearch: validateLibrarySearch,
+  }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/games/$gameId', component: GamePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/import', component: ImportPage }),
   createRoute({

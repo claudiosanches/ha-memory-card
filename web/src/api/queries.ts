@@ -1,12 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from './client';
 import { call } from './errors';
+import type { LibraryQuery } from './types';
 
 export const queryKeys = {
   status: ['status'],
   platforms: ['platforms'],
   devices: ['devices'],
   stores: ['stores'],
+  games: ['games'],
+  game: (id: number) => ['game', id] as const,
+  gameModes: ['game-modes'],
+  genres: ['genres'],
 } as const;
 
 export function useStatus() {
@@ -23,4 +28,31 @@ export function useDevices() {
 
 export function useStores() {
   return useQuery({ queryKey: queryKeys.stores, queryFn: () => call(api.GET('/api/stores')) });
+}
+
+export function useGames(query: LibraryQuery) {
+  return useQuery({
+    queryKey: [...queryKeys.games, query],
+    queryFn: () => call(api.GET('/api/games', { params: { query } })),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useGame(id: number) {
+  return useQuery({
+    queryKey: queryKeys.game(id),
+    queryFn: () => call(api.GET('/api/games/{id}', { params: { path: { id } } })),
+  });
+}
+
+export function useGameModes() {
+  return useQuery({
+    queryKey: queryKeys.gameModes,
+    queryFn: () => call(api.GET('/api/game-modes')),
+    staleTime: Infinity,
+  });
+}
+
+export function useGenres() {
+  return useQuery({ queryKey: queryKeys.genres, queryFn: () => call(api.GET('/api/genres')) });
 }

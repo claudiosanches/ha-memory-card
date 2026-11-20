@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 type Handler = (body: unknown) => unknown;
-export type ApiCall = { method: string; path: string; body: unknown };
+export type ApiCall = { method: string; path: string; query: URLSearchParams; body: unknown };
 
 export function json(body: unknown, status = 200): Response {
   return new Response(status === 204 ? null : JSON.stringify(body), {
@@ -20,11 +20,12 @@ export function mockApi(routes: Record<string, unknown>): ApiCall[] {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (request: Request) => {
-      const path = new URL(request.url).pathname;
+      const url = new URL(request.url);
+      const path = url.pathname;
       const text = await request.clone().text();
       const isJson = request.headers.get('Content-Type')?.includes('json') ?? false;
       const body: unknown = text ? (isJson ? JSON.parse(text) : text) : undefined;
-      calls.push({ method: request.method, path, body });
+      calls.push({ method: request.method, path, query: url.searchParams, body });
 
       const route = routes[`${request.method} ${path}`];
       if (route === undefined) return json({ code: 'not_found' }, 404);
