@@ -1,0 +1,31 @@
+[package]
+name = "memory-card"
+description = "Video game collection manager for Home Assistant"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+axum = "0.8.9"
+clap = { version = "4.6.9", features = ["derive"] }
+mime_guess = "2.0.5"
+rust-embed = "8.14.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sqlx = { version = "0.9.1", default-features = false, features = ["sqlite", "runtime-tokio", "migrate", "macros"] }
+thiserror = "2.0.21"
+time = { version = "0.3.55", features = ["formatting", "macros"] }
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "signal", "fs", "time"] }
+tower-http = { version = "0.7.1", features = ["trace"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+utoipa = "6.0.0"
+utoipa-axum = "0.3.0"
+
+[dev-dependencies]
+http-body-util = "0.1.5"
+tempfile = "3.27.0"
+tower = { version = "0.5.3", features = ["util"] }

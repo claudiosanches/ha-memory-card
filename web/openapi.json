@@ -1,0 +1,83 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Memory Card",
+    "description": "Video game collection manager for Home Assistant",
+    "license": {
+      "name": "GPL-3.0-only",
+      "identifier": "GPL-3.0-only"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/status": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "operationId": "getStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "description": "Error body. `code` is a stable key the UI translates; it never carries display text.",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "required": [
+          "version",
+          "igdb_configured",
+          "games",
+          "owned_copies"
+        ],
+        "properties": {
+          "games": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "igdb_configured": {
+            "type": "boolean"
+          },
+          "owned_copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

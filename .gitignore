@@ -1,0 +1,16 @@
+/target/
+node_modules/
+/web/dist/
+/dist/
+/.data/
+/e2e/test-results/
+/e2e/playwright-report/
+.idea/
+.vscode/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Migrations and their test fixtures are source.
+!/server/migrations/*.sql
+!/server/tests/fixtures/migrations/**/*.sql

@@ -1,0 +1,30 @@
+{
+  "app": {
+    "title": "Memory Card",
+    "toggleNavigation": "Toggle navigation"
+  },
+  "nav": {
+    "library": "Library",
+    "duplicates": "Duplicates",
+    "import": "Import and export",
+    "manage": "Devices and stores",
+    "settings": "Settings"
+  },
+  "placeholder": {
+    "notBuilt": "This screen is not built yet."
+  },
+  "settings": {
+    "status": "Status",
+    "version": "Version",
+    "games": "Games",
+    "ownedCopies": "Owned copies",
+    "igdb": "IGDB",
+    "igdbConfigured": "Connected",
+    "igdbMissing": "Not configured. Add your Twitch client ID and secret in the app configuration to fetch covers and metadata.",
+    "loadError": "Could not load status."
+  },
+  "errors": {
+    "internal": "Something went wrong on the server.",
+    "network": "Could not reach the server."
+  }
+}

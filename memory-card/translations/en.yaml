@@ -1,0 +1,12 @@
+configuration:
+  igdb_client_id:
+    name: IGDB client ID
+    description: >-
+      Client ID of your Twitch developer application. Leave empty to use the
+      app without IGDB metadata and covers.
+  igdb_client_secret:
+    name: IGDB client secret
+    description: Client secret of the same Twitch application.
+  log_level:
+    name: Log level
+    description: How much the app writes to its log.

@@ -1,0 +1,28 @@
+{
+  "name": "ha-memory-card",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "workspaces": [
+    "web",
+    "e2e"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "npm run build -w web",
+    "lint": "npm run lint -w web",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test -w web",
+    "e2e": "npm run test -w e2e",
+    "licenses": "node scripts/check-npm-licenses.mjs"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
+  }
+}
