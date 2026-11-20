@@ -22,6 +22,7 @@ import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useGames, usePlatforms } from '../../api/queries';
 import { type GameSummary, PLAY_STATUSES, type Platform, type PlayStatus } from '../../api/types';
+import { Cover } from '../../components/Cover';
 import { FormModal } from '../../components/FormModal';
 import { STATUS_COLORS } from '../../components/status';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
@@ -121,30 +122,33 @@ function GameCard({ game, platformsById }: { game: GameSummary; platformsById: M
       data-testid={`game-${game.title}`}
       renderRoot={(props) => <Link to="/games/$gameId" params={{ gameId: String(game.id) }} {...props} />}
     >
-      <Stack gap="xs">
-        <Text fw={600} lineClamp={2}>
-          {game.title}
-        </Text>
-        <Group gap={4}>
-          {game.play_status && (
-            <Badge size="sm" color={STATUS_COLORS[game.play_status]} variant="light">
-              {t(`playStatus.${game.play_status}`)}
-            </Badge>
-          )}
-          {game.platforms.map(({ platform_id, copies }) => {
-            const platform = platformsById.get(platform_id);
-            const label = platform?.abbreviation ?? platform?.name ?? '';
-            return (
-              <Badge key={platform_id} size="sm" variant="outline" tt="none">
-                {copies > 1 ? `${label} ×${copies}` : label}
+      <Group align="flex-start" wrap="nowrap">
+        <Cover path={game.cover_path} title={game.title} width={60} />
+        <Stack gap="xs" miw={0}>
+          <Text fw={600} lineClamp={2}>
+            {game.title}
+          </Text>
+          <Group gap={4}>
+            {game.play_status && (
+              <Badge size="sm" color={STATUS_COLORS[game.play_status]} variant="light">
+                {t(`playStatus.${game.play_status}`)}
               </Badge>
-            );
-          })}
-        </Group>
-        <Text size="xs" c="dimmed">
-          {game.owned_copies ? t('library.copies', { count: game.owned_copies }) : t('library.noCopies')}
-        </Text>
-      </Stack>
+            )}
+            {game.platforms.map(({ platform_id, copies }) => {
+              const platform = platformsById.get(platform_id);
+              const label = platform?.abbreviation ?? platform?.name ?? '';
+              return (
+                <Badge key={platform_id} size="sm" variant="outline" tt="none">
+                  {copies > 1 ? `${label} ×${copies}` : label}
+                </Badge>
+              );
+            })}
+          </Group>
+          <Text size="xs" c="dimmed">
+            {game.owned_copies ? t('library.copies', { count: game.owned_copies }) : t('library.noCopies')}
+          </Text>
+        </Stack>
+      </Group>
     </Card>
   );
 }

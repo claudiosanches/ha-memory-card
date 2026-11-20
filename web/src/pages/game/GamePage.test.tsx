@@ -91,6 +91,24 @@ describe('Game page', () => {
     expect(body.title).toBe('Metroid Dread');
   });
 
+  it('links the game to an IGDB search result', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, games: 1, owned_copies: 1 },
+      'GET /api/games/4': GAME,
+      'GET /api/igdb/search': [{ igdb_id: 7, name: 'Metroid Dread', year: 2021, platforms: ['Switch'] }],
+      'POST /api/games/4/igdb': { ...GAME, igdb_id: 7, developers: ['MercurySteam'] },
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.igdb.link }));
+    fireEvent.click(await screen.findByTestId('igdb-hit-7'));
+
+    expect(await screen.findByText(`${en.game.developers}: MercurySteam`)).toBeInTheDocument();
+    expect(calls.find((c) => c.path === '/api/igdb/search')?.query.get('q')).toBe('Metroid Dread');
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ igdb_id: 7 });
+  });
+
   it('says when the game does not exist', async () => {
     mockApi({ ...SETUP, 'GET /api/games/77': json({ code: 'not_found' }, 404) });
     renderAt('/games/77');

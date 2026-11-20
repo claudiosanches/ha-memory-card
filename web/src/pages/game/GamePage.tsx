@@ -13,14 +13,32 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core';
-import { IconArrowLeft, IconCalendarCheck, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconCalendarCheck,
+  IconLink,
+  IconPencil,
+  IconPlus,
+  IconRefresh,
+  IconTrash,
+} from '@tabler/icons-react';
+import { useMediaQuery } from '@mantine/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { ApiError, call, errorMessage } from '../../api/errors';
-import { queryKeys, useDevices, useGame, useGameModes, usePlatforms, useStores } from '../../api/queries';
+import {
+  queryKeys,
+  useDevices,
+  useGame,
+  useGameModes,
+  useGenres,
+  usePlatforms,
+  useStatus,
+  useStores,
+} from '../../api/queries';
 import {
   type CopyDetail,
   type GameDetail,
@@ -29,14 +47,17 @@ import {
   type ReleaseDetail,
 } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { Cover } from '../../components/Cover';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { formatDate, STATUS_COLORS, today } from '../../components/status';
 import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
+import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
 
 const route = getRouteApi('/games/$gameId');
 
 type Dialog =
   | { kind: 'editGame' }
+  | { kind: 'linkIgdb' }
   | { kind: 'deleteGame' }
   | { kind: 'addCopy'; release?: ReleaseDetail }
   | { kind: 'editCopy'; copy: CopyDetail; release: ReleaseDetail }
@@ -86,11 +107,15 @@ function BackLink() {
 function GameView({ game }: { game: GameDetail }) {
   const { t, i18n } = useTranslation();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const phone = useMediaQuery('(max-width: 48em)');
   const close = () => setDialog(null);
   const saved = useGameSaved();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const gameModes = useGameModes();
+  const genres = useGenres();
+  const status = useStatus();
+  const refresh = useIgdbLink(game);
   const platforms = usePlatforms();
   const devices = useDevices();
   const stores = useStores();
@@ -101,8 +126,9 @@ function GameView({ game }: { game: GameDetail }) {
       device: new Map((devices.data ?? []).map((d) => [d.id, d.name])),
       store: new Map((stores.data ?? []).map((s) => [s.id, s.name])),
       mode: new Map((gameModes.data ?? []).map((m) => [m.id, m.name])),
+      genre: new Map((genres.data ?? []).map((g) => [g.id, g.name])),
     }),
-    [platforms.data, devices.data, stores.data, gameModes.data],
+    [platforms.data, devices.data, stores.data, gameModes.data, genres.data],
   );
 
   const allCopies = game.releases.flatMap((release) => release.copies.map((copy) => ({ copy, release })));
@@ -169,15 +195,48 @@ function GameView({ game }: { game: GameDetail }) {
     <Stack>
       <BackLink />
       <Group justify="space-between" align="flex-start">
-        <Stack gap={4}>
-          <Title order={2}>{game.title}</Title>
-          {game.igdb_id && (
-            <Badge size="xs" variant="light" w="fit-content">
-              {t('game.igdbLinked')}
-            </Badge>
-          )}
-        </Stack>
+        <Group align="flex-start" wrap="nowrap">
+          <Cover path={game.cover_path} title={game.title} width={phone ? 72 : 120} />
+          <Stack gap={4}>
+            <Title order={2}>{game.title}</Title>
+            {game.igdb_id && (
+              <Badge size="xs" variant="light" w="fit-content">
+                {t('game.igdbLinked')}
+              </Badge>
+            )}
+            {game.first_release_date && (
+              <Text size="sm" c="dimmed">
+                {t('game.firstRelease')}: {formatDate(game.first_release_date, i18n.language)}
+              </Text>
+            )}
+            {game.developers.length > 0 && (
+              <Text size="sm" c="dimmed">
+                {t('game.developers')}: {game.developers.join(', ')}
+              </Text>
+            )}
+            {game.publishers.length > 0 && (
+              <Text size="sm" c="dimmed">
+                {t('game.publishers')}: {game.publishers.join(', ')}
+              </Text>
+            )}
+          </Stack>
+        </Group>
         <Group gap="xs">
+          {status.data?.igdb_configured && game.igdb_id && (
+            <Button
+              variant="default"
+              leftSection={<IconRefresh size={16} />}
+              loading={refresh.isPending}
+              onClick={() => game.igdb_id && refresh.mutate(game.igdb_id)}
+            >
+              {t('igdb.refresh')}
+            </Button>
+          )}
+          {status.data?.igdb_configured && (
+            <Button variant="default" leftSection={<IconLink size={16} />} onClick={() => setDialog({ kind: 'linkIgdb' })}>
+              {game.igdb_id ? t('igdb.relink') : t('igdb.link')}
+            </Button>
+          )}
           <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
             {t('common.edit')}
           </Button>
@@ -245,6 +304,16 @@ function GameView({ game }: { game: GameDetail }) {
               </Badge>
             ))}
           </Group>
+          {game.genre_ids.length > 0 && (
+            <Group gap="xs">
+              <Text size="sm">{t('game.genres')}:</Text>
+              {game.genre_ids.map((genreId) => (
+                <Badge key={genreId} size="sm" variant="outline" tt="none">
+                  {names.genre.get(genreId)}
+                </Badge>
+              ))}
+            </Group>
+          )}
           <Text size="sm">
             {t('game.players')}: {players(game.local_max_players, game.online_max_players)}
           </Text>
@@ -370,6 +439,7 @@ function GameView({ game }: { game: GameDetail }) {
       ))}
 
       {dialog?.kind === 'editGame' && <GameForm game={game} onClose={close} />}
+      {dialog?.kind === 'linkIgdb' && <IgdbLinkModal game={game} onClose={close} />}
       {dialog?.kind === 'addCopy' && <CopyForm gameId={game.id} release={dialog.release} onClose={close} />}
       {dialog?.kind === 'editCopy' && (
         <CopyForm gameId={game.id} copy={dialog.copy} release={dialog.release} onClose={close} />

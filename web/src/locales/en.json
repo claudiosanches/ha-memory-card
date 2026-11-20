@@ -98,7 +98,7 @@
     "too_long": "Too long.",
     "invalid_body": "The request was not valid.",
     "unknown_platform": "One of the platforms no longer exists.",
-    "platform_in_use": "Releases or devices use this platform. Deactivate it instead.",
+    "platform_in_use": "Games or devices use this platform. Deactivate it instead.",
     "invalid_order": "The platform list changed. Reload the page.",
     "import_invalid": "The file has errors. Check it again before importing.",
     "invalid_copy": "Pick a copy of this game.",
@@ -109,7 +109,12 @@
     "unknown_store": "The store no longer exists.",
     "condition_digital": "Digital copies have no condition.",
     "release_exists": "Another release of this game has the same platform, region and product code.",
-    "invalid_filter": "The filters in the address are not valid."
+    "invalid_filter": "The filters in the address are not valid.",
+    "igdb_not_configured": "IGDB is not set up. Add the Twitch client ID and secret in the app configuration.",
+    "igdb_failed": "IGDB could not be reached. Try again in a moment.",
+    "igdb_linked": "Another game is already linked to this IGDB game.",
+    "igdb_not_found": "IGDB has no game with this id.",
+    "sync_running": "A sync is already running."
   },
   "import": {
     "exportTitle": "Export",
@@ -302,6 +307,27 @@
     "copyOf": "{{format}} on {{device}}",
     "igdbLinked": "Linked to IGDB",
     "releaseHeading": "{{platform}} · {{region}}",
-    "datePlaceholder": "YYYY-MM-DD"
+    "datePlaceholder": "YYYY-MM-DD",
+    "firstRelease": "First released",
+    "developers": "Developers",
+    "publishers": "Publishers",
+    "genres": "Genres",
+    "cover": "Cover of {{title}}"
+  },
+  "igdb": {
+    "link": "Link to IGDB",
+    "relink": "Change IGDB match",
+    "refresh": "Refresh from IGDB",
+    "search": "Search IGDB",
+    "noResults": "No games found.",
+    "current": "Current",
+    "linked": "Linked to IGDB.",
+    "refreshed": "Updated from IGDB.",
+    "hitDetails": "{{year}} · {{platforms}}",
+    "syncTitle": "IGDB sync",
+    "syncText": "Links each game whose title matches exactly one IGDB game, then updates details and covers of every linked game. Link the games it cannot match from their page.",
+    "syncButton": "Sync with IGDB",
+    "syncProgress": "{{done}} of {{total}} games",
+    "syncResult": "Last sync: {{linked}} linked, {{updated}} updated, {{unmatched}} not matched, {{failed}} failed."
   }
 }

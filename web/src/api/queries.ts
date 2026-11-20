@@ -12,6 +12,7 @@ export const queryKeys = {
   game: (id: number) => ['game', id] as const,
   gameModes: ['game-modes'],
   genres: ['genres'],
+  igdbSync: ['igdb-sync'],
 } as const;
 
 export function useStatus() {
@@ -55,4 +56,14 @@ export function useGameModes() {
 
 export function useGenres() {
   return useQuery({ queryKey: queryKeys.genres, queryFn: () => call(api.GET('/api/genres')) });
+}
+
+/** Polls once a second while a sync runs. */
+export function useIgdbSync(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.igdbSync,
+    queryFn: () => call(api.GET('/api/igdb/sync')),
+    enabled,
+    refetchInterval: (query) => (query.state.data?.running ? 1000 : false),
+  });
 }
