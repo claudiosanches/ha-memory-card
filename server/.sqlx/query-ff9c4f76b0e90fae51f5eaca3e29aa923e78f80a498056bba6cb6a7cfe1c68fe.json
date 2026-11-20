@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE platforms SET sort_order = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ff9c4f76b0e90fae51f5eaca3e29aa923e78f80a498056bba6cb6a7cfe1c68fe"
+}

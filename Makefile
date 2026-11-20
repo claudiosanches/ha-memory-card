@@ -6,6 +6,9 @@ PORT ?= 8099
 PROXY_PORT ?= 18100
 IMAGE ?= memory-card:dev
 
+# Database the sqlx query macros check against while preparing server/.sqlx.
+SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
+
 RUN_ENV = MEMORY_CARD_DATA_DIR=$(DATA_DIR) \
 	MEMORY_CARD_TMP_DIR=$(DATA_DIR)/tmp \
 	MEMORY_CARD_LISTEN=127.0.0.1:$(PORT) \
@@ -73,8 +76,24 @@ api: node_modules ## Regenerate web/openapi.json and the TypeScript API types
 api-check: node_modules ## Fail if the generated API files are out of date
 	./scripts/gen-api.sh --check
 
+.PHONY: sqlx
+sqlx: ## Regenerate server/.sqlx after adding or changing a query
+	mkdir -p target/sqlx
+	rm -f target/sqlx/dev.sqlite*
+	DATABASE_URL=$(SQLX_DB_URL) sqlx database create
+	DATABASE_URL=$(SQLX_DB_URL) sqlx migrate run --source server/migrations
+	cd server && DATABASE_URL=$(SQLX_DB_URL) cargo sqlx prepare -- --all-targets
+
+.PHONY: sqlx-check
+sqlx-check: ## Fail if server/.sqlx is out of date
+	mkdir -p target/sqlx
+	rm -f target/sqlx/dev.sqlite*
+	DATABASE_URL=$(SQLX_DB_URL) sqlx database create
+	DATABASE_URL=$(SQLX_DB_URL) sqlx migrate run --source server/migrations
+	cd server && DATABASE_URL=$(SQLX_DB_URL) cargo sqlx prepare --check -- --all-targets
+
 .PHONY: check
-check: lint test licenses api-check e2e ## Everything CI runs except the image
+check: lint test licenses api-check sqlx-check e2e ## Everything CI runs except the image
 
 .PHONY: binaries
 binaries: web ## Static musl binaries into dist/ (needs zig and cargo-zigbuild)

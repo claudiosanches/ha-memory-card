@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS (SELECT 1 FROM releases WHERE platform_id = ?1)\n               OR EXISTS (SELECT 1 FROM device_platforms WHERE platform_id = ?1) AS \"in_use!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "in_use!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b97f87af3c2f61176082150557865cdaa923a08bc10460a9733f5b5aee85469d"
+}

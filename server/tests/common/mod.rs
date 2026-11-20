@@ -10,6 +10,7 @@ use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
 use memory_card::config::Config;
 use memory_card::{AppState, db};
+use serde_json::Value;
 use sqlx::SqlitePool;
 use tempfile::TempDir;
 use tower::ServiceExt;
@@ -64,5 +65,53 @@ impl TestApp {
         let status = response.status();
         let body = response.into_body().collect().await.unwrap().to_bytes();
         (status, body.to_vec())
+    }
+
+    /// Sends JSON (or nothing) and parses the JSON reply; an empty reply is `Value::Null`.
+    pub async fn json(&self, method: &str, path: &str, body: Option<Value>) -> (StatusCode, Value) {
+        let builder = Request::builder().method(method).uri(path);
+        let request = match body {
+            Some(body) => builder
+                .header("content-type", "application/json")
+                .body(Body::from(body.to_string())),
+            None => builder.body(Body::empty()),
+        }
+        .unwrap();
+        let (status, bytes) = self.request(SUPERVISOR, request).await;
+        let value = if bytes.is_empty() {
+            Value::Null
+        } else {
+            serde_json::from_slice(&bytes).unwrap()
+        };
+        (status, value)
+    }
+
+    pub async fn platform_id(&self, slug: &str) -> i64 {
+        sqlx::query_scalar("SELECT id FROM platforms WHERE slug = ?")
+            .bind(slug)
+            .fetch_one(&self.pool)
+            .await
+            .unwrap()
+    }
+
+    /// Inserts a game with one release on `platform_slug` and returns the release id.
+    pub async fn release(&self, title: &str, platform_slug: &str) -> i64 {
+        let platform = self.platform_id(platform_slug).await;
+        let game: i64 = sqlx::query_scalar(
+            "INSERT INTO games (title, sort_title) VALUES (?, lower(?)) RETURNING id",
+        )
+        .bind(title)
+        .bind(title)
+        .fetch_one(&self.pool)
+        .await
+        .unwrap();
+        sqlx::query_scalar(
+            "INSERT INTO releases (game_id, platform_id, region) VALUES (?, ?, 'na') RETURNING id",
+        )
+        .bind(game)
+        .bind(platform)
+        .fetch_one(&self.pool)
+        .await
+        .unwrap()
     }
 }

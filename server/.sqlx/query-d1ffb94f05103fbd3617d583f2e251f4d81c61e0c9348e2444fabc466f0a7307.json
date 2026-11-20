@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE platforms SET name = ?, abbreviation = ?, active = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "d1ffb94f05103fbd3617d583f2e251f4d81c61e0c9348e2444fabc466f0a7307"
+}

@@ -1,4 +1,7 @@
+pub mod devices;
+pub mod platforms;
 pub mod premigration;
+pub mod stores;
 
 use std::path::Path;
 use std::time::Duration;
@@ -6,6 +9,8 @@ use std::time::Duration;
 use sqlx::SqlitePool;
 use sqlx::migrate::Migrator;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
+
+use crate::error::{ApiError, ApiResult};
 
 pub static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
@@ -76,4 +81,13 @@ pub async fn close(pool: &SqlitePool) {
         Err(err) => tracing::warn!(error = %err, "database checkpoint failed"),
     }
     pool.close().await;
+}
+
+/// `NotFound` when a write touched no row.
+pub(crate) fn found(rows: u64) -> ApiResult<()> {
+    if rows == 0 {
+        Err(ApiError::NotFound)
+    } else {
+        Ok(())
+    }
 }

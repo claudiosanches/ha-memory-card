@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT slug AS \"slug!\" FROM platforms WHERE slug = ?1 OR slug LIKE ?1 || '-%'",
+  "describe": {
+    "columns": [
+      {
+        "name": "slug!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "slug"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "34ff822d199cda2dd06dff720055535e10a61962d47025c5c92da13ffa0afc45"
+}

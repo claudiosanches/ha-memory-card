@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO device_platforms (device_id, platform_id)\n         SELECT ?, value FROM json_each(?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "84919cac2c2cc60d520d4c1b53f457bc838539270d979ca3b0d1a78d0f8d10bb"
+}

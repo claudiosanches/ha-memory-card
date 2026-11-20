@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE devices\n         SET name = ?, kind = ?, model = ?, notes = ?, active = ?,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "47acb87093f9e3ffa1cef3c02e9295346a970965b8d946a75a8369c761a095ac"
+}
