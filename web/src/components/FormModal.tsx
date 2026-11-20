@@ -1,0 +1,38 @@
+import { Button, Group, Modal, Stack } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
+import type { FormEvent, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+
+type Props = {
+  opened: boolean;
+  title: string;
+  saving: boolean;
+  onClose: () => void;
+  onSubmit: (event?: FormEvent<HTMLFormElement>) => void;
+  children: ReactNode;
+};
+
+/** Modal with a form and Save/Cancel buttons; full screen on phones. */
+export function FormModal({ opened, title, saving, onClose, onSubmit, children }: Props) {
+  const { t } = useTranslation();
+  const phone = useMediaQuery('(max-width: 48em)');
+
+  return (
+    // Centering a full-screen modal misplaces dropdowns inside it.
+    <Modal opened={opened} onClose={onClose} title={title} fullScreen={phone} centered={!phone}>
+      <form onSubmit={onSubmit} noValidate>
+        <Stack>
+          {children}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={onClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" loading={saving}>
+              {t('common.save')}
+            </Button>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
+  );
+}

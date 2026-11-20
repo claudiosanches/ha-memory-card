@@ -1,0 +1,141 @@
+import { ActionIcon, Button, Group, Loader, Stack, Table, Text, Textarea, TextInput } from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../api/client';
+import { call, errorMessage } from '../../api/errors';
+import { queryKeys, useStores } from '../../api/queries';
+import type { Store, StoreInput } from '../../api/types';
+import { ConfirmModal } from '../../components/ConfirmModal';
+import { FormModal } from '../../components/FormModal';
+import { notifyError, notifySuccess } from '../../components/notify';
+import { useApiErrorHandler } from '../../hooks/useApiForm';
+
+type Editing = { store?: Store } | null;
+
+export function StoresTab() {
+  const { t } = useTranslation();
+  const stores = useStores();
+  const [editing, setEditing] = useState<Editing>(null);
+  const [deleting, setDeleting] = useState<Store | null>(null);
+  const queryClient = useQueryClient();
+
+  const remove = useMutation({
+    mutationFn: (id: number) =>
+      call(api.DELETE('/api/stores/{id}', { params: { path: { id } } })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stores });
+      setDeleting(null);
+      notifySuccess(t('common.deleted'));
+    },
+    onError: (error) => notifyError(errorMessage(t, error)),
+  });
+
+  if (stores.isPending) return <Loader size="sm" />;
+  if (stores.isError) return <Text c="red">{errorMessage(t, stores.error)}</Text>;
+
+  return (
+    <Stack>
+      <Group justify="flex-end">
+        <Button leftSection={<IconPlus size={16} />} onClick={() => setEditing({})}>
+          {t('stores.add')}
+        </Button>
+      </Group>
+
+      {stores.data.length === 0 ? (
+        <Text c="dimmed">{t('stores.empty')}</Text>
+      ) : (
+        <Table.ScrollContainer minWidth={480}>
+          <Table highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>{t('common.name')}</Table.Th>
+                <Table.Th>{t('common.notes')}</Table.Th>
+                <Table.Th>{t('common.copies')}</Table.Th>
+                <Table.Th w={96}>{t('common.actions')}</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {stores.data.map((store) => (
+                <Table.Tr key={store.id} data-testid={`store-${store.name}`}>
+                  <Table.Td>{store.name}</Table.Td>
+                  <Table.Td>
+                    <Text size="sm" c="dimmed" lineClamp={2}>
+                      {store.notes}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>{store.copy_count}</Table.Td>
+                  <Table.Td>
+                    <Group gap={4} wrap="nowrap">
+                      <ActionIcon variant="subtle" aria-label={t('common.edit')} onClick={() => setEditing({ store })}>
+                        <IconPencil size={16} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        aria-label={t('common.delete')}
+                        onClick={() => setDeleting(store)}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      )}
+
+      {editing && <StoreForm store={editing.store} onClose={() => setEditing(null)} />}
+
+      <ConfirmModal
+        opened={deleting !== null}
+        title={t('stores.deleteTitle', { name: deleting?.name ?? '' })}
+        message={deleting?.copy_count ? t('stores.deleteCopies', { count: deleting.copy_count }) : undefined}
+        confirmLabel={t('common.delete')}
+        busy={remove.isPending}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+        onClose={() => setDeleting(null)}
+      />
+    </Stack>
+  );
+}
+
+function StoreForm({ store, onClose }: { store?: Store; onClose: () => void }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const form = useForm({
+    initialValues: { name: store?.name ?? '', notes: store?.notes ?? '' },
+    validate: { name: (value) => (value.trim() ? null : t('errors.required')) },
+  });
+  const onApiError = useApiErrorHandler(form);
+
+  const save = useMutation({
+    mutationFn: (body: StoreInput) =>
+      store
+        ? call(api.PUT('/api/stores/{id}', { params: { path: { id: store.id } }, body }))
+        : call(api.POST('/api/stores', { body })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stores });
+      notifySuccess(t('common.saved'));
+      onClose();
+    },
+    onError: onApiError,
+  });
+
+  return (
+    <FormModal
+      opened
+      title={store ? t('stores.edit') : t('stores.add')}
+      saving={save.isPending}
+      onClose={onClose}
+      onSubmit={form.onSubmit((values) => save.mutate(values))}
+    >
+      <TextInput label={t('common.name')} required data-autofocus {...form.getInputProps('name')} />
+      <Textarea label={t('common.notes')} autosize minRows={2} {...form.getInputProps('notes')} />
+    </FormModal>
+  );
+}

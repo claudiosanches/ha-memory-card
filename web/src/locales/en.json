@@ -7,11 +7,78 @@
     "library": "Library",
     "duplicates": "Duplicates",
     "import": "Import and export",
-    "manage": "Devices and stores",
+    "manage": "Manage",
     "settings": "Settings"
+  },
+  "common": {
+    "actions": "Actions",
+    "active": "Active",
+    "cancel": "Cancel",
+    "copies": "Copies",
+    "delete": "Delete",
+    "deleted": "Deleted",
+    "edit": "Edit",
+    "inactive": "Inactive",
+    "moveDown": "Move down",
+    "moveUp": "Move up",
+    "name": "Name",
+    "notes": "Notes",
+    "save": "Save",
+    "saved": "Saved"
   },
   "placeholder": {
     "notBuilt": "This screen is not built yet."
+  },
+  "manage": {
+    "tabs": {
+      "devices": "Devices",
+      "stores": "Stores",
+      "platforms": "Platforms"
+    }
+  },
+  "devices": {
+    "add": "Add device",
+    "edit": "Edit device",
+    "empty": "No devices yet. Add the consoles, handhelds, PCs and store accounts your games live on.",
+    "kind": "Type",
+    "model": "Model",
+    "modelPlaceholder": "New 3DS XL",
+    "platforms": "Plays",
+    "platformsDescription": "Platforms whose games this device runs. A Wii U plays Wii U and Wii.",
+    "activeDescription": "Inactive devices are left out when choosing where a copy lives.",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteCopies_one": "{{count}} copy is on this device. It will be kept with no device.",
+    "deleteCopies_other": "{{count}} copies are on this device. They will be kept with no device."
+  },
+  "deviceKind": {
+    "console": "Console",
+    "handheld": "Handheld",
+    "pc": "PC",
+    "account": "Account"
+  },
+  "stores": {
+    "add": "Add store",
+    "edit": "Edit store",
+    "empty": "No stores yet. Add the shops and online stores you buy games from.",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteCopies_one": "{{count}} copy was bought here. It will be kept with no store.",
+    "deleteCopies_other": "{{count}} copies were bought here. They will be kept with no store."
+  },
+  "platforms": {
+    "add": "Add platform",
+    "edit": "Edit platform",
+    "abbreviation": "Abbreviation",
+    "usage": "Used by",
+    "releases_one": "{{count}} release",
+    "releases_other": "{{count}} releases",
+    "devices_one": "{{count}} device",
+    "devices_other": "{{count}} devices",
+    "unused": "Not used",
+    "fromIgdb": "Linked to IGDB",
+    "inUse": "Releases or devices use this platform. Deactivate it instead.",
+    "activeDescription": "Inactive platforms are hidden when adding games and devices.",
+    "deleteTitle": "Delete {{name}}?",
+    "activeToggle": "Active: {{name}}"
   },
   "settings": {
     "status": "Status",
@@ -25,6 +92,14 @@
   },
   "errors": {
     "internal": "Something went wrong on the server.",
-    "network": "Could not reach the server."
+    "network": "Could not reach the server.",
+    "not_found": "It no longer exists. Reload the page.",
+    "name_taken": "This name is already in use.",
+    "required": "Required.",
+    "too_long": "Too long.",
+    "invalid_body": "The request was not valid.",
+    "unknown_platform": "One of the platforms no longer exists.",
+    "platform_in_use": "Releases or devices use this platform. Deactivate it instead.",
+    "invalid_order": "The platform list changed. Reload the page."
   }
 }

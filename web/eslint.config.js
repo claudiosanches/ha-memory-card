@@ -28,6 +28,21 @@ export default tseslint.config(
           },
           // The default also skips any single word ("Library"), which is real UI text.
           words: { exclude: ['[0-9!-/:-@[-`{-~]+', /^\p{Emoji}+$/u] },
+          // Arguments to these are keys and identifiers, never display text.
+          callees: {
+            exclude: [
+              'i18n(ext)?',
+              't',
+              'getInputProps',
+              'setFieldError',
+              'navigate',
+              'useMediaQuery',
+              'getRouteApi',
+              'includes',
+              'startsWith',
+              'endsWith',
+            ],
+          },
         },
       ],
     },

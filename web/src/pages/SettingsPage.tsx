@@ -1,18 +1,10 @@
 import { Alert, Badge, Card, Group, Loader, Stack, Table, Text, Title } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { api } from '../api/client';
+import { useStatus } from '../api/queries';
 
 export function SettingsPage() {
   const { t } = useTranslation();
-  const status = useQuery({
-    queryKey: ['status'],
-    queryFn: async () => {
-      const { data, error } = await api.GET('/api/status');
-      if (error || !data) throw new Error(error?.code ?? 'network');
-      return data;
-    },
-  });
+  const status = useStatus();
 
   return (
     <Stack>
