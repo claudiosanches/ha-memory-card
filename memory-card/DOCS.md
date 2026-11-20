@@ -40,9 +40,11 @@ collection in a spreadsheet.
   `game_title` is required in every row; rows with a copy also need
   `platform`, `region` and `format`.
 - Platform, device and store names match what you already have, ignoring
-  case. Names that match nothing are created. A new device is an account when
-  all its copies are digital, otherwise a console; change it on the Manage
-  screen.
+  case. Common platforms and the digital stores (Nintendo eShop, PlayStation
+  Store, Microsoft Store, Steam, Epic Games Store, GOG, itch.io) exist from
+  the start. Names that match nothing are created. A new device is an account
+  when all its copies are digital, otherwise a console; change it on the
+  Manage screen.
 - The export fills `copy_id`. Keep it to update that copy when importing the
   file again; leave it empty to add a new copy. Importing an unchanged export
   changes nothing.

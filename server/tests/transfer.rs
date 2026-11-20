@@ -64,7 +64,7 @@ async fn preview_plans_without_writing() {
         })
     );
     assert_eq!(preview["new_platforms"], json!(["Sega Dreamcast"]));
-    assert_eq!(preview["new_stores"], json!(["Amazon", "Nintendo eShop"]));
+    assert_eq!(preview["new_stores"], json!(["Amazon"]));
     assert_eq!(
         preview["new_devices"],
         json!([
@@ -74,7 +74,11 @@ async fn preview_plans_without_writing() {
     );
 
     assert_eq!(app.scalar("SELECT COUNT(*) FROM games").await, 0);
-    assert_eq!(app.scalar("SELECT COUNT(*) FROM stores").await, 0);
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM stores WHERE name = 'Amazon'")
+            .await,
+        0
+    );
 }
 
 #[tokio::test]

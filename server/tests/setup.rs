@@ -17,6 +17,24 @@ fn names(list: &Value) -> Vec<&str> {
 // ---- stores ----
 
 #[tokio::test]
+async fn stores_start_with_digital_storefronts() {
+    let app = TestApp::new().await;
+    let (_, list) = app.json("GET", "/api/stores", None).await;
+    assert_eq!(
+        names(&list),
+        [
+            "Epic Games Store",
+            "GOG",
+            "itch.io",
+            "Microsoft Store",
+            "Nintendo eShop",
+            "PlayStation Store",
+            "Steam"
+        ]
+    );
+}
+
+#[tokio::test]
 async fn store_crud() {
     let app = TestApp::new().await;
 
@@ -24,11 +42,11 @@ async fn store_crud() {
         .json(
             "POST",
             "/api/stores",
-            Some(json!({"name": "  Nintendo eShop ", "notes": " "})),
+            Some(json!({"name": "  Best Buy ", "notes": " "})),
         )
         .await;
     assert_eq!(status, StatusCode::CREATED);
-    assert_eq!(created["name"], "Nintendo eShop");
+    assert_eq!(created["name"], "Best Buy");
     assert_eq!(created["notes"], Value::Null);
     assert_eq!(created["copy_count"], 0);
     let id = created["id"].as_i64().unwrap();
@@ -36,18 +54,18 @@ async fn store_crud() {
     app.json("POST", "/api/stores", Some(json!({"name": "Amazon"})))
         .await;
     let (_, list) = app.json("GET", "/api/stores", None).await;
-    assert_eq!(names(&list), ["Amazon", "Nintendo eShop"]);
+    assert_eq!(names(&list)[..2], ["Amazon", "Best Buy"]);
 
     let (status, updated) = app
         .json(
             "PUT",
             &format!("/api/stores/{id}"),
-            Some(json!({"name": "eShop", "notes": "Digital"})),
+            Some(json!({"name": "Best Buy US", "notes": "Online"})),
         )
         .await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(updated["name"], "eShop");
-    assert_eq!(updated["notes"], "Digital");
+    assert_eq!(updated["name"], "Best Buy US");
+    assert_eq!(updated["notes"], "Online");
 
     let (status, body) = app.json("DELETE", &format!("/api/stores/{id}"), None).await;
     assert_eq!(status, StatusCode::NO_CONTENT);
@@ -116,7 +134,13 @@ async fn deleting_a_store_keeps_its_copies() {
         .unwrap();
 
     let (_, list) = app.json("GET", "/api/stores", None).await;
-    assert_eq!(list[0]["copy_count"], 1);
+    let amazon = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["id"] == store["id"])
+        .unwrap();
+    assert_eq!(amazon["copy_count"], 1);
 
     let (status, _) = app
         .json("DELETE", &format!("/api/stores/{}", store["id"]), None)
