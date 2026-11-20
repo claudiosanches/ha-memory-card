@@ -106,7 +106,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Device> {
 }
 
 pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> {
-    let mut tx = pool.begin().await?;
+    let mut tx = crate::db::write_tx(pool).await?;
     let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
 
     let id = sqlx::query_scalar!(
@@ -129,7 +129,7 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiResult<()> {
-    let mut tx = pool.begin().await?;
+    let mut tx = crate::db::write_tx(pool).await?;
     let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
 
     let result = sqlx::query!(

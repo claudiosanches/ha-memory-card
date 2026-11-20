@@ -83,6 +83,13 @@ pub async fn close(pool: &SqlitePool) {
     pool.close().await;
 }
 
+/// Starts a transaction that takes the write lock up front. A deferred
+/// transaction that reads first fails with SQLITE_BUSY, without waiting, when
+/// another connection commits before its first write.
+pub async fn write_tx(pool: &SqlitePool) -> sqlx::Result<sqlx::Transaction<'static, sqlx::Sqlite>> {
+    pool.begin_with("BEGIN IMMEDIATE").await
+}
+
 /// `NotFound` when a write touched no row.
 pub(crate) fn found(rows: u64) -> ApiResult<()> {
     if rows == 0 {

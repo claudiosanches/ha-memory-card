@@ -58,7 +58,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
 
 /// New platforms go to the end of the list with a slug derived from the name.
 pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64> {
-    let mut tx = pool.begin().await?;
+    let mut tx = crate::db::write_tx(pool).await?;
 
     let base = slugify(&fields.name);
     let taken: Vec<String> = sqlx::query_scalar!(
@@ -102,7 +102,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &PlatformFields) -> ApiR
 
 /// `ids` must list every platform exactly once, in the new order.
 pub async fn reorder(pool: &SqlitePool, ids: &[i64]) -> ApiResult<()> {
-    let mut tx = pool.begin().await?;
+    let mut tx = crate::db::write_tx(pool).await?;
 
     let mut existing: Vec<i64> = sqlx::query_scalar!(r#"SELECT id AS "id!" FROM platforms"#)
         .fetch_all(&mut *tx)
@@ -131,7 +131,7 @@ pub async fn reorder(pool: &SqlitePool, ids: &[i64]) -> ApiResult<()> {
 
 /// Platforms that releases or devices use cannot be deleted; deactivate them instead.
 pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
-    let mut tx = pool.begin().await?;
+    let mut tx = crate::db::write_tx(pool).await?;
     let in_use: bool = sqlx::query_scalar!(
         r#"SELECT EXISTS (SELECT 1 FROM releases WHERE platform_id = ?1)
                OR EXISTS (SELECT 1 FROM device_platforms WHERE platform_id = ?1) AS "in_use!: bool""#,

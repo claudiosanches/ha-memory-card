@@ -182,7 +182,7 @@ pub async fn run(State(state): State<AppState>, body: Bytes) -> ApiResult<Json<I
         field: None,
     })?;
 
-    let mut tx = state.db.begin().await?;
+    let mut tx = crate::db::write_tx(&state.db).await?;
     let snapshot = snapshot::load(&mut tx).await?;
     let plan = plan(&rows, &snapshot);
     if plan.has_errors() {

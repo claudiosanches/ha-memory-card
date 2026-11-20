@@ -351,3 +351,24 @@ async fn unreadable_files_are_reported() {
     let (status, _) = app.post_csv("/api/import", "").await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn concurrent_writes_all_succeed() {
+    let app = std::sync::Arc::new(TestApp::new().await);
+    let tasks: Vec<_> = (0..12)
+        .map(|i| {
+            let app = app.clone();
+            tokio::spawn(async move {
+                let csv = format!(
+                    "game_title,platform,region,format,store\nGame {i},Switch,eu,physical,Store {i}\n"
+                );
+                app.post_csv("/api/import", &csv).await
+            })
+        })
+        .collect();
+    for task in tasks {
+        let (status, body) = task.await.unwrap();
+        assert_eq!(status, StatusCode::OK, "{body}");
+    }
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM games").await, 12);
+}
