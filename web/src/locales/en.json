@@ -348,6 +348,7 @@
     "onlineCoop": "Online co-op",
     "playersUnknown": "Unknown",
     "playersSummary": "{{local}} on the same screen, {{online}} online",
+    "withCoop": "{{value}} (co-op)",
     "releasesTitle": "Releases and copies",
     "noReleases": "No copies yet.",
     "addCopy": "Add copy",

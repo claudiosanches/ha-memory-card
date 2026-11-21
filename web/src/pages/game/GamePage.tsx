@@ -55,6 +55,8 @@ import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
 
 const route = getRouteApi('/games/$gameId');
 
+type PlayerCounts = Pick<GameDetail, 'local_max_players' | 'online_max_players' | 'local_coop' | 'online_coop'>;
+
 type Dialog =
   | { kind: 'editGame' }
   | { kind: 'linkIgdb' }
@@ -188,10 +190,14 @@ function GameView({ game }: { game: GameDetail }) {
   // The release title only says something when it differs from the game's.
   const regionalTitle = (release: ReleaseDetail) => (release.title === game.title ? null : release.title);
 
-  const players = (local?: number | null, online?: number | null) =>
+  const playerCount = (max?: number | null, coop?: boolean | null) => {
+    const value = max ?? t('game.playersUnknown');
+    return coop ? t('game.withCoop', { value }) : String(value);
+  };
+  const players = (counts: PlayerCounts) =>
     t('game.playersSummary', {
-      local: local ?? t('game.playersUnknown'),
-      online: online ?? t('game.playersUnknown'),
+      local: playerCount(counts.local_max_players, counts.local_coop),
+      online: playerCount(counts.online_max_players, counts.online_coop),
     });
 
   return (
@@ -324,7 +330,7 @@ function GameView({ game }: { game: GameDetail }) {
             </Group>
           )}
           <Text size="sm">
-            {t('game.players')}: {players(game.local_max_players, game.online_max_players)}
+            {t('game.players')}: {players(game)}
           </Text>
           {game.summary && (
             <Text size="sm" c="dimmed">
@@ -367,9 +373,12 @@ function GameView({ game }: { game: GameDetail }) {
                       {[regionalTitle(release), release.product_code].filter(Boolean).join(', ')}
                     </Text>
                   )}
-                  {(release.local_max_players || release.online_max_players) && (
+                  {(release.local_max_players ||
+                    release.online_max_players ||
+                    release.local_coop ||
+                    release.online_coop) && (
                     <Text size="xs" c="dimmed">
-                      {t('game.players')}: {players(release.local_max_players, release.online_max_players)}
+                      {t('game.players')}: {players(release)}
                     </Text>
                   )}
                 </Stack>

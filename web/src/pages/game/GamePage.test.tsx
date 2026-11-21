@@ -77,6 +77,21 @@ describe('Game page', () => {
     expect(within(screen.getByTestId('copy-21')).getByText(en.condition.cib)).toBeInTheDocument();
   });
 
+  it('shows co-op next to player counts', async () => {
+    const release = { ...GAME.releases[0], online_coop: true };
+    mockApi({
+      ...SETUP,
+      'GET /api/games/4': { ...GAME, local_max_players: 2, local_coop: true, releases: [release] },
+    });
+    renderAt('/games/4');
+
+    expect(
+      await screen.findByText(`${en.game.players}: 2 (co-op) on the same screen, Unknown online`),
+    ).toBeInTheDocument();
+    const card = screen.getByTestId('release-9');
+    expect(within(card).getByText(`${en.game.players}: Unknown on the same screen, Unknown (co-op) online`)).toBeInTheDocument();
+  });
+
   it('hides a release title equal to the game title', async () => {
     const release = { ...GAME.releases[0], title: 'Metroid Dread' };
     mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, releases: [release] } });
