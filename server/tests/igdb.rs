@@ -175,7 +175,8 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
     // No North America date, so the worldwide one; Brazil has its own.
     assert_eq!(release("na")["release_date"], "2017-10-27");
     assert_eq!(release("br")["release_date"], "2022-10-25");
-    assert_eq!(release("na")["title"], Value::Null);
+    // IGDB's name where it has no regional one.
+    assert_eq!(release("na")["title"], "Super Mario Odyssey");
     assert_eq!(release("jp")["title"], "スーパーマリオ オデッセイ");
 
     let cover = format!("game-{game}/co1mxf.jpg");

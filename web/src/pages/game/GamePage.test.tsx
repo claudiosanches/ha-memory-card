@@ -77,6 +77,16 @@ describe('Game page', () => {
     expect(within(screen.getByTestId('copy-21')).getByText(en.condition.cib)).toBeInTheDocument();
   });
 
+  it('hides a release title equal to the game title', async () => {
+    const release = { ...GAME.releases[0], title: 'Metroid Dread' };
+    mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, releases: [release] } });
+    renderAt('/games/4');
+
+    const card = await screen.findByTestId('release-9');
+    expect(within(card).getByText('HAC-AYL3A')).toBeInTheDocument();
+    expect(within(card).queryByText(/Metroid Dread/)).toBeNull();
+  });
+
   it('shows a release cover when the release has its own', async () => {
     const release = { ...GAME.releases[0], title: 'メトロイド ドレッド', cover_path: 'release-9/co5wrq.jpg' };
     mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, releases: [release] } });

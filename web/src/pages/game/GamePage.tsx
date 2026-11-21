@@ -185,6 +185,9 @@ function GameView({ game }: { game: GameDetail }) {
       .filter(Boolean)
       .join(', ');
 
+  // The release title only says something when it differs from the game's.
+  const regionalTitle = (release: ReleaseDetail) => (release.title === game.title ? null : release.title);
+
   const players = (local?: number | null, online?: number | null) =>
     t('game.playersSummary', {
       local: local ?? t('game.playersUnknown'),
@@ -359,9 +362,9 @@ function GameView({ game }: { game: GameDetail }) {
                       region: t(`region.${release.region}`),
                     })}
                   </Text>
-                  {(release.title || release.product_code) && (
+                  {(regionalTitle(release) || release.product_code) && (
                     <Text size="sm" c="dimmed">
-                      {[release.title, release.product_code].filter(Boolean).join(', ')}
+                      {[regionalTitle(release), release.product_code].filter(Boolean).join(', ')}
                     </Text>
                   )}
                   {(release.local_max_players || release.online_max_players) && (

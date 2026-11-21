@@ -181,7 +181,7 @@ pub async fn apply(
             .bind(c.local_coop)
             .bind(c.online_coop)
             .bind(platform.and_then(|p| release_date(data, p, &release.region)))
-            .bind(local_title(data, &release.region))
+            .bind(release_title(data, &release.region))
             .bind(release.id)
             .execute(&mut *tx)
             .await?;
@@ -419,13 +419,18 @@ fn localization<'a>(data: &'a GameData, region: &str) -> Option<&'a Localization
         .find(|l| l.region == Some(wanted))
 }
 
-/// The regional title, when it differs from the game's name.
-fn local_title(data: &GameData, region: &str) -> Option<String> {
-    localization(data, region)
+/// The regional name when IGDB has one. Otherwise IGDB's name, except in
+/// Asian regions, where that English name is not what the box says.
+fn release_title(data: &GameData, region: &str) -> Option<String> {
+    let regional = localization(data, region)
         .and_then(|l| l.name.as_deref())
         .map(str::trim)
-        .filter(|name| !name.is_empty() && *name != data.name)
-        .map(str::to_owned)
+        .filter(|name| !name.is_empty());
+    let fallback = match region {
+        "jp" | "kr" | "cn" | "asia" => None,
+        _ => Some(data.name.trim()).filter(|name| !name.is_empty()),
+    };
+    regional.or(fallback).map(str::to_owned)
 }
 
 /// The regional cover's image id, when it differs from the game's cover.
