@@ -8,7 +8,6 @@ import {
   Select,
   Stack,
   Switch,
-  Table,
   Text,
   Textarea,
   TextInput,
@@ -26,6 +25,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import classes from './ManageList.module.css';
 
 type Editing = { device?: Device } | null;
 
@@ -71,71 +71,63 @@ export function DevicesTab() {
       </Group>
 
       {devices.data.length === 0 ? (
-        <Text c="dimmed">{t('devices.empty')}</Text>
+        <div className={classes.empty}>{t('devices.empty')}</div>
       ) : (
-        <Table.ScrollContainer minWidth={640}>
-          <Table highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>{t('common.name')}</Table.Th>
-                <Table.Th>{t('devices.kind')}</Table.Th>
-                <Table.Th>{t('devices.platforms')}</Table.Th>
-                <Table.Th>{t('common.copies')}</Table.Th>
-                <Table.Th w={96}>{t('common.actions')}</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {devices.data.map((device) => (
-                <Table.Tr key={device.id} data-testid={`device-${device.name}`}>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <Text size="sm">{device.name}</Text>
-                      {!device.active && (
-                        <Badge size="xs" color="gray" variant="light">
-                          {t('common.inactive')}
-                        </Badge>
-                      )}
-                    </Group>
-                    {device.model && (
-                      <Text size="xs" c="dimmed">
-                        {device.model}
-                      </Text>
+        <ul className={classes.grid}>
+          {devices.data.map((device) => (
+            <li key={device.id} className={classes.card} data-testid={`device-${device.name}`}>
+              <div className={classes.top}>
+                <div className={classes.main}>
+                  <Group gap="xs">
+                    <Text className={classes.name}>{device.name}</Text>
+                    {!device.active && (
+                      <Badge size="xs" color="gray" variant="light">
+                        {t('common.inactive')}
+                      </Badge>
                     )}
-                  </Table.Td>
-                  <Table.Td>{t(`deviceKind.${device.kind}`)}</Table.Td>
-                  <Table.Td>
-                    <Group gap={4}>
-                      {device.platform_ids.map((id) => {
-                        const platform = platformsById.get(id);
-                        return platform ? (
-                          <Badge key={id} variant="outline" size="sm" tt="none">
-                            {platformLabel(platform)}
-                          </Badge>
-                        ) : null;
-                      })}
-                    </Group>
-                  </Table.Td>
-                  <Table.Td>{device.copy_count}</Table.Td>
-                  <Table.Td>
-                    <Group gap={4} wrap="nowrap">
-                      <ActionIcon variant="subtle" aria-label={t('common.edit')} onClick={() => setEditing({ device })}>
-                        <IconPencil size={16} />
-                      </ActionIcon>
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        aria-label={t('common.delete')}
-                        onClick={() => setDeleting(device)}
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
+                  </Group>
+                  <Text size="sm" c="dimmed">
+                    <span>{t(`deviceKind.${device.kind}`)}</span>
+                    {device.model && (
+                      <>
+                        {t('common.separator')}
+                        <span>{device.model}</span>
+                      </>
+                    )}
+                  </Text>
+                </div>
+                <Group gap={4} wrap="nowrap" className={classes.actions}>
+                  <ActionIcon variant="subtle" aria-label={t('common.edit')} onClick={() => setEditing({ device })}>
+                    <IconPencil size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    aria-label={t('common.delete')}
+                    onClick={() => setDeleting(device)}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Group>
+              </div>
+              <div className={classes.footer}>
+                <Group gap={4} aria-label={t('devices.platforms')}>
+                  {device.platform_ids.map((id) => {
+                    const platform = platformsById.get(id);
+                    return platform ? (
+                      <Badge key={id} variant="outline" size="sm" tt="none">
+                        {platformLabel(platform)}
+                      </Badge>
+                    ) : null;
+                  })}
+                </Group>
+                <Text size="xs" c="dimmed" className={classes.count}>
+                  {t('common.copyCount', { count: device.copy_count })}
+                </Text>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
       {editing && (

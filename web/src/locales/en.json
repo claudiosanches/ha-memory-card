@@ -18,6 +18,8 @@
     "active": "Active",
     "cancel": "Cancel",
     "copies": "Copies",
+    "copyCount_one": "{{count}} copy",
+    "copyCount_other": "{{count}} copies",
     "delete": "Delete",
     "deleted": "Deleted",
     "edit": "Edit",

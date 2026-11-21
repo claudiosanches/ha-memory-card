@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Loader, Stack, Table, Text, Textarea, TextInput } from '@mantine/core';
+import { ActionIcon, Button, Group, Loader, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import classes from './ManageList.module.css';
 
 type Editing = { store?: Store } | null;
 
@@ -45,48 +46,40 @@ export function StoresTab() {
       </Group>
 
       {stores.data.length === 0 ? (
-        <Text c="dimmed">{t('stores.empty')}</Text>
+        <div className={classes.empty}>{t('stores.empty')}</div>
       ) : (
-        <Table.ScrollContainer minWidth={480}>
-          <Table highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>{t('common.name')}</Table.Th>
-                <Table.Th>{t('common.notes')}</Table.Th>
-                <Table.Th>{t('common.copies')}</Table.Th>
-                <Table.Th w={96}>{t('common.actions')}</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {stores.data.map((store) => (
-                <Table.Tr key={store.id} data-testid={`store-${store.name}`}>
-                  <Table.Td>{store.name}</Table.Td>
-                  <Table.Td>
-                    <Text size="sm" c="dimmed" lineClamp={2}>
+        <ul className={classes.grid}>
+          {stores.data.map((store) => (
+            <li key={store.id} className={classes.card} data-testid={`store-${store.name}`}>
+              <div className={classes.top}>
+                <div className={classes.main}>
+                  <Text className={classes.name}>{store.name}</Text>
+                  <Text size="sm" c="dimmed">
+                    {t('common.copyCount', { count: store.copy_count })}
+                  </Text>
+                  {store.notes && (
+                    <Text size="sm" c="dimmed" lineClamp={3} className={classes.notes}>
                       {store.notes}
                     </Text>
-                  </Table.Td>
-                  <Table.Td>{store.copy_count}</Table.Td>
-                  <Table.Td>
-                    <Group gap={4} wrap="nowrap">
-                      <ActionIcon variant="subtle" aria-label={t('common.edit')} onClick={() => setEditing({ store })}>
-                        <IconPencil size={16} />
-                      </ActionIcon>
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        aria-label={t('common.delete')}
-                        onClick={() => setDeleting(store)}
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
+                  )}
+                </div>
+                <Group gap={4} wrap="nowrap" className={classes.actions}>
+                  <ActionIcon variant="subtle" aria-label={t('common.edit')} onClick={() => setEditing({ store })}>
+                    <IconPencil size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    aria-label={t('common.delete')}
+                    onClick={() => setDeleting(store)}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Group>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
       {editing && <StoreForm store={editing.store} onClose={() => setEditing(null)} />}
