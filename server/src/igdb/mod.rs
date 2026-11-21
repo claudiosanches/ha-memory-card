@@ -176,13 +176,7 @@ pub struct Igdb {
 
 impl Igdb {
     pub fn new(credentials: IgdbCredentials, endpoints: Endpoints) -> Self {
-        // reqwest is built without a crypto provider; an error means one is installed.
-        let _ = rustls::crypto::ring::default_provider().install_default();
-        let http = reqwest::Client::builder()
-            .user_agent(concat!("memory-card/", env!("CARGO_PKG_VERSION")))
-            .timeout(Duration::from_secs(30))
-            .build()
-            .expect("HTTP client settings are static");
+        let http = crate::http::client(Duration::from_secs(30));
         Self {
             http,
             credentials,

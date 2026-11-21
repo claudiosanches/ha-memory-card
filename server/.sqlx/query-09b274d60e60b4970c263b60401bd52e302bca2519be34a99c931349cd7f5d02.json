@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT g.title, c.created_at AS added_at, p.name AS platform\n             FROM copies c\n             JOIN releases r ON r.id = c.release_id\n             JOIN games g ON g.id = r.game_id\n             JOIN platforms p ON p.id = r.platform_id\n            WHERE c.status = 'owned'\n            ORDER BY c.created_at DESC, c.id DESC\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "added_at",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "platform",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "09b274d60e60b4970c263b60401bd52e302bca2519be34a99c931349cd7f5d02"
+}

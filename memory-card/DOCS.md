@@ -72,6 +72,7 @@ and start games from the backlog, but nothing else.
 | `external_services` | Lets Memory Card contact IGDB. On by default; IGDB also needs the two credentials above. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
+| `sensors` | Publishes Home Assistant sensors through the MQTT broker. On by default; does nothing without a broker. |
 | `viewers_track_progress` | Lets viewers change play status and last played. Off by default. |
 
 ## Wishlist
@@ -145,6 +146,29 @@ on them. Statuses you add have a name, a color and a "counts as" group:
 - Not counted: left out of the Backlog page.
 
 Deleting a status moves its games to another status, or leaves them with none.
+
+## Home Assistant sensors
+
+Memory Card adds a **Memory Card** device to Home Assistant through MQTT
+discovery. It needs the **Mosquitto broker** app and the **MQTT**
+integration, which Home Assistant offers to set up once the broker runs.
+Start Memory Card after the broker so it finds it; the Status section under
+Settings in Memory Card says whether the sensors are connected.
+
+| Entity | State | Attributes |
+|---|---|---|
+| `sensor.memory_card_games` | Games with at least one owned copy | |
+| `sensor.memory_card_copies` | Owned copies | |
+| `sensor.memory_card_wishlist` | Copies on the wishlist | |
+| `sensor.memory_card_backlog` | Owned games in a status that counts as backlog | |
+| `sensor.memory_card_playing` | Owned games in a status that counts as playing | `games`: their titles, last played first |
+| `sensor.memory_card_last_played` | Title of the game with the latest last played date | `date`, `platform` |
+| `sensor.memory_card_last_added` | Title of the game whose owned copy was added last | `added_at`, `platform` |
+
+The counts keep long-term statistics, so history graphs show how the
+collection grows. Sensors update a second after each change and show as
+unavailable while Memory Card is stopped. Turning off the `sensors` option
+removes the device on the next start.
 
 ## Data and backups
 

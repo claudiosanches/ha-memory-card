@@ -15,6 +15,8 @@ panel_title: Memory Card
 panel_admin: false
 backup: cold
 timeout: 20
+services:
+  - mqtt:want
 options:
   igdb_client_id: ""
   igdb_client_secret: ""
@@ -22,6 +24,7 @@ options:
   managers: []
   viewers_track_progress: false
   external_services: true
+  sensors: true
 schema:
   igdb_client_id: "str?"
   igdb_client_secret: "password?"
@@ -30,3 +33,4 @@ schema:
     - str
   viewers_track_progress: bool
   external_services: bool
+  sensors: bool

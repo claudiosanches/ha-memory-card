@@ -55,6 +55,12 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_MANAGERS` | from `options.json` | Comma-separated user IDs; overrides `managers` |
 | `MEMORY_CARD_EXTERNAL_SERVICES` | from `options.json` | `true` or `false`; overrides `external_services` |
 | `MEMORY_CARD_VIEWERS_TRACK_PROGRESS` | from `options.json` | `true` or `false`; overrides `viewers_track_progress` |
+| `MEMORY_CARD_SENSORS` | from `options.json` | `true` or `false`; overrides `sensors` |
+| `MEMORY_CARD_MQTT_HOST` | unset | MQTT broker for the sensors, instead of asking the Supervisor |
+| `MEMORY_CARD_MQTT_PORT` | `1883` | Port of that broker |
+| `MEMORY_CARD_MQTT_USERNAME` | unset | Broker user |
+| `MEMORY_CARD_MQTT_PASSWORD` | unset | Broker password |
+| `MEMORY_CARD_SUPERVISOR_URL` | `http://supervisor` | Supervisor API, asked for the broker when `SUPERVISOR_TOKEN` is set |
 
 ## Releasing
 

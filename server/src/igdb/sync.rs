@@ -50,6 +50,7 @@ pub fn start(state: &AppState) -> ApiResult<SyncStatus> {
         if let Err(err) = run(&state, &igdb).await {
             tracing::error!(error = %err, "IGDB sync stopped");
         }
+        state.changes.notify_one();
         let mut status = state.sync.lock().expect("sync status lock");
         status.running = false;
         status.finished_at = OffsetDateTime::now_utc().format(&Rfc3339).ok();

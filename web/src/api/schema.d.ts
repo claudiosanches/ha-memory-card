@@ -1004,6 +1004,8 @@ export interface components {
             /** Format: int32 */
             year?: number | null;
         };
+        /** @enum {string} */
+        SensorsStatus: "off" | "no_broker" | "connecting" | "connected" | "disconnected";
         Status: {
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
@@ -1013,6 +1015,8 @@ export interface components {
             igdb_configured: boolean;
             /** Format: int64 */
             owned_copies: number;
+            /** @description Whether Home Assistant sensors are being published. */
+            sensors: components["schemas"]["SensorsStatus"];
             version: string;
         };
         /**

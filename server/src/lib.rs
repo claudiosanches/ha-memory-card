@@ -6,9 +6,11 @@ pub mod covers;
 pub mod db;
 pub mod domain;
 pub mod error;
+pub mod http;
 pub mod igdb;
 pub mod ingress;
 pub mod logging;
+pub mod sensors;
 pub mod shutdown;
 pub mod transfer;
 
@@ -19,12 +21,14 @@ use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::middleware;
 use sqlx::SqlitePool;
+use tokio::sync::Notify;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 use crate::config::Config;
 use crate::igdb::sync::SyncStatus;
 use crate::igdb::{Endpoints, Igdb};
+use crate::sensors::SensorsStatus;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -33,6 +37,9 @@ pub struct AppState {
     /// `None` without credentials.
     pub igdb: Option<Arc<Igdb>>,
     pub sync: Arc<Mutex<SyncStatus>>,
+    /// Signalled after anything the sensors report may have changed.
+    pub changes: Arc<Notify>,
+    pub sensors: Arc<Mutex<SensorsStatus>>,
 }
 
 impl AppState {
@@ -41,11 +48,14 @@ impl AppState {
             .igdb
             .clone()
             .map(|credentials| Arc::new(Igdb::new(credentials, Endpoints::default())));
+        let sensors = SensorsStatus::initial(&config);
         Self {
             db,
             config,
             igdb,
             sync: Arc::default(),
+            changes: Arc::default(),
+            sensors: Arc::new(Mutex::new(sensors)),
         }
     }
 }
@@ -61,6 +71,10 @@ pub fn app(state: AppState) -> Router {
     let covers = ServeDir::new(state.config.covers_dir());
 
     api.nest_service("/covers", covers)
+        .route_layer(middleware::from_fn_with_state(
+            state.changes.clone(),
+            sensors::track_changes,
+        ))
         // Assets stay open so the UI can explain a missing identity.
         .route_layer(middleware::from_fn_with_state(policy, access::guard))
         .merge(assets::router())

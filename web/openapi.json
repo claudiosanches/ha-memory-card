@@ -4146,6 +4146,16 @@
           }
         }
       },
+      "SensorsStatus": {
+        "type": "string",
+        "enum": [
+          "off",
+          "no_broker",
+          "connecting",
+          "connected",
+          "disconnected"
+        ]
+      },
       "Status": {
         "type": "object",
         "required": [
@@ -4153,7 +4163,8 @@
           "igdb_configured",
           "external_services",
           "games",
-          "owned_copies"
+          "owned_copies",
+          "sensors"
         ],
         "properties": {
           "external_services": {
@@ -4171,6 +4182,10 @@
           "owned_copies": {
             "type": "integer",
             "format": "int64"
+          },
+          "sensors": {
+            "$ref": "#/components/schemas/SensorsStatus",
+            "description": "Whether Home Assistant sensors are being published."
           },
           "version": {
             "type": "string"

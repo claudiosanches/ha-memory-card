@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT g.title, g.last_played_at AS \"date!\", p.name AS \"platform?\"\n             FROM games g\n             LEFT JOIN copies c ON c.id = g.last_played_copy_id\n             LEFT JOIN releases r ON r.id = c.release_id\n             LEFT JOIN platforms p ON p.id = r.platform_id\n            WHERE g.last_played_at IS NOT NULL\n            ORDER BY g.last_played_at DESC, g.updated_at DESC\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "date!",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "last_played_at"
+          }
+        }
+      },
+      {
+        "name": "platform?",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "7242d2d1dd833560a2dd190629556989111355ffceca843e5438d33549f3bc70"
+}

@@ -11,6 +11,8 @@ pub const SUPERVISOR_IP: IpAddr = IpAddr::V4(Ipv4Addr::new(172, 30, 32, 2));
 const DEFAULT_DATA_DIR: &str = "/data";
 const DEFAULT_TMP_DIR: &str = "/tmp/memory-card";
 const DEFAULT_LISTEN: &str = "0.0.0.0:8099";
+const DEFAULT_SUPERVISOR_URL: &str = "http://supervisor";
+const DEFAULT_MQTT_PORT: u16 = 1883;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
@@ -81,6 +83,34 @@ impl fmt::Debug for IgdbCredentials {
     }
 }
 
+/// A value kept out of logs and debug output.
+#[derive(Clone, PartialEq, Eq)]
+pub struct Secret(String);
+
+impl Secret {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Debug for Secret {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("<redacted>")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MqttBroker {
+    pub host: String,
+    pub port: u16,
+    pub username: Option<String>,
+    pub password: Option<Secret>,
+}
+
 /// Shape of `/data/options.json` as written by the Supervisor.
 #[derive(Debug, Default, Deserialize)]
 struct Options {
@@ -90,6 +120,7 @@ struct Options {
     managers: Option<Vec<String>>,
     viewers_track_progress: Option<bool>,
     external_services: Option<bool>,
+    sensors: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -108,6 +139,13 @@ pub struct Config {
     pub viewers_track_progress: bool,
     /// False keeps the app from contacting IGDB or anything else online.
     pub external_services: bool,
+    /// Publishes Home Assistant sensors through the MQTT broker.
+    pub sensors: bool,
+    /// Broker named by `MEMORY_CARD_MQTT_*`, used instead of asking the Supervisor.
+    pub mqtt: Option<MqttBroker>,
+    pub supervisor_url: String,
+    /// Set by the Supervisor inside Home Assistant.
+    pub supervisor_token: Option<Secret>,
 }
 
 impl Config {
@@ -182,6 +220,30 @@ impl Config {
             false,
         )?;
 
+        let sensors = flag(&env, "MEMORY_CARD_SENSORS", options.sensors, true)?;
+        let mqtt = match non_empty(env("MEMORY_CARD_MQTT_HOST")) {
+            None => None,
+            Some(host) => {
+                let port = match env("MEMORY_CARD_MQTT_PORT") {
+                    None => DEFAULT_MQTT_PORT,
+                    Some(raw) => raw.trim().parse().map_err(|_| ConfigError::InvalidEnv {
+                        name: "MEMORY_CARD_MQTT_PORT",
+                        value: raw.clone(),
+                    })?,
+                };
+                Some(MqttBroker {
+                    host,
+                    port,
+                    username: non_empty(env("MEMORY_CARD_MQTT_USERNAME")),
+                    password: non_empty(env("MEMORY_CARD_MQTT_PASSWORD")).map(Secret),
+                })
+            }
+        };
+        let supervisor_url = env("MEMORY_CARD_SUPERVISOR_URL")
+            .unwrap_or(DEFAULT_SUPERVISOR_URL.into())
+            .trim_end_matches('/')
+            .to_owned();
+
         Ok(Self {
             data_dir,
             tmp_dir,
@@ -192,6 +254,10 @@ impl Config {
             managers,
             viewers_track_progress,
             external_services,
+            sensors,
+            mqtt,
+            supervisor_url,
+            supervisor_token: non_empty(env("SUPERVISOR_TOKEN")).map(Secret),
         })
     }
 
@@ -330,6 +396,42 @@ mod tests {
 
         let config = load_with(dir.path(), &[("MEMORY_CARD_EXTERNAL_SERVICES", "true")]).unwrap();
         assert!(config.igdb.is_some());
+    }
+
+    #[test]
+    fn sensors_use_the_broker_from_env_or_ask_the_supervisor() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = load_with(dir.path(), &[]).unwrap();
+        assert!(config.sensors);
+        assert!(config.mqtt.is_none());
+        assert!(config.supervisor_token.is_none());
+        assert_eq!(config.supervisor_url, "http://supervisor");
+
+        std::fs::write(dir.path().join("options.json"), r#"{"sensors":false}"#).unwrap();
+        let config = load_with(
+            dir.path(),
+            &[
+                ("SUPERVISOR_TOKEN", "token-1"),
+                ("MEMORY_CARD_MQTT_HOST", "localhost"),
+                ("MEMORY_CARD_MQTT_PASSWORD", "hunter2"),
+            ],
+        )
+        .unwrap();
+        assert!(!config.sensors);
+        assert_eq!(config.supervisor_token.unwrap().expose(), "token-1");
+        let mqtt = config.mqtt.unwrap();
+        assert_eq!((mqtt.host.as_str(), mqtt.port), ("localhost", 1883));
+        assert!(!format!("{mqtt:?}").contains("hunter2"));
+
+        let err = load_with(
+            dir.path(),
+            &[
+                ("MEMORY_CARD_MQTT_HOST", "localhost"),
+                ("MEMORY_CARD_MQTT_PORT", "x"),
+            ],
+        )
+        .unwrap_err();
+        assert!(matches!(err, ConfigError::InvalidEnv { .. }));
     }
 
     #[test]

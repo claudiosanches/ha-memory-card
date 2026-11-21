@@ -22,6 +22,12 @@ configuration:
       Look up games, covers and platforms on IGDB. Turn off to keep Memory
       Card from contacting the internet; the IGDB credentials are then
       ignored and games are entered by hand.
+  sensors:
+    name: Home Assistant sensors
+    description: >-
+      Publish collection counts, what you are playing and what you added last
+      as Home Assistant sensors. Needs the Mosquitto broker app and the MQTT
+      integration. Turning it off removes the sensors.
   viewers_track_progress:
     name: Viewers track play progress
     description: >-

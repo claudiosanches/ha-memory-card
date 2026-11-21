@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 
 use crate::AppState;
 use crate::error::{ApiError, ErrorBody};
+use crate::sensors::SensorsStatus;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Status {
@@ -15,6 +16,8 @@ pub struct Status {
     pub external_services: bool,
     pub games: i64,
     pub owned_copies: i64,
+    /// Whether Home Assistant sensors are being published.
+    pub sensors: SensorsStatus,
 }
 
 #[utoipa::path(
@@ -42,5 +45,6 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
         external_services: state.config.external_services,
         games,
         owned_copies,
+        sensors: *state.sensors.lock().expect("sensors status lock"),
     }))
 }
