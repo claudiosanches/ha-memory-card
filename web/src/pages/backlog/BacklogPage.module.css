@@ -58,6 +58,8 @@
   .unsorted { flex-wrap: wrap; }
   .unsorted > button { width: 100%; }
   .row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .rowActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rowActions > button { min-height: 44px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; }
   .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
