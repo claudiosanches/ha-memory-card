@@ -26,6 +26,8 @@ pub struct ReleaseDetail {
     pub title: Option<String>,
     pub product_code: Option<String>,
     pub release_date: Option<String>,
+    /// This release's own cover, relative to the covers URL. The game's cover applies when null.
+    pub cover_path: Option<String>,
     pub local_max_players: Option<i64>,
     pub online_max_players: Option<i64>,
     pub local_coop: Option<bool>,
@@ -115,7 +117,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
 
     let releases = sqlx::query!(
         r#"SELECT r.id AS "id!", r.platform_id, r.region AS "region: Region", r.title, r.product_code,
-                  r.release_date, r.local_max_players, r.online_max_players,
+                  r.release_date, r.cover_path, r.local_max_players, r.online_max_players,
                   r.local_coop AS "local_coop: bool", r.online_coop AS "online_coop: bool"
            FROM releases r JOIN platforms p ON p.id = r.platform_id
            WHERE r.game_id = ?
@@ -150,6 +152,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                 title: r.title,
                 product_code: r.product_code,
                 release_date: r.release_date,
+                cover_path: r.cover_path,
                 local_max_players: r.local_max_players,
                 online_max_players: r.online_max_players,
                 local_coop: r.local_coop,
@@ -277,11 +280,21 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
     Ok(())
 }
 
-pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
+/// Deletes a game with its releases and copies, and returns the release ids.
+pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<Vec<i64>> {
+    let mut tx = crate::db::write_tx(pool).await?;
+    let releases = sqlx::query_scalar!(
+        r#"DELETE FROM releases WHERE game_id = ? RETURNING id AS "id!""#,
+        id
+    )
+    .fetch_all(&mut *tx)
+    .await?;
     let result = sqlx::query!("DELETE FROM games WHERE id = ?", id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
-    found(result.rows_affected())
+    found(result.rows_affected())?;
+    tx.commit().await?;
+    Ok(releases)
 }
 
 /// Adds a copy, creating its release when the game has none for that

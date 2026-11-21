@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT r.id AS \"id!\", r.platform_id, r.region AS \"region: Region\", r.title, r.product_code,\n                  r.release_date, r.local_max_players, r.online_max_players,\n                  r.local_coop AS \"local_coop: bool\", r.online_coop AS \"online_coop: bool\"\n           FROM releases r JOIN platforms p ON p.id = r.platform_id\n           WHERE r.game_id = ?\n           ORDER BY p.sort_order, r.region, r.id",
+  "query": "SELECT r.id AS \"id!\", r.platform_id, r.region AS \"region: Region\", r.title, r.product_code,\n                  r.release_date, r.cover_path, r.local_max_players, r.online_max_players,\n                  r.local_coop AS \"local_coop: bool\", r.online_coop AS \"online_coop: bool\"\n           FROM releases r JOIN platforms p ON p.id = r.platform_id\n           WHERE r.game_id = ?\n           ORDER BY p.sort_order, r.region, r.id",
   "describe": {
     "columns": [
       {
@@ -70,8 +70,19 @@
         }
       },
       {
-        "name": "local_max_players",
+        "name": "cover_path",
         "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "cover_path"
+          }
+        }
+      },
+      {
+        "name": "local_max_players",
+        "ordinal": 7,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -82,7 +93,7 @@
       },
       {
         "name": "online_max_players",
-        "ordinal": 7,
+        "ordinal": 8,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -93,7 +104,7 @@
       },
       {
         "name": "local_coop: bool",
-        "ordinal": 8,
+        "ordinal": 9,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -104,7 +115,7 @@
       },
       {
         "name": "online_coop: bool",
-        "ordinal": 9,
+        "ordinal": 10,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -127,8 +138,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "38f1eb8c8262e846771e40cea946e7493a3504e2797073c975f288d2fde0bfb0"
+  "hash": "e8e53a7d2bb8b88997c5224179e065179a65a8afd0dd388bac00297717e94cd3"
 }

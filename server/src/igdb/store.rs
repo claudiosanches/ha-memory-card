@@ -1,7 +1,8 @@
 //! Writes IGDB data onto a game. IGDB owns the first release date, companies,
 //! genres and cover. Title, summary, game modes, player counts and release
 //! titles and dates are only filled when empty, so hand edits survive a
-//! refresh, unless `overwrite` replaces them where IGDB has a value.
+//! refresh, unless `overwrite` replaces them where IGDB has a value. Covers
+//! for Japan, Korea and Europe releases come from IGDB localizations.
 
 use std::path::Path;
 
@@ -9,7 +10,8 @@ use sqlx::{Sqlite, SqlitePool, Transaction};
 use time::OffsetDateTime;
 use time::macros::format_description;
 
-use super::{GameData, Igdb, MultiplayerMode};
+use super::{GameData, Igdb, Localization, MultiplayerMode};
+use crate::covers::{self, Owner};
 use crate::db::games::PlayerCounts;
 use crate::db::platforms::slugify;
 use crate::db::write_tx;
@@ -31,9 +33,20 @@ pub async fn apply(
     data: &GameData,
     overwrite: bool,
 ) -> ApiResult<()> {
+    // Checked before downloading covers; the unique index still decides.
+    let taken: bool =
+        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM games WHERE igdb_id = ? AND id != ?)")
+            .bind(data.id)
+            .bind(game_id)
+            .fetch_one(pool)
+            .await?;
+    if taken {
+        return Err(ApiError::Conflict("igdb_linked"));
+    }
+
     let cover = match data.cover.as_ref().map(|c| c.image_id.as_str()) {
         Some(image_id) if is_image_id(image_id) => {
-            match save_cover(covers_dir, igdb, game_id, image_id).await {
+            match save_cover(covers_dir, igdb, Owner::Game(game_id), image_id).await {
                 Ok(path) => Some(path),
                 Err(err) => {
                     tracing::warn!(game_id, error = %err, "cover download failed");
@@ -43,6 +56,34 @@ pub async fn apply(
         }
         _ => None,
     };
+    let releases: Vec<(i64, String, Option<i64>, Option<String>)> = sqlx::query_as(
+        "SELECT r.id, r.region, p.igdb_platform_id, r.cover_source
+         FROM releases r JOIN platforms p ON p.id = r.platform_id WHERE r.game_id = ?",
+    )
+    .bind(game_id)
+    .fetch_all(pool)
+    .await?;
+    // IGDB owns regional covers: each one is replaced or cleared. Uploads stay.
+    let mut release_covers = Vec::new();
+    for (release_id, region, _, source) in &releases {
+        if source.as_deref() == Some("upload") {
+            continue;
+        }
+        let path = match local_cover(data, region) {
+            Some(image_id) => {
+                match save_cover(covers_dir, igdb, Owner::Release(*release_id), image_id).await {
+                    Ok(path) => Some(path),
+                    Err(err) => {
+                        tracing::warn!(release_id, error = %err, "cover download failed");
+                        continue;
+                    }
+                }
+            }
+            None => None,
+        };
+        release_covers.push((*release_id, path));
+    }
+
     // The stored value wins unless overwriting; a missing IGDB value never clears one.
     let fill = |column: &str, param: u8| {
         if overwrite {
@@ -149,13 +190,6 @@ pub async fn apply(
         }
     }
 
-    let releases: Vec<(i64, String, Option<i64>)> = sqlx::query_as(
-        "SELECT r.id, r.region, p.igdb_platform_id
-         FROM releases r JOIN platforms p ON p.id = r.platform_id WHERE r.game_id = ?",
-    )
-    .bind(game_id)
-    .fetch_all(&mut *tx)
-    .await?;
     let release_sql = format!(
         "UPDATE releases SET {}, {}, {}, {}, {}, {}, updated_at = {NOW} WHERE id = ?7",
         fill("local_max_players", 1),
@@ -165,7 +199,8 @@ pub async fn apply(
         fill("release_date", 5),
         fill("title", 6),
     );
-    for (release_id, region, platform) in releases {
+    for (release_id, region, platform, _) in &releases {
+        let (release_id, platform) = (*release_id, *platform);
         let c = platform
             .and_then(|p| {
                 data.multiplayer_modes
@@ -179,16 +214,31 @@ pub async fn apply(
             .bind(c.online_max_players)
             .bind(c.local_coop)
             .bind(c.online_coop)
-            .bind(platform.and_then(|p| release_date(data, p, &region)))
-            .bind(local_title(data, &region))
+            .bind(platform.and_then(|p| release_date(data, p, region)))
+            .bind(local_title(data, region))
             .bind(release_id)
             .execute(&mut *tx)
             .await?;
     }
 
+    for (release_id, path) in &release_covers {
+        sqlx::query(
+            "UPDATE releases SET cover_path = ?1,
+                cover_source = CASE WHEN ?1 IS NULL THEN NULL ELSE 'igdb_localization' END
+             WHERE id = ?2 AND cover_source IS NOT 'upload'",
+        )
+        .bind(path)
+        .bind(release_id)
+        .execute(&mut *tx)
+        .await?;
+    }
+
     tx.commit().await?;
     if let Some(kept) = &cover {
-        remove_other_covers(covers_dir, game_id, kept).await;
+        covers::keep_only(covers_dir, Owner::Game(game_id), Some(kept)).await;
+    }
+    for (release_id, path) in &release_covers {
+        covers::keep_only(covers_dir, Owner::Release(*release_id), path.as_deref()).await;
     }
     Ok(())
 }
@@ -269,8 +319,8 @@ fn release_region(region: &str) -> Option<i64> {
     })
 }
 
-/// The regional title, when it differs from the game's name.
-fn local_title(data: &GameData, region: &str) -> Option<String> {
+/// IGDB has localizations for Korea (2), Japan (3) and Europe (4).
+fn localization<'a>(data: &'a GameData, region: &str) -> Option<&'a Localization> {
     let wanted = match region {
         "kr" => 2,
         "jp" => 3,
@@ -280,10 +330,25 @@ fn local_title(data: &GameData, region: &str) -> Option<String> {
     data.game_localizations
         .iter()
         .find(|l| l.region == Some(wanted))
+}
+
+/// The regional title, when it differs from the game's name.
+fn local_title(data: &GameData, region: &str) -> Option<String> {
+    localization(data, region)
         .and_then(|l| l.name.as_deref())
         .map(str::trim)
         .filter(|name| !name.is_empty() && *name != data.name)
         .map(str::to_owned)
+}
+
+/// The regional cover's image id, when it differs from the game's cover.
+fn local_cover<'a>(data: &'a GameData, region: &str) -> Option<&'a str> {
+    let generic = data.cover.as_ref().map(|c| c.image_id.as_str());
+    localization(data, region)?
+        .cover
+        .as_ref()
+        .map(|c| c.image_id.as_str())
+        .filter(|id| is_image_id(id) && Some(*id) != generic)
 }
 
 fn companies(data: &GameData) -> (Vec<String>, Vec<String>) {
@@ -336,34 +401,16 @@ fn is_image_id(id: &str) -> bool {
 async fn save_cover(
     covers_dir: &Path,
     igdb: &Igdb,
-    game_id: i64,
+    owner: Owner,
     image_id: &str,
 ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-    let relative = format!("game-{game_id}/{image_id}.jpg");
-    let path = covers_dir.join(&relative);
-    if tokio::fs::try_exists(&path).await? {
+    let file_name = format!("{image_id}.jpg");
+    let relative = owner.path(&file_name);
+    if covers::exists(covers_dir, &relative).await? {
         return Ok(relative);
     }
     let bytes = igdb.cover(image_id).await?;
-    let dir = covers_dir.join(format!("game-{game_id}"));
-    tokio::fs::create_dir_all(&dir).await?;
-    let partial = dir.join(format!("{image_id}.part"));
-    tokio::fs::write(&partial, bytes).await?;
-    tokio::fs::rename(&partial, &path).await?;
-    Ok(relative)
-}
-
-async fn remove_other_covers(covers_dir: &Path, game_id: i64, kept: &str) {
-    let dir = covers_dir.join(format!("game-{game_id}"));
-    let Ok(mut entries) = tokio::fs::read_dir(&dir).await else {
-        return;
-    };
-    let kept = covers_dir.join(kept);
-    while let Ok(Some(entry)) = entries.next_entry().await {
-        if entry.path() != kept {
-            let _ = tokio::fs::remove_file(entry.path()).await;
-        }
-    }
+    Ok(covers::write(covers_dir, owner, &file_name, &bytes).await?)
 }
 
 #[cfg(test)]

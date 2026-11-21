@@ -2670,6 +2670,13 @@
               "$ref": "#/components/schemas/CopyDetail"
             }
           },
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "This release's own cover, relative to the covers URL. The game's cover applies when null."
+          },
           "id": {
             "type": "integer",
             "format": "int64"

@@ -26,7 +26,7 @@ const GAME_FIELDS: &str = "name,summary,first_release_date,platforms,genres.name
     multiplayer_modes.onlinemax,multiplayer_modes.onlinecoopmax,\
     multiplayer_modes.offlinecoop,multiplayer_modes.onlinecoop,\
     release_dates.platform,release_dates.date,release_dates.release_region,\
-    game_localizations.name,game_localizations.region";
+    game_localizations.name,game_localizations.region,game_localizations.cover.image_id";
 
 pub struct Endpoints {
     pub token_url: String,
@@ -92,11 +92,12 @@ pub struct ReleaseDate {
     pub release_region: Option<i64>,
 }
 
-/// A regional title. IGDB has them for Korea (2), Japan (3) and Europe (4).
+/// A regional title and cover. IGDB has them for Korea (2), Japan (3) and Europe (4).
 #[derive(Debug, Deserialize)]
 pub struct Localization {
     pub name: Option<String>,
     pub region: Option<i64>,
+    pub cover: Option<Cover>,
 }
 
 #[derive(Debug, Deserialize)]

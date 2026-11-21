@@ -671,6 +671,8 @@ export interface components {
         Region: "na" | "eu" | "au" | "nz" | "jp" | "cn" | "asia" | "kr" | "br" | "ww";
         ReleaseDetail: {
             copies: components["schemas"]["CopyDetail"][];
+            /** @description This release's own cover, relative to the covers URL. The game's cover applies when null. */
+            cover_path?: string | null;
             /** Format: int64 */
             id: number;
             local_coop?: boolean | null;

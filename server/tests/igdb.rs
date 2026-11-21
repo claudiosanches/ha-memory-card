@@ -30,7 +30,10 @@ fn odyssey() -> Value {
             {"platform": 130, "date": 1509062400, "release_region": 8},
             {"platform": 130, "date": 1666656000, "release_region": 10}
         ],
-        "game_localizations": [{"name": "スーパーマリオ オデッセイ", "region": 3}]
+        "game_localizations": [
+            {"name": "スーパーマリオ オデッセイ", "region": 3, "cover": {"image_id": "co5wrq"}},
+            {"region": 4, "cover": {"image_id": "co1mxf"}}
+        ]
     })
 }
 
@@ -65,6 +68,10 @@ async fn with_igdb() -> TestApp {
         .route(
             "/img/t_cover_big_2x/co1mxf.jpg",
             get(|| async { "jpeg bytes" }),
+        )
+        .route(
+            "/img/t_cover_big_2x/co5wrq.jpg",
+            get(|| async { "japanese jpeg" }),
         );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
@@ -177,6 +184,14 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(bytes, b"jpeg bytes");
 
+    // Japan has its own cover; Europe's is the generic one, so it is not repeated.
+    let jp_cover = format!("release-{}/co5wrq.jpg", release("jp")["id"]);
+    assert_eq!(release("jp")["cover_path"], jp_cover.as_str());
+    assert_eq!(release("na")["cover_path"], Value::Null);
+    let (status, bytes) = app.get(&format!("/covers/{jp_cover}")).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(bytes, b"japanese jpeg");
+
     // A second game cannot take the same IGDB id.
     let (_, other) = app
         .json("POST", "/api/games", Some(json!({"title": "Other"})))
@@ -200,6 +215,16 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
         .await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(body["code"], "igdb_not_found");
+
+    let (status, _) = app
+        .json("DELETE", &format!("/api/games/{game}"), None)
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let covers: Vec<_> = std::fs::read_dir(app.config.covers_dir())
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect();
+    assert!(covers.is_empty(), "left behind: {covers:?}");
 }
 
 #[tokio::test]

@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 
 use super::input::{NOTES_MAX, optional, required};
 use crate::AppState;
+use crate::covers::{self, Owner};
 use crate::db::games::{self, CopyFields, GameDetail, GameFields, PlayerCounts, ReleaseFields};
 use crate::db::library::{self, GameSummary, LibraryFilter};
 use crate::domain::{Condition, Format, PlayStatus, Region};
@@ -260,7 +261,12 @@ pub async fn delete(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<StatusCode> {
-    games::delete(&state.db, id).await?;
+    let releases = games::delete(&state.db, id).await?;
+    let dir = state.config.covers_dir();
+    covers::keep_only(&dir, Owner::Game(id), None).await;
+    for release in releases {
+        covers::keep_only(&dir, Owner::Release(release), None).await;
+    }
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -351,6 +357,7 @@ pub async fn delete_release(
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::delete_release(&state.db, id).await?;
+    covers::keep_only(&state.config.covers_dir(), Owner::Release(id), None).await;
     Ok(Json(games::get(&state.db, game_id).await?))
 }
 

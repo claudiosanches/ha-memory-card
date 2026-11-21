@@ -338,24 +338,29 @@ function GameView({ game }: { game: GameDetail }) {
         <Card key={release.id} withBorder data-testid={`release-${release.id}`}>
           <Stack gap="xs">
             <Group justify="space-between" wrap="nowrap" align="flex-start">
-              <Stack gap={0}>
-                <Text fw={600}>
-                  {t('game.releaseHeading', {
-                    platform: names.platform.get(release.platform_id) ?? '',
-                    region: t(`region.${release.region}`),
-                  })}
-                </Text>
-                {(release.title || release.product_code) && (
-                  <Text size="sm" c="dimmed">
-                    {[release.title, release.product_code].filter(Boolean).join(', ')}
-                  </Text>
+              <Group gap="sm" wrap="nowrap" align="flex-start">
+                {release.cover_path && (
+                  <Cover path={release.cover_path} title={release.title ?? game.title} width={48} />
                 )}
-                {(release.local_max_players || release.online_max_players) && (
-                  <Text size="xs" c="dimmed">
-                    {t('game.players')}: {players(release.local_max_players, release.online_max_players)}
+                <Stack gap={0}>
+                  <Text fw={600}>
+                    {t('game.releaseHeading', {
+                      platform: names.platform.get(release.platform_id) ?? '',
+                      region: t(`region.${release.region}`),
+                    })}
                   </Text>
-                )}
-              </Stack>
+                  {(release.title || release.product_code) && (
+                    <Text size="sm" c="dimmed">
+                      {[release.title, release.product_code].filter(Boolean).join(', ')}
+                    </Text>
+                  )}
+                  {(release.local_max_players || release.online_max_players) && (
+                    <Text size="xs" c="dimmed">
+                      {t('game.players')}: {players(release.local_max_players, release.online_max_players)}
+                    </Text>
+                  )}
+                </Stack>
+              </Group>
               <Group gap={4} wrap="nowrap">
                 <Tooltip label={t('game.addCopyHere')}>
                   <ActionIcon

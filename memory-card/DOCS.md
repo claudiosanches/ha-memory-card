@@ -20,6 +20,9 @@ covers and metadata, give it access to the IGDB API.
    in both fields and save.
 5. Restart the app. Options are read only at startup.
 
+Releases for Japan, Korea and Europe get their regional cover when IGDB has
+one. **Settings > Sync with IGDB** refreshes every linked game.
+
 ## Options
 
 | Option | Description |
