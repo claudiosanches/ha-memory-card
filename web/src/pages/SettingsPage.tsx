@@ -7,6 +7,7 @@ import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
 import { queryKeys, useIgdbSync, useStatus } from '../api/queries';
 import { notifyError } from '../components/notify';
+import { ThemePicker } from '../components/ThemePicker';
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -15,6 +16,15 @@ export function SettingsPage() {
   return (
     <Stack>
       <Title order={2}>{t('nav.settings')}</Title>
+      <Card withBorder>
+        <Group justify="space-between">
+          <Stack gap={4}>
+            <Title order={4}>{t('settings.appearance')}</Title>
+            <Text size="sm" c="dimmed">{t('settings.appearanceDescription')}</Text>
+          </Stack>
+          <ThemePicker />
+        </Group>
+      </Card>
       <Card withBorder>
         <Title order={4} mb="sm">
           {t('settings.status')}

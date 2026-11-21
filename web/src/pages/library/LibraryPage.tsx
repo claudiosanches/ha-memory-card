@@ -1,19 +1,18 @@
 import {
+  ActionIcon,
   Badge,
   Button,
-  Card,
   Group,
   Loader,
   Select,
-  SimpleGrid,
   Stack,
   Text,
   TextInput,
   Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useDebouncedCallback, useDisclosure } from '@mantine/hooks';
-import { IconAdjustments, IconPlus, IconSearch } from '@tabler/icons-react';
+import { useDebouncedCallback, useDisclosure, useLocalStorage } from '@mantine/hooks';
+import { IconAdjustments, IconDeviceGamepad2, IconLayoutGrid, IconList, IconPlus, IconSearch, IconX } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
@@ -28,6 +27,7 @@ import { STATUS_COLORS } from '../../components/status';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { FiltersDrawer } from './FiltersDrawer';
 import { activeFilterCount, type LibrarySearch, toApiQuery } from './search';
+import classes from './LibraryPage.module.css';
 
 const route = getRouteApi('/');
 
@@ -37,6 +37,7 @@ export function LibraryPage() {
   const navigate = route.useNavigate();
   const [filtersOpen, filters] = useDisclosure();
   const [adding, setAdding] = useState(false);
+  const [view, setView] = useLocalStorage<'grid' | 'list'>({ key: 'memory-card-library-view', defaultValue: 'grid' });
   const [text, setText] = useState(search.q ?? '');
 
   const games = useGames(toApiQuery(search));
@@ -52,60 +53,117 @@ export function LibraryPage() {
 
   const filterCount = activeFilterCount(search);
   const filtered = filterCount > 0 || !!search.q;
+  const clearFilters = () => {
+    setQuery.cancel();
+    setText('');
+    void navigate({ to: '/', search: { sort: search.sort, ownership: search.ownership }, replace: true });
+  };
+  const collectionPlatforms = (platforms.data ?? []).filter((p) => p.game_count > 0 || search.platform?.includes(p.id));
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={2}>{t('nav.library')}</Title>
-        <Button leftSection={<IconPlus size={16} />} onClick={() => setAdding(true)}>
+    <Stack gap={24}>
+      <Group justify="space-between" align="center" className={classes.heading}>
+        <div>
+          <Group gap="sm" align="center">
+            <Title order={1} className={classes.title}>{t('nav.library')}</Title>
+            {games.data && (
+              <Text className={classes.count} data-testid="library-count" aria-live="polite">
+                {t('library.count', { count: games.data.length })}
+              </Text>
+            )}
+          </Group>
+          <Text size="sm" c="dimmed" mt={6}>{t('library.description')}</Text>
+        </div>
+        <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
           {t('library.addGame')}
         </Button>
       </Group>
 
-      <Group gap="sm" wrap="nowrap">
-        <TextInput
-          flex={1}
-          leftSection={<IconSearch size={16} />}
-          placeholder={t('library.search')}
-          aria-label={t('library.search')}
-          value={text}
-          onChange={(event) => {
-            setText(event.currentTarget.value);
-            setQuery(event.currentTarget.value);
-          }}
-        />
-        <Button variant="default" leftSection={<IconAdjustments size={16} />} onClick={filters.open}>
-          {filterCount ? t('library.filtersCount', { count: filterCount }) : t('library.filters')}
-        </Button>
-      </Group>
+      <div className={classes.controls}>
+        <div className={classes.toolbar}>
+          <TextInput
+            className={classes.search}
+            size="md"
+            leftSection={<IconSearch size={18} />}
+            placeholder={t('library.search')}
+            aria-label={t('library.search')}
+            value={text}
+            rightSection={text ? (
+              <ActionIcon variant="subtle" color="gray" size="sm" aria-label={t('library.clearSearch')} onClick={() => {
+                setQuery.cancel();
+                setText('');
+                setSearch({ q: undefined });
+              }}><IconX size={16} /></ActionIcon>
+            ) : null}
+            onChange={(event) => {
+              setText(event.currentTarget.value);
+              setQuery(event.currentTarget.value);
+            }}
+          />
+          <Button
+            size="md"
+            variant={filterCount ? 'light' : 'default'}
+            leftSection={<IconAdjustments size={18} />}
+            onClick={filters.open}
+          >
+            {filterCount ? t('library.filtersCount', { count: filterCount }) : t('library.filters')}
+          </Button>
+          <Select
+            className={classes.sort}
+            size="md"
+            aria-label={t('library.filter.sort')}
+            data={(['title', 'added', 'played'] as const).map((s) => ({ value: s, label: t(`library.sort.${s}`) }))}
+            value={search.sort ?? 'title'}
+            onChange={(value) => setSearch({ sort: value === 'added' || value === 'played' ? value : undefined })}
+            allowDeselect={false}
+          />
+          <Group gap={4} wrap="nowrap" className={classes.viewToggle} role="group" aria-label={t('library.view')}>
+            <ActionIcon size={34} variant={view === 'grid' ? 'light' : 'subtle'} color={view === 'grid' ? undefined : 'gray'} aria-label={t('library.gridView')} title={t('library.gridView')} aria-pressed={view === 'grid'} onClick={() => setView('grid')}>
+              <IconLayoutGrid size={19} />
+            </ActionIcon>
+            <ActionIcon size={34} variant={view === 'list' ? 'light' : 'subtle'} color={view === 'list' ? undefined : 'gray'} aria-label={t('library.listView')} title={t('library.listView')} aria-pressed={view === 'list'} onClick={() => setView('list')}>
+              <IconList size={20} />
+            </ActionIcon>
+          </Group>
+        </div>
+        {collectionPlatforms.length > 0 && (
+          <div className={classes.platforms} role="group" aria-label={t('library.filter.platform')}>
+            <button type="button" className={classes.platform} aria-pressed={!search.platform?.length} onClick={() => setSearch({ platform: undefined })}>
+              {t('library.allPlatforms')}
+            </button>
+            {collectionPlatforms.map((platform) => (
+              <button type="button" key={platform.id} className={classes.platform} aria-pressed={search.platform?.includes(platform.id) ?? false} onClick={() => setSearch({ platform: [platform.id] })}>
+                {platform.abbreviation ?? platform.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {games.isPending ? (
-        <Loader size="sm" />
+        <div className={classes.empty}><Loader size="sm" /></div>
       ) : games.isError ? (
-        <Text c="red">{errorMessage(t, games.error)}</Text>
+        <Text c="red" role="alert">{errorMessage(t, games.error)}</Text>
       ) : games.data.length === 0 ? (
-        <Text c="dimmed">{filtered ? t('library.noMatch') : t('library.empty')}</Text>
+        <Stack align="center" className={classes.empty}>
+          <IconDeviceGamepad2 size={48} stroke={1.2} />
+          <Title order={3}>{filtered ? t('library.noMatchTitle') : t('library.emptyTitle')}</Title>
+          <Text c="dimmed" ta="center">{filtered ? t('library.noMatch') : t('library.empty')}</Text>
+          {filtered && <Button variant="default" onClick={clearFilters}>{t('library.clearFilters')}</Button>}
+        </Stack>
       ) : (
-        <>
-          <Text size="sm" c="dimmed" data-testid="library-count">
-            {t('library.count', { count: games.data.length })}
-          </Text>
-          <SimpleGrid cols={{ base: 1, xs: 2, md: 3, xl: 4 }}>
-            {games.data.map((game) => (
-              <GameCard key={game.id} game={game} platformsById={platformsById} />
-            ))}
-          </SimpleGrid>
-        </>
+        <div className={view === 'list' ? classes.list : classes.grid}>
+          {games.data.map((game) => (
+            <GameCard key={game.id} game={game} platformsById={platformsById} />
+          ))}
+        </div>
       )}
 
       <FiltersDrawer
         opened={filtersOpen}
         search={search}
         onChange={setSearch}
-        onClear={() => {
-          setText('');
-          void navigate({ to: '/', search: {}, replace: true });
-        }}
+        onClear={clearFilters}
         onClose={filters.close}
       />
       {adding && <AddGameModal onClose={() => setAdding(false)} />}
@@ -116,40 +174,42 @@ export function LibraryPage() {
 function GameCard({ game, platformsById }: { game: GameSummary; platformsById: Map<number, Platform> }) {
   const { t } = useTranslation();
   return (
-    <Card
-      withBorder
-      padding="md"
+    <Link
+      className={classes.gameCard}
+      to="/games/$gameId"
+      params={{ gameId: String(game.id) }}
+      aria-label={game.title}
+      title={game.title}
       data-testid={`game-${game.title}`}
-      renderRoot={(props) => <Link to="/games/$gameId" params={{ gameId: String(game.id) }} {...props} />}
     >
-      <Group align="flex-start" wrap="nowrap">
-        <Cover path={game.cover_path} title={game.title} width={60} />
-        <Stack gap="xs" miw={0}>
-          <Text fw={600} lineClamp={2}>
-            {game.title}
-          </Text>
-          <Group gap={4}>
-            {game.play_status && (
-              <Badge size="sm" color={STATUS_COLORS[game.play_status]} variant="light">
-                {t(`playStatus.${game.play_status}`)}
-              </Badge>
-            )}
-            {game.platforms.map(({ platform_id, copies }) => {
-              const platform = platformsById.get(platform_id);
-              const label = platform?.abbreviation ?? platform?.name ?? '';
-              return (
-                <Badge key={platform_id} size="sm" variant="outline" tt="none">
-                  {copies > 1 ? `${label} ×${copies}` : label}
-                </Badge>
-              );
-            })}
-          </Group>
-          <Text size="xs" c="dimmed">
+      <div className={classes.artwork}>
+        <Cover path={game.cover_path} title={game.title} />
+      </div>
+      <div className={classes.gameInfo}>
+        <Text className={classes.gameTitle} lineClamp={2}>{game.title}</Text>
+        <Group gap={6} className={classes.gamePlatforms}>
+          {game.platforms.map(({ platform_id, copies }) => {
+            const platform = platformsById.get(platform_id);
+            const label = platform?.abbreviation ?? platform?.name ?? '';
+            return (
+              <span key={platform_id} className={classes.platformLabel}>
+                {copies > 1 ? `${label} ×${copies}` : label}
+              </span>
+            );
+          })}
+        </Group>
+        <div className={classes.gameFooter}>
+          <Text className={classes.copies}>
             {game.owned_copies ? t('library.copies', { count: game.owned_copies }) : t('library.noCopies')}
           </Text>
-        </Stack>
-      </Group>
-    </Card>
+          {game.play_status && (
+            <Badge size="sm" color={STATUS_COLORS[game.play_status]} variant="light" tt="none" className={classes.status}>
+              {t(`playStatus.${game.play_status}`)}
+            </Badge>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
 

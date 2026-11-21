@@ -1,7 +1,10 @@
 {
   "app": {
     "title": "Memory Card",
-    "toggleNavigation": "Toggle navigation"
+    "toggleNavigation": "Toggle navigation",
+    "collection": "Collection",
+    "tools": "Tools",
+    "skipNavigation": "Skip to content"
   },
   "nav": {
     "library": "Library",
@@ -87,7 +90,14 @@
     "igdb": "IGDB",
     "igdbConfigured": "Connected",
     "igdbMissing": "Not configured. Add your Twitch client ID and secret in the app configuration to fetch covers and metadata.",
-    "loadError": "Could not load status."
+    "loadError": "Could not load status.",
+    "appearance": "Appearance",
+    "appearanceDescription": "Choose a theme, or follow your system. Saved on this browser.",
+    "theme": {
+      "auto": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "errors": {
     "internal": "Something went wrong on the server.",
@@ -256,7 +266,15 @@
       "title": "Title",
       "added": "Recently added",
       "played": "Recently played"
-    }
+    },
+    "description": "All your games, in one place.",
+    "gridView": "Cover grid",
+    "listView": "Compact list",
+    "view": "Library view",
+    "allPlatforms": "All platforms",
+    "emptyTitle": "Your collection starts here",
+    "noMatchTitle": "No games found",
+    "clearSearch": "Clear search"
   },
   "game": {
     "back": "Library",

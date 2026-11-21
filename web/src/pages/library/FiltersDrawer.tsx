@@ -114,15 +114,6 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
             onChange({ min_local_players: Number.isInteger(players) && players > 1 ? players : undefined });
           }}
         />
-        <Select
-          label={t('library.filter.sort')}
-          data={(['title', 'added', 'played'] as const).map((s) => ({ value: s, label: t(`library.sort.${s}`) }))}
-          value={search.sort ?? 'title'}
-          onChange={(value) =>
-            onChange({ sort: value === 'added' || value === 'played' ? value : undefined })
-          }
-          allowDeselect={false}
-        />
         <Button variant="default" onClick={onClear}>
           {t('library.clearFilters')}
         </Button>

@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { useState } from 'react';
 import { createAppRouter } from './router';
+import { theme } from './theme';
+import './styles.css';
 
 type Props = {
   router?: ReturnType<typeof createAppRouter>;
@@ -15,7 +17,7 @@ export function App({ router, queryClient: client }: Props) {
   const [appRouter] = useState(() => router ?? createAppRouter());
 
   return (
-    <MantineProvider defaultColorScheme="auto">
+    <MantineProvider theme={theme} defaultColorScheme="auto">
       <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={appRouter} />
