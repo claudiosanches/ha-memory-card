@@ -1,14 +1,6 @@
-import { createTheme, defaultVariantColorsResolver, virtualColor } from '@mantine/core';
+import { createTheme, defaultVariantColorsResolver } from '@mantine/core';
 
-export const theme = createTheme({
-  primaryColor: 'brand',
-  autoContrast: true,
-  primaryShade: { light: 7, dark: 4 },
-  colors: {
-    brand: virtualColor({ name: 'brand', light: 'ocean', dark: 'blue' }),
-    ocean: ['#e7f8fb', '#cfedf2', '#9edce6', '#69cbd9', '#3dbbcc', '#20aabd', '#138fa3', '#087b8f', '#086578', '#085363'],
-    dark: ['#e7ebf0', '#c6cdd6', '#a1acba', '#788493', '#48525f', '#323c48', '#252d37', '#1b222b', '#141a22', '#10151c'],
-  },
+export const sharedTheme = createTheme({
   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   headings: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: '650' },
   defaultRadius: 'md',

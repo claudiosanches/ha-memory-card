@@ -8,6 +8,7 @@ import {
   CopyButton,
   Group,
   Loader,
+  Select,
   Progress,
   Stack,
   Tabs,
@@ -28,7 +29,8 @@ import { call, errorMessage } from '../api/errors';
 import { queryKeys, useCanManage, useIgdbSync, useMe, useStatus, useTitleDifferences } from '../api/queries';
 import { Cover } from '../components/Cover';
 import { notifyError, notifySuccess } from '../components/notify';
-import { ThemePicker } from '../components/ThemePicker';
+import { themes, useAppearance } from '../styles/themes/AppearanceProvider';
+import { ColorSchemePicker } from '../components/ColorSchemePicker';
 
 export const SETTINGS_TABS = ['status', 'igdb', 'appearance'] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
@@ -39,6 +41,7 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const status = useStatus();
   const canManage = useCanManage();
+  const { themeId, selectTheme } = useAppearance();
   const showIgdb = canManage && status.data?.igdb_configured;
   const { tab = 'status' } = route.useSearch();
   const navigate = route.useNavigate();
@@ -64,11 +67,25 @@ export function SettingsPage() {
           </Tabs.Panel>
         )}
         <Tabs.Panel value="appearance">
-          <ToolSection
-            title={t('settings.colorScheme')}
-            description={t('settings.appearanceDescription')}
-            action={<ThemePicker />}
-          />
+          <Stack gap={24}>
+            <ToolSection
+              title={t('settings.theme')}
+              action={
+                <Select
+                  aria-label={t('settings.theme')}
+                  value={themeId}
+                  allowDeselect={false}
+                  onChange={(value) => { if (value) selectTheme(value); }}
+                  data={themes.map(({ id }) => ({ value: id, label: t(`settings.themes.${id}`) }))}
+                />
+              }
+            />
+            <ToolSection
+              title={t('settings.colorScheme')}
+              description={t('settings.colorSchemeDescription')}
+              action={<ColorSchemePicker />}
+            />
+          </Stack>
         </Tabs.Panel>
       </Tabs>
     </Stack>

@@ -8,7 +8,7 @@ const choices = [
   { value: 'dark', icon: IconMoon },
 ] as const;
 
-export function ThemePicker({ compact = false }: { compact?: boolean }) {
+export function ColorSchemePicker({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const SelectedIcon = choices.find((choice) => choice.value === colorScheme)?.icon ?? IconDeviceDesktop;
@@ -16,12 +16,12 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
   if (!compact) {
     return (
       <SegmentedControl
-        aria-label={t('settings.appearance')}
+        aria-label={t('settings.colorScheme')}
         value={colorScheme}
         onChange={(value) => {
           if (value === 'auto' || value === 'light' || value === 'dark') setColorScheme(value);
         }}
-        data={choices.map(({ value }) => ({ value, label: t(`settings.theme.${value}`) }))}
+        data={choices.map(({ value }) => ({ value, label: t(`settings.schemes.${value}`) }))}
       />
     );
   }
@@ -29,12 +29,12 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
   return (
     <Menu position="bottom-end" width={180}>
       <Menu.Target>
-        <ActionIcon variant="default" size="lg" aria-label={t('settings.appearance')} title={t('settings.appearance')}>
+        <ActionIcon variant="default" size="lg" aria-label={t('settings.colorScheme')} title={t('settings.colorScheme')}>
           <SelectedIcon size={19} stroke={1.7} />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Label>{t('settings.appearance')}</Menu.Label>
+        <Menu.Label>{t('settings.colorScheme')}</Menu.Label>
         {choices.map(({ value, icon: Icon }) => (
           <Menu.Item
             key={value}
@@ -42,7 +42,7 @@ export function ThemePicker({ compact = false }: { compact?: boolean }) {
             rightSection={colorScheme === value ? <IconCheck size={14} /> : undefined}
             onClick={() => setColorScheme(value)}
           >
-            {t(`settings.theme.${value}`)}
+            {t(`settings.schemes.${value}`)}
           </Menu.Item>
         ))}
       </Menu.Dropdown>

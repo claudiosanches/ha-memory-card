@@ -6,7 +6,7 @@
 .row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 8px; }
 .name { flex: 1; min-width: 0; }
 .handle { cursor: grab; touch-action: none; }
-.row[data-dragging] { position: relative; z-index: 1; cursor: grabbing; box-shadow: 0 8px 20px #00000030; }
+.row[data-dragging] { position: relative; z-index: 1; cursor: grabbing; box-shadow: var(--mc-raised-shadow); }
 .actions { flex-shrink: 0; }
 .swatch { cursor: pointer; }
 .group { display: flex; flex-direction: column; gap: 8px; }

@@ -6,7 +6,7 @@
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 28px 22px; }
 .gameCard { display: flex; flex-direction: column; min-width: 0; text-decoration: none; color: inherit; border-radius: 9px; }
 .artwork { border-radius: 9px; overflow: hidden; box-shadow: var(--mc-cover-shadow); transition: transform 180ms ease, box-shadow 180ms ease; background: var(--mc-surface); }
-.gameCard:hover .artwork { transform: translateY(-4px); box-shadow: 0 8px 20px #00000030; }
+.gameCard:hover .artwork { transform: translateY(-4px); box-shadow: var(--mc-raised-shadow); }
 .gameCard:hover .gameTitle { color: var(--mantine-primary-color-light-color); }
 .gameInfo { padding: 12px 2px 0; display: flex; flex: 1; flex-direction: column; gap: 8px; min-width: 0; }
 .gameTitle { font-size: 0.9375rem; font-weight: 600; line-height: 1.45; min-height: 2.9em; overflow-wrap: anywhere; }

@@ -1,0 +1,30 @@
+export const variables = {
+  variables: {
+    '--mc-background-image': 'none',
+    '--mc-raised-shadow': '0 8px 20px #00000030',
+    '--mc-cover-action-shadow': '0 1px 3px #00000040',
+    '--mc-selected-text': 'var(--mantine-color-text)',
+  },
+  light: {
+    '--mc-background': '#f4f6f8',
+    '--mc-surface': '#ffffff',
+    '--mc-border': '#dfe5eb',
+    '--mc-muted': '#576575',
+    '--mc-selected': '#edf1f5',
+    '--mc-on-accent': '#ffffff',
+    '--mc-cover-shadow': '0 4px 12px #14233518, 0 1px 3px #14233512',
+    '--mantine-color-text': '#243344',
+    '--mantine-color-dimmed': '#576575',
+  },
+  dark: {
+    '--mc-background': '#141a22',
+    '--mc-surface': '#1b222b',
+    '--mc-border': '#303b48',
+    '--mc-muted': '#a1acba',
+    '--mc-selected': '#2a3440',
+    '--mc-on-accent': '#11243b',
+    '--mc-cover-shadow': '0 5px 15px #00000040, 0 1px 3px #00000030',
+    '--mantine-color-dimmed': '#a1acba',
+    '--mantine-color-text': 'var(--mantine-color-dark-0)',
+  },
+};

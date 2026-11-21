@@ -33,7 +33,7 @@
 .card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cardLink { display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; border-radius: 9px; flex: 1; }
 .artwork { border-radius: 9px; overflow: hidden; box-shadow: var(--mc-cover-shadow); transition: transform 180ms ease, box-shadow 180ms ease; margin-bottom: 4px; }
-.cardLink:hover .artwork { transform: translateY(-4px); box-shadow: 0 8px 20px #00000030; }
+.cardLink:hover .artwork { transform: translateY(-4px); box-shadow: var(--mc-raised-shadow); }
 .cardLink:hover .gameTitle { color: var(--mantine-primary-color-light-color); }
 
 .empty { padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: 12px; }

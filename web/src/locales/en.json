@@ -162,8 +162,10 @@
     },
     "loadError": "Could not load status.",
     "appearance": "Appearance",
-    "appearanceDescription": "Choose a theme, or follow your system. Saved on this browser.",
-    "theme": {
+    "colorSchemeDescription": "Choose light or dark, or follow your system setting. Your choice is saved in this browser.",
+    "theme": "Theme",
+    "themes": { "default": "Default" },
+    "schemes": {
       "auto": "System",
       "light": "Light",
       "dark": "Dark"

@@ -18,7 +18,7 @@ import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, errorMessage } from '../api/errors';
 import { useMe } from '../api/queries';
-import { ThemePicker } from './ThemePicker';
+import { ColorSchemePicker } from './ColorSchemePicker';
 import classes from './Layout.module.css';
 
 type NavKey = 'library' | 'backlog' | 'duplicates' | 'wishlist' | 'setup' | 'import' | 'manage' | 'settings';
@@ -90,7 +90,7 @@ export function Layout() {
             <span className={classes.logo}><IconDeviceSdCard size={25} stroke={1.7} /></span>
             <Text className={classes.brand}>{t('app.title')}</Text>
           </Group>
-          <ThemePicker compact />
+          <ColorSchemePicker compact />
         </Group>
       </AppShell.Header>
 
