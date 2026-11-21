@@ -70,7 +70,14 @@ test('platforms: add from the catalog, reorder, remove, delete a custom one', as
   const dreamcast = yours.filter({ hasText: 'Dreamcast' });
   await expect(yours.last()).toContainText('Dreamcast');
 
-  await dreamcast.getByRole('button', { name: en.common.moveUp }).click();
+  // Drag the grip onto the platform above it.
+  const grip = await dreamcast.getByRole('button', { name: 'Move Dreamcast', exact: true }).boundingBox();
+  const above = await yours.nth(-2).boundingBox();
+  if (!grip || !above) throw new Error('rows are not visible');
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2, above.y + above.height / 2, { steps: 12 });
+  await page.mouse.up();
   await expect(yours.nth(-2)).toContainText('Dreamcast');
   await page.reload();
   await expect(yours.nth(-2)).toContainText('Dreamcast');

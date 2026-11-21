@@ -1,8 +1,25 @@
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  type UniqueIdentifier,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { ActionIcon, Badge, Button, Group, Loader, Select, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import {
-  IconArrowDown,
-  IconArrowUp,
+  IconGripVertical,
   IconMinus,
   IconPencil,
   IconPlus,
@@ -10,7 +27,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
@@ -33,6 +50,11 @@ function deletable(platform: Platform) {
   return platform.igdb_platform_id == null && !inUse(platform);
 }
 
+/** Every platform id in the new order after moving one of the active ones. */
+export function reorderedIds(active: Platform[], inactive: Platform[], from: number, to: number): number[] {
+  return [...arrayMove(active, from, to), ...inactive].map((p) => p.id);
+}
+
 function input(platform: Platform, active: boolean): PlatformInput {
   return { name: platform.name, abbreviation: platform.abbreviation, category: platform.category, active };
 }
@@ -44,6 +66,10 @@ export function PlatformsTab() {
   const [deleting, setDeleting] = useState<Platform | null>(null);
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.platforms });
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const reorder = useMutation({
     mutationFn: (ids: number[]) => call(api.PUT('/api/platforms/order', { body: { ids } })),
@@ -79,16 +105,19 @@ export function PlatformsTab() {
   const active = platforms.data.filter((p) => p.active);
   const inactive = platforms.data.filter((p) => !p.active);
 
-  // The API orders every platform; inactive ones keep their place after the active list.
-  const move = (index: number, delta: -1 | 1) => {
-    const ids = active.map((p) => p.id);
-    const target = index + delta;
-    const moved = ids[index];
-    const other = ids[target];
-    if (moved === undefined || other === undefined) return;
-    ids[index] = other;
-    ids[target] = moved;
-    reorder.mutate([...ids, ...inactive.map((p) => p.id)]);
+  const all = platforms.data;
+  const name = (id: UniqueIdentifier) => all.find((p) => p.id === id)?.name ?? '';
+  const position = (id: UniqueIdentifier) => active.findIndex((p) => p.id === id) + 1;
+
+  const onDragEnd = ({ active: dragged, over }: DragEndEvent) => {
+    if (!over || dragged.id === over.id) return;
+    const ids = reorderedIds(active, inactive, position(dragged.id) - 1, position(over.id) - 1);
+    // Show the new order at once; the server answers with the same list.
+    queryClient.setQueryData(
+      queryKeys.platforms,
+      ids.map((id) => all.find((p) => p.id === id)),
+    );
+    reorder.mutate(ids);
   };
 
   const actions = (platform: Platform) => (
@@ -123,47 +152,46 @@ export function PlatformsTab() {
         {active.length === 0 ? (
           <div className={classes.empty}>{t('platforms.yourEmpty')}</div>
         ) : (
-          <ol className={classes.list}>
-            {active.map((platform, index) => (
-              <li key={platform.id} className={classes.row} data-testid={`platform-${platform.slug}`}>
-                <Group gap={2} wrap="nowrap">
-                  <ActionIcon
-                    variant="subtle"
-                    size="sm"
-                    aria-label={t('common.moveUp')}
-                    disabled={index === 0 || reorder.isPending}
-                    onClick={() => move(index, -1)}
-                  >
-                    <IconArrowUp size={14} />
-                  </ActionIcon>
-                  <ActionIcon
-                    variant="subtle"
-                    size="sm"
-                    aria-label={t('common.moveDown')}
-                    disabled={index === active.length - 1 || reorder.isPending}
-                    onClick={() => move(index, 1)}
-                  >
-                    <IconArrowDown size={14} />
-                  </ActionIcon>
-                </Group>
-                <PlatformName platform={platform} />
-                <Group gap={4} wrap="nowrap" className={classes.actions}>
-                  {actions(platform)}
-                  <Tooltip label={t('platforms.removeHint')}>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      aria-label={t('platforms.remove', { name: platform.name })}
-                      disabled={setActive.isPending}
-                      onClick={() => setActive.mutate({ platform, active: false })}
-                    >
-                      <IconMinus size={16} />
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
-              </li>
-            ))}
-          </ol>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={onDragEnd}
+            accessibility={{
+              screenReaderInstructions: { draggable: t('platforms.drag.instructions') },
+              announcements: {
+                onDragStart: ({ active: a }) => t('platforms.drag.start', { name: name(a.id) }),
+                onDragOver: ({ active: a, over }) =>
+                  over ? t('platforms.drag.over', { name: name(a.id), position: position(over.id) }) : undefined,
+                onDragEnd: ({ active: a, over }) =>
+                  over ? t('platforms.drag.end', { name: name(a.id), position: position(over.id) }) : undefined,
+                onDragCancel: ({ active: a }) => t('platforms.drag.cancel', { name: name(a.id) }),
+              },
+            }}
+          >
+            <SortableContext items={active.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <ol className={classes.list}>
+                {active.map((platform) => (
+                  <SortableRow key={platform.id} platform={platform}>
+                    <PlatformName platform={platform} />
+                    <Group gap={4} wrap="nowrap" className={classes.actions}>
+                      {actions(platform)}
+                      <Tooltip label={t('platforms.removeHint')}>
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                          aria-label={t('platforms.remove', { name: platform.name })}
+                          disabled={setActive.isPending}
+                          onClick={() => setActive.mutate({ platform, active: false })}
+                        >
+                          <IconMinus size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </SortableRow>
+                ))}
+              </ol>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 
@@ -185,6 +213,35 @@ export function PlatformsTab() {
         onClose={() => setDeleting(null)}
       />
     </Stack>
+  );
+}
+
+function SortableRow({ platform, children }: { platform: Platform; children: ReactNode }) {
+  const { t } = useTranslation();
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+    id: platform.id,
+  });
+  return (
+    <li
+      ref={setNodeRef}
+      className={classes.row}
+      data-dragging={isDragging || undefined}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      data-testid={`platform-${platform.slug}`}
+    >
+      <ActionIcon
+        ref={setActivatorNodeRef}
+        variant="subtle"
+        color="gray"
+        className={classes.handle}
+        {...attributes}
+        {...listeners}
+        aria-label={t('platforms.drag.handle', { name: platform.name })}
+      >
+        <IconGripVertical size={16} />
+      </ActionIcon>
+      {children}
+    </li>
   );
 }
 

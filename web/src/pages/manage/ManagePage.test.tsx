@@ -4,6 +4,7 @@ import type { Device, Platform, Store } from '../../api/types';
 import en from '../../locales/en.json';
 import { json, mockApi } from '../../test/api';
 import { renderAt } from '../../test/render';
+import { reorderedIds } from './PlatformsTab';
 
 function platform(id: number, name: string, extra: Partial<Platform> = {}): Platform {
   return {
@@ -135,22 +136,19 @@ describe('Manage platforms', () => {
     platform(5, 'Game Gear', { active: false, category: 'handheld', igdb_platform_id: 35, sort_order: 1020 }),
   ];
 
-  it('moves one of your platforms down, keeping the catalog after it', async () => {
-    const calls = mockApi({
-      'GET /api/platforms': CATALOG,
-      'PUT /api/platforms/order': (body: unknown) => {
-        const ids = (body as { ids: number[] }).ids;
-        return ids.map((id) => CATALOG.find((p) => p.id === id));
-      },
-    });
+  it('reorders your platforms and keeps the catalog after them', () => {
+    const active = CATALOG.filter((p) => p.active);
+    const inactive = CATALOG.filter((p) => !p.active);
+    expect(reorderedIds(active, inactive, 0, 2)).toEqual([2, 3, 1, 4, 5]);
+    expect(reorderedIds(active, inactive, 2, 0)).toEqual([3, 1, 2, 4, 5]);
+  });
+
+  it('gives each of your platforms a drag handle', async () => {
+    mockApi({ 'GET /api/platforms': CATALOG });
     renderAt('/manage?tab=platforms');
-
     const row = await screen.findByTestId('platform-wii-u');
-    fireEvent.click(within(row).getByRole('button', { name: en.common.moveDown }));
-
-    await waitFor(() =>
-      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ ids: [2, 1, 3, 4, 5] }),
-    );
+    expect(within(row).getByRole('button', { name: 'Move Wii U' })).toBeInTheDocument();
+    expect(within(screen.getByTestId('platform-dreamcast')).queryByRole('button', { name: 'Move Dreamcast' })).toBeNull();
   });
 
   it('only offers deleting unused platforms added by hand', async () => {

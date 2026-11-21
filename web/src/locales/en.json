@@ -82,7 +82,7 @@
     "inUse": "Games or devices use this platform. Deactivate it instead.",
     "deleteTitle": "Delete {{name}}?",
     "yourTitle": "Your platforms",
-    "yourText": "Shown when adding games and devices, in this order.",
+    "yourText": "Shown when adding games and devices, in this order. Drag to reorder.",
     "yourEmpty": "No platforms yet. Add the ones you own from the list below.",
     "remove": "Remove {{name}} from your platforms",
     "removeHint": "Hide it when adding games and devices. Its games and devices stay.",
@@ -107,7 +107,15 @@
     "gameCount_one": "{{count}} game",
     "gameCount_other": "{{count}} games",
     "deviceCount_one": "{{count}} device",
-    "deviceCount_other": "{{count}} devices"
+    "deviceCount_other": "{{count}} devices",
+    "drag": {
+      "handle": "Move {{name}}",
+      "instructions": "To move a platform, press space or enter, use the arrow keys, then press space or enter again. Press escape to cancel.",
+      "start": "Picked up {{name}}.",
+      "over": "{{name}} is at position {{position}}.",
+      "end": "{{name}} dropped at position {{position}}.",
+      "cancel": "Moving {{name}} was cancelled."
+    }
   },
   "settings": {
     "status": "Status",
