@@ -14,7 +14,7 @@ use crate::db::games::{
     self, CopyFields, GameDetail, GameFields, PlayerCounts, Price, ReleaseFields,
 };
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
-use crate::domain::{Condition, CopyStatus, Format, Region};
+use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 use crate::money;
 
@@ -86,6 +86,9 @@ pub struct CopyInput {
     /// ISO 4217 code.
     #[serde(default)]
     pub currency: Option<String>,
+    /// UPC or EAN; spaces and hyphens are ignored.
+    #[serde(default)]
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -223,6 +226,17 @@ impl CopyInput {
             edition: optional(self.edition.as_deref(), "edition", NAME_MAX)?,
             purchased_on: date(self.purchased_on.as_deref(), "purchased_on")?,
             price: price(self.price.as_deref(), self.currency.as_deref())?,
+            barcode: match self
+                .barcode
+                .as_deref()
+                .map(str::trim)
+                .filter(|b| !b.is_empty())
+            {
+                None => None,
+                Some(code) => Some(
+                    domain::barcode(code).ok_or(ApiError::invalid("invalid_barcode", "barcode"))?,
+                ),
+            },
         })
     }
 }

@@ -230,7 +230,8 @@
     "already_in_bundle": "That game is already in this bundle.",
     "same_game": "A bundle cannot hold its own game.",
     "unknown_game": "That game no longer exists.",
-    "too_many_photos": "A copy can have up to 20 photos."
+    "too_many_photos": "A copy can have up to 20 photos.",
+    "invalid_barcode": "Not a valid UPC or EAN. Check the digits under the bars."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -293,6 +294,7 @@
       "purchased_on": "Date bought, as YYYY-MM-DD.",
       "price": "Price paid, or expected for a wanted copy. 59.99, 59,99 and 1.299,90 all work. Needs currency.",
       "currency": "Three-letter code, such as USD, EUR or BRL.",
+      "barcode": "UPC or EAN digits from the box.",
       "notes": "Free text."
     }
   },
@@ -534,6 +536,7 @@
     "price": "Price paid",
     "expectedPrice": "Expected price",
     "currency": "Currency",
+    "barcode": "Barcode",
     "noDevice": "No device",
     "noStore": "Not set",
     "showAllDevices": "Show devices that do not list this platform",
@@ -751,5 +754,22 @@
     "previous": "Previous photo",
     "next": "Next photo",
     "delete": "Delete photo"
+  },
+  "scan": {
+    "button": "Scan barcode",
+    "title": "Scan a barcode",
+    "reading": "Reading the barcode…",
+    "notFound": "No barcode found in the photo. Try again closer and in good light, or type the digits under the bars.",
+    "code": "Barcode digits",
+    "again": "Take another photo",
+    "lookUp": "Look up",
+    "owned": "You already have this ({{barcode}}):",
+    "read": "Barcode {{barcode}}",
+    "addIt": "Add it",
+    "whichGame": "Which game is it?",
+    "addTitle": "Add {{title}}",
+    "unknown": "The barcode database does not know this code. Enter the game yourself.",
+    "offline": "Memory Card is set to stay offline, so it cannot look the code up. Enter the game yourself.",
+    "failed": "The barcode database did not answer. It allows 100 lookups a day; try again later or enter the game yourself."
   }
 }

@@ -10,6 +10,46 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/barcodes/{code}": {
+      "get": {
+        "tags": [
+          "barcodes"
+        ],
+        "operationId": "lookUpBarcode",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "UPC or EAN",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarcodeLookup"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_barcode`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/copies": {
       "get": {
         "tags": [
@@ -2967,6 +3007,74 @@
           }
         }
       },
+      "BarcodeCopy": {
+        "type": "object",
+        "required": [
+          "copy_id",
+          "game_id",
+          "title",
+          "platform_id",
+          "region",
+          "status"
+        ],
+        "properties": {
+          "copy_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "platform_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CopyStatus"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "BarcodeLookup": {
+        "type": "object",
+        "required": [
+          "barcode",
+          "copies",
+          "lookup"
+        ],
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "description": "The code as digits."
+          },
+          "copies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BarcodeCopy"
+            },
+            "description": "Copies in the collection with this barcode."
+          },
+          "lookup": {
+            "$ref": "#/components/schemas/LookupOutcome"
+          },
+          "product": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Product"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
       "Condition": {
         "type": "string",
         "description": "Physical copies only.",
@@ -3001,6 +3109,13 @@
           "created_at"
         ],
         "properties": {
+          "barcode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UPC or EAN from the box."
+          },
           "bundle": {
             "oneOf": [
               {
@@ -3126,6 +3241,13 @@
           "format"
         ],
         "properties": {
+          "barcode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UPC or EAN; spaces and hyphens are ignored."
+          },
           "condition": {
             "oneOf": [
               {
@@ -3270,6 +3392,12 @@
           "format"
         ],
         "properties": {
+          "barcode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "bundle_copy_id": {
             "type": [
               "integer",
@@ -4192,6 +4320,16 @@
           }
         }
       },
+      "LookupOutcome": {
+        "type": "string",
+        "enum": [
+          "in_collection",
+          "found",
+          "not_found",
+          "offline",
+          "failed"
+        ]
+      },
       "Me": {
         "type": "object",
         "required": [
@@ -4687,6 +4825,24 @@
           },
           "title": {
             "type": "string"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "brand": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "As the database lists it, often with the platform, such as\n\"Super Mario Odyssey - Nintendo Switch\"."
           }
         }
       },

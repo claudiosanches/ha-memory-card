@@ -12,6 +12,7 @@ const DEFAULT_DATA_DIR: &str = "/data";
 const DEFAULT_TMP_DIR: &str = "/tmp/memory-card";
 const DEFAULT_LISTEN: &str = "0.0.0.0:8099";
 const DEFAULT_SUPERVISOR_URL: &str = "http://supervisor";
+const DEFAULT_BARCODE_URL: &str = "https://api.upcitemdb.com/prod/trial/lookup";
 const DEFAULT_MQTT_PORT: u16 = 1883;
 
 #[derive(Debug, thiserror::Error)]
@@ -144,6 +145,8 @@ pub struct Config {
     /// Broker named by `MEMORY_CARD_MQTT_*`, used instead of asking the Supervisor.
     pub mqtt: Option<MqttBroker>,
     pub supervisor_url: String,
+    /// UPCitemdb's lookup endpoint; tests point it elsewhere.
+    pub barcode_url: String,
     /// Set by the Supervisor inside Home Assistant.
     pub supervisor_token: Option<Secret>,
 }
@@ -257,6 +260,7 @@ impl Config {
             sensors,
             mqtt,
             supervisor_url,
+            barcode_url: env("MEMORY_CARD_BARCODE_URL").unwrap_or(DEFAULT_BARCODE_URL.into()),
             supervisor_token: non_empty(env("SUPERVISOR_TOKEN")).map(Secret),
         })
     }

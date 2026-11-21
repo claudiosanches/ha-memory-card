@@ -80,11 +80,13 @@ type CopyFormProps = {
   release?: Pick<ReleaseDetail, 'platform_id' | 'region' | 'product_code'>;
   /** Starts the form on this status, such as owned for a wanted copy just bought. */
   status?: CopyStatus;
+  /** What a barcode scan suggests for a new copy. */
+  scanned?: { barcode: string; platform_id?: number; region?: Region | null };
   title?: string;
   onClose: () => void;
 };
 
-export function CopyForm({ gameId, resolveGame, copy, release, status, title, onClose }: CopyFormProps) {
+export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, title, onClose }: CopyFormProps) {
   const { t, i18n } = useTranslation();
   const platforms = usePlatforms();
   const devices = useDevices();
@@ -99,8 +101,8 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
   const form = useForm({
     initialValues: {
       status: status ?? copy?.status ?? ('owned' as CopyStatus),
-      platform_id: release ? String(release.platform_id) : '',
-      region: (release?.region ?? '') as Region | '',
+      platform_id: release ? String(release.platform_id) : scanned?.platform_id ? String(scanned.platform_id) : '',
+      region: (release?.region ?? scanned?.region ?? '') as Region | '',
       product_code: release?.product_code ?? '',
       format: (copy?.format ?? 'physical') as Format,
       device_id: copy?.device_id ? String(copy.device_id) : '',
@@ -111,6 +113,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
       purchased_on: copy?.purchased_on ?? '',
       price: copy?.price ?? '',
       currency: copy?.currency ?? appStatus.data?.last_currency ?? localeCurrency(i18n.language),
+      barcode: copy?.barcode ?? scanned?.barcode ?? '',
     },
     validate: {
       platform_id: (value) => (value ? null : t('errors.required')),
@@ -161,6 +164,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
         notes: '',
         edition: '',
         price: '',
+        barcode: '',
       });
       form.resetDirty();
       setRound((value) => value + 1);
@@ -186,6 +190,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
         purchased_on: wanted ? null : textOrNull(v.purchased_on),
         price: textOrNull(v.price),
         currency: v.price.trim() ? v.currency : null,
+        barcode: v.format === 'physical' ? textOrNull(v.barcode) : null,
       };
       save.mutate({ body, another: addAnother });
     });
@@ -288,6 +293,9 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
           {...form.getInputProps('currency')}
         />
       </Group>
+      {values.format === 'physical' && (
+        <TextInput label={t('game.barcode')} inputMode="numeric" {...form.getInputProps('barcode')} />
+      )}
       <Textarea label={t('common.notes')} autosize minRows={2} {...form.getInputProps('notes')} />
     </FormModal>
   );

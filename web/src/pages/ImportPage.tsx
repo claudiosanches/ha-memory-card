@@ -49,6 +49,7 @@ const COLUMNS = [
   'purchased_on',
   'price',
   'currency',
+  'barcode',
   'notes',
 ] as const;
 

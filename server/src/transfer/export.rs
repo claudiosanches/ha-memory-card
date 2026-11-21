@@ -25,6 +25,7 @@ struct ExportRow {
     purchased_on: Option<String>,
     price: Option<i64>,
     currency: Option<String>,
+    barcode: Option<String>,
 }
 
 /// Copies matching the library filters, as CSV. Without copy filters, games
@@ -33,12 +34,12 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     let mut qb = QueryBuilder::new(
         "SELECT copy_id, status, igdb_id, game_title, play_status, platform, region,
                 release_title, product_code, format, device, store, condition, notes,
-                edition, purchased_on, price, currency
+                edition, purchased_on, price, currency, barcode
          FROM (
              SELECT c.id AS copy_id, c.status, g.igdb_id, g.title AS game_title, g.play_status,
                     p.name AS platform, r.region, r.title AS release_title, r.product_code,
                     c.format, d.name AS device, s.name AS store, c.condition, c.notes,
-                    c.edition, c.purchased_on, c.price, c.currency,
+                    c.edition, c.purchased_on, c.price, c.currency, c.barcode,
                     g.sort_title, g.id AS game_id, p.sort_order AS platform_order
              FROM copies c
              JOIN releases r ON r.id = c.release_id
@@ -55,7 +56,7 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
             " UNION ALL
              SELECT NULL, NULL, g.igdb_id, g.title, g.play_status,
                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL,
+                    NULL, NULL, NULL, NULL, NULL,
                     g.sort_title, g.id, NULL
              FROM games g
              WHERE NOT EXISTS (
@@ -102,6 +103,7 @@ pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>
                 text(row.purchased_on),
                 text(price),
                 text(row.currency),
+                text(row.barcode),
                 text(row.notes),
             ])?;
         }

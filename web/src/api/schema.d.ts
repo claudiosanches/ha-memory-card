@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/barcodes/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["lookUpBarcode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/copies": {
         parameters: {
             query?: never;
@@ -679,6 +695,25 @@ export interface components {
             copies: number;
             currency: string;
         };
+        BarcodeCopy: {
+            /** Format: int64 */
+            copy_id: number;
+            /** Format: int64 */
+            game_id: number;
+            /** Format: int64 */
+            platform_id: number;
+            region: components["schemas"]["Region"];
+            status: components["schemas"]["CopyStatus"];
+            title: string;
+        };
+        BarcodeLookup: {
+            /** @description The code as digits. */
+            barcode: string;
+            /** @description Copies in the collection with this barcode. */
+            copies: components["schemas"]["BarcodeCopy"][];
+            lookup: components["schemas"]["LookupOutcome"];
+            product?: components["schemas"]["Product"] | null;
+        };
         /**
          * @description Physical copies only.
          * @enum {string}
@@ -689,6 +724,8 @@ export interface components {
             game_id: number;
         };
         CopyDetail: {
+            /** @description UPC or EAN from the box. */
+            barcode?: string | null;
             bundle?: components["schemas"]["CopyLink"] | null;
             condition?: components["schemas"]["Condition"] | null;
             /** @description Copies of other games that came in this one, by title. */
@@ -716,6 +753,8 @@ export interface components {
             updated_by?: components["schemas"]["Person"] | null;
         };
         CopyInput: {
+            /** @description UPC or EAN; spaces and hyphens are ignored. */
+            barcode?: string | null;
             condition?: components["schemas"]["Condition"] | null;
             /** @description ISO 4217 code. */
             currency?: string | null;
@@ -753,6 +792,7 @@ export interface components {
         };
         /** @description One copy in the copies view, with its release and game. */
         CopyRow: {
+            barcode?: string | null;
             /**
              * Format: int64
              * @description The bundle copy this copy came in.
@@ -998,6 +1038,8 @@ export interface components {
              */
             overwrite?: boolean;
         };
+        /** @enum {string} */
+        LookupOutcome: "in_collection" | "found" | "not_found" | "offline" | "failed";
         Me: {
             /** @description May change play status and last played. */
             can_track_progress: boolean;
@@ -1153,6 +1195,14 @@ export interface components {
             minutes: number;
             /** Format: int64 */
             sessions: number;
+            title: string;
+        };
+        Product: {
+            brand?: string | null;
+            /**
+             * @description As the database lists it, often with the platform, such as
+             *     "Super Mario Odyssey - Nintendo Switch".
+             */
             title: string;
         };
         /**
@@ -1422,6 +1472,37 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    lookUpBarcode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description UPC or EAN */
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BarcodeLookup"];
+                };
+            };
+            /** @description `invalid_barcode` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     listCopies: {
         parameters: {
             query?: {

@@ -61,6 +61,7 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_MQTT_USERNAME` | unset | Broker user |
 | `MEMORY_CARD_MQTT_PASSWORD` | unset | Broker password |
 | `MEMORY_CARD_SUPERVISOR_URL` | `http://supervisor` | Supervisor API, asked for the broker when `SUPERVISOR_TOKEN` is set |
+| `MEMORY_CARD_BARCODE_URL` | UPCitemdb's trial lookup | Barcode lookup endpoint, for tests |
 
 ## Releasing
 

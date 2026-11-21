@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", release_id, status AS \"status: CopyStatus\", device_id,\n                  format AS \"format: Format\", store_id, condition AS \"condition: Condition\", notes,\n                  edition, purchased_on, price, currency\n           FROM copies",
+  "query": "SELECT id AS \"id!\", release_id, status AS \"status: CopyStatus\", device_id,\n                  format AS \"format: Format\", store_id, condition AS \"condition: Condition\", notes,\n                  edition, purchased_on, price, currency, barcode\n           FROM copies",
   "describe": {
     "columns": [
       {
@@ -134,6 +134,17 @@
             "name": "currency"
           }
         }
+      },
+      {
+        "name": "barcode",
+        "ordinal": 12,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "barcode"
+          }
+        }
       }
     ],
     "parameters": {
@@ -151,8 +162,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "241e133030595b9190e02cff31ce8a66f063b6a07bff82b43dc786458db03acc"
+  "hash": "27ecd932086353bcff849fc0714d2e77a56d9004d8f0f942f76eb27dd29fa061"
 }

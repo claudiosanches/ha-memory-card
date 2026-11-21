@@ -1,6 +1,7 @@
 pub mod access;
 pub mod api;
 pub mod assets;
+pub mod barcodes;
 pub mod config;
 pub mod covers;
 pub mod db;

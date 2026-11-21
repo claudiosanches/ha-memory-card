@@ -1,3 +1,4 @@
+pub mod barcodes;
 pub mod covers;
 pub mod devices;
 pub mod duplicates;
@@ -33,6 +34,7 @@ pub fn router() -> OpenApiRouter<AppState> {
     let api = OpenApiRouter::new()
         .routes(routes!(status::get_status))
         .routes(routes!(stats::get))
+        .routes(routes!(barcodes::look_up))
         .routes(routes!(me::get_me))
         .routes(routes!(platforms::list, platforms::create))
         .routes(routes!(platforms::reorder))

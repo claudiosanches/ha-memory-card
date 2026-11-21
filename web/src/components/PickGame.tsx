@@ -37,11 +37,14 @@ export async function createGame(target: Extract<Target, { kind: 'new' }>, t: TF
 export function PickGameModal({
   title,
   submitLabel,
+  initialTitle = '',
   onClose,
   onNext,
 }: {
   title: string;
   submitLabel: string;
+  /** Starts the title field with this, such as a name read from a barcode. */
+  initialTitle?: string;
   onClose: () => void;
   onNext: (target: Target) => void;
 }) {
@@ -51,7 +54,7 @@ export function PickGameModal({
   const { results, searched, search } = useIgdbSearch();
   const [picked, setPicked] = useState<IgdbHit | null>(null);
   const form = useForm({
-    initialValues: { title: '' },
+    initialValues: { title: initialTitle },
     validate: { title: (value) => (value.trim() ? null : t('errors.required')) },
   });
 

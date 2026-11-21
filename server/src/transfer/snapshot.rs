@@ -58,6 +58,7 @@ pub struct CopyRow {
     pub purchased_on: Option<String>,
     pub price: Option<i64>,
     pub currency: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -118,7 +119,7 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
         CopyRow,
         r#"SELECT id AS "id!", release_id, status AS "status: CopyStatus", device_id,
                   format AS "format: Format", store_id, condition AS "condition: Condition", notes,
-                  edition, purchased_on, price, currency
+                  edition, purchased_on, price, currency, barcode
            FROM copies"#
     )
     .fetch_all(&mut *conn)

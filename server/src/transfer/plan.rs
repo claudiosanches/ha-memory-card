@@ -10,7 +10,7 @@ use super::parse::RawRow;
 use super::snapshot::{CopyRow, Snapshot};
 use crate::db::devices::DeviceKind;
 use crate::db::play_statuses;
-use crate::domain::{Condition, CopyStatus, Format, Region};
+use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::money;
 
 const TITLE_MAX: usize = 200;
@@ -63,6 +63,7 @@ pub struct CopyWrite {
     pub purchased_on: Option<String>,
     pub price: Option<i64>,
     pub currency: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
@@ -327,6 +328,7 @@ impl<'a> Planner<'a> {
             }
         };
         let currency = currency.filter(|_| price.is_some());
+        let barcode = issues.value(&raw.barcode, "barcode", domain::barcode, false);
 
         let existing_copy = match copy_id {
             None => None,
@@ -425,6 +427,7 @@ impl<'a> Planner<'a> {
             purchased_on,
             price,
             currency,
+            barcode,
         };
         let action = match existing_copy {
             None => RowAction::NewCopy,
@@ -659,6 +662,7 @@ fn same_copy(copy: &CopyRow, write: &CopyWrite) -> bool {
         && write.purchased_on == copy.purchased_on
         && write.price == copy.price
         && write.currency == copy.currency
+        && write.barcode == copy.barcode
 }
 
 /// A `YYYY-MM-DD` date.

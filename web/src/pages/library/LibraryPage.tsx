@@ -39,6 +39,7 @@ import { FormModal } from '../../components/FormModal';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { notifyError } from '../../components/notify';
+import { ScanBarcodeButton } from '../../components/ScanBarcode';
 import { IgdbHits, type IgdbHit, useIgdbSearch } from '../game/IgdbLink';
 import { FiltersDrawer } from './FiltersDrawer';
 import { CopiesView } from './CopiesView';
@@ -98,23 +99,26 @@ export function LibraryPage() {
         }
         countTestId="library-count"
       >
-        {canManage && (
-          <Group gap="sm">
-            <Button
-              component="a"
-              href={exportHref(search)}
-              download
-              variant="default"
-              leftSection={<IconDownload size={18} />}
-              title={t('library.exportHint')}
-            >
-              {t('library.export')}
-            </Button>
-            <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
-              {t('library.addGame')}
-            </Button>
-          </Group>
-        )}
+        <Group gap="sm">
+          <ScanBarcodeButton status="owned" />
+          {canManage && (
+            <>
+              <Button
+                component="a"
+                href={exportHref(search)}
+                download
+                variant="default"
+                leftSection={<IconDownload size={18} />}
+                title={t('library.exportHint')}
+              >
+                {t('library.export')}
+              </Button>
+              <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
+                {t('library.addGame')}
+              </Button>
+            </>
+          )}
+        </Group>
       </PageHeader>
 
       <div className={classes.controls}>

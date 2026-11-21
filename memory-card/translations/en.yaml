@@ -19,9 +19,9 @@ configuration:
   external_services:
     name: Use external services
     description: >-
-      Look up games, covers and platforms on IGDB. Turn off to keep Memory
-      Card from contacting the internet; the IGDB credentials are then
-      ignored and games are entered by hand.
+      Look up games, covers and platforms on IGDB, and barcodes on
+      UPCitemdb. Turn off to keep Memory Card from contacting the internet;
+      the IGDB credentials are then ignored and games are entered by hand.
   sensors:
     name: Home Assistant sensors
     description: >-

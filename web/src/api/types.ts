@@ -3,6 +3,7 @@ import type { components, operations } from './schema';
 type Schemas = components['schemas'];
 
 export type Condition = Schemas['Condition'];
+export type BarcodeLookup = Schemas['BarcodeLookup'];
 export type CopyDetail = Schemas['CopyDetail'];
 export type CopyInput = Schemas['CopyInput'];
 export type CopyPhoto = Schemas['CopyPhoto'];

@@ -130,6 +130,25 @@ value_list! {
     }
 }
 
+/// A UPC or EAN (GTIN-8, -12, -13 or -14) as digits, if its check digit is right.
+/// Spaces and hyphens are ignored.
+pub fn barcode(text: &str) -> Option<String> {
+    let digits: String = text.chars().filter(|c| !matches!(c, ' ' | '-')).collect();
+    if !matches!(digits.len(), 8 | 12 | 13 | 14) || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let values: Vec<u32> = digits.bytes().map(|b| u32::from(b - b'0')).collect();
+    let (check, body) = values.split_last()?;
+    // From the right, digits alternate weights 3 and 1.
+    let sum: u32 = body
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(i, d)| if i % 2 == 0 { d * 3 } else { *d })
+        .sum();
+    ((10 - sum % 10) % 10 == *check).then_some(digits)
+}
+
 /// Search key for a title: compatibility forms folded (full-width letters,
 /// ligatures), accents dropped, lowercase, runs of spaces made one.
 /// Punctuation stays.
@@ -209,6 +228,16 @@ mod tests {
             "pilot's log; 100%_complete"
         );
         assert_ne!(search_key("ゼルダ"), search_key("セルダ"));
+    }
+
+    #[test]
+    fn barcodes_need_a_right_check_digit() {
+        assert_eq!(barcode("0 45496 59002 4").as_deref(), Some("045496590024"));
+        assert_eq!(barcode("4902370536485").as_deref(), Some("4902370536485"));
+        assert_eq!(barcode("96385074").as_deref(), Some("96385074"));
+        assert_eq!(barcode("4902370536484"), None);
+        assert_eq!(barcode("12345"), None);
+        assert_eq!(barcode("ABCDEFGHIJKL"), None);
     }
 
     #[test]

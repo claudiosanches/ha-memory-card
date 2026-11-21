@@ -14,6 +14,7 @@ import { formatMoney } from '../components/money';
 import { PageHeader } from '../components/PageHeader';
 import { notifyError, notifySuccess } from '../components/notify';
 import { createGame, PickGameModal, type Target } from '../components/PickGame';
+import { ScanBarcodeButton } from '../components/ScanBarcode';
 import { CopyForm, useGameSaved } from './game/forms';
 import classes from './WishlistPage.module.css';
 
@@ -48,11 +49,14 @@ export function WishlistPage() {
         count={copies.data && t('wishlist.count', { count: wishes.length })}
         countTestId="wishlist-count"
       >
-        {canManage && (
-          <Button leftSection={<IconPlus size={18} />} onClick={() => setDialog({ kind: 'pickGame' })}>
-            {t('wishlist.add')}
-          </Button>
-        )}
+        <Group gap="sm">
+          <ScanBarcodeButton status="wanted" />
+          {canManage && (
+            <Button leftSection={<IconPlus size={18} />} onClick={() => setDialog({ kind: 'pickGame' })}>
+              {t('wishlist.add')}
+            </Button>
+          )}
+        </Group>
       </PageHeader>
 
       {copies.isPending ? (
@@ -159,6 +163,7 @@ export function WishlistPage() {
             purchased_on: dialog.row.purchased_on,
             price: dialog.row.price,
             currency: dialog.row.currency,
+            barcode: dialog.row.barcode,
           }}
           release={dialog.row}
           status="owned"

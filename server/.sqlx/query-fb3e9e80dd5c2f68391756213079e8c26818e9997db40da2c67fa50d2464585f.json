@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"copy_id!\", g.id AS \"game_id!\", g.title, r.platform_id,\n                  r.region AS \"region: Region\", c.status AS \"status: CopyStatus\"\n           FROM copies c JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id\n           WHERE c.barcode = ?\n           ORDER BY g.sort_title, c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "copy_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "game_id!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "platform_id",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "platform_id"
+          }
+        }
+      },
+      {
+        "name": "region: Region",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "region"
+          }
+        }
+      },
+      {
+        "name": "status: CopyStatus",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fb3e9e80dd5c2f68391756213079e8c26818e9997db40da2c67fa50d2464585f"
+}

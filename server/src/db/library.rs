@@ -411,6 +411,7 @@ pub struct CopyRow {
     price_minor: Option<i64>,
     /// The bundle copy this copy came in.
     pub bundle_copy_id: Option<i64>,
+    pub barcode: Option<String>,
     /// The game's latest session.
     pub last_played_at: Option<String>,
 }
@@ -423,7 +424,7 @@ pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
                 r.id AS release_id, r.platform_id, r.region, r.title AS release_title,
                 r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes,
                 c.edition, c.purchased_on, c.price AS price_minor, c.currency,
-                c.bundle_id AS bundle_copy_id,
+                c.bundle_id AS bundle_copy_id, c.barcode,
                 (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) AS last_played_at
          FROM copies c
          JOIN releases r ON r.id = c.release_id

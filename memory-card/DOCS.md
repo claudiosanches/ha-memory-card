@@ -39,8 +39,9 @@ upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
 uploaded cover. Removing it brings back IGDB's.
 
 To keep Memory Card from contacting the internet, turn off
-`external_services`. The IGDB credentials are then ignored, and games,
-covers and details are entered by hand.
+`external_services`. The IGDB credentials are then ignored, games, covers
+and details are entered by hand, and barcode scans only check your own
+copies.
 
 ## Managers and viewers
 
@@ -83,7 +84,7 @@ copy, and the game page shows who added it and who changed it last.
 |---|---|
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
-| `external_services` | Lets Memory Card contact IGDB. On by default; IGDB also needs the two credentials above. |
+| `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials above. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
 | `sensors` | Publishes Home Assistant sensors through the MQTT broker. On by default; does nothing without a broker. |
@@ -101,6 +102,17 @@ fill in the device, Bought at and condition. Wishlist copies do not count as
 owned anywhere else: the library, backlog, duplicates and Missing details
 only look at copies you own. **Show > Wishlist** in the library filters
 lists the games on it.
+
+## Barcodes
+
+**Scan barcode** on the Library and Wishlist pages takes a photo of the
+barcode on a box. Memory Card reads it in the browser and first checks your
+copies, so in a shop you can see whether you already own a game. When no
+copy has the code, it asks [UPCitemdb](https://www.upcitemdb.com) for the
+product name, then lets you pick the game and add the copy with the barcode,
+platform and region filled in. UPCitemdb allows 100 lookups a day without an
+account. With `external_services` off, only your own copies are checked. If
+the photo cannot be read, type the digits under the bars instead.
 
 ## Photos of copies
 
@@ -171,6 +183,7 @@ After an import, games without an IGDB link can be linked with
 | `purchased_on` | Date bought, `YYYY-MM-DD` |
 | `price` | Price paid, or expected for a wanted copy. `59.99`, `59,99` and `1.299,90` all work; the export writes `1299.90`. Needs `currency`. |
 | `currency` | Three-letter ISO 4217 code, such as `USD`, `EUR` or `BRL` |
+| `barcode` | UPC or EAN digits from the box |
 | `notes` | Free text |
 
 ## Play statuses
