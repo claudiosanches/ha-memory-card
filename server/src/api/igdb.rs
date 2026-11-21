@@ -45,7 +45,22 @@ pub async fn search(
     if text.is_empty() {
         return Ok(Json(Vec::new()));
     }
-    Ok(Json(igdb.search(text).await?))
+    let mut hits = igdb.search(text).await?;
+    let ids = serde_json::to_string(&hits.iter().map(|hit| hit.igdb_id).collect::<Vec<_>>())
+        .expect("a list of numbers serializes");
+    let owned: Vec<(i64, i64)> = sqlx::query_as(
+        "SELECT igdb_id, id FROM games WHERE igdb_id IN (SELECT value FROM json_each(?))",
+    )
+    .bind(ids)
+    .fetch_all(&state.db)
+    .await?;
+    for hit in &mut hits {
+        hit.game_id = owned
+            .iter()
+            .find(|(igdb_id, _)| *igdb_id == hit.igdb_id)
+            .map(|(_, id)| *id);
+    }
+    Ok(Json(hits))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

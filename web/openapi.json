@@ -3693,6 +3693,14 @@
           "platforms"
         ],
         "properties": {
+          "game_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The game in the collection already linked to this IGDB game."
+          },
           "igdb_id": {
             "type": "integer",
             "format": "int64"

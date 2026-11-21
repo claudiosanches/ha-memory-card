@@ -942,6 +942,11 @@ export interface components {
             platform?: string | null;
         };
         SearchHit: {
+            /**
+             * Format: int64
+             * @description The game in the collection already linked to this IGDB game.
+             */
+            game_id?: number | null;
             /** Format: int64 */
             igdb_id: number;
             name: string;

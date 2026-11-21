@@ -19,7 +19,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { queryKeys, useCanManage, useGames, usePlatforms } from '../../api/queries';
+import { queryKeys, useCanManage, useGames, usePlatforms, useStatus } from '../../api/queries';
 import type { GameSummary, Platform } from '../../api/types';
 import { FilterBar, FilterButton } from '../../components/FilterBar';
 import { PageHeader } from '../../components/PageHeader';
@@ -27,6 +27,8 @@ import { Cover } from '../../components/Cover';
 import { FormModal } from '../../components/FormModal';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import { notifyError } from '../../components/notify';
+import { IgdbHits, type IgdbHit, useIgdbSearch } from '../game/IgdbLink';
 import { FiltersDrawer } from './FiltersDrawer';
 import { activeFilterCount, type LibrarySearch, toApiQuery } from './search';
 import classes from './LibraryPage.module.css';
@@ -217,26 +219,59 @@ function AddGameModal({ onClose }: { onClose: () => void }) {
     validate: { title: (value) => (value.trim() ? null : t('errors.required')) },
   });
   const onApiError = useApiErrorHandler(form);
+  const igdb = useStatus().data?.igdb_configured ?? false;
+  const { results, searched, search } = useIgdbSearch();
+  const [picked, setPicked] = useState<IgdbHit | null>(null);
+
+  const open = (id: number) => {
+    onClose();
+    void navigate({ to: '/games/$gameId', params: { gameId: String(id) } });
+  };
 
   const create = useMutation({
-    mutationFn: (values: { title: string; play_status: string }) =>
-      call(
+    mutationFn: async (values: { title: string; play_status: string }) => {
+      const game = await call(
         api.POST('/api/games', {
           body: {
             title: values.title,
             play_status: values.play_status || null,
           },
         }),
-      ),
-    onSuccess: (game) => {
+      );
+      if (!picked) return { game, linkError: null };
+      // The game exists either way; a failed link leaves it to be linked from its page.
+      try {
+        const linked = await call(
+          api.POST('/api/games/{id}/igdb', {
+            params: { path: { id: game.id } },
+            body: { igdb_id: picked.igdb_id, overwrite: false },
+          }),
+        );
+        return { game: linked, linkError: null };
+      } catch (error) {
+        return { game, linkError: error };
+      }
+    },
+    onSuccess: ({ game, linkError }) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games });
       void queryClient.invalidateQueries({ queryKey: queryKeys.status });
       queryClient.setQueryData(queryKeys.game(game.id), game);
-      onClose();
-      void navigate({ to: '/games/$gameId', params: { gameId: String(game.id) } });
+      if (linkError) notifyError(errorMessage(t, linkError));
+      open(game.id);
     },
     onError: onApiError,
   });
+
+  const pick = (hit: IgdbHit) => {
+    if (hit.game_id != null) {
+      open(hit.game_id);
+    } else if (picked?.igdb_id === hit.igdb_id) {
+      setPicked(null);
+    } else {
+      setPicked(hit);
+      form.setFieldValue('title', hit.name);
+    }
+  };
 
   return (
     <FormModal
@@ -246,7 +281,42 @@ function AddGameModal({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       onSubmit={form.onSubmit((values) => create.mutate(values))}
     >
-      <TextInput label={t('game.title')} required data-autofocus {...form.getInputProps('title')} />
+      <TextInput
+        label={t('game.title')}
+        description={igdb ? t('library.addIgdbHint') : undefined}
+        required
+        data-autofocus
+        {...form.getInputProps('title')}
+      />
+      {igdb && (
+        <Button
+          variant="light"
+          style={{ alignSelf: 'flex-start' }}
+          leftSection={<IconSearch size={16} />}
+          loading={results.isFetching}
+          disabled={!form.values.title.trim()}
+          onClick={() => search(form.values.title)}
+        >
+          {t('igdb.search')}
+        </Button>
+      )}
+      {searched && (
+        <Stack gap="xs" data-testid="igdb-results">
+          <IgdbHits
+            results={results}
+            disabled={create.isPending}
+            onPick={pick}
+            selectedId={picked?.igdb_id ?? null}
+            badge={(hit) =>
+              hit.game_id != null ? (
+                <Badge variant="light" color="gray">{t('igdb.inCollection')}</Badge>
+              ) : hit.igdb_id === picked?.igdb_id ? (
+                <Badge variant="light">{t('igdb.selected')}</Badge>
+              ) : null
+            }
+          />
+        </Stack>
+      )}
       <Select
         label={t('game.playStatus')}
         data={statuses.options}

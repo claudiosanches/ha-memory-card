@@ -253,12 +253,18 @@ describe('Game page', () => {
       ...SETUP,
       'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 1, owned_copies: 1 },
       'GET /api/games/4': GAME,
-      'GET /api/igdb/search': [{ igdb_id: 7, name: 'Metroid Dread', year: 2021, platforms: ['Switch'] }],
+      'GET /api/igdb/search': [{ igdb_id: 7, name: 'Metroid Dread', year: 2021, platforms: ['Switch'], game_id: null }],
       'POST /api/games/4/igdb': { ...GAME, igdb_id: 7, developers: ['MercurySteam'] },
     });
     renderAt('/games/4');
 
     fireEvent.click(await screen.findByRole('button', { name: en.igdb.link }));
+    await screen.findByTestId('igdb-hit-7');
+    const search = screen.getByRole('textbox', { name: en.igdb.searchLabel });
+    fireEvent.change(search, { target: { value: 'Metroid Dread (2021)' } });
+    expect(calls.filter((c) => c.path === '/api/igdb/search')).toHaveLength(1);
+    fireEvent.submit(search);
+    await waitFor(() => expect(calls.filter((c) => c.path === '/api/igdb/search')).toHaveLength(2));
     fireEvent.click(await screen.findByTestId('igdb-hit-7'));
 
     expect(await screen.findByText(`${en.game.developers}: MercurySteam`)).toBeInTheDocument();

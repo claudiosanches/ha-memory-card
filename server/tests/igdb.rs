@@ -103,15 +103,21 @@ async fn without_credentials_igdb_is_unavailable() {
 }
 
 #[tokio::test]
-async fn search_returns_year_and_platforms() {
+async fn search_returns_year_platforms_and_the_game_already_linked() {
     let app = with_igdb().await;
+    let owned: i64 = sqlx::query_scalar(
+        "INSERT INTO games (igdb_id, title, sort_title) VALUES (9, 'Odyssey 64', 'odyssey 64') RETURNING id",
+    )
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
     let (status, hits) = app.json("GET", "/api/igdb/search?q=odyssey", None).await;
     assert_eq!(status, StatusCode::OK, "{hits}");
     assert_eq!(
         hits,
         json!([
-            {"igdb_id": 1, "name": "Super Mario Odyssey", "year": 2017, "platforms": ["Switch"]},
-            {"igdb_id": 9, "name": "Super Mario Odyssey 64", "year": null, "platforms": ["Nintendo 64"]}
+            {"igdb_id": 1, "name": "Super Mario Odyssey", "year": 2017, "platforms": ["Switch"], "game_id": null},
+            {"igdb_id": 9, "name": "Super Mario Odyssey 64", "year": null, "platforms": ["Nintendo 64"], "game_id": owned}
         ])
     );
 }

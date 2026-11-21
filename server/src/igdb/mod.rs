@@ -59,6 +59,8 @@ pub struct SearchHit {
     pub year: Option<i32>,
     /// Abbreviations where IGDB has them.
     pub platforms: Vec<String>,
+    /// The game in the collection already linked to this IGDB game.
+    pub game_id: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -209,6 +211,7 @@ impl Igdb {
                     .into_iter()
                     .map(|p| p.abbreviation.unwrap_or(p.name))
                     .collect(),
+                game_id: None,
             })
             .collect())
     }
