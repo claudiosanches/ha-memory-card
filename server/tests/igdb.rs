@@ -390,7 +390,7 @@ async fn overwrite_replaces_hand_edits_where_igdb_has_values() {
     .await
     .unwrap();
     sqlx::query(
-        "UPDATE games SET summary = 'Mine.', local_max_players = 8
+        "UPDATE games SET summary = 'Mine.', online_max_players = 8
          WHERE id = (SELECT game_id FROM releases WHERE id = ?)",
     )
     .bind(release)
@@ -409,8 +409,9 @@ async fn overwrite_replaces_hand_edits_where_igdb_has_values() {
     assert_eq!(status, StatusCode::OK, "{detail}");
     assert_eq!(detail["title"], "Super Mario Odyssey");
     assert_eq!(detail["summary"], "Cappy.");
-    // IGDB has no game-level player count, so the hand-edited one stays.
-    assert_eq!(detail["local_max_players"], 8);
+    // The Switch entry stands in for the game; IGDB has no online count, so that edit stays.
+    assert_eq!(detail["local_max_players"], 2);
+    assert_eq!(detail["online_max_players"], 8);
     assert_eq!(detail["releases"][0]["release_date"], "2017-10-27");
     assert_eq!(detail["releases"][0]["local_max_players"], 2);
     assert_eq!(

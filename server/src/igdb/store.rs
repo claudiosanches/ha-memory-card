@@ -60,12 +60,7 @@ pub async fn apply(
     };
 
     let mut tx = write_tx(pool).await?;
-    let game_counts = data
-        .multiplayer_modes
-        .iter()
-        .find(|m| m.platform.is_none())
-        .map(counts)
-        .unwrap_or_default();
+    let game_counts = game_counts(&data.multiplayer_modes);
     let (developers, publishers) = companies(data);
     let igdb_title = Some(data.name.trim()).filter(|t| !t.is_empty());
     let title = igdb_title.filter(|_| overwrite);
@@ -460,6 +455,23 @@ fn companies(data: &GameData) -> (Vec<String>, Vec<String>) {
     (developers, publishers)
 }
 
+/// The entry without a platform, or else all entries merged, so a release on
+/// another platform (a Virtual Console copy, say) still gets the game's values.
+fn game_counts(modes: &[MultiplayerMode]) -> PlayerCounts {
+    if let Some(mode) = modes.iter().find(|m| m.platform.is_none()) {
+        return counts(mode);
+    }
+    modes
+        .iter()
+        .map(counts)
+        .fold(PlayerCounts::default(), |a, b| PlayerCounts {
+            local_max_players: a.local_max_players.max(b.local_max_players),
+            online_max_players: a.online_max_players.max(b.online_max_players),
+            local_coop: a.local_coop.max(b.local_coop),
+            online_coop: a.online_coop.max(b.online_coop),
+        })
+}
+
 /// Local and online stay apart; co-op maxima count as players too. Values are
 /// kept within the 1 to 99 the edit form accepts.
 fn counts(mode: &MultiplayerMode) -> PlayerCounts {
@@ -531,6 +543,37 @@ mod tests {
             .local_max_players,
             None
         );
+    }
+
+    #[test]
+    fn game_counts_merge_platform_entries_when_none_is_generic() {
+        let n64 = MultiplayerMode {
+            platform: Some(4),
+            offlinemax: Some(4),
+            offlinecoop: Some(false),
+            ..Default::default()
+        };
+        let wii = MultiplayerMode {
+            platform: Some(5),
+            offlinecoopmax: Some(2),
+            offlinecoop: Some(true),
+            ..Default::default()
+        };
+        let merged = game_counts(&[n64, wii]);
+        assert_eq!(merged.local_max_players, Some(4));
+        assert_eq!(merged.local_coop, Some(true));
+        assert_eq!(merged.online_coop, None);
+
+        let generic = MultiplayerMode {
+            offlinemax: Some(2),
+            ..Default::default()
+        };
+        let n64 = MultiplayerMode {
+            platform: Some(4),
+            offlinemax: Some(4),
+            ..Default::default()
+        };
+        assert_eq!(game_counts(&[n64, generic]).local_max_players, Some(2));
     }
 
     #[test]
