@@ -1,0 +1,70 @@
+/* A game portal skin: enamel title bar, stamped panels and glass controls. */
+[data-mc-theme='internet-2000s'] {
+  --portal-highlight: #ffffffda;
+  --portal-panel-edge: #879cc1;
+  --portal-panel-tint: #dce6f6;
+  --portal-heading: #163575;
+  --portal-shadow: #23356530;
+  --portal-button-gloss: linear-gradient(#ffffff2b, #ffffff0d 48%, #07164614 50%, transparent);
+}
+
+[data-mc-theme='internet-2000s'][data-mantine-color-scheme='dark'] {
+  --portal-highlight: #91baff44;
+  --portal-panel-edge: #51658d;
+  --portal-panel-tint: #293957;
+  --portal-heading: #c2eaff;
+  --portal-shadow: #080e2290;
+}
+
+[data-mc-theme='internet-2000s'] {
+  .mantine-AppShell-header {
+    --mc-selected: linear-gradient(#ecfbff, #a5cfeb 48%, #88b3d8 50%, #d7efff);
+    --mantine-primary-color-light-color: #143866;
+    color: white;
+    border-color: #182f62;
+    box-shadow: inset 0 1px #93cdff, inset 0 -2px #51c7fa, 0 2px 5px #11234a45;
+    text-shadow: 0 1px 2px #0a183d;
+  }
+
+  .mantine-AppShell-header .mantine-Burger-burger { --burger-color: white; }
+
+  .mantine-AppShell-navbar {
+    box-shadow: inset -1px 0 var(--portal-highlight), 2px 0 5px var(--portal-shadow);
+  }
+
+  .mantine-NavLink-root[data-active] {
+    color: white;
+    background-image: linear-gradient(#648acd, #345ba1 48%, #204785 50%, #315c9a);
+    box-shadow: inset 0 0 0 1px #1a3f7a, inset 0 2px #a6d6ff, 0 1px var(--portal-highlight);
+    text-shadow: 0 1px #172d53;
+  }
+
+  .mantine-NavLink-root[data-active] .mantine-NavLink-section { color: #b8f6ff; }
+
+  .mantine-Title-root { color: var(--portal-heading); }
+
+  .mantine-Card-root {
+    background: linear-gradient(var(--portal-panel-tint), transparent 28px) var(--mc-surface);
+    border-color: var(--portal-panel-edge);
+    box-shadow: inset 0 1px var(--portal-highlight), 0 2px 4px var(--portal-shadow);
+  }
+
+  .mantine-Button-root:where(:not([data-variant]), [data-variant='filled'], [data-variant='default']),
+  .mantine-ActionIcon-root[data-variant='default'],
+  .mantine-SegmentedControl-indicator {
+    background-image: var(--portal-button-gloss);
+    box-shadow: inset 0 1px var(--portal-highlight), inset 0 -1px var(--portal-shadow);
+  }
+
+  .mantine-Input-input[data-variant='default'] {
+    border-color: var(--portal-panel-edge);
+    box-shadow: inset 0 1px 2px var(--portal-shadow);
+  }
+
+  .mantine-Input-input:focus-within { border-color: var(--mantine-primary-color-filled); }
+
+  .mantine-Tabs-tab[data-active] {
+    background-image: linear-gradient(transparent, var(--portal-panel-tint));
+    color: var(--portal-heading);
+  }
+}

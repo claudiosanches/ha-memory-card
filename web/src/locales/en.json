@@ -164,7 +164,7 @@
     "appearance": "Appearance",
     "colorSchemeDescription": "Choose light or dark, or follow your system setting. Your choice is saved in this browser.",
     "theme": "Theme",
-    "themes": { "default": "Default" },
+    "themes": { "default": "Default", "retro": "Retro", "internet-2000s": "2000's Internet" },
     "schemes": {
       "auto": "System",
       "light": "Light",

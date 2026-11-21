@@ -1,9 +1,11 @@
 import { MantineProvider, mergeThemeOverrides, type MantineThemeOverride } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, type ReactNode } from 'react';
 import { sharedTheme } from '../mantine';
 import { palette } from './default/palette';
 import { variables } from './default/variables';
+import { internet2000s } from './internet-2000s';
+import { retro } from './retro';
 
 type VisualTheme = {
   id: string;
@@ -15,7 +17,7 @@ type VisualTheme = {
   };
 };
 
-export const themes = [{ id: 'default', palette, variables }] as const satisfies readonly VisualTheme[];
+export const themes = [{ id: 'default', palette, variables }, retro, internet2000s] as const satisfies readonly VisualTheme[];
 
 const AppearanceContext = createContext<{ themeId: string; selectTheme: (id: string) => void } | null>(null);
 
@@ -28,6 +30,12 @@ export function useAppearance() {
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [savedId, selectTheme] = useLocalStorage({ key: 'memory-card-theme', defaultValue: 'default' });
   const selected = themes.find(({ id }) => id === savedId) ?? themes[0];
+
+  // Portaled menus and dialogs share the same theme as the app shell.
+  useLayoutEffect(() => {
+    document.documentElement.dataset.mcTheme = selected.id;
+    return () => { delete document.documentElement.dataset.mcTheme; };
+  }, [selected.id]);
 
   return (
     <AppearanceContext.Provider value={{ themeId: selected.id, selectTheme }}>
