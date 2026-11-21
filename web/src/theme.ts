@@ -12,6 +12,7 @@ export const theme = createTheme({
   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   headings: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: '650' },
   defaultRadius: 'md',
+  cursorType: 'pointer',
   variantColorResolver: (input) => {
     const colors = defaultVariantColorsResolver(input);
     return input.color === 'brand' && input.variant === 'filled'
