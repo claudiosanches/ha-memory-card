@@ -96,6 +96,26 @@ pub async fn apply(
     .await
     .map_err(|err| ApiError::unique(err, "igdb_linked"))?;
 
+    sqlx::query("DELETE FROM game_names WHERE game_id = ? AND source = 'igdb'")
+        .bind(game_id)
+        .execute(&mut *tx)
+        .await?;
+    for alternative in &data.alternative_names {
+        let name = alternative.name.trim();
+        if name.is_empty() {
+            continue;
+        }
+        // A name added by hand stays as it is.
+        sqlx::query(
+            "INSERT OR IGNORE INTO game_names (game_id, name, source, comment) VALUES (?, ?, 'igdb', ?)",
+        )
+        .bind(game_id)
+        .bind(name)
+        .bind(alternative.comment.as_deref().map(str::trim).filter(|c| !c.is_empty()))
+        .execute(&mut *tx)
+        .await?;
+    }
+
     sqlx::query("DELETE FROM game_links WHERE game_id = ?")
         .bind(game_id)
         .execute(&mut *tx)

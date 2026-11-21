@@ -29,6 +29,7 @@ const GAME: GameDetail = {
   created_at: '2026-11-01T10:00:00.000Z',
   sessions: [],
   versions: [],
+  names: [],
   releases: [
     {
       id: 9,
@@ -117,6 +118,34 @@ describe('Game page', () => {
     for (const name of [en.common.edit, en.game.delete, en.game.addCopy, en.game.playedToday, en.cover.changeGame]) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
+  });
+
+  it('shows other names and edits the ones added by hand', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': {
+        ...GAME,
+        names: [
+          { name: 'MD', from_igdb: false, comment: null },
+          { name: 'メトロイド ドレッド', from_igdb: true, comment: 'Japanese title' },
+        ],
+      },
+      'PUT /api/games/4': GAME,
+    });
+    renderAt('/games/4');
+
+    expect(await screen.findByTestId('names')).toHaveTextContent('MD, メトロイド ドレッド (Japanese title)');
+    fireEvent.click(screen.getByRole('button', { name: en.common.edit }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/IGDB also gives: メトロイド ドレッド/)).toBeInTheDocument();
+    const names = within(dialog).getByLabelText(en.game.names);
+    names.focus();
+    fireEvent.change(names, { target: { value: 'Dread' } });
+    fireEvent.keyDown(names, { key: 'Enter' });
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ names: ['MD', 'Dread'] });
   });
 
   it('links other versions of the game', async () => {

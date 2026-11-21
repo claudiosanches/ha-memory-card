@@ -22,6 +22,7 @@ const TITLE_MAX: usize = 200;
 const SUMMARY_MAX: usize = 5000;
 const CODE_MAX: usize = 40;
 const PLAYERS_MAX: i64 = 99;
+const NAMES_MAX: usize = 50;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct NewGameInput {
@@ -49,6 +50,9 @@ pub struct GameInput {
     pub online_coop: Option<bool>,
     #[serde(default)]
     pub game_mode_ids: Vec<i64>,
+    /// Other names to search by. Left out, the current ones stay.
+    #[serde(default)]
+    pub names: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -125,6 +129,26 @@ pub(super) fn date(value: Option<&str>, field: &'static str) -> ApiResult<Option
         .map_err(|_| ApiError::invalid("invalid_date", field))
 }
 
+/// Trims and deduplicates names, ignoring case; blanks are dropped.
+fn names(values: &[String]) -> ApiResult<Vec<String>> {
+    if values.len() > NAMES_MAX {
+        return Err(ApiError::invalid("too_many", "names"));
+    }
+    let mut names: Vec<String> = Vec::new();
+    for value in values {
+        let Some(name) = optional(Some(value), "names", TITLE_MAX)? else {
+            continue;
+        };
+        if !names
+            .iter()
+            .any(|n| n.to_lowercase() == name.to_lowercase())
+        {
+            names.push(name);
+        }
+    }
+    Ok(names)
+}
+
 /// A price needs a currency; a currency alone is dropped.
 fn price(amount: Option<&str>, currency: Option<&str>) -> ApiResult<Option<Price>> {
     let Some(amount) = amount.map(str::trim).filter(|a| !a.is_empty()) else {
@@ -176,6 +200,7 @@ impl GameInput {
                 self.online_coop,
             )?,
             game_mode_ids: self.game_mode_ids.clone(),
+            names: self.names.as_deref().map(names).transpose()?,
         })
     }
 }

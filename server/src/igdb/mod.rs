@@ -27,7 +27,7 @@ const GAME_FIELDS: &str = "name,summary,first_release_date,platforms,genres.name
     multiplayer_modes.offlinecoop,multiplayer_modes.onlinecoop,\
     release_dates.platform,release_dates.date,release_dates.release_region,\
     game_localizations.name,game_localizations.region,game_localizations.cover.image_id,\
-    version_parent,remasters,remakes,ports";
+    version_parent,remasters,remakes,ports,alternative_names.name,alternative_names.comment";
 
 pub struct Endpoints {
     pub token_url: String,
@@ -93,6 +93,14 @@ pub struct GameData {
     pub remakes: Vec<i64>,
     #[serde(default)]
     pub ports: Vec<i64>,
+    #[serde(default)]
+    pub alternative_names: Vec<AlternativeName>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AlternativeName {
+    pub name: String,
+    pub comment: Option<String>,
 }
 
 impl GameData {

@@ -7,6 +7,7 @@ import {
   SegmentedControl,
   Select,
   Switch,
+  TagsInput,
   Text,
   Textarea,
   TextInput,
@@ -386,6 +387,7 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
       online_max: (game.online_max_players ?? '') as string | number,
       local_coop: game.local_coop === true,
       online_coop: game.online_coop === true,
+      names: game.names.filter((n) => !n.from_igdb).map((n) => n.name),
     },
     validate: { title: (value) => (value.trim() ? null : t('errors.required')) },
   });
@@ -405,6 +407,7 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
             online_max_players: numberOrNull(v.online_max),
             local_coop: checkedOrNull(v.local_coop, game.local_coop),
             online_coop: checkedOrNull(v.online_coop, game.online_coop),
+            names: v.names,
           },
         }),
       ),
@@ -414,6 +417,7 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
     },
     onError: onApiError,
   });
+  const igdbNames = game.names.filter((n) => n.from_igdb).map((n) => n.name);
 
   return (
     <FormModal
@@ -424,6 +428,15 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
       onSubmit={form.onSubmit((v) => save.mutate(v))}
     >
       <TextInput label={t('game.title')} required data-autofocus {...form.getInputProps('title')} />
+      <TagsInput
+        label={t('game.names')}
+        description={
+          igdbNames.length > 0
+            ? t('game.namesIgdb', { names: igdbNames.join(', ') })
+            : t('game.namesHint')
+        }
+        {...form.getInputProps('names')}
+      />
       <MultiSelect
         label={t('game.gameModes')}
         data={(gameModes.data ?? []).map((m) => ({ value: String(m.id), label: m.name }))}

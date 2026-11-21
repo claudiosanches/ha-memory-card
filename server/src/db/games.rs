@@ -93,6 +93,17 @@ pub struct GameDetail {
     pub sessions: Vec<PlaySession>,
     /// Games in the collection that IGDB names as another version of this one, by title.
     pub versions: Vec<GameVersion>,
+    /// Other names the game goes by, which the library search also matches.
+    pub names: Vec<GameName>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GameName {
+    pub name: String,
+    /// From IGDB, which replaces them on a refresh, or added by hand.
+    pub from_igdb: bool,
+    /// IGDB's note, such as "Japanese title".
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -176,6 +187,8 @@ pub struct GameFields {
     pub play_status: Option<String>,
     pub players: PlayerCounts,
     pub game_mode_ids: Vec<i64>,
+    /// Names added by hand; `None` keeps them.
+    pub names: Option<Vec<String>>,
 }
 
 pub struct CopyFields {
@@ -374,6 +387,14 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         releases,
         sessions: sessions::for_game(pool, id).await?,
         versions: versions(pool, id).await?,
+        names: sqlx::query_as!(
+            GameName,
+            r#"SELECT name, source = 'igdb' AS "from_igdb!: bool", comment
+               FROM game_names WHERE game_id = ? ORDER BY source = 'igdb', name"#,
+            id
+        )
+        .fetch_all(pool)
+        .await?,
     })
 }
 
@@ -438,6 +459,26 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
     )
     .execute(&mut *tx)
     .await?;
+
+    if let Some(names) = &fields.names {
+        sqlx::query!(
+            "DELETE FROM game_names WHERE game_id = ? AND source = 'user'",
+            id
+        )
+        .execute(&mut *tx)
+        .await?;
+        for name in names {
+            // A name IGDB already gives becomes the user's, so it survives a refresh.
+            sqlx::query!(
+                "INSERT INTO game_names (game_id, name, source) VALUES (?, ?, 'user')
+                 ON CONFLICT (game_id, name) DO UPDATE SET source = 'user', comment = NULL",
+                id,
+                name
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
 
     tx.commit().await?;
     Ok(())

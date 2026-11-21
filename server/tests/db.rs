@@ -39,6 +39,7 @@ async fn fresh_database_has_schema_and_seed() {
             "game_genres",
             "game_links",
             "game_modes",
+            "game_names",
             "games",
             "genres",
             "platforms",

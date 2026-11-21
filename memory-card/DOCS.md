@@ -29,6 +29,11 @@ each game page lists the other under **Other versions**. They stay separate
 games with their own copies and progress. Run a sync to fill this in for
 games linked before this was added.
 
+The library search finds a game by its title, its release titles and its
+other names, ignoring case and accents, so `pokemon` finds `Pokémon`.
+Linking fills in IGDB's alternative names, such as Japanese titles and
+acronyms. Add your own under **Also known as** when editing a game.
+
 To use your own cover, click the cover of a game or a release on its page and
 upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
 uploaded cover. Removing it brings back IGDB's.

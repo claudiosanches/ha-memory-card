@@ -1,0 +1,45 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT name, source = 'igdb' AS \"from_igdb!: bool\", comment\n               FROM game_names WHERE game_id = ? ORDER BY source = 'igdb', name",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "game_names",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "from_igdb!: bool",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "comment",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "game_names",
+            "name": "comment"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "4f1aef0203159e95aaf954756bf9cbaaec6eeb1bf6b903e3762c64478a6996e8"
+}

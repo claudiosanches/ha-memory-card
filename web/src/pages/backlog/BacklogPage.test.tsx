@@ -50,6 +50,7 @@ function detail(summary: GameSummary, play_status: string | null): GameDetail {
     created_at: '2026-11-01T10:00:00.000Z',
     sessions: [],
     versions: [],
+    names: [],
     releases: [],
   };
 }

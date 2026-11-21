@@ -944,3 +944,68 @@ async fn copies_record_edition_purchase_date_and_price() {
         assert_eq!(error, json!({"code": code, "field": field}));
     }
 }
+
+#[tokio::test]
+async fn search_matches_other_names_and_ignores_accents() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let pokemon = new_game(&app, "Pokémon Legends: Arceus").await;
+    let zelda = new_game(&app, "The Legend of Zelda: Breath of the Wild").await;
+    new_game(&app, "Hades").await;
+    add_copy(
+        &app,
+        pokemon,
+        json!({"platform_id": switch, "region": "jp", "format": "physical"}),
+    )
+    .await;
+    let release: i64 = app.scalar("SELECT id FROM releases").await;
+    app.json(
+        "PUT",
+        &format!("/api/releases/{release}"),
+        Some(json!({"title": "Pokémon LEGENDS アルセウス"})),
+    )
+    .await;
+
+    let body = json!({"title": "The Legend of Zelda: Breath of the Wild", "names": [" BotW ", "botw", "", "Zelda BOTW"]});
+    let (status, detail) = app
+        .json("PUT", &format!("/api/games/{zelda}"), Some(body))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(
+        detail["names"],
+        json!([
+            {"name": "BotW", "from_igdb": false, "comment": null},
+            {"name": "Zelda BOTW", "from_igdb": false, "comment": null},
+        ])
+    );
+    let keep = json!({"title": "The Legend of Zelda: Breath of the Wild"});
+    let (_, detail) = app
+        .json("PUT", &format!("/api/games/{zelda}"), Some(keep))
+        .await;
+    assert_eq!(
+        detail["names"].as_array().unwrap().len(),
+        2,
+        "left out, names stay"
+    );
+
+    for (q, expected) in [
+        ("pokemon", vec!["Pokémon Legends: Arceus"]),
+        ("アルセウス", vec!["Pokémon Legends: Arceus"]),
+        ("botw", vec!["The Legend of Zelda: Breath of the Wild"]),
+        (
+            "LEGEND",
+            vec![
+                "The Legend of Zelda: Breath of the Wild",
+                "Pokémon Legends: Arceus",
+            ],
+        ),
+        ("ｈａｄｅｓ", vec!["Hades"]),
+        ("mario", vec![]),
+    ] {
+        let query = serde_urlencoded::to_string([("ownership", "any"), ("q", q)]).unwrap();
+        assert_eq!(titles(&app, &query).await, expected, "q={q}");
+    }
+    let query = serde_urlencoded::to_string([("q", "pokemon")]).unwrap();
+    let (_, copies) = app.json("GET", &format!("/api/copies?{query}"), None).await;
+    assert_eq!(copies.as_array().unwrap().len(), 1);
+}

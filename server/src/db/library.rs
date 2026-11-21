@@ -54,7 +54,7 @@ pub enum LibrarySort {
 #[derive(Debug, Clone, Default, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct LibraryFilter {
-    /// Text in the title.
+    /// Text in the title, a release title or another name, ignoring case and accents.
     pub q: Option<String>,
     /// Platform ids.
     #[serde(default, deserialize_with = "comma_list")]
@@ -94,6 +94,34 @@ pub struct LibraryFilter {
     pub igdb: Option<IgdbLink>,
     #[param(inline)]
     pub sort: Option<LibrarySort>,
+    /// Games matching `q`, filled by [`resolve_search`].
+    #[serde(skip)]
+    #[param(ignore)]
+    pub matches: Option<Vec<i64>>,
+}
+
+/// Finds the games `q` matches, so the query can filter on their ids.
+pub async fn resolve_search(pool: &SqlitePool, filter: &mut LibraryFilter) -> sqlx::Result<()> {
+    let Some(text) = filter.q.as_deref().map(str::trim).filter(|t| !t.is_empty()) else {
+        return Ok(());
+    };
+    let needle = crate::domain::search_key(text);
+    let names: Vec<(i64, String)> = sqlx::query_as(
+        "SELECT id, title FROM games
+         UNION ALL SELECT game_id, title FROM releases WHERE title IS NOT NULL
+         UNION ALL SELECT game_id, name FROM game_names",
+    )
+    .fetch_all(pool)
+    .await?;
+    let mut ids: Vec<i64> = names
+        .into_iter()
+        .filter(|(_, name)| crate::domain::search_key(name).contains(&needle))
+        .map(|(id, _)| id)
+        .collect();
+    ids.sort_unstable();
+    ids.dedup();
+    filter.matches = Some(ids);
+    Ok(())
 }
 
 /// A play status key, or `none` for games without one.
@@ -259,7 +287,12 @@ pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) 
         None => &mut *qb,
     };
 
-    if let Some(text) = filter.q.as_deref().map(str::trim).filter(|t| !t.is_empty()) {
+    if let Some(ids) = &filter.matches {
+        let ids = serde_json::to_string(ids).expect("a list of numbers serializes");
+        qb.push(" AND g.id IN (SELECT value FROM json_each(")
+            .push_bind(ids)
+            .push("))");
+    } else if let Some(text) = filter.q.as_deref().map(str::trim).filter(|t| !t.is_empty()) {
         qb.push(" AND instr(lower(g.title), lower(")
             .push_bind(text.to_owned())
             .push(")) > 0");
@@ -412,7 +445,9 @@ pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
 }
 
 pub async fn list_copies(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec<CopyRow>> {
-    let mut rows: Vec<CopyRow> = copies_query(filter)
+    let mut filter = filter.clone();
+    resolve_search(pool, &mut filter).await?;
+    let mut rows: Vec<CopyRow> = copies_query(&filter)
         .build_query_as()
         .fetch_all(pool)
         .await?;
@@ -426,7 +461,9 @@ pub async fn list_copies(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Res
 }
 
 pub async fn list(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec<GameSummary>> {
-    let rows: Vec<SummaryRow> = query(filter).build_query_as().fetch_all(pool).await?;
+    let mut filter = filter.clone();
+    resolve_search(pool, &mut filter).await?;
+    let rows: Vec<SummaryRow> = query(&filter).build_query_as().fetch_all(pool).await?;
     Ok(rows
         .into_iter()
         .map(|row| GameSummary {

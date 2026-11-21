@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO game_names (game_id, name, source) VALUES (?, ?, 'user')\n                 ON CONFLICT (game_id, name) DO UPDATE SET source = 'user', comment = NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "02006f7425e562ddd9613d9ba7d9c449be73852384571de6fba18f53983e6b05"
+}

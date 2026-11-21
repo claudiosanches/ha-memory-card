@@ -388,6 +388,14 @@ function GameView({ game }: { game: GameDetail }) {
             <Text size="sm">
               <strong>{t('game.players')}:</strong> {singlePlayerOnly ? t('game.singlePlayer') : describePlayers(t, game)}
             </Text>
+            {game.names.length > 0 && (
+              <Text size="sm" data-testid="names">
+                <strong>{t('game.alsoKnownAs')}:</strong>{' '}
+                {game.names
+                  .map((n) => (n.comment ? `${n.name} (${n.comment})` : n.name))
+                  .join(', ')}
+              </Text>
+            )}
             {game.versions.length > 0 && (
               <Text size="sm" data-testid="versions">
                 <strong>{t('game.otherVersions')}:</strong>{' '}

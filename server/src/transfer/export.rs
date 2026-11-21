@@ -69,7 +69,9 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
 }
 
 pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>, ExportError> {
-    let rows: Vec<ExportRow> = query(filter).build_query_as().fetch_all(pool).await?;
+    let mut filter = filter.clone();
+    library::resolve_search(pool, &mut filter).await?;
+    let rows: Vec<ExportRow> = query(&filter).build_query_as().fetch_all(pool).await?;
 
     let mut out = UTF8_BOM.to_vec();
     {

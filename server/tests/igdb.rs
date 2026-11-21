@@ -35,7 +35,11 @@ fn odyssey() -> Value {
             {"region": 4, "cover": {"image_id": "co1mxf"}}
         ],
         "version_parent": 40,
-        "ports": [41, 1]
+        "ports": [41, 1],
+        "alternative_names": [
+            {"name": "SMO", "comment": "Acronym"},
+            {"name": "Mario Odyssey"}
+        ]
     })
 }
 
@@ -512,4 +516,52 @@ async fn linked_games_name_their_other_versions() {
         .json("GET", &format!("/api/games/{}", ids[3]), None)
         .await;
     assert_eq!(unrelated["versions"], json!([]));
+}
+
+#[tokio::test]
+async fn igdb_names_refresh_and_hand_added_names_stay() {
+    let app = with_igdb().await;
+    let (_, game) = app
+        .json(
+            "POST",
+            "/api/games",
+            Some(json!({"title": "Super Mario Odyssey"})),
+        )
+        .await;
+    let id = game["id"].as_i64().unwrap();
+    let link = format!("/api/games/{id}/igdb");
+    app.json("POST", &link, Some(json!({"igdb_id": 1}))).await;
+    let (_, detail) = app.json("GET", &format!("/api/games/{id}"), None).await;
+    assert_eq!(
+        detail["names"],
+        json!([
+            {"name": "Mario Odyssey", "from_igdb": true, "comment": null},
+            {"name": "SMO", "from_igdb": true, "comment": "Acronym"},
+        ])
+    );
+
+    let body = json!({"title": "Super Mario Odyssey", "names": ["SMO", "Cappy game"]});
+    app.json("PUT", &format!("/api/games/{id}"), Some(body))
+        .await;
+    app.json("POST", &link, Some(json!({"igdb_id": 1}))).await;
+    let (_, detail) = app.json("GET", &format!("/api/games/{id}"), None).await;
+    let names: Vec<(String, bool)> = detail["names"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|n| {
+            (
+                n["name"].as_str().unwrap().to_owned(),
+                n["from_igdb"].as_bool().unwrap(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        names,
+        [
+            ("Cappy game".to_owned(), false),
+            ("SMO".to_owned(), false),
+            ("Mario Odyssey".to_owned(), true),
+        ]
+    );
 }

@@ -20,7 +20,7 @@
           {
             "name": "q",
             "in": "query",
-            "description": "Text in the title.",
+            "description": "Text in the title, a release title or another name, ignoring case and accents.",
             "required": false,
             "schema": {
               "type": "string"
@@ -545,7 +545,7 @@
           {
             "name": "q",
             "in": "query",
-            "description": "Text in the title.",
+            "description": "Text in the title, a release title or another name, ignoring case and accents.",
             "required": false,
             "schema": {
               "type": "string"
@@ -728,7 +728,7 @@
           {
             "name": "q",
             "in": "query",
-            "description": "Text in the title.",
+            "description": "Text in the title, a release title or another name, ignoring case and accents.",
             "required": false,
             "schema": {
               "type": "string"
@@ -3537,7 +3537,8 @@
           "created_at",
           "releases",
           "sessions",
-          "versions"
+          "versions",
+          "names"
         ],
         "properties": {
           "cover_path": {
@@ -3612,6 +3613,13 @@
               "null"
             ],
             "format": "int64"
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameName"
+            },
+            "description": "Other names the game goes by, which the library search also matches."
           },
           "online_coop": {
             "type": [
@@ -3708,6 +3716,16 @@
             ],
             "format": "int64"
           },
+          "names": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Other names to search by. Left out, the current ones stay."
+          },
           "online_coop": {
             "type": [
               "boolean",
@@ -3755,6 +3773,29 @@
             "type": "string"
           },
           "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "GameName": {
+        "type": "object",
+        "required": [
+          "name",
+          "from_igdb"
+        ],
+        "properties": {
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "IGDB's note, such as \"Japanese title\"."
+          },
+          "from_igdb": {
+            "type": "boolean",
+            "description": "From IGDB, which replaces them on a refresh, or added by hand."
+          },
+          "name": {
             "type": "string"
           }
         }

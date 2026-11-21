@@ -130,6 +130,21 @@ value_list! {
     }
 }
 
+/// Search key for a title: compatibility forms folded (full-width letters,
+/// ligatures), accents dropped, lowercase, runs of spaces made one.
+/// Punctuation stays.
+pub fn search_key(text: &str) -> String {
+    use unicode_normalization::UnicodeNormalization;
+    use unicode_normalization::char::is_combining_mark;
+    let folded: String = text
+        .nfkd()
+        // Kana voicing marks change the word, unlike Latin accents.
+        .filter(|c| !is_combining_mark(*c) || matches!(c, '\u{3099}' | '\u{309A}'))
+        .flat_map(char::to_lowercase)
+        .collect();
+    folded.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 /// Sort key for a title: lowercase, leading English article moved out.
 pub fn sort_title(title: &str) -> String {
     let lower = title.trim().to_lowercase();
@@ -179,6 +194,21 @@ mod tests {
         for status in BuiltinStatus::ALL {
             assert_eq!(BuiltinStatus::parse_loose(status.as_str()), Some(*status));
         }
+    }
+
+    #[test]
+    fn search_key_folds_accents_case_and_width() {
+        assert_eq!(
+            search_key("Pokémon  Mystery Dungeon"),
+            "pokemon mystery dungeon"
+        );
+        assert_eq!(search_key("ＦＩＮＡＬ ＦＡＮＴＡＳＹ"), "final fantasy");
+        assert_eq!(search_key("Ōkami"), "okami");
+        assert_eq!(
+            search_key("Pilot's Log; 100%_Complete"),
+            "pilot's log; 100%_complete"
+        );
+        assert_ne!(search_key("ゼルダ"), search_key("セルダ"));
     }
 
     #[test]

@@ -838,6 +838,8 @@ export interface components {
             local_coop?: boolean | null;
             /** Format: int64 */
             local_max_players?: number | null;
+            /** @description Other names the game goes by, which the library search also matches. */
+            names: components["schemas"]["GameName"][];
             online_coop?: boolean | null;
             /** Format: int64 */
             online_max_players?: number | null;
@@ -859,6 +861,8 @@ export interface components {
             local_coop?: boolean | null;
             /** Format: int64 */
             local_max_players?: number | null;
+            /** @description Other names to search by. Left out, the current ones stay. */
+            names?: string[] | null;
             online_coop?: boolean | null;
             /** Format: int64 */
             online_max_players?: number | null;
@@ -872,6 +876,13 @@ export interface components {
             id: number;
             name: string;
             slug: string;
+        };
+        GameName: {
+            /** @description IGDB's note, such as "Japanese title". */
+            comment?: string | null;
+            /** @description From IGDB, which replaces them on a refresh, or added by hand. */
+            from_igdb: boolean;
+            name: string;
         };
         GameSummary: {
             /** @description Relative to the covers URL. */
@@ -1373,7 +1384,7 @@ export interface operations {
     listCopies: {
         parameters: {
             query?: {
-                /** @description Text in the title. */
+                /** @description Text in the title, a release title or another name, ignoring case and accents. */
                 q?: string;
                 /** @description Platform ids. */
                 platform?: string;
@@ -1710,7 +1721,7 @@ export interface operations {
     exportCsv: {
         parameters: {
             query?: {
-                /** @description Text in the title. */
+                /** @description Text in the title, a release title or another name, ignoring case and accents. */
                 q?: string;
                 /** @description Platform ids. */
                 platform?: string;
@@ -1782,7 +1793,7 @@ export interface operations {
     listGames: {
         parameters: {
             query?: {
-                /** @description Text in the title. */
+                /** @description Text in the title, a release title or another name, ignoring case and accents. */
                 q?: string;
                 /** @description Platform ids. */
                 platform?: string;
