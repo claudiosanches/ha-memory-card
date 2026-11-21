@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { PlayStatus } from '../api/types';
+import type { Me, PlayStatus } from '../api/types';
 
 type Handler = (body: unknown) => unknown;
 export type ApiCall = { method: string; path: string; query: URLSearchParams; body: unknown };
@@ -30,15 +30,27 @@ export const BUILTIN_STATUSES: PlayStatus[] = [
   builtin('mastered', 'grape', 'finished'),
 ];
 
+/** A viewer once managers are configured; the default user is a manager. */
+export const VIEWER: Me = {
+  user: { id: 'viewer-id', name: 'sam', display_name: 'Sam' },
+  role: 'viewer',
+  enforced: true,
+};
+
 /**
  * Stubs fetch with routes keyed by "METHOD /path". A route is a value to
  * return as JSON, a Response, or a function of the request body (which may
  * return a promise of either). Unknown
  * routes answer 404, except the play status list, which defaults to the
- * built-in statuses. Returns the list of calls made.
+ * built-in statuses, and the current user, who defaults to a manager.
+ * Returns the list of calls made.
  */
 export function mockApi(given: Record<string, unknown>): ApiCall[] {
-  const routes: Record<string, unknown> = { 'GET /api/play-statuses': BUILTIN_STATUSES, ...given };
+  const routes: Record<string, unknown> = {
+    'GET /api/play-statuses': BUILTIN_STATUSES,
+    'GET /api/me': { user: null, role: 'manager', enforced: false } satisfies Me,
+    ...given,
+  };
   const calls: ApiCall[] = [];
   vi.stubGlobal(
     'fetch',

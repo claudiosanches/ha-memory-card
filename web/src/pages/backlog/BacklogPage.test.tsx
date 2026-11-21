@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { GameDetail, GameSummary } from '../../api/types';
 import en from '../../locales/en.json';
-import { BUILTIN_STATUSES, json, mockApi } from '../../test/api';
+import { BUILTIN_STATUSES, json, mockApi, VIEWER } from '../../test/api';
 import { renderAt } from '../../test/render';
 
 function game(id: number, title: string, play_status: string | null): GameSummary {
@@ -180,6 +180,26 @@ describe('Backlog page', () => {
     finish();
     await waitFor(() => expect(screen.getByTestId('picked')).toHaveTextContent('Celeste'));
     expect(screen.getByTestId('picked')).not.toHaveAttribute('data-rolling');
+  });
+
+  it('lets a viewer roll a pick but change no status', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/me': VIEWER,
+      'POST /api/suggestions': { game: detail(GAMES[3]!, 'backlog'), copy_ids: [] },
+    });
+    renderAt('/backlog');
+
+    expect(await screen.findByTestId('row-1')).toBeInTheDocument();
+    expect(screen.queryByText(en.backlog.unsortedTitle)).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('row-1')).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('backlog-3')).queryByRole('button')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: en.backlog.pick }));
+    const picked = await screen.findByTestId('picked');
+    expect(within(picked).getByText('Tunic')).toBeInTheDocument();
+    expect(within(picked).queryByRole('button', { name: en.backlog.start })).not.toBeInTheDocument();
+    expect(calls.filter((c) => c.method === 'PUT')).toEqual([]);
   });
 
   it('shows on hold games ten at a time', async () => {

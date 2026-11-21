@@ -1,5 +1,18 @@
-import { Alert, Badge, Button, Group, Loader, Progress, Stack, Text } from '@mantine/core';
-import { IconRefresh } from '@tabler/icons-react';
+import {
+  ActionIcon,
+  Alert,
+  Badge,
+  Button,
+  Code,
+  CopyButton,
+  Group,
+  Loader,
+  Progress,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core';
+import { IconCheck, IconCopy, IconRefresh } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { ToolSection } from '../components/ToolSection';
@@ -8,7 +21,7 @@ import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
-import { queryKeys, useIgdbSync, useStatus, useTitleDifferences } from '../api/queries';
+import { queryKeys, useCanManage, useIgdbSync, useMe, useStatus, useTitleDifferences } from '../api/queries';
 import { Cover } from '../components/Cover';
 import { notifyError, notifySuccess } from '../components/notify';
 import { ThemePicker } from '../components/ThemePicker';
@@ -16,6 +29,7 @@ import { ThemePicker } from '../components/ThemePicker';
 export function SettingsPage() {
   const { t } = useTranslation();
   const status = useStatus();
+  const canManage = useCanManage();
 
   return (
     <Stack gap={24}>
@@ -54,9 +68,59 @@ export function SettingsPage() {
           </dl>
         )}
       </ToolSection>
-      {status.data?.igdb_configured && <IgdbSync />}
-      {status.data?.igdb_configured && <IgdbTitles />}
+      <Access />
+      {canManage && status.data?.igdb_configured && <IgdbSync />}
+      {canManage && status.data?.igdb_configured && <IgdbTitles />}
     </Stack>
+  );
+}
+
+/** Who Home Assistant says is signed in, with the ID to put in the managers option. */
+function Access() {
+  const { t } = useTranslation();
+  const me = useMe().data;
+  if (!me) return null;
+
+  const description = !me.enforced
+    ? t('settings.accessOpen')
+    : me.role === 'manager'
+      ? t('settings.accessManager')
+      : t('settings.accessViewer');
+  const user = me.user;
+  return (
+    <ToolSection title={t('settings.access')} description={description}>
+      {user ? (
+        <dl className={classes.status}>
+          <div>
+            <dt>{t('settings.signedInAs')}</dt>
+            <dd>{user.display_name ?? user.name ?? user.id}</dd>
+          </div>
+          <div>
+            <dt>{t('settings.role')}</dt>
+            <dd data-testid="access-role">{t(`settings.roles.${me.role}`)}</dd>
+          </div>
+          <div>
+            <dt>{t('settings.userId')}</dt>
+            <dd className={classes.userId}>
+              <Code data-testid="user-id">{user.id}</Code>
+              <CopyButton value={user.id}>
+                {({ copied, copy }) => (
+                  <Tooltip label={copied ? t('settings.copied') : t('settings.copyUserId')}>
+                    <ActionIcon variant="subtle" aria-label={t('settings.copyUserId')} onClick={copy}>
+                      {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <Text size="sm" c="dimmed">
+          {t('settings.noUser')}
+        </Text>
+      )}
+    </ToolSection>
   );
 }
 

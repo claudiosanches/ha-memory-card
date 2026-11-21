@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { GameDetail } from '../../api/types';
 import en from '../../locales/en.json';
-import { json, mockApi } from '../../test/api';
+import { json, mockApi, VIEWER } from '../../test/api';
 import { renderAt } from '../../test/render';
 
 /** Matches the element whose whole text is `text`, across a bold label. */
@@ -79,6 +79,19 @@ describe('Game page', () => {
     await waitFor(() => expect(within(release).getByText('Nintendo Switch · Europe (PAL)')).toBeInTheDocument());
     expect(within(release).getByText('HAC-AYL3A')).toBeInTheDocument();
     expect(within(screen.getByTestId('copy-21')).getByText(en.condition.cib)).toBeInTheDocument();
+  });
+
+  it('shows a viewer the game without edit controls', async () => {
+    mockApi({ ...SETUP, 'GET /api/me': VIEWER, 'GET /api/games/4': GAME });
+    renderAt('/games/4');
+
+    const copy = await screen.findByTestId('copy-21');
+    expect(within(copy).getByText(en.condition.cib)).toBeInTheDocument();
+    expect(within(copy).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('release-9')).queryByRole('button')).not.toBeInTheDocument();
+    for (const name of [en.common.edit, en.game.delete, en.game.addCopy, en.game.playedToday, en.cover.changeGame]) {
+      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    }
   });
 
   it('lists copies without a table on a phone', async () => {

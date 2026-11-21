@@ -27,6 +27,27 @@ To use your own cover, click the cover of a game or a release on its page and
 upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
 uploaded cover. Removing it brings back IGDB's.
 
+## Managers and viewers
+
+Home Assistant signs you in, so Memory Card has no login of its own. By
+default, everyone who opens it can change the collection.
+
+To limit changes to some people:
+
+1. Open Memory Card as a person who should manage it, go to **Settings** and
+   copy the user ID under **Your access**.
+2. In Home Assistant, open the Memory Card app, go to **Configuration**, add
+   the ID to `managers` and save. Add one entry per manager.
+3. Restart the app.
+
+From then on, everyone else is a viewer. Viewers browse the library, game
+pages, the backlog and duplicates, and can roll a random pick. They cannot
+add, edit or delete anything, change play progress, import or export CSV
+files, manage devices, stores, platforms and play statuses, or sync with
+IGDB. Requests that Home Assistant does not tie to a user are refused.
+
+To let everyone change the collection again, empty `managers` and restart.
+
 ## Options
 
 | Option | Description |
@@ -34,6 +55,7 @@ uploaded cover. Removing it brings back IGDB's.
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
+| `managers` | Home Assistant user IDs that can change the collection. Empty (the default) lets everyone change it. |
 
 ## Import and export (CSV)
 

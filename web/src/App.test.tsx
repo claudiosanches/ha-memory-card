@@ -1,20 +1,12 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import en from './locales/en.json';
+import { json, mockApi, VIEWER } from './test/api';
 import { renderAt } from './test/render';
-
-function stubStatus(body: unknown, status = 200) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => new Response(JSON.stringify(body), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    })),
-  );
-}
 
 describe('App', () => {
   it('shows every navigation entry from the locale file', async () => {
+    mockApi({ 'GET /api/games': [] });
     renderAt('/');
     for (const label of Object.values(en.nav)) {
       expect(await screen.findByRole('link', { name: label })).toBeInTheDocument();
@@ -22,15 +14,37 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: en.nav.library })).toBeInTheDocument();
   });
 
+  it('leaves manager tools out of a viewer navigation', async () => {
+    mockApi({ 'GET /api/me': VIEWER, 'GET /api/games': [] });
+    renderAt('/');
+    expect(await screen.findByRole('link', { name: en.nav.settings })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: en.nav.import })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: en.nav.manage })).not.toBeInTheDocument();
+  });
+
+  it('keeps viewers off manager pages opened by URL', async () => {
+    mockApi({ 'GET /api/me': VIEWER });
+    renderAt('/manage');
+    expect(await screen.findByText(en.app.managersOnly)).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('explains a missing Home Assistant identity', async () => {
+    mockApi({ 'GET /api/me': json({ code: 'identity_required' }, 401) });
+    renderAt('/');
+    expect(await screen.findByRole('alert')).toHaveTextContent(en.app.unidentified);
+    expect(screen.queryByRole('link', { name: en.nav.library })).not.toBeInTheDocument();
+  });
+
   it('shows server status on the settings screen', async () => {
-    stubStatus({ version: '9.9.9', igdb_configured: false, games: 3, owned_copies: 5 });
+    mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, games: 3, owned_copies: 5 } });
     renderAt('/settings');
     expect(await screen.findByTestId('status-version')).toHaveTextContent('9.9.9');
     expect(screen.getByTestId('igdb-missing')).toHaveTextContent(en.settings.igdbMissing);
   });
 
   it('reports a failed status request', async () => {
-    stubStatus({ code: 'internal' }, 500);
+    mockApi({ 'GET /api/status': json({ code: 'internal' }, 500) });
     renderAt('/settings');
     expect(await screen.findByTestId('status-error')).toHaveTextContent(en.settings.loadError);
   });

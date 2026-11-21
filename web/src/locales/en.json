@@ -4,7 +4,9 @@
     "toggleNavigation": "Toggle navigation",
     "collection": "Collection",
     "tools": "Tools",
-    "skipNavigation": "Skip to content"
+    "skipNavigation": "Skip to content",
+    "unidentified": "Home Assistant did not say who you are, so Memory Card cannot open. Reload the page from the sidebar.",
+    "managersOnly": "Only managers can use this page."
   },
   "nav": {
     "library": "Library",
@@ -138,7 +140,21 @@
       "auto": "System",
       "light": "Light",
       "dark": "Dark"
-    }
+    },
+    "access": "Your access",
+    "accessOpen": "Everyone who opens Memory Card can change the collection. To limit that, add the user IDs of the people who manage it to the managers option in the app configuration.",
+    "accessManager": "You can change the collection.",
+    "accessViewer": "You can browse the collection. Ask a manager to make changes.",
+    "signedInAs": "Signed in as",
+    "role": "Role",
+    "roles": {
+      "manager": "Manager",
+      "viewer": "Viewer"
+    },
+    "userId": "User ID",
+    "copyUserId": "Copy user ID",
+    "copied": "Copied",
+    "noUser": "Home Assistant did not say who you are."
   },
   "errors": {
     "internal": "Something went wrong on the server.",
@@ -171,7 +187,9 @@
     "no_candidates": "Nothing in your backlog matches.",
     "image_too_large": "Use an image of 10 MB or less.",
     "unknown_play_status": "That play status no longer exists. Reload the page.",
-    "builtin_status": "Built-in play statuses cannot be deleted or moved to another group."
+    "builtin_status": "Built-in play statuses cannot be deleted or moved to another group.",
+    "manager_required": "Only managers can change the collection.",
+    "identity_required": "Home Assistant did not say who you are. Reload the page."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",

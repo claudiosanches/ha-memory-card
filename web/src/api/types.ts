@@ -32,6 +32,8 @@ export type StatusGroup = Schemas['StatusGroup'];
 export type StoreInput = Schemas['StoreInput'];
 export type Suggestion = Schemas['Suggestion'];
 export type SuggestionFilter = Schemas['SuggestionFilter'];
+export type Me = Schemas['Me'];
+export type Role = Schemas['Role'];
 export type LibraryQuery = NonNullable<operations['listGames']['parameters']['query']>;
 
 export const DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account'];

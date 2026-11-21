@@ -9,8 +9,9 @@ type Props = {
   copies: CopyDetail[];
   devices: Map<number, string>;
   stores: Map<number, string>;
-  onEdit: (copy: CopyDetail) => void;
-  onDelete: (copy: CopyDetail) => void;
+  /** Without handlers, the copies are read only. */
+  onEdit?: (copy: CopyDetail) => void;
+  onDelete?: (copy: CopyDetail) => void;
 };
 
 export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
@@ -19,7 +20,8 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
   const device = (copy: CopyDetail) => (copy.device_id ? devices.get(copy.device_id) : null);
   const store = (copy: CopyDetail) => (copy.store_id ? stores.get(copy.store_id) : null);
   const condition = (copy: CopyDetail) => (copy.condition ? t(`condition.${copy.condition}`) : null);
-  const actions = (copy: CopyDetail) => (
+  const editable = onEdit && onDelete;
+  const actions = (copy: CopyDetail) => editable && (
     <Group gap={4} wrap="nowrap" className={classes.actions}>
       <ActionIcon variant="subtle" aria-label={t('game.editCopy')} onClick={() => onEdit(copy)}>
         <IconPencil size={16} />
@@ -69,7 +71,7 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
         <col className={classes.storeColumn} />
         <col className={classes.conditionColumn} />
         <col />
-        <col className={classes.actionsColumn} />
+        {editable && <col className={classes.actionsColumn} />}
       </colgroup>
       <Table.Thead>
         <Table.Tr>
@@ -78,7 +80,7 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
           <Table.Th>{t('game.store')}</Table.Th>
           <Table.Th>{t('game.condition')}</Table.Th>
           <Table.Th>{t('common.notes')}</Table.Th>
-          <Table.Th aria-label={t('common.actions')} />
+          {editable && <Table.Th aria-label={t('common.actions')} />}
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
@@ -89,7 +91,7 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
             <Table.Td>{store(copy)}</Table.Td>
             <Table.Td>{condition(copy)}</Table.Td>
             <Table.Td><Text size="sm" className={classes.notes}>{copy.notes}</Text></Table.Td>
-            <Table.Td>{actions(copy)}</Table.Td>
+            {editable && <Table.Td>{actions(copy)}</Table.Td>}
           </Table.Tr>
         ))}
       </Table.Tbody>

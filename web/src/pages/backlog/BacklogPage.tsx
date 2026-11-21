@@ -11,7 +11,7 @@ import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../api/errors';
-import { useGames, usePlatforms } from '../../api/queries';
+import { useCanManage, useGames, usePlatforms } from '../../api/queries';
 import type { BuiltinStatus, GameSummary, StatusGroup } from '../../api/types';
 import { PageHeader } from '../../components/PageHeader';
 import { Description } from '../../components/Description';
@@ -42,6 +42,7 @@ export function BacklogPage() {
   const platforms = usePlatforms();
   const statuses = usePlayStatusList();
   const [sorting, setSorting] = useState<GameSummary[] | null>(null);
+  const canManage = useCanManage();
 
   const groups = useMemo(
     () => groupByStatus(games.data ?? [], (key) => statuses.get(key)?.counts_as),
@@ -72,7 +73,7 @@ export function BacklogPage() {
         )}
       </PageHeader>
 
-      {groups.unsorted.length > 0 && (
+      {canManage && groups.unsorted.length > 0 && (
         <section className={classes.unsorted}>
           <IconSparkles size={28} stroke={1.6} aria-hidden />
           <div className={classes.unsortedText}>
@@ -89,13 +90,13 @@ export function BacklogPage() {
 
       {groups.playing.length > 0 && (
         <Section title={t('backlog.playing')} count={groups.playing.length}>
-          <RowList games={groups.playing} platformNames={platformNames} actions={PLAYING_ACTIONS} />
+          <RowList games={groups.playing} platformNames={platformNames} actions={canManage ? PLAYING_ACTIONS : []} />
         </Section>
       )}
 
       {groups.paused.length > 0 && (
         <Section title={t('backlog.paused')} count={groups.paused.length}>
-          <RowList games={groups.paused} platformNames={platformNames} actions={PAUSED_ACTIONS} />
+          <RowList games={groups.paused} platformNames={platformNames} actions={canManage ? PAUSED_ACTIONS : []} />
         </Section>
       )}
 
@@ -108,7 +109,7 @@ export function BacklogPage() {
         ) : (
           <ul className={classes.grid}>
             {groups.backlog.map((game) => (
-              <BacklogCard key={game.id} game={game} platformNames={platformNames} />
+              <BacklogCard key={game.id} game={game} platformNames={platformNames} canStart={canManage} />
             ))}
           </ul>
         )}
@@ -223,26 +224,36 @@ function GameRow({
           </Text>
         </div>
       </Link>
-      <Group gap={6} className={classes.rowActions}>
-        {actions.map(({ status, label, icon: Icon }) => (
-          <Button
-            key={status}
-            size="xs"
-            variant={status === 'dropped' ? 'subtle' : 'light'}
-            color={status === 'dropped' ? 'gray' : undefined}
-            leftSection={<Icon size={14} />}
-            disabled={setStatus.isPending}
-            onClick={() => setStatus.mutate({ id: game.id, status })}
-          >
-            {t(`backlog.${label}`)}
-          </Button>
-        ))}
-      </Group>
+      {actions.length > 0 && (
+        <Group gap={6} className={classes.rowActions}>
+          {actions.map(({ status, label, icon: Icon }) => (
+            <Button
+              key={status}
+              size="xs"
+              variant={status === 'dropped' ? 'subtle' : 'light'}
+              color={status === 'dropped' ? 'gray' : undefined}
+              leftSection={<Icon size={14} />}
+              disabled={setStatus.isPending}
+              onClick={() => setStatus.mutate({ id: game.id, status })}
+            >
+              {t(`backlog.${label}`)}
+            </Button>
+          ))}
+        </Group>
+      )}
     </li>
   );
 }
 
-function BacklogCard({ game, platformNames }: { game: GameSummary; platformNames: Map<number, string> }) {
+function BacklogCard({
+  game,
+  platformNames,
+  canStart,
+}: {
+  game: GameSummary;
+  platformNames: Map<number, string>;
+  canStart: boolean;
+}) {
   const { t } = useTranslation();
   const setStatus = useSetPlayStatus();
   return (
@@ -259,16 +270,18 @@ function BacklogCard({ game, platformNames }: { game: GameSummary; platformNames
           {platformList(game, platformNames).join(t('common.separator'))}
         </Text>
       </Link>
-      <Button
-        size="xs"
-        variant="light"
-        leftSection={<IconPlayerPlay size={14} />}
-        disabled={setStatus.isPending}
-        onClick={() => setStatus.mutate({ id: game.id, status: 'playing' })}
-        aria-label={t('backlog.startNamed', { title: game.title })}
-      >
-        {t('backlog.startShort')}
-      </Button>
+      {canStart && (
+        <Button
+          size="xs"
+          variant="light"
+          leftSection={<IconPlayerPlay size={14} />}
+          disabled={setStatus.isPending}
+          onClick={() => setStatus.mutate({ id: game.id, status: 'playing' })}
+          aria-label={t('backlog.startNamed', { title: game.title })}
+        >
+          {t('backlog.startShort')}
+        </Button>
+      )}
     </li>
   );
 }

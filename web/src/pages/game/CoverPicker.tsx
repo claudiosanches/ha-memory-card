@@ -42,12 +42,14 @@ export function CoverPicker({
   uploaded,
   title,
   width,
+  readOnly = false,
 }: {
   target: CoverTarget;
   path: string | null | undefined;
   uploaded: boolean;
   title: string;
   width: number;
+  readOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const saved = useGameSaved();
@@ -66,6 +68,7 @@ export function CoverPicker({
   const busy = upload.isPending || remove.isPending;
   const small = width < 64;
 
+  if (readOnly) return <Cover path={path} title={title} width={width} />;
   return (
     <>
       <Menu position="bottom-start" shadow="md">

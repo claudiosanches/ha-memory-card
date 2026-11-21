@@ -19,7 +19,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { queryKeys, useGames, usePlatforms } from '../../api/queries';
+import { queryKeys, useCanManage, useGames, usePlatforms } from '../../api/queries';
 import type { GameSummary, Platform } from '../../api/types';
 import { FilterBar, FilterButton } from '../../components/FilterBar';
 import { PageHeader } from '../../components/PageHeader';
@@ -37,6 +37,7 @@ export function LibraryPage() {
   const { t } = useTranslation();
   const search = route.useSearch();
   const navigate = route.useNavigate();
+  const canManage = useCanManage();
   const [filtersOpen, filters] = useDisclosure();
   const [adding, setAdding] = useState(false);
   const [view, setView] = useLocalStorage<'grid' | 'list'>({ key: 'memory-card-library-view', defaultValue: 'grid' });
@@ -70,9 +71,11 @@ export function LibraryPage() {
         count={games.data && t('library.count', { count: games.data.length })}
         countTestId="library-count"
       >
-        <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
-          {t('library.addGame')}
-        </Button>
+        {canManage && (
+          <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
+            {t('library.addGame')}
+          </Button>
+        )}
       </PageHeader>
 
       <div className={classes.controls}>

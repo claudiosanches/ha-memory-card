@@ -1,9 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from './client';
-import { call } from './errors';
+import { ApiError, call } from './errors';
 import type { LibraryQuery } from './types';
 
 export const queryKeys = {
+  me: ['me'],
   status: ['status'],
   platforms: ['platforms'],
   devices: ['devices'],
@@ -17,6 +18,22 @@ export const queryKeys = {
   igdbTitles: ['igdb-titles'],
   duplicates: ['duplicates'],
 } as const;
+
+/** Who is signed in and their role. Options only change on restart. */
+export function useMe() {
+  return useQuery({
+    queryKey: queryKeys.me,
+    queryFn: () => call(api.GET('/api/me')),
+    staleTime: Infinity,
+    // A missing identity does not fix itself; say so at once.
+    retry: (failures, error) => !(error instanceof ApiError && error.code === 'identity_required') && failures < 3,
+  });
+}
+
+/** Whether the user may change the collection. The layout loads this before any page. */
+export function useCanManage() {
+  return useMe().data?.role === 'manager';
+}
 
 export function useStatus() {
   return useQuery({ queryKey: queryKeys.status, queryFn: () => call(api.GET('/api/status')) });

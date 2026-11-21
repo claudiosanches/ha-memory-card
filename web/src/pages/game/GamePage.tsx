@@ -32,6 +32,7 @@ import { api } from '../../api/client';
 import { ApiError, call, errorMessage } from '../../api/errors';
 import {
   queryKeys,
+  useCanManage,
   useDevices,
   useGame,
   useGameModes,
@@ -124,6 +125,7 @@ function GameView({ game }: { game: GameDetail }) {
   const platforms = usePlatforms();
   const devices = useDevices();
   const stores = useStores();
+  const canManage = useCanManage();
 
   const names = useMemo(
     () => ({
@@ -213,6 +215,7 @@ function GameView({ game }: { game: GameDetail }) {
             uploaded={game.cover_uploaded}
             title={game.title}
             width={phone ? 92 : 160}
+            readOnly={!canManage}
           />
           <Stack className={classes.identityText} gap={4}>
             <Title order={1} className={classes.gameTitle}>{game.title}</Title>
@@ -238,37 +241,39 @@ function GameView({ game }: { game: GameDetail }) {
             )}
           </Stack>
         </Group>
-        <Group className={classes.gameActions} gap="xs">
-          {status.data?.igdb_configured && game.igdb_id && (
-            <Button
-              variant="default"
-              leftSection={<IconRefresh size={16} />}
-              loading={refresh.isPending}
-              onClick={() => game.igdb_id && refresh.mutate({ igdbId: game.igdb_id, overwrite: false })}
-            >
-              {t('igdb.refresh')}
-            </Button>
-          )}
-          {status.data?.igdb_configured && (
-            <Button variant="default" leftSection={<IconLink size={16} />} onClick={() => setDialog({ kind: 'linkIgdb' })}>
-              {game.igdb_id ? t('igdb.relink') : t('igdb.link')}
-            </Button>
-          )}
-          <Group className={classes.manageActions} gap="xs" wrap="nowrap">
-            <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
-              {t('common.edit')}
-            </Button>
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              size="lg"
-              aria-label={t('game.delete')}
-              onClick={() => setDialog({ kind: 'deleteGame' })}
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
+        {canManage && (
+          <Group className={classes.gameActions} gap="xs">
+            {status.data?.igdb_configured && game.igdb_id && (
+              <Button
+                variant="default"
+                leftSection={<IconRefresh size={16} />}
+                loading={refresh.isPending}
+                onClick={() => game.igdb_id && refresh.mutate({ igdbId: game.igdb_id, overwrite: false })}
+              >
+                {t('igdb.refresh')}
+              </Button>
+            )}
+            {status.data?.igdb_configured && (
+              <Button variant="default" leftSection={<IconLink size={16} />} onClick={() => setDialog({ kind: 'linkIgdb' })}>
+                {game.igdb_id ? t('igdb.relink') : t('igdb.link')}
+              </Button>
+            )}
+            <Group className={classes.manageActions} gap="xs" wrap="nowrap">
+              <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
+                {t('common.edit')}
+              </Button>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                size="lg"
+                aria-label={t('game.delete')}
+                onClick={() => setDialog({ kind: 'deleteGame' })}
+              >
+                <IconTrash size={18} />
+              </ActionIcon>
+            </Group>
           </Group>
-        </Group>
+        )}
       </section>
 
       <div className={classes.overview}>
@@ -283,7 +288,9 @@ function GameView({ game }: { game: GameDetail }) {
                 data={statuses.options}
                 value={game.play_status ?? null}
                 onChange={(value) => update.mutate({ play_status: value ?? null })}
-                clearable
+                clearable={canManage}
+                readOnly={!canManage}
+                rightSection={canManage ? undefined : null}
                 disabled={update.isPending}
                 leftSection={
                   game.play_status ? <Badge size="xs" circle color={statuses.color(game.play_status)} /> : null
@@ -296,17 +303,21 @@ function GameView({ game }: { game: GameDetail }) {
                 data={allCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
                 value={game.last_played_copy_id ? String(game.last_played_copy_id) : null}
                 onChange={(value) => update.mutate({ last_played_copy_id: value ? Number(value) : null })}
-                clearable
+                clearable={canManage}
+                readOnly={!canManage}
+                rightSection={canManage ? undefined : null}
                 disabled={update.isPending || allCopies.length === 0}
               />
-              <Button
-                variant="light"
-                leftSection={<IconCalendarCheck size={16} />}
-                onClick={playedToday}
-                loading={update.isPending}
-              >
-                {t('game.playedToday')}
-              </Button>
+              {canManage && (
+                <Button
+                  variant="light"
+                  leftSection={<IconCalendarCheck size={16} />}
+                  onClick={playedToday}
+                  loading={update.isPending}
+                >
+                  {t('game.playedToday')}
+                </Button>
+              )}
             </Group>
             <div className={classes.lastPlayed} data-testid="last-played">
               <Text size="xs" c="dimmed">{t('game.lastPlayed')}</Text>
@@ -351,10 +362,12 @@ function GameView({ game }: { game: GameDetail }) {
       </div>
 
       <Group className={classes.releasesHeading} justify="space-between">
-        <SectionHeading title={t('game.releasesTitle')} description={t('game.releasesDescription')} />
-        <Button leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy' })}>
-          {t('game.addCopy')}
-        </Button>
+        <SectionHeading title={t('game.releasesTitle')} description={canManage ? t('game.releasesDescription') : undefined} />
+        {canManage && (
+          <Button leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy' })}>
+            {t('game.addCopy')}
+          </Button>
+        )}
       </Group>
 
       {game.releases.length === 0 && <Text c="dimmed">{t('game.noReleases')}</Text>}
@@ -370,6 +383,7 @@ function GameView({ game }: { game: GameDetail }) {
                   uploaded={release.cover_uploaded}
                   title={release.title ?? game.title}
                   width={48}
+                  readOnly={!canManage}
                 />
                 <Stack gap={0}>
                   <Text fw={600}>
@@ -390,7 +404,7 @@ function GameView({ game }: { game: GameDetail }) {
                   )}
                 </Stack>
               </Group>
-              {phone ? (
+              {!canManage ? null : phone ? (
                 <Menu position="bottom-end">
                   <Menu.Target>
                     <Button variant="default" size="xs" className={classes.releaseMenuButton} rightSection={<IconChevronDown size={14} />}>
@@ -444,8 +458,8 @@ function GameView({ game }: { game: GameDetail }) {
                 copies={release.copies}
                 devices={names.device}
                 stores={names.store}
-                onEdit={(copy) => setDialog({ kind: 'editCopy', copy, release })}
-                onDelete={(copy) => setDialog({ kind: 'deleteCopy', copy })}
+                onEdit={canManage ? (copy) => setDialog({ kind: 'editCopy', copy, release }) : undefined}
+                onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}
               />
             )}
           </Stack>

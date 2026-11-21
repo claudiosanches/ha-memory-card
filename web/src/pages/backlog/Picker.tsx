@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { useDevices, usePlatforms } from '../../api/queries';
+import { useCanManage, useDevices, usePlatforms } from '../../api/queries';
 import type { Suggestion } from '../../api/types';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
@@ -21,6 +21,7 @@ export function Picker() {
   // Kept apart from the mutation, which drops its data while the next roll loads.
   const [picked, setPicked] = useState<{ suggestion: Suggestion; roll: number } | null>(null);
   const setStatus = useSetPlayStatus();
+  const canManage = useCanManage();
 
   const pick = useMutation({
     mutationFn: () => call(api.POST('/api/suggestions', { body: device ? { device: [Number(device)] } : {} })),
@@ -82,7 +83,7 @@ export function Picker() {
             suggestion={picked.suggestion}
             rolling={pick.isPending}
             starting={setStatus.isPending}
-            onStart={() => start(picked.suggestion.game.id)}
+            onStart={canManage ? () => start(picked.suggestion.game.id) : undefined}
           />
         ) : pick.isError ? (
           <Text size="sm" c="dimmed">
@@ -98,7 +99,7 @@ export function Picker() {
   );
 }
 
-type PickedProps = { suggestion: Suggestion; rolling: boolean; starting: boolean; onStart: () => void };
+type PickedProps = { suggestion: Suggestion; rolling: boolean; starting: boolean; onStart?: () => void };
 
 function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
   const { t } = useTranslation();
@@ -130,16 +131,18 @@ function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
             {line}
           </Text>
         ))}
-        <Group className={classes.pickedActions}>
-          <Button
-            leftSection={<IconPlayerPlay size={16} />}
-            onClick={onStart}
-            loading={starting}
-            disabled={rolling}
-          >
-            {t('backlog.start')}
-          </Button>
-        </Group>
+        {onStart && (
+          <Group className={classes.pickedActions}>
+            <Button
+              leftSection={<IconPlayerPlay size={16} />}
+              onClick={onStart}
+              loading={starting}
+              disabled={rolling}
+            >
+              {t('backlog.start')}
+            </Button>
+          </Group>
+        )}
       </div>
     </div>
   );

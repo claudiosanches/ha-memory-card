@@ -6,6 +6,7 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router';
 import { Layout } from './components/Layout';
+import { ManagerOnly } from './components/ManagerOnly';
 import { BacklogPage } from './pages/backlog/BacklogPage';
 import { DuplicatesPage } from './pages/DuplicatesPage';
 import { ImportPage } from './pages/ImportPage';
@@ -27,11 +28,23 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/games/$gameId', component: GamePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
-  createRoute({ getParentRoute: () => rootRoute, path: '/import', component: ImportPage }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/import',
+    component: () => (
+      <ManagerOnly>
+        <ImportPage />
+      </ManagerOnly>
+    ),
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: '/manage',
-    component: ManagePage,
+    component: () => (
+      <ManagerOnly>
+        <ManagePage />
+      </ManagerOnly>
+    ),
     validateSearch: (search: Record<string, unknown>): { tab?: ManageTab } =>
       MANAGE_TABS.includes(search.tab as ManageTab) ? { tab: search.tab as ManageTab } : {},
   }),
