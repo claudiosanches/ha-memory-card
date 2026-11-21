@@ -9,7 +9,7 @@
     "skipNavigation": "Skip to content",
     "unidentified": "Home Assistant did not say who you are, so Memory Card cannot open. Reload the page from the sidebar.",
     "managersOnly": "Only managers can use this page.",
-    "noManagers": "Memory Card is read-only until the app configuration names a manager.",
+    "noManagers": "Memory Card is read-only until you name a manager in Home Assistant, under Settings > Apps > Memory Card > Configuration.",
     "openSettings": "Find your user ID in Settings"
   },
   "nav": {
@@ -147,7 +147,7 @@
       "dark": "Dark"
     },
     "access": "Your access",
-    "accessNoManagers": "Nobody can change the collection until a manager is named. Copy your user ID below, add it to managers in the app configuration, then restart the app.",
+    "accessNoManagers": "Nobody can change the collection until a manager is named. Copy your user ID below. In Home Assistant, go to Settings > Apps > Memory Card > Configuration, add the ID to Managers, save, then restart the app.",
     "accessManager": "You can change the collection.",
     "accessViewer": "You can browse the collection. Ask a manager to make changes.",
     "accessViewerProgress": "You can browse the collection and track play progress. Ask a manager to make other changes.",

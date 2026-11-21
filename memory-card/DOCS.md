@@ -37,9 +37,17 @@ starts read-only. To name a manager:
 
 1. Open Memory Card as that person, go to **Settings** and copy the user ID
    under **Your access**.
-2. In Home Assistant, open the Memory Card app, go to **Configuration**, add
-   the ID to `managers` and save. Add one entry per manager.
-3. Restart the app.
+2. In Home Assistant, go to **Settings > Apps > Memory Card** and open the
+   **Configuration** tab. Add the ID to **Managers**, one entry per manager,
+   and save. If the form shows no field for it, choose **Edit in YAML** from
+   the ⋮ menu and write:
+
+   ```yaml
+   managers:
+     - your-user-id
+   ```
+
+3. Restart the app from the **Info** tab.
 
 Everyone else is a viewer. Viewers browse the library, game pages, the
 backlog and duplicates. They cannot add, edit or delete anything, roll a
