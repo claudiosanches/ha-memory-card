@@ -376,6 +376,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["suggestGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -729,6 +745,39 @@ export interface components {
         StoreInput: {
             name: string;
             notes?: string | null;
+        };
+        Suggestion: {
+            /** @description Owned copies of the game that match the filters. */
+            copy_ids: number[];
+            game: components["schemas"]["GameDetail"];
+        };
+        /**
+         * @description Values inside one filter are OR, filters are AND, and the copy filters
+         *     apply to the same owned copy.
+         */
+        SuggestionFilter: {
+            /**
+             * @description Copies on these devices, or with no device on a platform one of them plays.
+             * @default []
+             */
+            device: number[];
+            /** @default [] */
+            game_mode: number[];
+            /** @default [] */
+            genre: number[];
+            /**
+             * Format: int64
+             * @description Local (same screen) players, release value first, then the game's.
+             * @default null
+             */
+            min_local_players: number | null;
+            /** @default [] */
+            platform: number[];
+            /**
+             * @description Empty means backlog.
+             * @default []
+             */
+            play_status: components["schemas"]["PlayStatus"][];
         };
         SyncStatus: {
             done: number;
@@ -1917,6 +1966,48 @@ export interface operations {
                 content?: never;
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    suggestGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionFilter"];
+            };
+        };
+        responses: {
+            /** @description A random owned game, not one picked in the last day when others match */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Suggestion"];
+                };
+            };
+            /** @description `no_candidates` */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid_body` */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

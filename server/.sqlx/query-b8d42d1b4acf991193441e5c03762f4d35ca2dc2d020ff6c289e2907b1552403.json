@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM suggestions\n         WHERE suggested_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-30 days')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "b8d42d1b4acf991193441e5c03762f4d35ca2dc2d020ff6c289e2907b1552403"
+}

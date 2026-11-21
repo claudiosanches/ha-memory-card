@@ -19,6 +19,9 @@ pub struct ErrorBody {
 pub enum ApiError {
     #[error("not found")]
     NotFound,
+    /// A search with no result, as a 404 with its own code.
+    #[error("nothing matched: {0}")]
+    NoMatch(&'static str),
     #[error("conflict: {0}")]
     Conflict(&'static str),
     #[error("invalid {field:?}: {code}")]
@@ -58,6 +61,7 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, code, field) = match self {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found", None),
+            Self::NoMatch(code) => (StatusCode::NOT_FOUND, code, None),
             Self::Conflict(code) => (StatusCode::CONFLICT, code, None),
             Self::Invalid { code, field } => (StatusCode::UNPROCESSABLE_ENTITY, code, field),
             Self::Unavailable(code) => (StatusCode::SERVICE_UNAVAILABLE, code, None),

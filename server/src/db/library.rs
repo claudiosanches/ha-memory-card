@@ -147,6 +147,29 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
          FROM games g WHERE 1 = 1",
     );
 
+    push_filters(&mut qb, filter, DeviceMatch::Assigned);
+
+    qb.push(match filter.sort.unwrap_or_default() {
+        LibrarySort::Title => " ORDER BY g.sort_title, g.id",
+        LibrarySort::Added => " ORDER BY g.created_at DESC, g.id DESC",
+        LibrarySort::Played => {
+            " ORDER BY g.last_played_at IS NULL, g.last_played_at DESC, g.sort_title"
+        }
+    });
+    qb
+}
+
+/// How the device filter matches a copy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceMatch {
+    /// The copy is on the device.
+    Assigned,
+    /// The copy is on the device, or has no device and the device plays its platform.
+    Playable,
+}
+
+/// Conditions on games `g` after a `WHERE`.
+pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, device: DeviceMatch) {
     let owned = filter.ownership.unwrap_or_default() == Ownership::Owned;
     let copy_filters = !filter.platform.is_empty()
         || !filter.device.is_empty()
@@ -160,38 +183,25 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
             " AND EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
                WHERE r.game_id = g.id",
         );
-        if owned {
-            qb.push(" AND c.status = 'owned'");
-        }
-        push_in(&mut qb, "r.platform_id", &filter.platform);
-        push_in(&mut qb, "c.device_id", &filter.device);
-        push_in(&mut qb, "c.store_id", &filter.store);
-        push_in(&mut qb, "r.region", &filter.region);
-        if let Some(format) = filter.format {
-            qb.push(" AND c.format = ").push_bind(format);
-        }
-        if let Some(players) = filter.min_local_players.filter(|n| *n > 1) {
-            qb.push(" AND COALESCE(r.local_max_players, g.local_max_players) >= ")
-                .push_bind(players);
-        }
+        push_copy_filters(qb, filter, device);
         qb.push(")");
     }
 
     if !filter.genre.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_genres gg WHERE gg.game_id = g.id");
-        push_in(&mut qb, "gg.genre_id", &filter.genre);
+        push_in(qb, "gg.genre_id", &filter.genre);
         qb.push(")");
     }
     if !filter.game_mode.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_game_modes gm WHERE gm.game_id = g.id");
-        push_in(&mut qb, "gm.game_mode_id", &filter.game_mode);
+        push_in(qb, "gm.game_mode_id", &filter.game_mode);
         qb.push(")");
     }
-    push_in(&mut qb, "g.play_status", &filter.play_status);
+    push_in(qb, "g.play_status", &filter.play_status);
     match filter.igdb {
         Some(IgdbLink::Linked) => qb.push(" AND g.igdb_id IS NOT NULL"),
         Some(IgdbLink::Unlinked) => qb.push(" AND g.igdb_id IS NULL"),
-        None => &mut qb,
+        None => &mut *qb,
     };
 
     if let Some(text) = filter.q.as_deref().map(str::trim).filter(|t| !t.is_empty()) {
@@ -199,15 +209,41 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
             .push_bind(text.to_owned())
             .push(")) > 0");
     }
+}
 
-    qb.push(match filter.sort.unwrap_or_default() {
-        LibrarySort::Title => " ORDER BY g.sort_title, g.id",
-        LibrarySort::Added => " ORDER BY g.created_at DESC, g.id DESC",
-        LibrarySort::Played => {
-            " ORDER BY g.last_played_at IS NULL, g.last_played_at DESC, g.sort_title"
+/// Conditions on copies `c`, their releases `r` and games `g`.
+pub fn push_copy_filters(
+    qb: &mut QueryBuilder<Sqlite>,
+    filter: &LibraryFilter,
+    device: DeviceMatch,
+) {
+    if filter.ownership.unwrap_or_default() == Ownership::Owned {
+        qb.push(" AND c.status = 'owned'");
+    }
+    push_in(qb, "r.platform_id", &filter.platform);
+    match device {
+        DeviceMatch::Assigned => push_in(qb, "c.device_id", &filter.device),
+        DeviceMatch::Playable if !filter.device.is_empty() => {
+            qb.push(" AND (c.device_id IN ");
+            push_list(qb, &filter.device);
+            qb.push(
+                " OR (c.device_id IS NULL AND r.platform_id IN
+                   (SELECT platform_id FROM device_platforms WHERE device_id IN ",
+            );
+            push_list(qb, &filter.device);
+            qb.push(")))");
         }
-    });
-    qb
+        DeviceMatch::Playable => {}
+    }
+    push_in(qb, "c.store_id", &filter.store);
+    push_in(qb, "r.region", &filter.region);
+    if let Some(format) = filter.format {
+        qb.push(" AND c.format = ").push_bind(format);
+    }
+    if let Some(players) = filter.min_local_players.filter(|n| *n > 1) {
+        qb.push(" AND COALESCE(r.local_max_players, g.local_max_players) >= ")
+            .push_bind(players);
+    }
 }
 
 fn push_in<T>(qb: &mut QueryBuilder<Sqlite>, column: &str, values: &[T])
@@ -217,7 +253,16 @@ where
     if values.is_empty() {
         return;
     }
-    qb.push(format_args!(" AND {column} IN ("));
+    qb.push(format_args!(" AND {column} IN "));
+    push_list(qb, values);
+}
+
+/// Pushes `(?, ?, ...)`.
+fn push_list<T>(qb: &mut QueryBuilder<Sqlite>, values: &[T])
+where
+    T: Clone + for<'q> sqlx::Encode<'q, Sqlite> + sqlx::Type<Sqlite> + 'static,
+{
+    qb.push("(");
     let mut list = qb.separated(", ");
     for value in values {
         list.push_bind(value.clone());

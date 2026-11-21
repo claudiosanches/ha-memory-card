@@ -6,6 +6,7 @@ mod input;
 pub mod platforms;
 pub mod status;
 pub mod stores;
+pub mod suggestions;
 pub mod transfer;
 
 use utoipa::OpenApi;
@@ -39,6 +40,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::game_modes))
         .routes(routes!(games::genres))
         .routes(routes!(duplicates::list))
+        .routes(routes!(suggestions::suggest))
         .routes(routes!(igdb::search))
         .routes(routes!(igdb::link))
         .routes(routes!(igdb::sync_status, igdb::start_sync))
