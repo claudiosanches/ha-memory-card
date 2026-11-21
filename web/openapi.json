@@ -1041,6 +1041,70 @@
         }
       }
     },
+    "/api/igdb/titles": {
+      "get": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "listTitleDifferences",
+        "responses": {
+          "200": {
+            "description": "Linked games whose title differs from IGDB's, except titles the user kept",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TitleDifference"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "resolveTitles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleChoices"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The differences left",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TitleDifference"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_body`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/import": {
       "post": {
         "tags": [
@@ -3283,6 +3347,55 @@
             "type": "integer",
             "description": "Linked games refreshed.",
             "minimum": 0
+          }
+        }
+      },
+      "TitleChoices": {
+        "type": "object",
+        "properties": {
+          "keep": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Games whose title stays; they leave the list until IGDB renames them."
+          },
+          "use_igdb": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Games to rename to their IGDB title."
+          }
+        },
+        "additionalProperties": false
+      },
+      "TitleDifference": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "igdb_title"
+        ],
+        "properties": {
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative to the covers URL."
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "igdb_title": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
           }
         }
       }

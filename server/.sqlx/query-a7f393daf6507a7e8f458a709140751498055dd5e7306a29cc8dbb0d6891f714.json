@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"game_id!\", title, igdb_title AS \"igdb_title!\", cover_path\n           FROM games\n           WHERE igdb_title IS NOT NULL AND title != igdb_title\n             AND igdb_title_declined IS NOT igdb_title\n           ORDER BY sort_title, id",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "igdb_title!",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "igdb_title"
+          }
+        }
+      },
+      {
+        "name": "cover_path",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "cover_path"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "a7f393daf6507a7e8f458a709140751498055dd5e7306a29cc8dbb0d6891f714"
+}

@@ -396,7 +396,16 @@
     "syncButton": "Sync with IGDB",
     "syncProgress": "{{done}} of {{total}} games",
     "syncResult": "Last sync: {{linked}} linked, {{updated}} updated, {{unmatched}} not matched, {{failed}} failed.",
-    "overwrite": "Replace the title, summary, game modes, player counts and release titles and dates with IGDB's"
+    "overwrite": "Replace the title, summary, game modes, player counts and release titles and dates with IGDB's",
+    "titlesTitle": "Titles",
+    "titlesText_one": "{{count}} linked game has a different title on IGDB. Use IGDB's title or keep yours. A kept title comes back here only if IGDB renames the game.",
+    "titlesText_other": "{{count}} linked games have a different title on IGDB. Use IGDB's title or keep yours. A kept title comes back here only if IGDB renames the game.",
+    "titlesNone": "Every linked game uses IGDB's title or one you chose to keep. Sync to check again.",
+    "titleOnIgdb": "IGDB: {{title}}",
+    "useIgdbTitle": "Use IGDB's",
+    "keepTitle": "Keep mine",
+    "useAllIgdbTitles": "Use IGDB's for all",
+    "titlesSaved": "Titles updated"
   },
   "duplicates": {
     "intro": "Games you own more than one copy of.",

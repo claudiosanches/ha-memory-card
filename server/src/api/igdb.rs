@@ -8,6 +8,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::AppState;
 use crate::db::games::{self, GameDetail};
+use crate::db::titles::{self, TitleDifference};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 use crate::igdb::sync::{self, SyncStatus};
 use crate::igdb::{Igdb, SearchHit, store};
@@ -116,4 +117,41 @@ pub async fn start_sync(
     State(state): State<AppState>,
 ) -> ApiResult<(StatusCode, Json<SyncStatus>)> {
     Ok((StatusCode::ACCEPTED, Json(sync::start(&state)?)))
+}
+
+#[utoipa::path(
+    get, path = "/igdb/titles", tag = "igdb", operation_id = "listTitleDifferences",
+    responses((status = OK, description = "Linked games whose title differs from IGDB's, except titles the user kept", body = Vec<TitleDifference>))
+)]
+pub async fn title_differences(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<TitleDifference>>> {
+    Ok(Json(titles::differences(&state.db).await?))
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TitleChoices {
+    /// Games to rename to their IGDB title.
+    #[serde(default)]
+    pub use_igdb: Vec<i64>,
+    /// Games whose title stays; they leave the list until IGDB renames them.
+    #[serde(default)]
+    pub keep: Vec<i64>,
+}
+
+#[utoipa::path(
+    post, path = "/igdb/titles", tag = "igdb", operation_id = "resolveTitles",
+    request_body = TitleChoices,
+    responses(
+        (status = OK, description = "The differences left", body = Vec<TitleDifference>),
+        (status = UNPROCESSABLE_ENTITY, description = "`invalid_body`", body = ErrorBody),
+    )
+)]
+pub async fn resolve_titles(
+    State(state): State<AppState>,
+    ApiJson(choices): ApiJson<TitleChoices>,
+) -> ApiResult<Json<Vec<TitleDifference>>> {
+    titles::resolve(&state.db, &choices.use_igdb, &choices.keep).await?;
+    Ok(Json(titles::differences(&state.db).await?))
 }

@@ -273,6 +273,76 @@ async fn uploads_survive_a_refresh_and_removing_one_restores_igdb_covers() {
 }
 
 #[tokio::test]
+async fn lists_titles_that_differ_from_igdb_until_resolved() {
+    let app = with_igdb().await;
+    app.release("Odyssey", "switch").await;
+    let odyssey: i64 = app.scalar("SELECT id FROM games").await;
+    let link = format!("/api/games/{odyssey}/igdb");
+    app.json("POST", &link, Some(json!({"igdb_id": 1}))).await;
+    app.release("Bomberman 93", "switch").await;
+    sqlx::query("UPDATE games SET igdb_title = 'Bomberman ''93' WHERE title = 'Bomberman 93'")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let bomberman: i64 = app
+        .scalar("SELECT id FROM games WHERE title = 'Bomberman 93'")
+        .await;
+
+    let (status, list) = app.json("GET", "/api/igdb/titles", None).await;
+    assert_eq!(status, StatusCode::OK, "{list}");
+    let pairs: Vec<(&str, &str)> = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| {
+            (
+                d["title"].as_str().unwrap(),
+                d["igdb_title"].as_str().unwrap(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        pairs,
+        [
+            ("Bomberman 93", "Bomberman '93"),
+            ("Odyssey", "Super Mario Odyssey")
+        ]
+    );
+
+    let (status, left) = app
+        .json(
+            "POST",
+            "/api/igdb/titles",
+            Some(json!({"use_igdb": [bomberman], "keep": [odyssey]})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{left}");
+    assert_eq!(left, json!([]));
+    let (_, game) = app
+        .json("GET", &format!("/api/games/{bomberman}"), None)
+        .await;
+    assert_eq!(game["title"], "Bomberman '93");
+    let sort: String = sqlx::query_scalar("SELECT sort_title FROM games WHERE id = ?")
+        .bind(bomberman)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(sort, "bomberman '93");
+
+    // A refresh keeps a kept title off the list; a new IGDB name brings it back.
+    app.json("POST", &link, Some(json!({"igdb_id": 1}))).await;
+    let (_, list) = app.json("GET", "/api/igdb/titles", None).await;
+    assert_eq!(list, json!([]));
+    sqlx::query("UPDATE games SET igdb_title = 'Super Mario Odyssey Deluxe' WHERE id = ?")
+        .bind(odyssey)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let (_, list) = app.json("GET", "/api/igdb/titles", None).await;
+    assert_eq!(list[0]["igdb_title"], "Super Mario Odyssey Deluxe");
+}
+
+#[tokio::test]
 async fn sync_links_exact_titles_and_skips_ambiguous_ones() {
     let app = with_igdb().await;
     for title in ["super mario odyssey", "Doom", "Unknown"] {

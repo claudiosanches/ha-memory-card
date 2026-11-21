@@ -5,8 +5,9 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
-import { queryKeys, useIgdbSync, useStatus } from '../api/queries';
-import { notifyError } from '../components/notify';
+import { queryKeys, useIgdbSync, useStatus, useTitleDifferences } from '../api/queries';
+import { Cover } from '../components/Cover';
+import { notifyError, notifySuccess } from '../components/notify';
 import { ThemePicker } from '../components/ThemePicker';
 
 export function SettingsPage() {
@@ -69,6 +70,7 @@ export function SettingsPage() {
         )}
       </Card>
       {status.data?.igdb_configured && <IgdbSync />}
+      {status.data?.igdb_configured && <IgdbTitles />}
     </Stack>
   );
 }
@@ -127,6 +129,92 @@ function IgdbSync() {
             })}
           </Text>
         )}
+      </Stack>
+    </Card>
+  );
+}
+
+type TitleChoices = { use_igdb?: number[]; keep?: number[] };
+
+function IgdbTitles() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const titles = useTitleDifferences();
+
+  const resolve = useMutation({
+    mutationFn: (body: TitleChoices) => call(api.POST('/api/igdb/titles', { body })),
+    onSuccess: (left, body) => {
+      queryClient.setQueryData(queryKeys.igdbTitles, left);
+      if (body.use_igdb?.length) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.games });
+        void queryClient.invalidateQueries({ queryKey: ['game'] });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.duplicates });
+        notifySuccess(t('igdb.titlesSaved'));
+      }
+    },
+    onError: (error) => notifyError(errorMessage(t, error)),
+  });
+
+  const list = titles.data ?? [];
+  return (
+    <Card withBorder>
+      <Stack gap="sm">
+        <Title order={4}>{t('igdb.titlesTitle')}</Title>
+        {titles.isPending && <Loader size="sm" />}
+        {titles.isError && <Text c="red">{errorMessage(t, titles.error)}</Text>}
+        {titles.data && (
+          <Text size="sm" c="dimmed">
+            {list.length ? t('igdb.titlesText', { count: list.length }) : t('igdb.titlesNone')}
+          </Text>
+        )}
+        {list.length > 1 && (
+          <Group>
+            <Button
+              variant="light"
+              disabled={resolve.isPending}
+              onClick={() => resolve.mutate({ use_igdb: list.map((d) => d.game_id) })}
+            >
+              {t('igdb.useAllIgdbTitles')}
+            </Button>
+          </Group>
+        )}
+        {list.map((difference) => (
+          <Group
+            key={difference.game_id}
+            justify="space-between"
+            gap="sm"
+            data-testid={`title-${difference.game_id}`}
+          >
+            <Group gap="sm" wrap="nowrap" miw={0} style={{ flex: '1 1 260px' }}>
+              <Cover path={difference.cover_path} title={difference.title} width={36} />
+              <Stack gap={0} miw={0}>
+                <Text size="sm" fw={600}>
+                  {difference.title}
+                </Text>
+                <Text size="sm" c="dimmed">
+                  {t('igdb.titleOnIgdb', { title: difference.igdb_title })}
+                </Text>
+              </Stack>
+            </Group>
+            <Group gap="xs" wrap="nowrap">
+              <Button
+                size="xs"
+                variant="default"
+                disabled={resolve.isPending}
+                onClick={() => resolve.mutate({ keep: [difference.game_id] })}
+              >
+                {t('igdb.keepTitle')}
+              </Button>
+              <Button
+                size="xs"
+                disabled={resolve.isPending}
+                onClick={() => resolve.mutate({ use_igdb: [difference.game_id] })}
+              >
+                {t('igdb.useIgdbTitle')}
+              </Button>
+            </Group>
+          </Group>
+        ))}
       </Stack>
     </Card>
   );

@@ -10,6 +10,7 @@ export type DeviceInput = Schemas['DeviceInput'];
 export type DeviceKind = Schemas['DeviceKind'];
 export type DuplicateCopy = Schemas['DuplicateCopy'];
 export type DuplicateGroup = Schemas['DuplicateGroup'];
+export type TitleDifference = Schemas['TitleDifference'];
 export type DuplicateLabel = Schemas['DuplicateLabel'];
 export type Format = Schemas['Format'];
 export type GameDetail = Schemas['GameDetail'];

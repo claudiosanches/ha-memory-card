@@ -6,6 +6,7 @@ pub mod platforms;
 pub mod premigration;
 pub mod stores;
 pub mod suggestions;
+pub mod titles;
 
 use std::path::Path;
 use std::time::Duration;

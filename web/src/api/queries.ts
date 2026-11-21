@@ -13,6 +13,7 @@ export const queryKeys = {
   gameModes: ['game-modes'],
   genres: ['genres'],
   igdbSync: ['igdb-sync'],
+  igdbTitles: ['igdb-titles'],
   duplicates: ['duplicates'],
 } as const;
 
@@ -67,6 +68,10 @@ export function useIgdbSync(enabled: boolean) {
     enabled,
     refetchInterval: (query) => (query.state.data?.running ? 1000 : false),
   });
+}
+
+export function useTitleDifferences() {
+  return useQuery({ queryKey: queryKeys.igdbTitles, queryFn: () => call(api.GET('/api/igdb/titles')) });
 }
 
 export function useDuplicates() {

@@ -67,13 +67,15 @@ pub async fn apply(
         .map(counts)
         .unwrap_or_default();
     let (developers, publishers) = companies(data);
-    let title = Some(data.name.trim()).filter(|t| overwrite && !t.is_empty());
+    let igdb_title = Some(data.name.trim()).filter(|t| !t.is_empty());
+    let title = igdb_title.filter(|_| overwrite);
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE games SET igdb_id = ?1, {summary},
             first_release_date = COALESCE(?3, first_release_date),
             developers = ?4, publishers = ?5,
             {local_max}, {online_max}, {local_coop}, {online_coop},
             title = COALESCE(?11, title), sort_title = COALESCE(?12, sort_title),
+            igdb_title = COALESCE(?13, igdb_title),
             igdb_synced_at = {NOW}, updated_at = {NOW}
          WHERE id = ?10",
         summary = fill("summary", 2),
@@ -94,6 +96,7 @@ pub async fn apply(
     .bind(game_id)
     .bind(title)
     .bind(title.map(sort_title))
+    .bind(igdb_title)
     .execute(&mut *tx)
     .await
     .map_err(|err| ApiError::unique(err, "igdb_linked"))?;

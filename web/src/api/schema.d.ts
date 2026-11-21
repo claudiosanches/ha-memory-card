@@ -232,6 +232,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/igdb/titles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listTitleDifferences"];
+        put?: never;
+        post: operations["resolveTitles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/import": {
         parameters: {
             query?: never;
@@ -832,6 +848,20 @@ export interface components {
             unmatched: number;
             /** @description Linked games refreshed. */
             updated: number;
+        };
+        TitleChoices: {
+            /** @description Games whose title stays; they leave the list until IGDB renames them. */
+            keep?: number[];
+            /** @description Games to rename to their IGDB title. */
+            use_igdb?: number[];
+        };
+        TitleDifference: {
+            /** @description Relative to the covers URL. */
+            cover_path?: string | null;
+            /** Format: int64 */
+            game_id: number;
+            igdb_title: string;
+            title: string;
         };
     };
     responses: never;
@@ -1581,6 +1611,59 @@ export interface operations {
             };
             /** @description `igdb_not_configured` */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listTitleDifferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linked games whose title differs from IGDB's, except titles the user kept */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TitleDifference"][];
+                };
+            };
+        };
+    };
+    resolveTitles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TitleChoices"];
+            };
+        };
+        responses: {
+            /** @description The differences left */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TitleDifference"][];
+                };
+            };
+            /** @description `invalid_body` */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

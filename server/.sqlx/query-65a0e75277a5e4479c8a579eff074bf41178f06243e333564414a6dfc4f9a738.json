@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE games SET igdb_title_declined = igdb_title WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "65a0e75277a5e4479c8a579eff074bf41178f06243e333564414a6dfc4f9a738"
+}
