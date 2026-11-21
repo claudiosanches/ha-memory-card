@@ -47,9 +47,9 @@ import {
   type ReleaseDetail,
 } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
-import { Cover } from '../../components/Cover';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { formatDate, STATUS_COLORS, today } from '../../components/status';
+import { CoverPicker } from './CoverPicker';
 import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
 import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
 
@@ -196,7 +196,13 @@ function GameView({ game }: { game: GameDetail }) {
       <BackLink />
       <Group justify="space-between" align="flex-start">
         <Group align="flex-start" wrap="nowrap">
-          <Cover path={game.cover_path} title={game.title} width={phone ? 72 : 120} />
+          <CoverPicker
+            target={{ kind: 'game', id: game.id }}
+            path={game.cover_path}
+            uploaded={game.cover_uploaded}
+            title={game.title}
+            width={phone ? 72 : 120}
+          />
           <Stack gap={4}>
             <Title order={2}>{game.title}</Title>
             {game.igdb_id && (
@@ -339,9 +345,13 @@ function GameView({ game }: { game: GameDetail }) {
           <Stack gap="xs">
             <Group justify="space-between" wrap="nowrap" align="flex-start">
               <Group gap="sm" wrap="nowrap" align="flex-start">
-                {release.cover_path && (
-                  <Cover path={release.cover_path} title={release.title ?? game.title} width={48} />
-                )}
+                <CoverPicker
+                  target={{ kind: 'release', id: release.id }}
+                  path={release.cover_path ?? game.cover_path}
+                  uploaded={release.cover_uploaded}
+                  title={release.title ?? game.title}
+                  width={48}
+                />
                 <Stack gap={0}>
                   <Text fw={600}>
                     {t('game.releaseHeading', {

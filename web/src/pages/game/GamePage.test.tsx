@@ -10,6 +10,8 @@ const GAME: GameDetail = {
   igdb_id: null,
   title: 'Metroid Dread',
   summary: null,
+  cover_path: null,
+  cover_uploaded: false,
   first_release_date: null,
   developers: [],
   publishers: [],
@@ -31,6 +33,7 @@ const GAME: GameDetail = {
       product_code: 'HAC-AYL3A',
       release_date: null,
       cover_path: null,
+      cover_uploaded: false,
       local_max_players: null,
       online_max_players: null,
       local_coop: null,
@@ -81,6 +84,30 @@ describe('Game page', () => {
 
     const card = await screen.findByTestId('release-9');
     expect(within(card).getByRole('img')).toHaveAttribute('src', 'covers/release-9/co5wrq.jpg');
+  });
+
+  it('uploads a release cover from the cover menu', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': GAME,
+      'PUT /api/releases/9/cover': {
+        ...GAME,
+        releases: [{ ...GAME.releases[0], cover_path: 'release-9/upload-1.png', cover_uploaded: true }],
+      },
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.cover.changeRelease }));
+    expect(await screen.findByRole('menuitem', { name: en.cover.upload })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: en.cover.remove })).toBeNull();
+    const file = new File(['png bytes'], 'box.png', { type: 'image/png' });
+    fireEvent.change(screen.getByTestId('cover-file-release-9'), { target: { files: [file] } });
+
+    const card = screen.getByTestId('release-9');
+    await waitFor(() =>
+      expect(within(card).getByRole('img')).toHaveAttribute('src', 'covers/release-9/upload-1.png'),
+    );
+    expect(calls.find((c) => c.method === 'PUT')?.body).toBe('png bytes');
   });
 
   it('marks the only copy as played today', async () => {

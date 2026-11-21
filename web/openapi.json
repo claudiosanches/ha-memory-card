@@ -724,6 +724,103 @@
         }
       }
     },
+    "/api/games/{id}/cover": {
+      "put": {
+        "tags": [
+          "covers"
+        ],
+        "operationId": "uploadGameCover",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Image"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_image` or `image_too_large`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "covers"
+        ],
+        "operationId": "removeGameCover",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The upload is gone; a linked game gets its IGDB cover back",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/games/{id}/igdb": {
       "post": {
         "tags": [
@@ -1337,6 +1434,104 @@
         "responses": {
           "200": {
             "description": "The release's game; the release's copies are deleted too",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/releases/{id}/cover": {
+      "put": {
+        "tags": [
+          "covers"
+        ],
+        "operationId": "uploadReleaseCover",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Image"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The release's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_image` or `image_too_large`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "covers"
+        ],
+        "operationId": "removeReleaseCover",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The release's game; a linked game gets its IGDB cover back",
             "content": {
               "application/json": {
                 "schema": {
@@ -1995,6 +2190,7 @@
         "required": [
           "id",
           "title",
+          "cover_uploaded",
           "developers",
           "publishers",
           "game_mode_ids",
@@ -2008,6 +2204,9 @@
               "null"
             ],
             "description": "Relative to the covers URL."
+          },
+          "cover_uploaded": {
+            "type": "boolean"
           },
           "developers": {
             "type": "array",
@@ -2288,6 +2487,11 @@
             "type": "string"
           }
         }
+      },
+      "Image": {
+        "type": "string",
+        "format": "binary",
+        "description": "A JPEG, PNG or WebP image, at most 10 MB."
       },
       "ImportPreview": {
         "type": "object",
@@ -2661,6 +2865,7 @@
           "id",
           "platform_id",
           "region",
+          "cover_uploaded",
           "copies"
         ],
         "properties": {
@@ -2676,6 +2881,9 @@
               "null"
             ],
             "description": "This release's own cover, relative to the covers URL. The game's cover applies when null."
+          },
+          "cover_uploaded": {
+            "type": "boolean"
           },
           "id": {
             "type": "integer",

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT igdb_id FROM games WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "igdb_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "igdb_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "8fb11a3dee0c78e83c971a2b247699cfd505b3ea538f07787cf8746659a522b7"
+}

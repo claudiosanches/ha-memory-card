@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE releases SET cover_path = NULL, cover_source = NULL,\n                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n             WHERE id = ? AND cover_source = 'upload'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e46c51ddbb1c1e3a7f9c83cceb37d865c1e1fe8b8c4f063b2a79fe9c66d0cbfa"
+}

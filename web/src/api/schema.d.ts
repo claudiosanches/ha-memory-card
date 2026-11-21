@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/games/{id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["uploadGameCover"];
+        post?: never;
+        delete: operations["removeGameCover"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/games/{id}/igdb": {
         parameters: {
             query?: never;
@@ -328,6 +344,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/releases/{id}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["uploadReleaseCover"];
+        post?: never;
+        delete: operations["removeReleaseCover"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/status": {
         parameters: {
             query?: never;
@@ -502,6 +534,7 @@ export interface components {
         GameDetail: {
             /** @description Relative to the covers URL. */
             cover_path?: string | null;
+            cover_uploaded: boolean;
             developers: string[];
             first_release_date?: string | null;
             game_mode_ids: number[];
@@ -571,6 +604,11 @@ export interface components {
             id: number;
             name: string;
         };
+        /**
+         * Format: binary
+         * @description A JPEG, PNG or WebP image, at most 10 MB.
+         */
+        Image: string;
         ImportPreview: {
             file_issue?: components["schemas"]["FileIssue"] | null;
             new_devices: components["schemas"]["NewDeviceReport"][];
@@ -673,6 +711,7 @@ export interface components {
             copies: components["schemas"]["CopyDetail"][];
             /** @description This release's own cover, relative to the covers URL. The game's cover applies when null. */
             cover_path?: string | null;
+            cover_uploaded: boolean;
             /** Format: int64 */
             id: number;
             local_coop?: boolean | null;
@@ -1296,6 +1335,78 @@ export interface operations {
             };
         };
     };
+    uploadGameCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": components["schemas"]["Image"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid_image` or `image_too_large` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    removeGameCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The upload is gone; a linked game gets its IGDB cover back */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     linkGame: {
         parameters: {
             query?: never;
@@ -1795,6 +1906,79 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description The release's game; the release's copies are deleted too */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    uploadReleaseCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": components["schemas"]["Image"];
+            };
+        };
+        responses: {
+            /** @description The release's game */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid_image` or `image_too_large` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    removeReleaseCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The release's game; a linked game gets its IGDB cover back */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -162,7 +162,9 @@
     "igdb_linked": "Another game is already linked to this IGDB game.",
     "igdb_not_found": "IGDB has no game with this id.",
     "sync_running": "A sync is already running.",
-    "platform_builtin": "Platforms that come with the app cannot be deleted. Remove it from your platforms instead."
+    "platform_builtin": "Platforms that come with the app cannot be deleted. Remove it from your platforms instead.",
+    "invalid_image": "Use a JPEG, PNG or WebP image.",
+    "image_too_large": "Use an image of 10 MB or less."
   },
   "import": {
     "exportTitle": "Export",
@@ -314,6 +316,14 @@
     "emptyTitle": "Your collection starts here",
     "noMatchTitle": "No games found",
     "clearSearch": "Clear search"
+  },
+  "cover": {
+    "changeGame": "Change the game cover",
+    "changeRelease": "Change this release's cover",
+    "upload": "Upload a cover",
+    "remove": "Remove the uploaded cover",
+    "uploaded": "Cover uploaded",
+    "removed": "Uploaded cover removed"
   },
   "game": {
     "back": "Library",

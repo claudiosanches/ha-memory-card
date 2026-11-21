@@ -23,6 +23,10 @@ covers and metadata, give it access to the IGDB API.
 Releases for Japan, Korea and Europe get their regional cover when IGDB has
 one. **Settings > Sync with IGDB** refreshes every linked game.
 
+To use your own cover, click the cover of a game or a release on its page and
+upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
+uploaded cover. Removing it brings back IGDB's.
+
 ## Options
 
 | Option | Description |

@@ -20,6 +20,9 @@ use crate::error::{ApiError, ApiResult};
 
 const NOW: &str = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
 
+/// `cover_source` of an uploaded cover. IGDB never replaces one.
+const UPLOAD: &str = "upload";
+
 /// IGDB `release_region` for worldwide releases, the fallback for release dates.
 const WORLDWIDE: i64 = 8;
 
@@ -44,45 +47,8 @@ pub async fn apply(
         return Err(ApiError::Conflict("igdb_linked"));
     }
 
-    let cover = match data.cover.as_ref().map(|c| c.image_id.as_str()) {
-        Some(image_id) if is_image_id(image_id) => {
-            match save_cover(covers_dir, igdb, Owner::Game(game_id), image_id).await {
-                Ok(path) => Some(path),
-                Err(err) => {
-                    tracing::warn!(game_id, error = %err, "cover download failed");
-                    None
-                }
-            }
-        }
-        _ => None,
-    };
-    let releases: Vec<(i64, String, Option<i64>, Option<String>)> = sqlx::query_as(
-        "SELECT r.id, r.region, p.igdb_platform_id, r.cover_source
-         FROM releases r JOIN platforms p ON p.id = r.platform_id WHERE r.game_id = ?",
-    )
-    .bind(game_id)
-    .fetch_all(pool)
-    .await?;
-    // IGDB owns regional covers: each one is replaced or cleared. Uploads stay.
-    let mut release_covers = Vec::new();
-    for (release_id, region, _, source) in &releases {
-        if source.as_deref() == Some("upload") {
-            continue;
-        }
-        let path = match local_cover(data, region) {
-            Some(image_id) => {
-                match save_cover(covers_dir, igdb, Owner::Release(*release_id), image_id).await {
-                    Ok(path) => Some(path),
-                    Err(err) => {
-                        tracing::warn!(release_id, error = %err, "cover download failed");
-                        continue;
-                    }
-                }
-            }
-            None => None,
-        };
-        release_covers.push((*release_id, path));
-    }
+    let releases = releases(pool, game_id).await?;
+    let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
 
     // The stored value wins unless overwriting; a missing IGDB value never clears one.
     let fill = |column: &str, param: u8| {
@@ -107,11 +73,9 @@ pub async fn apply(
             first_release_date = COALESCE(?3, first_release_date),
             developers = ?4, publishers = ?5,
             {local_max}, {online_max}, {local_coop}, {online_coop},
-            cover_path = COALESCE(?10, cover_path),
-            cover_source = CASE WHEN ?10 IS NULL THEN cover_source ELSE 'igdb' END,
-            title = COALESCE(?12, title), sort_title = COALESCE(?13, sort_title),
+            title = COALESCE(?11, title), sort_title = COALESCE(?12, sort_title),
             igdb_synced_at = {NOW}, updated_at = {NOW}
-         WHERE id = ?11",
+         WHERE id = ?10",
         summary = fill("summary", 2),
         local_max = fill("local_max_players", 6),
         online_max = fill("online_max_players", 7),
@@ -127,7 +91,6 @@ pub async fn apply(
     .bind(game_counts.online_max_players)
     .bind(game_counts.local_coop)
     .bind(game_counts.online_coop)
-    .bind(&cover)
     .bind(game_id)
     .bind(title)
     .bind(title.map(sort_title))
@@ -199,8 +162,8 @@ pub async fn apply(
         fill("release_date", 5),
         fill("title", 6),
     );
-    for (release_id, region, platform, _) in &releases {
-        let (release_id, platform) = (*release_id, *platform);
+    for release in &releases {
+        let platform = release.igdb_platform_id;
         let c = platform
             .and_then(|p| {
                 data.multiplayer_modes
@@ -214,33 +177,154 @@ pub async fn apply(
             .bind(c.online_max_players)
             .bind(c.local_coop)
             .bind(c.online_coop)
-            .bind(platform.and_then(|p| release_date(data, p, region)))
-            .bind(local_title(data, region))
-            .bind(release_id)
+            .bind(platform.and_then(|p| release_date(data, p, &release.region)))
+            .bind(local_title(data, &release.region))
+            .bind(release.id)
             .execute(&mut *tx)
             .await?;
     }
 
-    for (release_id, path) in &release_covers {
-        sqlx::query(
+    let changed = write_covers(&mut tx, game_id, &covers).await?;
+    tx.commit().await?;
+    clean_up(covers_dir, changed).await;
+    Ok(())
+}
+
+/// Downloads and stores the game's IGDB covers without touching its other data.
+pub async fn refresh_covers(
+    pool: &SqlitePool,
+    covers_dir: &Path,
+    igdb: &Igdb,
+    game_id: i64,
+    data: &GameData,
+) -> ApiResult<()> {
+    let releases = releases(pool, game_id).await?;
+    let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
+    let mut tx = write_tx(pool).await?;
+    let changed = write_covers(&mut tx, game_id, &covers).await?;
+    tx.commit().await?;
+    clean_up(covers_dir, changed).await;
+    Ok(())
+}
+
+#[derive(sqlx::FromRow)]
+struct ReleaseRow {
+    id: i64,
+    region: String,
+    igdb_platform_id: Option<i64>,
+    cover_source: Option<String>,
+}
+
+async fn releases(pool: &SqlitePool, game_id: i64) -> sqlx::Result<Vec<ReleaseRow>> {
+    sqlx::query_as(
+        "SELECT r.id, r.region, p.igdb_platform_id, r.cover_source
+         FROM releases r JOIN platforms p ON p.id = r.platform_id WHERE r.game_id = ?",
+    )
+    .bind(game_id)
+    .fetch_all(pool)
+    .await
+}
+
+/// Downloaded covers, relative to the covers directory. Uploads are skipped.
+struct Covers {
+    /// `None` keeps the stored cover.
+    game: Option<String>,
+    /// IGDB owns regional covers, so `None` clears one.
+    releases: Vec<(i64, Option<String>)>,
+}
+
+async fn download_covers(
+    pool: &SqlitePool,
+    covers_dir: &Path,
+    igdb: &Igdb,
+    game_id: i64,
+    data: &GameData,
+    releases: &[ReleaseRow],
+) -> ApiResult<Covers> {
+    let source: Option<String> = sqlx::query_scalar("SELECT cover_source FROM games WHERE id = ?")
+        .bind(game_id)
+        .fetch_optional(pool)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let game = match data.cover.as_ref().map(|c| c.image_id.as_str()) {
+        Some(image_id) if is_image_id(image_id) && source.as_deref() != Some(UPLOAD) => {
+            match save_cover(covers_dir, igdb, Owner::Game(game_id), image_id).await {
+                Ok(path) => Some(path),
+                Err(err) => {
+                    tracing::warn!(game_id, error = %err, "cover download failed");
+                    None
+                }
+            }
+        }
+        _ => None,
+    };
+
+    let mut release_covers = Vec::new();
+    for release in releases {
+        if release.cover_source.as_deref() == Some(UPLOAD) {
+            continue;
+        }
+        let path = match local_cover(data, &release.region) {
+            Some(image_id) => {
+                match save_cover(covers_dir, igdb, Owner::Release(release.id), image_id).await {
+                    Ok(path) => Some(path),
+                    Err(err) => {
+                        tracing::warn!(release_id = release.id, error = %err, "cover download failed");
+                        continue;
+                    }
+                }
+            }
+            None => None,
+        };
+        release_covers.push((release.id, path));
+    }
+    Ok(Covers {
+        game,
+        releases: release_covers,
+    })
+}
+
+/// Stores the covers unless an upload arrived meanwhile, and returns what changed.
+async fn write_covers(
+    tx: &mut Transaction<'static, Sqlite>,
+    game_id: i64,
+    covers: &Covers,
+) -> sqlx::Result<Vec<(Owner, Option<String>)>> {
+    let mut changed = Vec::new();
+    if let Some(path) = &covers.game {
+        let result = sqlx::query(
+            "UPDATE games SET cover_path = ?, cover_source = 'igdb'
+             WHERE id = ? AND cover_source IS NOT 'upload'",
+        )
+        .bind(path)
+        .bind(game_id)
+        .execute(&mut **tx)
+        .await?;
+        if result.rows_affected() > 0 {
+            changed.push((Owner::Game(game_id), Some(path.clone())));
+        }
+    }
+    for (release_id, path) in &covers.releases {
+        let result = sqlx::query(
             "UPDATE releases SET cover_path = ?1,
                 cover_source = CASE WHEN ?1 IS NULL THEN NULL ELSE 'igdb_localization' END
              WHERE id = ?2 AND cover_source IS NOT 'upload'",
         )
         .bind(path)
         .bind(release_id)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await?;
+        if result.rows_affected() > 0 {
+            changed.push((Owner::Release(*release_id), path.clone()));
+        }
     }
+    Ok(changed)
+}
 
-    tx.commit().await?;
-    if let Some(kept) = &cover {
-        covers::keep_only(covers_dir, Owner::Game(game_id), Some(kept)).await;
+async fn clean_up(covers_dir: &Path, changed: Vec<(Owner, Option<String>)>) {
+    for (owner, kept) in changed {
+        covers::keep_only(covers_dir, owner, kept.as_deref()).await;
     }
-    for (release_id, path) in &release_covers {
-        covers::keep_only(covers_dir, Owner::Release(*release_id), path.as_deref()).await;
-    }
-    Ok(())
 }
 
 /// Finds a genre or game mode by IGDB id, then by name, or creates it.

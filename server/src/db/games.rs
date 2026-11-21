@@ -4,6 +4,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
+use crate::covers::Owner;
 use crate::domain::{Condition, CopyStatus, Format, PlayStatus, Region, sort_title};
 use crate::error::{ApiError, ApiResult};
 
@@ -28,6 +29,7 @@ pub struct ReleaseDetail {
     pub release_date: Option<String>,
     /// This release's own cover, relative to the covers URL. The game's cover applies when null.
     pub cover_path: Option<String>,
+    pub cover_uploaded: bool,
     pub local_max_players: Option<i64>,
     pub online_max_players: Option<i64>,
     pub local_coop: Option<bool>,
@@ -43,6 +45,7 @@ pub struct GameDetail {
     pub summary: Option<String>,
     /// Relative to the covers URL.
     pub cover_path: Option<String>,
+    pub cover_uploaded: bool,
     pub first_release_date: Option<String>,
     pub developers: Vec<String>,
     pub publishers: Vec<String>,
@@ -98,7 +101,8 @@ pub struct ReleaseFields {
 
 pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     let game = sqlx::query!(
-        r#"SELECT g.id AS "id!", g.igdb_id, g.title, g.summary, g.cover_path, g.first_release_date,
+        r#"SELECT g.id AS "id!", g.igdb_id, g.title, g.summary, g.cover_path,
+                  g.cover_source IS 'upload' AS "cover_uploaded!: bool", g.first_release_date,
                   g.developers AS "developers: Json<Vec<String>>",
                   g.publishers AS "publishers: Json<Vec<String>>",
                   g.play_status AS "play_status: PlayStatus", g.last_played_at, g.last_played_copy_id,
@@ -117,7 +121,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
 
     let releases = sqlx::query!(
         r#"SELECT r.id AS "id!", r.platform_id, r.region AS "region: Region", r.title, r.product_code,
-                  r.release_date, r.cover_path, r.local_max_players, r.online_max_players,
+                  r.release_date, r.cover_path, r.cover_source IS 'upload' AS "cover_uploaded!: bool",
+                  r.local_max_players, r.online_max_players,
                   r.local_coop AS "local_coop: bool", r.online_coop AS "online_coop: bool"
            FROM releases r JOIN platforms p ON p.id = r.platform_id
            WHERE r.game_id = ?
@@ -153,6 +158,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                 product_code: r.product_code,
                 release_date: r.release_date,
                 cover_path: r.cover_path,
+                cover_uploaded: r.cover_uploaded,
                 local_max_players: r.local_max_players,
                 online_max_players: r.online_max_players,
                 local_coop: r.local_coop,
@@ -184,6 +190,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         title: game.title,
         summary: game.summary,
         cover_path: game.cover_path,
+        cover_uploaded: game.cover_uploaded,
         first_release_date: game.first_release_date,
         developers: game.developers.0,
         publishers: game.publishers.0,
@@ -506,4 +513,59 @@ async fn id_list(
         return Err(ApiError::invalid("unknown_id", field));
     }
     Ok(json)
+}
+
+/// The game a cover belongs to.
+pub async fn cover_game(pool: &SqlitePool, owner: Owner) -> ApiResult<i64> {
+    match owner {
+        Owner::Game(id) => {
+            sqlx::query_scalar!(r#"SELECT id AS "id!" FROM games WHERE id = ?"#, id)
+                .fetch_optional(pool)
+                .await?
+        }
+        Owner::Release(id) => release_game(pool, id).await.map(Some)?,
+    }
+    .ok_or(ApiError::NotFound)
+}
+
+/// Sets an uploaded cover, or with `None` removes one. Returns whether the row changed.
+pub async fn set_uploaded_cover(
+    pool: &SqlitePool,
+    owner: Owner,
+    path: Option<&str>,
+) -> ApiResult<bool> {
+    let result = match (owner, path) {
+        (Owner::Game(id), Some(path)) => sqlx::query!(
+            "UPDATE games SET cover_path = ?, cover_source = 'upload',
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            path,
+            id
+        )
+        .execute(pool),
+        (Owner::Game(id), None) => sqlx::query!(
+            "UPDATE games SET cover_path = NULL, cover_source = NULL,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ? AND cover_source = 'upload'",
+            id
+        )
+        .execute(pool),
+        (Owner::Release(id), Some(path)) => sqlx::query!(
+            "UPDATE releases SET cover_path = ?, cover_source = 'upload',
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            path,
+            id
+        )
+        .execute(pool),
+        (Owner::Release(id), None) => sqlx::query!(
+            "UPDATE releases SET cover_path = NULL, cover_source = NULL,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ? AND cover_source = 'upload'",
+            id
+        )
+        .execute(pool),
+    }
+    .await?;
+    Ok(result.rows_affected() > 0)
 }

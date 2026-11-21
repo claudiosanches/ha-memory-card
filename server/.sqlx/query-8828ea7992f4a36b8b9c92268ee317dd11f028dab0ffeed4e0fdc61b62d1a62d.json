@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE games SET cover_path = NULL, cover_source = NULL,\n                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n             WHERE id = ? AND cover_source = 'upload'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "8828ea7992f4a36b8b9c92268ee317dd11f028dab0ffeed4e0fdc61b62d1a62d"
+}

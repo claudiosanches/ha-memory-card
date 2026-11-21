@@ -28,6 +28,19 @@ test('add a game and a copy, then find and delete it', async ({ page }, testInfo
   await expect(dialog).toBeHidden();
   await expect(page.getByText('Nintendo Switch · Europe (PAL)')).toBeVisible();
 
+  // A 1x1 PNG, uploaded through the cover menu and served under the ingress path.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  await page.getByRole('button', { name: en.cover.changeGame }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('menuitem', { name: en.cover.upload }).click();
+  await (await chooser).setFiles({ name: 'cover.png', mimeType: 'image/png', buffer: png });
+  const cover = page.getByRole('button', { name: en.cover.changeGame }).getByRole('img');
+  await expect(cover).toHaveAttribute('src', /^covers\/game-\d+\/upload-\d+\.png$/);
+  await expect.poll(() => cover.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1);
+
   await page.getByRole('combobox', { name: en.game.playStatus, exact: true }).click();
   await page.getByRole('option', { name: en.playStatus.playing }).click();
   await page.getByRole('button', { name: en.game.playedToday }).click();

@@ -1,3 +1,4 @@
+pub mod covers;
 pub mod devices;
 pub mod duplicates;
 pub mod games;
@@ -37,6 +38,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::add_copy))
         .routes(routes!(games::update_copy, games::delete_copy))
         .routes(routes!(games::update_release, games::delete_release))
+        .routes(routes!(covers::upload_game, covers::remove_game))
+        .routes(routes!(covers::upload_release, covers::remove_release))
         .routes(routes!(games::game_modes))
         .routes(routes!(games::genres))
         .routes(routes!(duplicates::list))

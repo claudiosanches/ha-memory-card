@@ -95,6 +95,16 @@ impl TestApp {
         (status, serde_json::from_slice(&bytes).unwrap())
     }
 
+    /// Sends raw bytes with `PUT` and parses the JSON reply.
+    pub async fn put_bytes(&self, path: &str, bytes: &[u8]) -> (StatusCode, Value) {
+        let request = Request::put(path)
+            .header("content-type", "application/octet-stream")
+            .body(Body::from(bytes.to_vec()))
+            .unwrap();
+        let (status, bytes) = self.request(SUPERVISOR, request).await;
+        (status, serde_json::from_slice(&bytes).unwrap())
+    }
+
     pub async fn scalar(&self, sql: &'static str) -> i64 {
         sqlx::query_scalar(sql).fetch_one(&self.pool).await.unwrap()
     }

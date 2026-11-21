@@ -228,6 +228,51 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
 }
 
 #[tokio::test]
+async fn uploads_survive_a_refresh_and_removing_one_restores_igdb_covers() {
+    let app = with_igdb().await;
+    let release = app.release("Odyssey", "switch").await;
+    sqlx::query("UPDATE releases SET region = 'jp' WHERE id = ?")
+        .bind(release)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let game: i64 = app.scalar("SELECT id FROM games").await;
+    let path = format!("/api/games/{game}/igdb");
+    let link = |overwrite: bool| {
+        app.json(
+            "POST",
+            &path,
+            Some(json!({"igdb_id": 1, "overwrite": overwrite})),
+        )
+    };
+    link(false).await;
+
+    let png = b"\x89PNG\r\n\x1a\nmine";
+    let (_, uploaded) = app
+        .put_bytes(&format!("/api/games/{game}/cover"), png)
+        .await;
+    app.put_bytes(&format!("/api/releases/{release}/cover"), png)
+        .await;
+    let (status, detail) = link(true).await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["cover_path"], uploaded["cover_path"]);
+    assert_eq!(detail["releases"][0]["cover_uploaded"], true);
+
+    let (_, detail) = app
+        .json("DELETE", &format!("/api/games/{game}/cover"), None)
+        .await;
+    assert_eq!(detail["cover_path"], format!("game-{game}/co1mxf.jpg"));
+    assert_eq!(detail["cover_uploaded"], false);
+    let (_, detail) = app
+        .json("DELETE", &format!("/api/releases/{release}/cover"), None)
+        .await;
+    assert_eq!(
+        detail["releases"][0]["cover_path"],
+        format!("release-{release}/co5wrq.jpg")
+    );
+}
+
+#[tokio::test]
 async fn sync_links_exact_titles_and_skips_ambiguous_ones() {
     let app = with_igdb().await;
     for title in ["super mario odyssey", "Doom", "Unknown"] {
