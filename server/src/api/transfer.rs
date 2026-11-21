@@ -52,6 +52,8 @@ pub struct ImportPreview {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ImportResult {
     pub summary: ImportSummary,
+    /// Games in the whole collection, after the import, with no IGDB link.
+    pub unlinked_games: i64,
 }
 
 fn summarize(plan: &Plan) -> ImportSummary {
@@ -202,5 +204,11 @@ pub async fn run(State(state): State<AppState>, body: Bytes) -> ApiResult<Json<I
         updated_copies = summary.updated_copies,
         "import applied"
     );
-    Ok(Json(ImportResult { summary }))
+    let unlinked_games = sqlx::query_scalar("SELECT COUNT(*) FROM games WHERE igdb_id IS NULL")
+        .fetch_one(&state.db)
+        .await?;
+    Ok(Json(ImportResult {
+        summary,
+        unlinked_games,
+    }))
 }

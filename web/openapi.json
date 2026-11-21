@@ -3005,11 +3005,17 @@
       "ImportResult": {
         "type": "object",
         "required": [
-          "summary"
+          "summary",
+          "unlinked_games"
         ],
         "properties": {
           "summary": {
             "$ref": "#/components/schemas/ImportSummary"
+          },
+          "unlinked_games": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games in the whole collection, after the import, with no IGDB link."
           }
         }
       },

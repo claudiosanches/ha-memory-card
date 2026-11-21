@@ -95,6 +95,7 @@ async fn import_then_export_round_trips() {
     assert_eq!(result["summary"]["new_games"], 2);
     assert_eq!(result["summary"]["new_copies"], 2);
     assert_eq!(result["summary"]["game_only_rows"], 1);
+    assert_eq!(result["unlinked_games"], 1, "Zelda has no IGDB id");
 
     let (igdb, status, sort): (Option<i64>, Option<String>, String) = sqlx::query_as(
         "SELECT igdb_id, play_status, sort_title FROM games WHERE title = 'Super Mario Odyssey'",

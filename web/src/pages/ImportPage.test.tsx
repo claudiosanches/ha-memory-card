@@ -57,7 +57,7 @@ describe('Import page', () => {
     };
     const calls = mockApi({
       'POST /api/import/preview': preview,
-      'POST /api/import': { summary: summary() },
+      'POST /api/import': { summary: summary(), unlinked_games: 0 },
     });
     renderAt('/import');
 
@@ -75,6 +75,28 @@ describe('Import page', () => {
       ['/api/import/preview', CSV],
       ['/api/import', CSV],
     ]);
+    expect(screen.queryByTestId('import-unlinked')).not.toBeInTheDocument();
+  });
+
+  it('points to the IGDB sync when imported games are not linked', async () => {
+    mockApi({
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 3, owned_copies: 1 },
+      'POST /api/import/preview': {
+        file_issue: null,
+        summary: summary(),
+        new_platforms: [],
+        new_devices: [],
+        new_stores: [],
+        rows: [{ line: 2, game_title: 'Zelda', platform: 'Switch', action: 'new_copy', issues: [] }],
+      },
+      'POST /api/import': { summary: summary(), unlinked_games: 3 },
+    });
+    renderAt('/import');
+
+    await chooseFile(CSV);
+    fireEvent.click(await screen.findByRole('button', { name: en.import.confirm }));
+    expect(await screen.findByTestId('import-unlinked')).toHaveTextContent(en.import.unlinked_other.replace('{{count}}', '3'));
+    expect(screen.getByRole('link', { name: en.import.openSync })).toHaveAttribute('href', expect.stringContaining('/settings'));
   });
 
   it('lists row problems and blocks the import', async () => {

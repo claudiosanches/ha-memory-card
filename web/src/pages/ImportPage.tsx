@@ -15,6 +15,7 @@ import {
 } from '@mantine/core';
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { ToolSection } from '../components/ToolSection';
 import { PageHeader } from '../components/PageHeader';
@@ -24,9 +25,11 @@ import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
 import type { components } from '../api/schema';
 import { notifyError } from '../components/notify';
+import { useStatus } from '../api/queries';
 
 type Preview = components['schemas']['ImportPreview'];
 type Summary = components['schemas']['ImportSummary'];
+type Result = components['schemas']['ImportResult'];
 
 const COLUMNS = [
   'copy_id',
@@ -63,7 +66,8 @@ export function ImportPage() {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState<string | null>(null);
-  const [done, setDone] = useState<Summary | null>(null);
+  const [done, setDone] = useState<Result | null>(null);
+  const igdb = useStatus().data?.igdb_configured ?? false;
 
   const preview = useMutation({
     mutationFn: (body: string) => call(api.POST('/api/import/preview', { body, ...asCsv })),
@@ -73,7 +77,7 @@ export function ImportPage() {
   const run = useMutation({
     mutationFn: (body: string) => call(api.POST('/api/import', { body, ...asCsv })),
     onSuccess: (result) => {
-      setDone(result.summary);
+      setDone(result);
       setFile(null);
       setText(null);
       preview.reset();
@@ -130,10 +134,18 @@ export function ImportPage() {
         {done && (
           <Alert color="green" data-testid="import-done">
             {t('import.done', {
-              games: done.new_games,
-              copies: done.new_copies,
-              updated: done.updated_copies,
+              games: done.summary.new_games,
+              copies: done.summary.new_copies,
+              updated: done.summary.updated_copies,
             })}
+          </Alert>
+        )}
+        {done && igdb && done.unlinked_games > 0 && (
+          <Alert color="blue" data-testid="import-unlinked">
+            {t('import.unlinked', { count: done.unlinked_games })}{' '}
+            <Anchor renderRoot={(props) => <Link to="/settings" {...props} />} inherit>
+              {t('import.openSync')}
+            </Anchor>
           </Alert>
         )}
 

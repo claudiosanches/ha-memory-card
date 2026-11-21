@@ -213,6 +213,9 @@
     "nothingToDo": "Nothing in this file changes your collection.",
     "hasErrors": "Fix the rows below in your spreadsheet, then choose the file again.",
     "done": "Imported {{games}} new games and {{copies}} new copies, updated {{updated}} copies.",
+    "unlinked_one": "{{count}} game is not linked to IGDB yet. Sync with IGDB links games whose title matches and fills in their details.",
+    "unlinked_other": "{{count}} games are not linked to IGDB yet. Sync with IGDB links games whose title matches and fills in their details.",
+    "openSync": "Go to Sync with IGDB in Settings",
     "summary": {
       "rows": "Rows",
       "new_games": "New games",

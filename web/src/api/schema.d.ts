@@ -749,6 +749,11 @@ export interface components {
         };
         ImportResult: {
             summary: components["schemas"]["ImportSummary"];
+            /**
+             * Format: int64
+             * @description Games in the whole collection, after the import, with no IGDB link.
+             */
+            unlinked_games: number;
         };
         ImportSummary: {
             error_rows: number;
