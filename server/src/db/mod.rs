@@ -1,4 +1,5 @@
 pub mod devices;
+pub mod duplicates;
 pub mod games;
 pub mod library;
 pub mod platforms;

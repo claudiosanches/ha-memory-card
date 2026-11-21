@@ -276,6 +276,29 @@
         }
       }
     },
+    "/api/duplicates": {
+      "get": {
+        "tags": [
+          "duplicates"
+        ],
+        "operationId": "listDuplicates",
+        "responses": {
+          "200": {
+            "description": "Games with two or more owned copies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DuplicateGroup"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/export.csv": {
       "get": {
         "tags": [
@@ -1751,6 +1774,119 @@
           "handheld",
           "pc",
           "account"
+        ]
+      },
+      "DuplicateCopy": {
+        "type": "object",
+        "required": [
+          "id",
+          "release_id",
+          "platform_id",
+          "region",
+          "format"
+        ],
+        "properties": {
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "device_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "format": {
+            "$ref": "#/components/schemas/Format"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          },
+          "release_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "release_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "DuplicateGroup": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "labels",
+          "copies"
+        ],
+        "properties": {
+          "copies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DuplicateCopy"
+            },
+            "description": "In platform list order, then region."
+          },
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DuplicateLabel"
+            }
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "DuplicateLabel": {
+        "type": "string",
+        "enum": [
+          "cross_platform",
+          "cross_region",
+          "cross_device",
+          "physical_digital",
+          "same_release"
         ]
       },
       "ErrorBody": {

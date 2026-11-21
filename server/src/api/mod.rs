@@ -1,4 +1,5 @@
 pub mod devices;
+pub mod duplicates;
 pub mod games;
 pub mod igdb;
 mod input;
@@ -37,6 +38,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::update_release, games::delete_release))
         .routes(routes!(games::game_modes))
         .routes(routes!(games::genres))
+        .routes(routes!(duplicates::list))
         .routes(routes!(igdb::search))
         .routes(routes!(igdb::link))
         .routes(routes!(igdb::sync_status, igdb::start_sync))

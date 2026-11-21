@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listDuplicates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/export.csv": {
         parameters: {
             query?: never;
@@ -422,6 +438,34 @@ export interface components {
         };
         /** @enum {string} */
         DeviceKind: "console" | "handheld" | "pc" | "account";
+        DuplicateCopy: {
+            condition?: components["schemas"]["Condition"] | null;
+            /** Format: int64 */
+            device_id?: number | null;
+            format: components["schemas"]["Format"];
+            /** Format: int64 */
+            id: number;
+            notes?: string | null;
+            /** Format: int64 */
+            platform_id: number;
+            region: components["schemas"]["Region"];
+            /** Format: int64 */
+            release_id: number;
+            release_title?: string | null;
+            /** Format: int64 */
+            store_id?: number | null;
+        };
+        DuplicateGroup: {
+            /** @description In platform list order, then region. */
+            copies: components["schemas"]["DuplicateCopy"][];
+            cover_path?: string | null;
+            /** Format: int64 */
+            game_id: number;
+            labels: components["schemas"]["DuplicateLabel"][];
+            title: string;
+        };
+        /** @enum {string} */
+        DuplicateLabel: "cross_platform" | "cross_region" | "cross_device" | "physical_digital" | "same_release";
         /**
          * @description Error body. `code` is a stable key the UI translates; it never carries
          *     display text. `field` names the input field at fault, when there is one.
@@ -906,6 +950,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listDuplicates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Games with two or more owned copies */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DuplicateGroup"][];
                 };
             };
         };
