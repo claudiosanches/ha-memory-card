@@ -349,7 +349,14 @@ function GameView({ game }: { game: GameDetail }) {
               {game.game_mode_ids.length === 0 ? (
                 <Text size="sm" c="dimmed">{t('common.notSet')}</Text>
               ) : game.game_mode_ids.map((modeId) => (
-                <Badge key={modeId} size="sm" variant="light" tt="none">
+                <Badge
+                  key={modeId}
+                  size="sm"
+                  variant="light"
+                  tt="none"
+                  className={classes.tagLink}
+                  renderRoot={(props) => <Link to="/" search={{ game_mode: [modeId] }} {...props} />}
+                >
                   {names.mode.get(modeId)}
                 </Badge>
               ))}
@@ -358,7 +365,14 @@ function GameView({ game }: { game: GameDetail }) {
               <Group gap="xs" className={classes.tagRow}>
                 <Text size="sm"><strong>{t('game.genres')}:</strong></Text>
                 {game.genre_ids.map((genreId) => (
-                  <Badge key={genreId} size="sm" variant="outline" tt="none">
+                  <Badge
+                    key={genreId}
+                    size="sm"
+                    variant="outline"
+                    tt="none"
+                    className={classes.tagLink}
+                    renderRoot={(props) => <Link to="/" search={{ genre: [genreId] }} {...props} />}
+                  >
                     {names.genre.get(genreId)}
                   </Badge>
                 ))}
