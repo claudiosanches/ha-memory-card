@@ -33,6 +33,7 @@ Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
 | `make smoke` | Builds the amd64 image and runs it like Home Assistant |
 | `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
+| `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 
 The server reads these variables; `make run` sets the first four.
 

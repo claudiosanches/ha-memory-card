@@ -109,6 +109,10 @@ image: binaries ## Build the amd64 image (override IMAGE)
 smoke: image ## Run the image like Home Assistant and check start, UI, API and stop
 	./scripts/smoke-image.sh $(IMAGE)
 
+.PHONY: reset-db
+reset-db: ## Delete the local database and covers, keeping options.json
+	rm -rf $(DATA_DIR)/db $(DATA_DIR)/covers $(DATA_DIR)/tmp
+
 .PHONY: clean
 clean: ## Remove build output and local data
 	cargo clean

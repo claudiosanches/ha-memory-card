@@ -35,3 +35,14 @@ INSERT INTO game_modes (igdb_game_mode_id, name, slug) VALUES
     (4, 'Split screen',   'split-screen'),
     (5, 'MMO',            'mmo'),
     (6, 'Battle Royale',  'battle-royale');
+
+-- Digital storefronts. Physical retailers depend on the country, so they are
+-- left to the user or the CSV import.
+INSERT INTO stores (name) VALUES
+    ('Nintendo eShop'),
+    ('PlayStation Store'),
+    ('Microsoft Store'),
+    ('Steam'),
+    ('Epic Games Store'),
+    ('GOG'),
+    ('itch.io');
