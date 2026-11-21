@@ -1,24 +1,11 @@
-import {
-  Accordion,
-  Alert,
-  Anchor,
-  Badge,
-  Button,
-  Code,
-  FileInput,
-  Group,
-  List,
-  SimpleGrid,
-  Stack,
-  Table,
-  Text,
-} from '@mantine/core';
+import { Accordion, Alert, Anchor, Badge, Button, Code, FileInput, Group, List, Select, SimpleGrid, Stack, Table, Text } from '@mantine/core';
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { ToolSection } from '../components/ToolSection';
 import { PageHeader } from '../components/PageHeader';
+import { withColumns } from './importColumns';
 import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -148,13 +135,24 @@ export function ImportPage() {
         {done && igdb && done.unlinked_games > 0 && (
           <Alert color="blue" data-testid="import-unlinked">
             {t('import.unlinked', { count: done.unlinked_games })}{' '}
-            <Anchor renderRoot={(props) => <Link to="/settings" {...props} />} inherit>
-              {t('import.openSync')}
+            <Anchor renderRoot={(props) => <Link to="/igdb-matches" {...props} />} inherit>
+              {t('import.reviewMatches')}
             </Anchor>
           </Alert>
         )}
 
         {preview.isPending && <Text size="sm">{t('import.checking')}</Text>}
+
+        {preview.data && text !== null && preview.data.headers.length > 0 && (
+          <ColumnMapping
+            preview={preview.data}
+            onChange={(columns) => {
+              const next = withColumns(text, columns, preview.data.delimiter);
+              setText(next);
+              preview.mutate(next);
+            }}
+          />
+        )}
 
         {preview.data && text !== null && (
           <PreviewResult
@@ -167,6 +165,46 @@ export function ImportPage() {
       </ToolSection>
 
       <ColumnHelp />
+    </Stack>
+  );
+}
+
+/** How each header of the file is read, with a choice to read it as another column. */
+function ColumnMapping({ preview, onChange }: { preview: Preview; onChange: (columns: (string | null)[]) => void }) {
+  const { t } = useTranslation();
+  const columns = preview.headers.map((h) => h.column ?? null);
+  const options = [
+    { value: '', label: t('import.notImported') },
+    ...COLUMNS.map((column) => ({ value: column, label: column })),
+  ];
+  return (
+    <Stack gap="xs" data-testid="column-mapping">
+      <Text fw={600} size="sm">
+        {t('import.columnsRead')}
+      </Text>
+      <Text size="xs" c="dimmed">
+        {t('import.columnsReadHint')}
+      </Text>
+      <Table className={classes.mapping}>
+        <Table.Tbody>
+          {preview.headers.map((header, i) => (
+            <Table.Tr key={i}>
+              <Table.Td>
+                <Code>{header.header || t('import.noHeader')}</Code>
+              </Table.Td>
+              <Table.Td>
+                <Select
+                  aria-label={t('import.readAs', { header: header.header })}
+                  data={options}
+                  value={columns[i] ?? ''}
+                  allowDeselect={false}
+                  onChange={(value) => onChange(columns.map((c, j) => (j === i ? value || null : c)))}
+                />
+              </Table.Td>
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
     </Stack>
   );
 }

@@ -1,6 +1,7 @@
 //! IGDB API client. All requests share one queue at IGDB's limit of four per
 //! second; a 401 refreshes the Twitch token and a 429 waits, each retried once.
 
+pub mod matches;
 pub mod store;
 pub mod sync;
 

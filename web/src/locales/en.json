@@ -259,7 +259,6 @@
     "done": "Imported {{games}} new games and {{copies}} new copies, updated {{updated}} copies.",
     "unlinked_one": "{{count}} game is not linked to IGDB yet. Sync with IGDB links games whose title matches and fills in their details.",
     "unlinked_other": "{{count}} games are not linked to IGDB yet. Sync with IGDB links games whose title matches and fills in their details.",
-    "openSync": "Go to Sync with IGDB in Settings",
     "summary": {
       "rows": "Rows",
       "new_games": "New games",
@@ -304,7 +303,13 @@
       "currency": "Three-letter code, such as USD, EUR or BRL.",
       "barcode": "UPC or EAN digits from the box.",
       "notes": "Free text."
-    }
+    },
+    "columnsRead": "How your columns are read",
+    "columnsReadHint": "Memory Card recognizes its own column names and common ones from other spreadsheets. Pick another column for any header it read wrong, or leave one out.",
+    "notImported": "Not imported",
+    "readAs": "Read {{header}} as",
+    "noHeader": "(no header)",
+    "reviewMatches": "Review IGDB matches"
   },
   "importIssues": {
     "required": "Needs a value.",
@@ -585,7 +590,8 @@
     "useIgdbTitle": "Use IGDB's",
     "keepTitle": "Keep mine",
     "useAllIgdbTitles": "Use IGDB's for all",
-    "titlesSaved": "Titles updated"
+    "titlesSaved": "Titles updated",
+    "reviewMatches": "Review close matches"
   },
   "wishlist": {
     "description": "Games you want, with the platform and edition you are after.",
@@ -790,5 +796,18 @@
     "unlinked": "Tags unlinked",
     "count_one": "{{count}} NFC tag starts this copy",
     "count_other": "{{count}} NFC tags start this copy"
+  },
+  "matches": {
+    "title": "IGDB matches",
+    "intro": "Games without an IGDB link, with the closest names IGDB has. Link the right one, or say the game is not on IGDB so it stops coming back.",
+    "searching": "Searching IGDB…",
+    "more": "Show more games",
+    "none": "Every game is linked or skipped.",
+    "noCandidates": "IGDB has no game with a close name. Link it by hand from its page.",
+    "pick": "IGDB game for {{title}}",
+    "score": "{{score}}% match",
+    "link": "Link",
+    "later": "Later",
+    "notOnIgdb": "Not on IGDB"
   }
 }

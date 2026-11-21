@@ -1534,6 +1534,39 @@
         }
       }
     },
+    "/api/games/{id}/igdb-skip": {
+      "post": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "skipIgdbMatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Match reviews stop offering the game"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/games/{id}/play-status": {
       "put": {
         "tags": [
@@ -1666,6 +1699,71 @@
                   "items": {
                     "$ref": "#/components/schemas/Genre"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/igdb/matches": {
+      "get": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "igdbMatches",
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Continue after this game id.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Games per page, at most 10.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Games with no IGDB link, by id, with IGDB's closest names",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MatchGroup"
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`igdb_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`igdb_not_configured`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -4305,6 +4403,24 @@
           }
         }
       },
+      "HeaderMatch": {
+        "type": "object",
+        "description": "How a header was read. `column` is empty for headers that match nothing\nor repeat a column an earlier header took.",
+        "required": [
+          "header"
+        ],
+        "properties": {
+          "column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "header": {
+            "type": "string"
+          }
+        }
+      },
       "Image": {
         "type": "string",
         "format": "binary",
@@ -4313,6 +4429,8 @@
       "ImportPreview": {
         "type": "object",
         "required": [
+          "headers",
+          "delimiter",
           "summary",
           "new_platforms",
           "new_devices",
@@ -4320,16 +4438,27 @@
           "rows"
         ],
         "properties": {
+          "delimiter": {
+            "type": "string",
+            "description": "The file's separator, `,` or `;`."
+          },
           "file_issue": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/FileIssue",
-                "description": "Set when the file cannot be read at all; everything else is then empty."
+                "description": "Set when the file cannot be read at all; everything else but the headers is then empty."
               },
               {
                 "type": "null"
               }
             ]
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeaderMatch"
+            },
+            "description": "How each header of the file was read, in file order."
           },
           "new_devices": {
             "type": "array",
@@ -4464,6 +4593,59 @@
           "offline",
           "failed"
         ]
+      },
+      "MatchCandidate": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SearchHit"
+          },
+          {
+            "type": "object",
+            "required": [
+              "score"
+            ],
+            "properties": {
+              "score": {
+                "type": "integer",
+                "format": "int32",
+                "description": "How close the names are, 0 to 100.",
+                "minimum": 0
+              }
+            }
+          }
+        ]
+      },
+      "MatchGroup": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "platforms",
+          "candidates"
+        ],
+        "properties": {
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatchCandidate"
+            },
+            "description": "Best first."
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Platforms of the game's copies, in platform list order."
+          },
+          "title": {
+            "type": "string"
+          }
+        }
       },
       "Me": {
         "type": "object",

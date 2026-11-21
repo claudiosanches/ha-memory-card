@@ -421,7 +421,7 @@ async fn igdb_id_links_a_game_imported_without_one() {
 async fn unreadable_files_are_reported() {
     let app = TestApp::new().await;
     let (status, preview) = app
-        .post_csv("/api/import/preview", "title,platform\nZelda,Wii\n")
+        .post_csv("/api/import/preview", "rating,platform\nZelda,Wii\n")
         .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
@@ -514,5 +514,33 @@ async fn purchase_columns_import_and_export() {
     assert_eq!(
         issues(&preview, 6),
         [("barcode".into(), "invalid_value".into())]
+    );
+}
+
+#[tokio::test]
+async fn preview_says_how_each_header_was_read() {
+    let app = TestApp::new().await;
+    let (_, preview) = app
+        .post_csv("/api/import/preview", "Name;Console;Stars\nZelda;Wii;5\n")
+        .await;
+    assert_eq!(preview["delimiter"], ";");
+    assert_eq!(
+        preview["headers"],
+        json!([
+            {"header": "Name", "column": "game_title"},
+            {"header": "Console", "column": "platform"},
+            {"header": "Stars", "column": null},
+        ])
+    );
+    assert_eq!(preview["summary"]["game_only_rows"], 0);
+    assert_eq!(preview["rows"][0]["issues"][0]["column"], "region");
+
+    let (_, preview) = app
+        .post_csv("/api/import/preview", "Stars,Console\n5,Wii\n")
+        .await;
+    assert_eq!(preview["file_issue"]["code"], "missing_column");
+    assert_eq!(
+        preview["headers"][1]["column"], "platform",
+        "headers come back to fix the file"
     );
 }

@@ -144,13 +144,19 @@ collection in a spreadsheet. **Export CSV** on the Library page downloads
 only the copies that match its filters.
 
 After an import, games without an IGDB link can be linked with
-**Settings > Sync with IGDB**, which matches them by exact title.
+**Settings > Sync with IGDB**, which matches them by exact title. **Review
+close matches** next to it goes through the rest: it shows IGDB's closest
+names for each game, to link with a click or mark as not on IGDB.
 
 - One row per copy you own. A row with only `game_title` (and optionally
   `igdb_id` and `play_status`) adds a game with no copies.
 - Column names are not case sensitive and can be in any order. Only
   `game_title` is required in every row; rows with a copy also need
   `platform`, `region` and `format`.
+- Files from other spreadsheets work too: common headers such as `Title`,
+  `Name`, `System`, `Console`, `Serial`, `UPC`, `Price Paid` or `Comments`
+  are recognized. The preview shows how each header was read; pick another
+  column for any it read wrong, or leave one out.
 - Platform, device and store names match what you already have, ignoring
   case. Common platforms and the digital stores (Nintendo eShop, PlayStation
   Store, Microsoft Store, Steam, Epic Games Store, GOG, itch.io) exist from

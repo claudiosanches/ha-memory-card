@@ -11,6 +11,7 @@ use crate::access::Actor;
 use crate::db::games::{self, GameDetail};
 use crate::db::titles::{self, TitleDifference};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
+use crate::igdb::matches::{self, MatchError, MatchGroup};
 use crate::igdb::sync::{self, SyncStatus};
 use crate::igdb::{Igdb, SearchHit, store};
 
@@ -140,6 +141,61 @@ pub async fn link(
     )
     .await?;
     Ok(Json(games::get(&state.db, id).await?))
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct MatchQuery {
+    /// Continue after this game id.
+    #[serde(default)]
+    pub after: i64,
+    /// Games per page, at most 10.
+    pub limit: Option<i64>,
+}
+
+#[utoipa::path(
+    get, path = "/igdb/matches", tag = "igdb", operation_id = "igdbMatches",
+    params(MatchQuery),
+    responses(
+        (status = OK, description = "Games with no IGDB link, by id, with IGDB's closest names", body = Vec<MatchGroup>),
+        (status = SERVICE_UNAVAILABLE, description = "`igdb_not_configured`", body = ErrorBody),
+        (status = BAD_GATEWAY, description = "`igdb_failed`", body = ErrorBody),
+    )
+)]
+pub async fn matches(
+    State(state): State<AppState>,
+    Query(query): Query<MatchQuery>,
+) -> ApiResult<Json<Vec<MatchGroup>>> {
+    let igdb = client(&state)?;
+    let limit = query.limit.unwrap_or(5).clamp(1, 10);
+    let groups = matches::next(&state.db, &igdb, query.after, limit)
+        .await
+        .map_err(|err| match err {
+            MatchError::Database(err) => ApiError::from(err),
+            MatchError::Igdb(err) => ApiError::from(err),
+        })?;
+    Ok(Json(groups))
+}
+
+#[utoipa::path(
+    post, path = "/games/{id}/igdb-skip", tag = "igdb", operation_id = "skipIgdbMatch",
+    params(("id" = i64, Path)),
+    responses(
+        (status = NO_CONTENT, description = "Match reviews stop offering the game"),
+        (status = NOT_FOUND, body = ErrorBody),
+    )
+)]
+pub async fn skip(
+    State(state): State<AppState>,
+    ApiPath(id): ApiPath<i64>,
+) -> ApiResult<axum::http::StatusCode> {
+    let result = sqlx::query!("UPDATE games SET igdb_skipped = 1 WHERE id = ?", id)
+        .execute(&state.db)
+        .await?;
+    if result.rows_affected() == 0 {
+        return Err(ApiError::NotFound);
+    }
+    Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(

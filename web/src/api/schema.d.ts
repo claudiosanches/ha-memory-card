@@ -284,6 +284,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/games/{id}/igdb-skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["skipIgdbMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/games/{id}/play-status": {
         parameters: {
             query?: never;
@@ -324,6 +340,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["listGenres"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/igdb/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["igdbMatches"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1034,12 +1066,24 @@ export interface components {
             name: string;
         };
         /**
+         * @description How a header was read. `column` is empty for headers that match nothing
+         *     or repeat a column an earlier header took.
+         */
+        HeaderMatch: {
+            column?: string | null;
+            header: string;
+        };
+        /**
          * Format: binary
          * @description A JPEG, PNG or WebP image, at most 10 MB.
          */
         Image: string;
         ImportPreview: {
+            /** @description The file's separator, `,` or `;`. */
+            delimiter: string;
             file_issue?: components["schemas"]["FileIssue"] | null;
+            /** @description How each header of the file was read, in file order. */
+            headers: components["schemas"]["HeaderMatch"][];
             new_devices: components["schemas"]["NewDeviceReport"][];
             new_platforms: string[];
             new_stores: string[];
@@ -1078,6 +1122,22 @@ export interface components {
         };
         /** @enum {string} */
         LookupOutcome: "in_collection" | "found" | "not_found" | "offline" | "failed";
+        MatchCandidate: components["schemas"]["SearchHit"] & {
+            /**
+             * Format: int32
+             * @description How close the names are, 0 to 100.
+             */
+            score: number;
+        };
+        MatchGroup: {
+            /** @description Best first. */
+            candidates: components["schemas"]["MatchCandidate"][];
+            /** Format: int64 */
+            game_id: number;
+            /** @description Platforms of the game's copies, in platform list order. */
+            platforms: string[];
+            title: string;
+        };
         Me: {
             /** @description May change play status and last played. */
             can_track_progress: boolean;
@@ -2481,6 +2541,34 @@ export interface operations {
             };
         };
     };
+    skipIgdbMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Match reviews stop offering the game */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     setPlayStatus: {
         parameters: {
             query?: never;
@@ -2579,6 +2667,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Genre"][];
+                };
+            };
+        };
+    };
+    igdbMatches: {
+        parameters: {
+            query?: {
+                /** @description Continue after this game id. */
+                after?: number;
+                /** @description Games per page, at most 10. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Games with no IGDB link, by id, with IGDB's closest names */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchGroup"][];
+                };
+            };
+            /** @description `igdb_failed` */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_not_configured` */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

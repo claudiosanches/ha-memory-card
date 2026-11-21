@@ -25,3 +25,4 @@
   .issues td { display: grid; grid-template-columns: 4rem minmax(0, 1fr); align-items: baseline; gap: 8px; padding: 4px 0; overflow-wrap: anywhere; }
   .issues td::before { content: attr(data-label); font-size: .8125rem; font-weight: 600; }
 }
+.mapping td { vertical-align: middle; }

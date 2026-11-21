@@ -14,7 +14,7 @@ use crate::access::Actor;
 use crate::db::devices::DeviceKind;
 use crate::db::library::{LibraryFilter, Ownership};
 use crate::error::{ApiError, ApiResult, ErrorBody};
-use crate::transfer::parse::{FileIssue, parse};
+use crate::transfer::parse::{FileIssue, HeaderMatch, headers, parse};
 use crate::transfer::plan::{Plan, Ref, RowAction, RowReport, plan};
 use crate::transfer::snapshot::{self, Snapshot};
 use crate::transfer::{apply, export, template};
@@ -43,8 +43,12 @@ pub struct NewDeviceReport {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ImportPreview {
-    /// Set when the file cannot be read at all; everything else is then empty.
+    /// Set when the file cannot be read at all; everything else but the headers is then empty.
     pub file_issue: Option<FileIssue>,
+    /// How each header of the file was read, in file order.
+    pub headers: Vec<HeaderMatch>,
+    /// The file's separator, `,` or `;`.
+    pub delimiter: String,
     pub summary: ImportSummary,
     pub new_platforms: Vec<String>,
     pub new_devices: Vec<NewDeviceReport>,
@@ -92,6 +96,8 @@ fn preview_of(plan: Plan, snapshot: &Snapshot) -> ImportPreview {
     };
     ImportPreview {
         file_issue: None,
+        headers: Vec::new(),
+        delimiter: ",".to_owned(),
         summary: summarize(&plan),
         new_devices: plan
             .devices
@@ -111,6 +117,8 @@ fn preview_of(plan: Plan, snapshot: &Snapshot) -> ImportPreview {
 fn file_problem(issue: FileIssue) -> ImportPreview {
     ImportPreview {
         file_issue: Some(issue),
+        headers: Vec::new(),
+        delimiter: ",".to_owned(),
         summary: ImportSummary::default(),
         new_platforms: Vec::new(),
         new_devices: Vec::new(),
@@ -179,14 +187,20 @@ pub async fn template_csv() -> Response {
     responses((status = OK, body = ImportPreview))
 )]
 pub async fn preview(State(state): State<AppState>, body: Bytes) -> ApiResult<Json<ImportPreview>> {
-    let rows = match parse(&body) {
-        Ok(rows) => rows,
-        Err(issue) => return Ok(Json(file_problem(issue))),
+    let mut preview = match parse(&body) {
+        Ok(rows) => {
+            let mut conn = state.db.acquire().await?;
+            let snapshot = snapshot::load(&mut conn).await?;
+            let plan = plan(&rows, &snapshot);
+            preview_of(plan, &snapshot)
+        }
+        Err(issue) => file_problem(issue),
     };
-    let mut conn = state.db.acquire().await?;
-    let snapshot = snapshot::load(&mut conn).await?;
-    let plan = plan(&rows, &snapshot);
-    Ok(Json(preview_of(plan, &snapshot)))
+    if let Some((headers, delimiter)) = headers(&body) {
+        preview.headers = headers;
+        preview.delimiter = delimiter.to_string();
+    }
+    Ok(Json(preview))
 }
 
 #[utoipa::path(

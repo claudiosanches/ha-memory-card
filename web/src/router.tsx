@@ -16,6 +16,7 @@ import { LibraryPage } from './pages/library/LibraryPage';
 import { validateLibrarySearch } from './pages/library/search';
 import { MANAGE_TABS, ManagePage, type ManageTab } from './pages/manage/ManagePage';
 import { SETTINGS_TABS, SettingsPage, type SettingsTab } from './pages/SettingsPage';
+import { IgdbMatchesPage } from './pages/IgdbMatchesPage';
 import { SetupPage } from './pages/setup/SetupPage';
 import { StatsPage } from './pages/stats/StatsPage';
 
@@ -33,6 +34,15 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/igdb-matches',
+    component: () => (
+      <ManagerOnly>
+        <IgdbMatchesPage />
+      </ManagerOnly>
+    ),
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: '/setup',

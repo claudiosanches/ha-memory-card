@@ -180,6 +180,7 @@ async fn every_route_checks_the_role() {
         "/api/igdb/search",
         "/api/igdb/titles",
         "/api/games/{id}/igdb-contents",
+        "/api/igdb/matches",
     ];
 
     let openapi = memory_card::openapi();

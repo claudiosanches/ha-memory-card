@@ -23,6 +23,9 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
+// Mantine scrolls the selected option into view when a dropdown opens.
+Element.prototype.scrollIntoView ??= () => {};
+
 class ResizeObserverStub {
   observe() {}
   unobserve() {}

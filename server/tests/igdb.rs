@@ -565,3 +565,50 @@ async fn igdb_names_refresh_and_hand_added_names_stay() {
         ]
     );
 }
+
+#[tokio::test]
+async fn match_review_offers_close_names_until_skipped() {
+    let app = with_igdb().await;
+    let mut ids = Vec::new();
+    for title in ["Super Mario Odysey", "Untitled Goose", "Linked"] {
+        let (_, game) = app
+            .json("POST", "/api/games", Some(json!({"title": title})))
+            .await;
+        ids.push(game["id"].as_i64().unwrap());
+    }
+    sqlx::query("UPDATE games SET igdb_id = 500 WHERE id = ?")
+        .bind(ids[2])
+        .execute(&app.pool)
+        .await
+        .unwrap();
+
+    let (status, groups) = app.json("GET", "/api/igdb/matches?limit=1", None).await;
+    assert_eq!(status, StatusCode::OK, "{groups}");
+    assert_eq!(groups.as_array().unwrap().len(), 1);
+    assert_eq!(groups[0]["game_id"], ids[0]);
+    let best = &groups[0]["candidates"][0];
+    assert_eq!(best["igdb_id"], 1, "the closest name, not the first hit");
+    assert_eq!(best["name"], "Super Mario Odyssey");
+    assert!(best["score"].as_u64().unwrap() > 90);
+
+    let (_, rest) = app
+        .json("GET", &format!("/api/igdb/matches?after={}", ids[0]), None)
+        .await;
+    assert_eq!(
+        rest.as_array().unwrap().len(),
+        1,
+        "linked games are left out"
+    );
+    assert_eq!(rest[0]["game_id"], ids[1]);
+
+    let (status, _) = app
+        .json("POST", &format!("/api/games/{}/igdb-skip", ids[1]), None)
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, rest) = app
+        .json("GET", &format!("/api/igdb/matches?after={}", ids[0]), None)
+        .await;
+    assert_eq!(rest, json!([]));
+    let (status, _) = app.json("POST", "/api/games/999/igdb-skip", None).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}

@@ -17,7 +17,7 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconCopy, IconRefresh } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRouteApi } from '@tanstack/react-router';
+import { Link, getRouteApi } from '@tanstack/react-router';
 import { ToolTabList } from '../components/ToolTabList';
 import { useEffect, useRef } from 'react';
 import { ToolSection } from '../components/ToolSection';
@@ -258,6 +258,9 @@ function IgdbSync() {
           onClick={() => start.mutate()}
         >
           {t('igdb.syncButton')}
+        </Button>
+        <Button component={Link} to="/igdb-matches" variant="default">
+          {t('igdb.reviewMatches')}
         </Button>
       </Group>
       {data?.running && (

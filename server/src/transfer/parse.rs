@@ -4,6 +4,92 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use super::{COLUMNS, MAX_ROWS, UTF8_BOM};
+use crate::domain::loose;
+
+/// Header names other spreadsheets use, compared loosely, for each column.
+const ALIASES: [(&str, &[&str]); 16] = [
+    ("game_title", &["title", "name", "game", "gamename"]),
+    ("igdb_id", &["igdb"]),
+    ("platform", &["system", "console", "platformname"]),
+    ("region", &["territory", "zone"]),
+    ("release_title", &["localtitle", "regionaltitle"]),
+    ("product_code", &["serial", "serialnumber", "productid"]),
+    ("format", &["type", "media", "medium"]),
+    (
+        "play_status",
+        &["progress", "completion", "completionstatus", "playstate"],
+    ),
+    ("device", &["account"]),
+    (
+        "store",
+        &["shop", "retailer", "seller", "boughtat", "purchasedat"],
+    ),
+    ("condition", &["completeness"]),
+    ("notes", &["note", "comments", "comment", "remarks"]),
+    (
+        "purchased_on",
+        &[
+            "purchasedate",
+            "purchased",
+            "datepurchased",
+            "bought",
+            "boughton",
+            "acquired",
+        ],
+    ),
+    ("price", &["paid", "cost", "pricepaid", "amount"]),
+    ("barcode", &["upc", "ean", "gtin"]),
+    ("edition", &["variant"]),
+];
+
+/// The column a header names: its own name, ignoring case, or a common alias.
+pub fn column_for(header: &str) -> Option<&'static str> {
+    let header = header.trim();
+    if let Some(column) = COLUMNS.iter().find(|c| header.eq_ignore_ascii_case(c)) {
+        return Some(column);
+    }
+    let key = loose(header);
+    ALIASES
+        .iter()
+        .find(|(_, aliases)| aliases.contains(&key.as_str()))
+        .map(|(column, _)| *column)
+}
+
+/// How a header was read. `column` is empty for headers that match nothing
+/// or repeat a column an earlier header took.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ToSchema)]
+pub struct HeaderMatch {
+    pub header: String,
+    pub column: Option<&'static str>,
+}
+
+/// The header row as read, and the separator, without reading the rows.
+pub fn headers(bytes: &[u8]) -> Option<(Vec<HeaderMatch>, char)> {
+    let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
+    let text = std::str::from_utf8(bytes).ok()?;
+    let delimiter = detect_delimiter(text);
+    let mut reader = csv::ReaderBuilder::new()
+        .delimiter(delimiter)
+        .flexible(true)
+        .trim(csv::Trim::All)
+        .from_reader(text.as_bytes());
+    let headers = reader.headers().ok()?;
+    let mut taken = Vec::new();
+    let matches = headers
+        .iter()
+        .map(|header| {
+            let column = column_for(header).filter(|c| !taken.contains(c));
+            if let Some(column) = column {
+                taken.push(column);
+            }
+            HeaderMatch {
+                header: header.to_owned(),
+                column,
+            }
+        })
+        .collect();
+    Some((matches, char::from(delimiter)))
+}
 
 /// One CSV row, every cell trimmed; blank cells are `None`.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -98,7 +184,7 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
         .filter_map(|column| {
             headers
                 .iter()
-                .position(|header| header.trim().eq_ignore_ascii_case(column))
+                .position(|header| column_for(header) == Some(column))
                 .map(|position| (*column, position))
         })
         .collect();
@@ -192,6 +278,25 @@ mod tests {
     }
 
     #[test]
+    fn reads_other_spreadsheets_headers() {
+        let rows = parse(b"Name,System,UPC,Price Paid,Comments\nZelda,Wii,045496590024,10,Gift\n")
+            .unwrap();
+        assert_eq!(rows[0].game_title.as_deref(), Some("Zelda"));
+        assert_eq!(rows[0].platform.as_deref(), Some("Wii"));
+        assert_eq!(rows[0].barcode.as_deref(), Some("045496590024"));
+        assert_eq!(rows[0].price.as_deref(), Some("10"));
+        assert_eq!(rows[0].notes.as_deref(), Some("Gift"));
+
+        let (headers, delimiter) = headers(b"Title;Game;Rating\nx;y;z\n").unwrap();
+        assert_eq!(delimiter, ';');
+        assert_eq!(
+            headers.iter().map(|h| h.column).collect::<Vec<_>>(),
+            [Some("game_title"), None, None],
+            "a second title column is left out"
+        );
+    }
+
+    #[test]
     fn strips_bom_and_reads_semicolons() {
         let mut bytes = UTF8_BOM.to_vec();
         bytes.extend_from_slice("game_title;platform\n\"Pokémon X; Y\";3DS\n".as_bytes());
@@ -205,7 +310,7 @@ mod tests {
         assert_eq!(parse(b"").unwrap_err().code, "empty_file");
         assert_eq!(parse(b"game_title\n").unwrap_err().code, "empty_file");
         assert_eq!(
-            parse(b"title,platform\nZelda,Wii\n").unwrap_err().code,
+            parse(b"what,platform\nZelda,Wii\n").unwrap_err().code,
             "missing_column"
         );
         assert_eq!(

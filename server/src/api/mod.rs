@@ -71,6 +71,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(igdb::search))
         .routes(routes!(igdb::link))
         .routes(routes!(igdb::bundle_contents))
+        .routes(routes!(igdb::matches))
+        .routes(routes!(igdb::skip))
         .routes(routes!(igdb::sync_status, igdb::start_sync))
         .routes(routes!(igdb::title_differences, igdb::resolve_titles))
         .routes(routes!(transfer::export_csv))

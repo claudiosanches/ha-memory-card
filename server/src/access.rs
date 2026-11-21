@@ -21,12 +21,13 @@ const USER_NAME: &str = "x-remote-user-name";
 const USER_DISPLAY_NAME: &str = "x-remote-user-display-name";
 
 /// Reads anyone may make, except these manager tools.
-const MANAGER_READS: [&str; 5] = [
+const MANAGER_READS: [&str; 6] = [
     "/api/export.csv",
     "/api/import/template.csv",
     "/api/igdb/search",
     "/api/igdb/titles",
     "/api/games/{id}/igdb-contents",
+    "/api/igdb/matches",
 ];
 
 /// Play progress, open to viewers when the option allows it.

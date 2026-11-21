@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.name FROM platforms p\n               WHERE EXISTS (SELECT 1 FROM releases r WHERE r.platform_id = p.id AND r.game_id = ?)\n               ORDER BY p.sort_order, p.name",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "793d1e636dabfe6e0655125db19a82e7b480e26af295bd95f7e854a04b264815"
+}

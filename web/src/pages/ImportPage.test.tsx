@@ -49,6 +49,8 @@ describe('Import page', () => {
   it('previews a file, then imports it', async () => {
     const preview: Preview = {
       file_issue: null,
+      headers: [],
+      delimiter: ',',
       summary: summary(),
       new_platforms: [],
       new_devices: [{ name: 'Switch OLED', kind: 'console', platforms: ['Nintendo Switch'] }],
@@ -83,6 +85,8 @@ describe('Import page', () => {
       'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 3, owned_copies: 1 },
       'POST /api/import/preview': {
         file_issue: null,
+        headers: [],
+        delimiter: ',',
         summary: summary(),
         new_platforms: [],
         new_devices: [],
@@ -96,13 +100,15 @@ describe('Import page', () => {
     await chooseFile(CSV);
     fireEvent.click(await screen.findByRole('button', { name: en.import.confirm }));
     expect(await screen.findByTestId('import-unlinked')).toHaveTextContent(en.import.unlinked_other.replace('{{count}}', '3'));
-    expect(screen.getByRole('link', { name: en.import.openSync })).toHaveAttribute('href', expect.stringContaining('/settings'));
+    expect(screen.getByRole('link', { name: en.import.reviewMatches })).toHaveAttribute('href', expect.stringContaining('/igdb-matches'));
   });
 
   it('lists row problems and blocks the import', async () => {
     mockApi({
       'POST /api/import/preview': {
         file_issue: null,
+        headers: [],
+        delimiter: ',',
         summary: summary({ new_games: 0, new_releases: 0, new_copies: 0, error_rows: 1 }),
         new_platforms: [],
         new_devices: [],
@@ -127,10 +133,12 @@ describe('Import page', () => {
     expect(screen.getByRole('button', { name: en.import.confirm })).toBeDisabled();
   });
 
-  it('explains a file it cannot read', async () => {
-    mockApi({
+  it('explains a file it cannot read and lets its columns be picked', async () => {
+    const calls = mockApi({
       'POST /api/import/preview': json({
         file_issue: { code: 'missing_column', column: 'game_title' },
+        headers: [{ header: 'Jogo', column: null }],
+        delimiter: ',',
         summary: summary({ rows: 0, new_games: 0, new_releases: 0, new_copies: 0 }),
         new_platforms: [],
         new_devices: [],
@@ -140,14 +148,20 @@ describe('Import page', () => {
     });
     renderAt('/import');
 
-    await chooseFile('title\nZelda\n');
+    await chooseFile('Jogo\nZelda\n');
     expect(await screen.findByTestId('file-issue')).toHaveTextContent('The file needs a game_title column.');
+    fireEvent.click(screen.getByRole('combobox', { name: 'Read Jogo as' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'game_title', hidden: true }));
+    await waitFor(() => expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(2));
+    expect(calls.filter((c) => c.path === '/api/import/preview')[1]?.body).toBe('game_title\nZelda\n');
   });
 
   it('keeps the confirm button off when nothing changes', async () => {
     mockApi({
       'POST /api/import/preview': {
         file_issue: null,
+        headers: [],
+        delimiter: ',',
         summary: summary({ new_games: 0, new_releases: 0, new_copies: 0, unchanged_copies: 1 }),
         new_platforms: [],
         new_devices: [],
