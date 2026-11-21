@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ActionIcon, Button, ColorSwatch, Group, Input, Loader, Modal, Select, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconCheck, IconGripVertical, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCheck, IconGripVertical, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,7 @@ import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { type NamedStatus, usePlayStatusList } from '../../components/playStatuses';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import { ManageToolbar } from './ManageToolbar';
 import classes from './PlatformsTab.module.css';
 
 type Editing = { status?: NamedStatus } | null;
@@ -81,14 +82,11 @@ export function PlayStatusesTab() {
 
   return (
     <section className={classes.section}>
-      <Group justify="space-between" align="flex-end" gap="sm">
+      <ManageToolbar addLabel={t('playStatuses.add')} onAdd={() => setEditing({})}>
         <Text size="sm" c="dimmed" maw={640}>
           {t('playStatuses.intro')}
         </Text>
-        <Button variant="default" leftSection={<IconPlus size={16} />} onClick={() => setEditing({})}>
-          {t('playStatuses.add')}
-        </Button>
-      </Group>
+      </ManageToolbar>
 
       <DndContext
         sensors={sensors}

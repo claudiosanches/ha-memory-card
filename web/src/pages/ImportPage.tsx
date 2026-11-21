@@ -4,7 +4,6 @@ import {
   Anchor,
   Badge,
   Button,
-  Card,
   Code,
   FileInput,
   Group,
@@ -13,11 +12,13 @@ import {
   Stack,
   Table,
   Text,
-  Title,
 } from '@mantine/core';
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ToolSection } from '../components/ToolSection';
+import { PageHeader } from '../components/PageHeader';
+import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
@@ -95,70 +96,58 @@ export function ImportPage() {
   };
 
   return (
-    <Stack>
-      <Title order={2}>{t('nav.import')}</Title>
+    <Stack gap={24}>
+      <PageHeader title={t('nav.import')} description={t('import.intro')} />
 
-      <Card withBorder>
-        <Stack gap="sm">
-          <Title order={4}>{t('import.exportTitle')}</Title>
-          <Text size="sm" c="dimmed">
-            {t('import.exportText')}
-          </Text>
-          <Group>
-            <Button component="a" href="api/export.csv" download leftSection={<IconDownload size={16} />}>
-              {t('import.exportButton')}
-            </Button>
-            <Button
-              component="a"
-              href="api/import/template.csv"
-              download
-              variant="default"
-              leftSection={<IconFileSpreadsheet size={16} />}
-            >
-              {t('import.templateButton')}
-            </Button>
-          </Group>
-        </Stack>
-      </Card>
+      <ToolSection title={t('import.exportTitle')} description={t('import.exportText')}>
+        <Group className={classes.downloads}>
+          <Button component="a" href="api/export.csv" download leftSection={<IconDownload size={16} />}>
+            {t('import.exportButton')}
+          </Button>
+          <Button
+            component="a"
+            href="api/import/template.csv"
+            download
+            variant="default"
+            leftSection={<IconFileSpreadsheet size={16} />}
+          >
+            {t('import.templateButton')}
+          </Button>
+        </Group>
+      </ToolSection>
 
-      <Card withBorder>
-        <Stack gap="sm">
-          <Title order={4}>{t('import.importTitle')}</Title>
-          <Text size="sm" c="dimmed">
-            {t('import.importText')}
-          </Text>
-          <FileInput
-            label={t('import.file')}
-            placeholder={t('import.filePlaceholder')}
-            accept=".csv,text/csv"
-            leftSection={<IconUpload size={16} />}
-            value={file}
-            onChange={(chosen) => void choose(chosen)}
-            clearable
+      <ToolSection title={t('import.importTitle')} description={t('import.importText')}>
+        <FileInput
+          label={t('import.file')}
+          placeholder={t('import.filePlaceholder')}
+          accept=".csv,text/csv"
+          leftSection={<IconUpload size={16} />}
+          value={file}
+          onChange={(chosen) => void choose(chosen)}
+          clearable
+        />
+
+        {done && (
+          <Alert color="green" data-testid="import-done">
+            {t('import.done', {
+              games: done.new_games,
+              copies: done.new_copies,
+              updated: done.updated_copies,
+            })}
+          </Alert>
+        )}
+
+        {preview.isPending && <Text size="sm">{t('import.checking')}</Text>}
+
+        {preview.data && text !== null && (
+          <PreviewResult
+            preview={preview.data}
+            importing={run.isPending}
+            onImport={() => run.mutate(text)}
+            onReset={() => void choose(null)}
           />
-
-          {done && (
-            <Alert color="green" data-testid="import-done">
-              {t('import.done', {
-                games: done.new_games,
-                copies: done.new_copies,
-                updated: done.updated_copies,
-              })}
-            </Alert>
-          )}
-
-          {preview.isPending && <Text size="sm">{t('import.checking')}</Text>}
-
-          {preview.data && text !== null && (
-            <PreviewResult
-              preview={preview.data}
-              importing={run.isPending}
-              onImport={() => run.mutate(text)}
-              onReset={() => void choose(null)}
-            />
-          )}
-        </Stack>
-      </Card>
+        )}
+      </ToolSection>
 
       <ColumnHelp />
     </Stack>
@@ -254,39 +243,37 @@ function PreviewResult({
           <Text fw={600} size="sm">
             {t('import.issuesTitle')}
           </Text>
-          <Table.ScrollContainer minWidth={560}>
-            <Table data-testid="import-issues">
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>{t('import.line')}</Table.Th>
-                  <Table.Th>{t('import.game')}</Table.Th>
-                  <Table.Th>{t('import.column')}</Table.Th>
-                  <Table.Th>{t('import.problem')}</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {flagged.flatMap((row) =>
-                  row.issues.map((issue) => (
-                    <Table.Tr key={`${row.line}-${issue.column}-${issue.code}`}>
-                      <Table.Td>{row.line}</Table.Td>
-                      <Table.Td>{row.game_title}</Table.Td>
-                      <Table.Td>
-                        <Code>{issue.column}</Code>
-                      </Table.Td>
-                      <Table.Td>
-                        <Group gap="xs" wrap="nowrap">
-                          <Badge size="xs" color={issue.error ? 'red' : 'yellow'}>
-                            {issue.error ? t('common.error') : t('common.warning')}
-                          </Badge>
-                          <Text size="sm">{t(`importIssues.${issue.code}` as 'importIssues.required')}</Text>
-                        </Group>
-                      </Table.Td>
-                    </Table.Tr>
-                  )),
-                )}
-              </Table.Tbody>
-            </Table>
-          </Table.ScrollContainer>
+          <Table className={classes.issues} data-testid="import-issues">
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>{t('import.line')}</Table.Th>
+                <Table.Th>{t('import.game')}</Table.Th>
+                <Table.Th>{t('import.column')}</Table.Th>
+                <Table.Th>{t('import.problem')}</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {flagged.flatMap((row) =>
+                row.issues.map((issue) => (
+                  <Table.Tr key={`${row.line}-${issue.column}-${issue.code}`}>
+                    <Table.Td data-label={t('import.line')}>{row.line}</Table.Td>
+                    <Table.Td data-label={t('import.game')}>{row.game_title}</Table.Td>
+                    <Table.Td data-label={t('import.column')}>
+                      <Code>{issue.column}</Code>
+                    </Table.Td>
+                    <Table.Td data-label={t('import.problem')}>
+                      <Group gap="xs" wrap="nowrap">
+                        <Badge size="xs" color={issue.error ? 'red' : 'yellow'}>
+                          {issue.error ? t('common.error') : t('common.warning')}
+                        </Badge>
+                        <Text size="sm">{t(`importIssues.${issue.code}` as 'importIssues.required')}</Text>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                )),
+              )}
+            </Table.Tbody>
+          </Table>
         </Stack>
       )}
 

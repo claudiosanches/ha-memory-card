@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ActionIcon, Badge, Button, Group, Loader, Select, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
+import { ActionIcon, Badge, Button, Group, Loader, Select, Stack, Text, TextInput, Tooltip } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import {
   IconGripVertical,
@@ -37,6 +37,9 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import { SectionHeading } from '../../components/SectionHeading';
+import { FilterBar, FilterButton } from '../../components/FilterBar';
+import { ManageToolbar } from './ManageToolbar';
 import classes from './PlatformsTab.module.css';
 
 type Editing = { platform?: Platform } | null;
@@ -139,19 +142,13 @@ export function PlatformsTab() {
   return (
     <Stack gap="xl">
       <section className={classes.section}>
-        <Group justify="space-between" align="flex-end" gap="sm">
-          <div>
-            <Title order={3} className={classes.heading}>
-              {t('platforms.yourTitle')}
-            </Title>
-            <Text size="sm" c="dimmed">
-              {t('platforms.yourText')}
-            </Text>
-          </div>
-          <Button variant="default" leftSection={<IconPlus size={16} />} onClick={() => setEditing({})}>
-            {t('platforms.add')}
-          </Button>
-        </Group>
+        <ManageToolbar addLabel={t('platforms.add')} onAdd={() => setEditing({})}>
+          <SectionHeading
+            title={t('platforms.yourTitle')}
+            description={t('platforms.yourText')}
+            titleClassName={classes.heading}
+          />
+        </ManageToolbar>
         {active.length === 0 ? (
           <div className={classes.empty}>{t('platforms.yourEmpty')}</div>
         ) : (
@@ -295,14 +292,11 @@ function Catalog({ platforms, busy, onAdd, actions }: CatalogProps) {
 
   return (
     <section className={classes.section}>
-      <div>
-        <Title order={3} className={classes.heading}>
-          {t('platforms.catalogTitle')}
-        </Title>
-        <Text size="sm" c="dimmed">
-          {t('platforms.catalogText')}
-        </Text>
-      </div>
+      <SectionHeading
+        title={t('platforms.catalogTitle')}
+        description={t('platforms.catalogText')}
+        titleClassName={classes.heading}
+      />
       <TextInput
         leftSection={<IconSearch size={16} />}
         placeholder={t('platforms.search')}
@@ -310,22 +304,20 @@ function Catalog({ platforms, busy, onAdd, actions }: CatalogProps) {
         value={text}
         onChange={(event) => setText(event.currentTarget.value)}
       />
-      <div className={classes.filters} role="group" aria-label={t('platforms.category')}>
-        <button type="button" className={classes.filter} aria-pressed={!category} onClick={() => setCategory(null)}>
+      <FilterBar label={t('platforms.category')}>
+        <FilterButton selected={!category} onClick={() => setCategory(null)}>
           {t('platforms.categories.all')}
-        </button>
+        </FilterButton>
         {PLATFORM_CATEGORIES.map((c) => (
-          <button
-            type="button"
+          <FilterButton
             key={c}
-            className={classes.filter}
-            aria-pressed={category === c}
+            selected={category === c}
             onClick={() => setCategory(c)}
           >
             {t(`platforms.categories.${c}`)}
-          </button>
+          </FilterButton>
         ))}
-      </div>
+      </FilterBar>
       {groups.length === 0 ? (
         <div className={classes.empty}>{t('platforms.noMatch')}</div>
       ) : (

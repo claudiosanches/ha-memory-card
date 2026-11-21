@@ -1,6 +1,6 @@
-import { ActionIcon, Button, Group, Loader, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { ActionIcon, Group, Loader, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import { ManageToolbar } from './ManageToolbar';
 import classes from './ManageList.module.css';
 
 type Editing = { store?: Store } | null;
@@ -39,11 +40,7 @@ export function StoresTab() {
 
   return (
     <Stack>
-      <Group justify="flex-end">
-        <Button leftSection={<IconPlus size={16} />} onClick={() => setEditing({})}>
-          {t('stores.add')}
-        </Button>
-      </Group>
+      <ManageToolbar addLabel={t('stores.add')} onAdd={() => setEditing({})} />
 
       {stores.data.length === 0 ? (
         <div className={classes.empty}>{t('stores.empty')}</div>

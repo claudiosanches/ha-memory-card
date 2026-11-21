@@ -1,0 +1,23 @@
+.status { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 12px; }
+.status > div { min-width: 0; padding: 12px; border-radius: 8px; background: var(--mc-background); }
+.status dt { color: var(--mc-muted); font-size: .8125rem; }
+.status dd { margin: 4px 0 0; font-weight: 600; }
+.titleRow { padding-block: 12px; border-top: 1px solid var(--mc-border); overflow-wrap: anywhere; }
+
+@media (max-width: 36em) {
+  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .tabs::before { display: none; }
+  .tabs > button { min-height: 44px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 8px; }
+  .tabs > button[data-active] { background: var(--mantine-primary-color-light); border-color: var(--mantine-primary-color-filled); }
+  .downloads { display: grid; }
+  .downloads > a, .titleActions > button { min-height: 44px; }
+  .titleActions { width: 100%; }
+  .status { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .status > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+  .status dd { margin: 0; }
+  .issues, .issues tbody { display: block; }
+  .issues thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .issues tr { display: block; padding: 8px 0; }
+  .issues td { display: grid; grid-template-columns: 4rem minmax(0, 1fr); align-items: baseline; gap: 8px; padding: 4px 0; overflow-wrap: anywhere; }
+  .issues td::before { content: attr(data-label); font-size: .8125rem; font-weight: 600; }
+}

@@ -45,6 +45,7 @@ import {
   type GameDetail,
   type ReleaseDetail,
 } from '../../api/types';
+import { SectionHeading } from '../../components/SectionHeading';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { usePlayStatusList } from '../../components/playStatuses';
@@ -350,10 +351,7 @@ function GameView({ game }: { game: GameDetail }) {
       </div>
 
       <Group className={classes.releasesHeading} justify="space-between">
-        <div>
-          <Title order={3}>{t('game.releasesTitle')}</Title>
-          <Text size="sm" c="dimmed" mt={3}>{t('game.releasesDescription')}</Text>
-        </div>
+        <SectionHeading title={t('game.releasesTitle')} description={t('game.releasesDescription')} />
         <Button leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy' })}>
           {t('game.addCopy')}
         </Button>

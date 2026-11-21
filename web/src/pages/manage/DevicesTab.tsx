@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   Badge,
-  Button,
   Group,
   Loader,
   MultiSelect,
@@ -13,7 +12,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +24,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
+import { ManageToolbar } from './ManageToolbar';
 import classes from './ManageList.module.css';
 
 type Editing = { device?: Device } | null;
@@ -64,11 +64,7 @@ export function DevicesTab() {
 
   return (
     <Stack>
-      <Group justify="flex-end">
-        <Button leftSection={<IconPlus size={16} />} onClick={() => setEditing({})}>
-          {t('devices.add')}
-        </Button>
-      </Group>
+      <ManageToolbar addLabel={t('devices.add')} onAdd={() => setEditing({})} />
 
       {devices.data.length === 0 ? (
         <div className={classes.empty}>{t('devices.empty')}</div>

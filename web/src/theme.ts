@@ -20,7 +20,10 @@ export const theme = createTheme({
       : colors;
   },
   components: {
-    InputWrapper: { styles: { label: { marginBottom: 6, fontWeight: 600 } } },
+    InputWrapper: {
+      defaultProps: { inputWrapperOrder: ['label', 'input', 'description', 'error'] },
+      styles: { label: { marginBottom: 6, fontWeight: 600 } },
+    },
     Button: { defaultProps: { fw: 600 } },
     Card: { defaultProps: { padding: 'lg' } },
   },

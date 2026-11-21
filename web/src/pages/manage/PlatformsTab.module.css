@@ -9,15 +9,10 @@
 .row[data-dragging] { position: relative; z-index: 1; cursor: grabbing; box-shadow: 0 8px 20px #00000030; }
 .actions { flex-shrink: 0; }
 .swatch { cursor: pointer; }
-.filters { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.filter { border: 1px solid transparent; border-radius: 7px; background: transparent; padding: 6px 11px; color: var(--mc-muted); font: inherit; font-size: 0.875rem; font-weight: 550; cursor: pointer; transition: background 140ms ease; }
-.filter:hover { background: var(--mantine-color-default-hover); }
-.filter[aria-pressed='true'] { background: var(--mantine-primary-color-light); color: var(--mantine-primary-color-light-color); }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .groupTitle { letter-spacing: 0.06em; padding-top: 6px; }
 .empty { padding: 32px 24px; text-align: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: 12px; }
 
 @media (max-width: 36em) {
   .grid { grid-template-columns: minmax(0, 1fr); }
-  .filter { padding: 6px 9px; }
 }
