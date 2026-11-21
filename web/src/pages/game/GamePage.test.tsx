@@ -5,6 +5,10 @@ import en from '../../locales/en.json';
 import { json, mockApi } from '../../test/api';
 import { renderAt } from '../../test/render';
 
+/** Matches the element whose whole text is `text`, across a bold label. */
+const wholeText = (text: string) => (_: string, element: Element | null) =>
+  element?.textContent === text && [...element.children].every((child) => child.textContent !== text);
+
 const GAME: GameDetail = {
   id: 4,
   igdb_id: null,
@@ -110,7 +114,7 @@ describe('Game page', () => {
     renderAt('/games/4');
 
     expect(
-      await screen.findByText(`${en.game.players}: 2 (co-op) on the same screen, no online play`),
+      await screen.findByText(wholeText(`${en.game.players}: 2 (co-op) on the same screen, no online play`)),
     ).toBeInTheDocument();
     // The release adds online co-op to the game's values.
     const card = screen.getByTestId('release-9');
@@ -124,7 +128,7 @@ describe('Game page', () => {
     ];
     mockApi({ ...SETUP, 'GET /api/game-modes': modes, 'GET /api/games/4': { ...GAME, game_mode_ids: [1] } });
     renderAt('/games/4');
-    expect(await screen.findByText(`${en.game.players}: ${en.game.singlePlayer}`)).toBeInTheDocument();
+    expect(await screen.findByText(wholeText(`${en.game.players}: ${en.game.singlePlayer}`))).toBeInTheDocument();
   });
 
   it('keeps unknown counts for games with a multiplayer mode', async () => {
@@ -135,7 +139,7 @@ describe('Game page', () => {
     mockApi({ ...SETUP, 'GET /api/game-modes': modes, 'GET /api/games/4': { ...GAME, game_mode_ids: [1, 2] } });
     renderAt('/games/4');
     expect(
-      await screen.findByText(`${en.game.players}: Unknown on the same screen, Unknown online`),
+      await screen.findByText(wholeText(`${en.game.players}: Unknown on the same screen, Unknown online`)),
     ).toBeInTheDocument();
   });
 
