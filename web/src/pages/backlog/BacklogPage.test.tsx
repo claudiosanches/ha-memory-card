@@ -156,6 +156,32 @@ describe('Backlog page', () => {
     await waitFor(() => expect(screen.queryByTestId('picked')).toBeNull());
   });
 
+  it('keeps the current pick on screen while the next one loads', async () => {
+    let finish = () => {};
+    const rolls = ['Tunic', 'Celeste'];
+    mockApi({
+      ...SETUP,
+      'POST /api/suggestions': async () => {
+        const title = rolls.shift();
+        if (title === 'Celeste') await new Promise<void>((resolve) => (finish = resolve));
+        const summary = GAMES.find((g) => g.title === title) as GameSummary;
+        return { game: detail(summary, 'backlog'), copy_ids: [] };
+      },
+    });
+    renderAt('/backlog');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.backlog.pick }));
+    expect(await screen.findByTestId('picked')).toHaveTextContent('Tunic');
+    fireEvent.click(screen.getByRole('button', { name: en.backlog.pickAgain }));
+    await waitFor(() => expect(screen.getByTestId('picked')).toHaveAttribute('data-rolling'));
+    expect(screen.getByTestId('picked')).toHaveTextContent('Tunic');
+    expect(screen.getByRole('button', { name: en.backlog.pickAgain })).toBeDisabled();
+
+    finish();
+    await waitFor(() => expect(screen.getByTestId('picked')).toHaveTextContent('Celeste'));
+    expect(screen.getByTestId('picked')).not.toHaveAttribute('data-rolling');
+  });
+
   it('shows on hold games ten at a time', async () => {
     const paused = Array.from({ length: 23 }, (_, i) => game(100 + i, `Paused ${i}`, 'paused'));
     mockApi({ ...SETUP, 'GET /api/games': [...GAMES, ...paused] });

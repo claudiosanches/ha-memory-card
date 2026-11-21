@@ -17,11 +17,26 @@ export function Picker() {
   const { t } = useTranslation();
   const devices = useDevices();
   const [device, setDevice] = useState<string | null>(null);
+  // Kept apart from the mutation, which drops its data while the next roll loads.
+  const [picked, setPicked] = useState<{ suggestion: Suggestion; roll: number } | null>(null);
   const setStatus = useSetPlayStatus();
 
   const pick = useMutation({
     mutationFn: () => call(api.POST('/api/suggestions', { body: device ? { device: [Number(device)] } : {} })),
+    onSuccess: (suggestion) => setPicked((last) => ({ suggestion, roll: (last?.roll ?? 0) + 1 })),
+    onError: () => setPicked(null),
   });
+
+  const start = (id: number) =>
+    setStatus.mutate(
+      { id, status: 'playing' },
+      {
+        onSuccess: () => {
+          setPicked(null);
+          pick.reset();
+        },
+      },
+    );
 
   return (
     <section className={classes.picker}>
@@ -49,31 +64,42 @@ export function Picker() {
             onClick={() => pick.mutate()}
             disabled={pick.isPending}
           >
-            {pick.data ? t('backlog.pickAgain') : t('backlog.pick')}
+            {picked ? t('backlog.pickAgain') : t('backlog.pick')}
           </Button>
         </Group>
       </div>
 
-      {pick.isError && (
-        <Text size="sm" c="dimmed" className={classes.pickerResult}>
-          {errorMessage(t, pick.error)}
-        </Text>
-      )}
-      {pick.data && (
-        <Picked
-          key={pick.submittedAt}
-          suggestion={pick.data}
-          starting={setStatus.isPending}
-          onStart={() =>
-            pick.data && setStatus.mutate({ id: pick.data.game.id, status: 'playing' }, { onSuccess: () => pick.reset() })
-          }
-        />
-      )}
+      <div
+        className={classes.pickerResult}
+        data-empty={(!picked && !pick.isError) || undefined}
+        aria-live="polite"
+        aria-busy={pick.isPending}
+      >
+        {picked ? (
+          <Picked
+            key={picked.roll}
+            suggestion={picked.suggestion}
+            rolling={pick.isPending}
+            starting={setStatus.isPending}
+            onStart={() => start(picked.suggestion.game.id)}
+          />
+        ) : pick.isError ? (
+          <Text size="sm" c="dimmed">
+            {errorMessage(t, pick.error)}
+          </Text>
+        ) : (
+          <div className={classes.pickSlot} aria-hidden>
+            <IconDice5 size={28} stroke={1.4} className={pick.isPending ? classes.rolling : undefined} />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
 
-function Picked({ suggestion, starting, onStart }: { suggestion: Suggestion; starting: boolean; onStart: () => void }) {
+type PickedProps = { suggestion: Suggestion; rolling: boolean; starting: boolean; onStart: () => void };
+
+function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
   const { t } = useTranslation();
   const platforms = usePlatforms();
   const devices = useDevices();
@@ -90,12 +116,12 @@ function Picked({ suggestion, starting, onStart }: { suggestion: Suggestion; sta
   }
 
   return (
-    <div className={`${classes.pickerResult} ${classes.picked}`} data-testid="picked">
+    <div className={classes.picked} data-rolling={rolling || undefined} data-testid="picked">
       <Link to="/games/$gameId" params={{ gameId: String(game.id) }} className={classes.pickedCover}>
         <Cover path={game.cover_path} title={game.title} width={96} />
       </Link>
-      <div className={classes.rowText}>
-        <Text fw={700} size="lg" className={classes.gameTitle}>
+      <div className={classes.pickedText}>
+        <Text fw={700} size="lg" lineClamp={2} className={classes.gameTitle}>
           {game.title}
         </Text>
         {[...where].map((line) => (
@@ -103,8 +129,13 @@ function Picked({ suggestion, starting, onStart }: { suggestion: Suggestion; sta
             {line}
           </Text>
         ))}
-        <Group mt="sm">
-          <Button leftSection={<IconPlayerPlay size={16} />} onClick={onStart} loading={starting}>
+        <Group className={classes.pickedActions}>
+          <Button
+            leftSection={<IconPlayerPlay size={16} />}
+            onClick={onStart}
+            loading={starting}
+            disabled={rolling}
+          >
             {t('backlog.start')}
           </Button>
         </Group>

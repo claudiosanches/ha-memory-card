@@ -32,7 +32,8 @@ export const BUILTIN_STATUSES: PlayStatus[] = [
 
 /**
  * Stubs fetch with routes keyed by "METHOD /path". A route is a value to
- * return as JSON, a Response, or a function of the request body. Unknown
+ * return as JSON, a Response, or a function of the request body (which may
+ * return a promise of either). Unknown
  * routes answer 404, except the play status list, which defaults to the
  * built-in statuses. Returns the list of calls made.
  */
@@ -51,7 +52,7 @@ export function mockApi(given: Record<string, unknown>): ApiCall[] {
 
       const route = routes[`${request.method} ${path}`];
       if (route === undefined) return json({ code: 'not_found' }, 404);
-      const result = typeof route === 'function' ? (route as Handler)(body) : route;
+      const result = await (typeof route === 'function' ? (route as Handler)(body) : route);
       return result instanceof Response ? result : json(result);
     }),
   );
