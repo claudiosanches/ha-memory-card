@@ -129,12 +129,18 @@ describe('Manage stores', () => {
 });
 
 describe('Manage platforms', () => {
-  it('moves a platform down', async () => {
+  const CATALOG = [
+    ...PLATFORMS,
+    platform(4, 'Dreamcast', { active: false, category: 'console', igdb_platform_id: 23, sort_order: 1010 }),
+    platform(5, 'Game Gear', { active: false, category: 'handheld', igdb_platform_id: 35, sort_order: 1020 }),
+  ];
+
+  it('moves one of your platforms down, keeping the catalog after it', async () => {
     const calls = mockApi({
-      'GET /api/platforms': PLATFORMS,
+      'GET /api/platforms': CATALOG,
       'PUT /api/platforms/order': (body: unknown) => {
         const ids = (body as { ids: number[] }).ids;
-        return ids.map((id) => PLATFORMS.find((p) => p.id === id));
+        return ids.map((id) => CATALOG.find((p) => p.id === id));
       },
     });
     renderAt('/manage?tab=platforms');
@@ -143,28 +149,30 @@ describe('Manage platforms', () => {
     fireEvent.click(within(row).getByRole('button', { name: en.common.moveDown }));
 
     await waitFor(() =>
-      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ ids: [2, 1, 3] }),
+      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ ids: [2, 1, 3, 4, 5] }),
     );
   });
 
-  it('only allows deleting unused platforms', async () => {
-    mockApi({ 'GET /api/platforms': PLATFORMS });
+  it('only offers deleting unused platforms added by hand', async () => {
+    mockApi({ 'GET /api/platforms': CATALOG });
     renderAt('/manage?tab=platforms');
 
     const used = await screen.findByTestId('platform-wii-u');
-    expect(within(used).getByRole('button', { name: en.common.delete })).toBeDisabled();
+    expect(within(used).queryByRole('button', { name: en.common.delete })).toBeNull();
     const unused = screen.getByTestId('platform-nintendo-3ds');
     expect(within(unused).getByRole('button', { name: en.common.delete })).toBeEnabled();
+    const fromIgdb = screen.getByTestId('platform-dreamcast');
+    expect(within(fromIgdb).queryByRole('button', { name: en.common.delete })).toBeNull();
   });
 
-  it('toggles a platform off', async () => {
+  it('removes a platform from your list', async () => {
     const calls = mockApi({
-      'GET /api/platforms': PLATFORMS,
-      'PUT /api/platforms/3': (body: unknown) => ({ ...PLATFORMS[2], ...(body as object) }),
+      'GET /api/platforms': CATALOG,
+      'PUT /api/platforms/3': (body: unknown) => ({ ...CATALOG[2], ...(body as object) }),
     });
     renderAt('/manage?tab=platforms');
 
-    fireEvent.click(await screen.findByRole('switch', { name: 'Active: Nintendo 3DS' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove Nintendo 3DS from your platforms' }));
 
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({
@@ -172,6 +180,24 @@ describe('Manage platforms', () => {
         abbreviation: '3DS',
         active: false,
       }),
+    );
+  });
+
+  it('searches the catalog and adds a platform', async () => {
+    const calls = mockApi({
+      'GET /api/platforms': CATALOG,
+      'PUT /api/platforms/4': (body: unknown) => ({ ...CATALOG[3], ...(body as object) }),
+    });
+    renderAt('/manage?tab=platforms');
+
+    fireEvent.change(await screen.findByRole('textbox', { name: en.platforms.search }), {
+      target: { value: 'dream' },
+    });
+    expect(screen.queryByTestId('platform-game-gear')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Dreamcast' }));
+
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ name: 'Dreamcast', active: true }),
     );
   });
 });

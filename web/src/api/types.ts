@@ -18,6 +18,7 @@ export type GameMode = Schemas['GameMode'];
 export type GameSummary = Schemas['GameSummary'];
 export type Genre = Schemas['Genre'];
 export type Platform = Schemas['Platform'];
+export type PlatformCategory = Schemas['PlatformCategory'];
 export type PlatformInput = Schemas['PlatformInput'];
 export type PlayStatus = Schemas['PlayStatus'];
 export type Region = Schemas['Region'];
@@ -30,6 +31,14 @@ export type LibraryQuery = NonNullable<operations['listGames']['parameters']['qu
 export const DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account'];
 export const REGIONS: readonly Region[] = ['na', 'eu', 'au', 'nz', 'jp', 'cn', 'asia', 'kr', 'br', 'ww'];
 export const FORMATS: readonly Format[] = ['physical', 'digital'];
+export const PLATFORM_CATEGORIES: readonly PlatformCategory[] = [
+  'console',
+  'handheld',
+  'computer',
+  'mobile',
+  'arcade',
+  'other',
+];
 export const DUPLICATE_LABELS: readonly DuplicateLabel[] = [
   'same_release',
   'cross_platform',

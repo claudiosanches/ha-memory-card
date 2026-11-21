@@ -60,32 +60,31 @@ test('devices: add with platforms, reject a taken name', async ({ page }, testIn
   await expect(dialog.getByText(en.errors.name_taken)).toBeVisible();
 });
 
-test('platforms: add, deactivate, reorder, delete', async ({ page }, testInfo) => {
+test('platforms: add from the catalog, reorder, remove, delete a custom one', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'platform order is shared state');
   await openTab(page, 'platforms');
+  const yours = page.locator('ol [data-testid^="platform-"]');
+
+  await page.getByRole('textbox', { name: en.platforms.search }).fill('dreamcast');
+  await page.getByRole('button', { name: 'Add Dreamcast' }).click();
+  const dreamcast = yours.filter({ hasText: 'Dreamcast' });
+  await expect(yours.last()).toContainText('Dreamcast');
+
+  await dreamcast.getByRole('button', { name: en.common.moveUp }).click();
+  await expect(yours.nth(-2)).toContainText('Dreamcast');
+  await page.reload();
+  await expect(yours.nth(-2)).toContainText('Dreamcast');
+
+  await dreamcast.getByRole('button', { name: 'Remove Dreamcast from your platforms' }).click();
+  await expect(dreamcast).toHaveCount(0);
 
   await page.getByRole('button', { name: en.platforms.add }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel(en.common.name).fill('Sega Dreamcast');
-  await dialog.getByLabel(en.platforms.abbreviation).fill('DC');
+  await dialog.getByLabel(en.common.name).fill('Homebrew Console');
   await dialog.getByRole('button', { name: en.common.save }).click();
   await expect(dialog).toBeHidden();
-
-  const rows = page.locator('[data-testid^="platform-"]');
-  const row = page.getByTestId('platform-sega-dreamcast');
-  await expect(rows.last()).toHaveAttribute('data-testid', 'platform-sega-dreamcast');
-
-  await row.getByRole('switch', { name: 'Active: Sega Dreamcast' }).click({ force: true });
-  await expect(row.getByRole('switch')).not.toBeChecked();
-
-  await row.getByRole('button', { name: en.common.moveUp }).click();
-  await expect(rows.nth(-2)).toHaveAttribute('data-testid', 'platform-sega-dreamcast');
-
-  await page.reload();
-  await expect(rows.nth(-2)).toHaveAttribute('data-testid', 'platform-sega-dreamcast');
-  await expect(row.getByRole('switch')).not.toBeChecked();
-
-  await row.getByRole('button', { name: en.common.delete }).click();
+  const custom = page.getByTestId('platform-homebrew-console');
+  await custom.getByRole('button', { name: en.common.delete }).click();
   await page.getByRole('dialog').getByRole('button', { name: en.common.delete }).click();
-  await expect(row).toBeHidden();
+  await expect(custom).toBeHidden();
 });
