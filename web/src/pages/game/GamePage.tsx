@@ -227,7 +227,7 @@ function GameView({ game }: { game: GameDetail }) {
               variant="default"
               leftSection={<IconRefresh size={16} />}
               loading={refresh.isPending}
-              onClick={() => game.igdb_id && refresh.mutate(game.igdb_id)}
+              onClick={() => game.igdb_id && refresh.mutate({ igdbId: game.igdb_id, overwrite: false })}
             >
               {t('igdb.refresh')}
             </Button>

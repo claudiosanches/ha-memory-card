@@ -257,7 +257,11 @@
       "ownership": "Show",
       "owned": "Games I own",
       "any": "All games",
-      "sort": "Sort by"
+      "sort": "Sort by",
+      "igdb": "IGDB",
+      "igdbAny": "Linked or not",
+      "igdbLinked": "Linked to IGDB",
+      "igdbUnlinked": "Not linked to IGDB"
     },
     "sort": {
       "title": "Title",
@@ -343,6 +347,7 @@
     "syncText": "Links each game whose title matches exactly one IGDB game, then updates details and covers of every linked game. Link the games it cannot match from their page.",
     "syncButton": "Sync with IGDB",
     "syncProgress": "{{done}} of {{total}} games",
-    "syncResult": "Last sync: {{linked}} linked, {{updated}} updated, {{unmatched}} not matched, {{failed}} failed."
+    "syncResult": "Last sync: {{linked}} linked, {{updated}} updated, {{unmatched}} not matched, {{failed}} failed.",
+    "overwrite": "Replace the title, summary, game modes, player counts and release titles and dates with IGDB's"
   }
 }

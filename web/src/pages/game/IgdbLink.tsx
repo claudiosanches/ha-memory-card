@@ -1,4 +1,4 @@
-import { Badge, Card, Group, Loader, Modal, Stack, Text, TextInput } from '@mantine/core';
+import { Badge, Card, Checkbox, Group, Loader, Modal, Stack, Text, TextInput } from '@mantine/core';
 import { useDebouncedValue, useMediaQuery } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -10,14 +10,21 @@ import type { GameDetail } from '../../api/types';
 import { notifyError } from '../../components/notify';
 import { useGameSaved } from './forms';
 
+type LinkRequest = { igdbId: number; overwrite: boolean };
+
 /** Links a game to IGDB, or refreshes it when `igdbId` is its current link. */
 export function useIgdbLink(game: GameDetail, onDone?: () => void) {
   const { t } = useTranslation();
   const saved = useGameSaved();
   return useMutation({
-    mutationFn: (igdbId: number) =>
-      call(api.POST('/api/games/{id}/igdb', { params: { path: { id: game.id } }, body: { igdb_id: igdbId } })),
-    onSuccess: (updated, igdbId) => {
+    mutationFn: ({ igdbId, overwrite }: LinkRequest) =>
+      call(
+        api.POST('/api/games/{id}/igdb', {
+          params: { path: { id: game.id } },
+          body: { igdb_id: igdbId, overwrite },
+        }),
+      ),
+    onSuccess: (updated, { igdbId }) => {
       saved(updated, igdbId === game.igdb_id ? t('igdb.refreshed') : t('igdb.linked'));
       onDone?.();
     },
@@ -30,6 +37,8 @@ export function IgdbLinkModal({ game, onClose }: { game: GameDetail; onClose: ()
   const phone = useMediaQuery('(max-width: 48em)');
   const [text, setText] = useState(game.title);
   const [query] = useDebouncedValue(text.trim(), 400);
+  // A new match usually means the data from the old one was wrong.
+  const [overwrite, setOverwrite] = useState(game.igdb_id != null);
   const link = useIgdbLink(game, onClose);
 
   const results = useQuery({
@@ -49,6 +58,11 @@ export function IgdbLinkModal({ game, onClose }: { game: GameDetail; onClose: ()
           onChange={(event) => setText(event.currentTarget.value)}
           data-autofocus
         />
+        <Checkbox
+          label={t('igdb.overwrite')}
+          checked={overwrite}
+          onChange={(event) => setOverwrite(event.currentTarget.checked)}
+        />
         {results.isFetching && <Loader size="sm" />}
         {results.isError && <Text c="red">{errorMessage(t, results.error)}</Text>}
         {results.data?.length === 0 && <Text c="dimmed">{t('igdb.noResults')}</Text>}
@@ -60,7 +74,7 @@ export function IgdbLinkModal({ game, onClose }: { game: GameDetail; onClose: ()
             component="button"
             type="button"
             disabled={link.isPending}
-            onClick={() => link.mutate(hit.igdb_id)}
+            onClick={() => link.mutate({ igdbId: hit.igdb_id, overwrite })}
             style={{ textAlign: 'left', cursor: 'pointer' }}
             data-testid={`igdb-hit-${hit.igdb_id}`}
           >

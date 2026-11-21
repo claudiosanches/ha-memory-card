@@ -106,7 +106,7 @@ describe('Game page', () => {
 
     expect(await screen.findByText(`${en.game.developers}: MercurySteam`)).toBeInTheDocument();
     expect(calls.find((c) => c.path === '/api/igdb/search')?.query.get('q')).toBe('Metroid Dread');
-    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ igdb_id: 7 });
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ igdb_id: 7, overwrite: false });
   });
 
   it('says when the game does not exist', async () => {

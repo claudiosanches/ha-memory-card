@@ -72,6 +72,19 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
           onChange={(value) => onChange({ format: value ? (value as Format) : undefined })}
           allowDeselect={false}
         />
+        <Select
+          label={t('library.filter.igdb')}
+          data={[
+            { value: '', label: t('library.filter.igdbAny') },
+            { value: 'linked', label: t('library.filter.igdbLinked') },
+            { value: 'unlinked', label: t('library.filter.igdbUnlinked') },
+          ]}
+          value={search.igdb ?? ''}
+          onChange={(value) =>
+            onChange({ igdb: value === 'linked' || value === 'unlinked' ? value : undefined })
+          }
+          allowDeselect={false}
+        />
         <MultiSelect
           label={t('library.filter.region')}
           data={REGIONS.map((r) => ({ value: r, label: t(`region.${r}`) }))}

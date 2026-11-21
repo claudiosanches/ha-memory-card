@@ -28,5 +28,8 @@ describe('library search', () => {
   it('counts filters but not search, ownership or sort', () => {
     expect(activeFilterCount({ q: 'x', ownership: 'any', sort: 'added' })).toBe(0);
     expect(activeFilterCount({ platform: [1], play_status: ['backlog'], min_local_players: 2 })).toBe(3);
+    expect(activeFilterCount({ igdb: 'unlinked' })).toBe(1);
+    expect(toApiQuery({ igdb: 'unlinked' })).toEqual({ igdb: 'unlinked' });
+    expect(validateLibrarySearch({ igdb: 'maybe' })).toEqual({});
   });
 });

@@ -21,6 +21,7 @@ export type LibrarySearch = {
   format?: Format;
   min_local_players?: number;
   ownership?: 'any';
+  igdb?: 'linked' | 'unlinked';
   sort?: 'added' | 'played';
 };
 
@@ -54,6 +55,7 @@ export function validateLibrarySearch(search: Record<string, unknown>): LibraryS
   const players = Number(search.min_local_players);
   if (Number.isInteger(players) && players > 1) result.min_local_players = players;
   if (search.ownership === 'any') result.ownership = 'any';
+  if (search.igdb === 'linked' || search.igdb === 'unlinked') result.igdb = search.igdb;
   if (search.sort === 'added' || search.sort === 'played') result.sort = search.sort;
   return result;
 }
@@ -65,7 +67,8 @@ export function activeFilterCount(search: LibrarySearch): number {
     (search.region ? 1 : 0) +
     (search.play_status ? 1 : 0) +
     (search.format ? 1 : 0) +
-    (search.min_local_players ? 1 : 0)
+    (search.min_local_players ? 1 : 0) +
+    (search.igdb ? 1 : 0)
   );
 }
 
@@ -81,6 +84,7 @@ export function toApiQuery(search: LibrarySearch): LibraryQuery {
   if (search.format) query.format = search.format;
   if (search.min_local_players) query.min_local_players = search.min_local_players;
   if (search.ownership) query.ownership = search.ownership;
+  if (search.igdb) query.igdb = search.igdb;
   if (search.sort) query.sort = search.sort;
   return query;
 }
