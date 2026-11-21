@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE copies\n                     SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,\n                         condition = ?, notes = ?, updated_by = ?,\n                         updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n                     WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "11e396cda3fd960f0609b292e48b2c3ea7e511a4bcd5920fb83876ca95c745f9"
+}

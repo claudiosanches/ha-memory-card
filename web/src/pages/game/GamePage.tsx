@@ -51,6 +51,7 @@ import { SectionHeading } from '../../components/SectionHeading';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { usePlayStatusList } from '../../components/playStatuses';
+import { history } from '../../components/history';
 import { formatDate, today } from '../../components/status';
 import { Copies } from './Copies';
 import { CoverPicker } from './CoverPicker';
@@ -266,6 +267,9 @@ function GameView({ game }: { game: GameDetail }) {
                 {t('game.publishers')}: {game.publishers.join(', ')}
               </Text>
             )}
+            <Text size="xs" c="dimmed" data-testid="game-history">
+              {history(game, t, i18n.language)}
+            </Text>
           </Stack>
         </Group>
         {canManage && (

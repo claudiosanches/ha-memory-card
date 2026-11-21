@@ -63,6 +63,9 @@ To let viewers keep track of what they play, turn on
 `viewers_track_progress`. They can then change play status and last played,
 and start games from the backlog, but nothing else.
 
+Memory Card keeps the name of each user who adds or changes a game or a
+copy, and the game page shows who added it and who changed it last.
+
 ## Options
 
 | Option | Description |

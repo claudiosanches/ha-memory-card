@@ -49,6 +49,7 @@ function detail(summary: GameSummary, play_status: string | null): GameDetail {
     online_coop: null,
     game_mode_ids: [],
     genre_ids: [],
+    created_at: '2026-11-01T10:00:00.000Z',
     releases: [],
   };
 }

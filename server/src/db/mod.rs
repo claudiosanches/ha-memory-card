@@ -10,6 +10,7 @@ pub mod sensors;
 pub mod stores;
 pub mod suggestions;
 pub mod titles;
+pub mod users;
 
 use std::path::Path;
 use std::time::Duration;

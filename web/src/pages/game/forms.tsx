@@ -76,7 +76,7 @@ type CopyFormProps = {
   gameId?: number;
   /** Called on save when there is no `gameId`, to create the game only once the copy is saved. */
   resolveGame?: () => Promise<number>;
-  copy?: CopyDetail;
+  copy?: Omit<CopyDetail, 'created_at' | 'created_by' | 'updated_by'>;
   release?: Pick<ReleaseDetail, 'platform_id' | 'region' | 'product_code'>;
   /** Starts the form on this status, such as owned for a wanted copy just bought. */
   status?: CopyStatus;

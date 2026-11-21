@@ -32,7 +32,7 @@ pub async fn differences(pool: &SqlitePool) -> sqlx::Result<Vec<TitleDifference>
 }
 
 /// Renames `use_igdb` games to their IGDB title and hides `keep` games from the list.
-pub async fn resolve(pool: &SqlitePool, use_igdb: &[i64], keep: &[i64]) -> ApiResult<()> {
+pub async fn resolve(pool: &SqlitePool, use_igdb: &[i64], keep: &[i64], by: &str) -> ApiResult<()> {
     let mut tx = write_tx(pool).await?;
     for &id in use_igdb {
         let Some(title) = sqlx::query_scalar!("SELECT igdb_title FROM games WHERE id = ?", id)
@@ -44,11 +44,12 @@ pub async fn resolve(pool: &SqlitePool, use_igdb: &[i64], keep: &[i64]) -> ApiRe
         };
         let sort = sort_title(&title);
         sqlx::query!(
-            "UPDATE games SET title = ?, sort_title = ?,
+            "UPDATE games SET title = ?, sort_title = ?, updated_by = ?,
                  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
              WHERE id = ?",
             title,
             sort,
+            by,
             id
         )
         .execute(&mut *tx)

@@ -13,7 +13,7 @@ fn resolve(r: Ref, created: &[i64]) -> i64 {
 
 /// Writes the plan. The caller owns the transaction and must not apply a
 /// plan that has errors.
-pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()> {
+pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::Result<()> {
     let mut taken: Vec<String> = sqlx::query_scalar!(r#"SELECT slug AS "slug!" FROM platforms"#)
         .fetch_all(&mut *conn)
         .await?;
@@ -70,12 +70,14 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
     for game in &plan.games {
         let sort = sort_title(&game.title);
         let id = sqlx::query_scalar!(
-            r#"INSERT INTO games (igdb_id, title, sort_title, play_status)
-               VALUES (?, ?, ?, ?) RETURNING id AS "id!""#,
+            r#"INSERT INTO games (igdb_id, title, sort_title, play_status, created_by, updated_by)
+               VALUES (?, ?, ?, ?, ?, ?) RETURNING id AS "id!""#,
             game.igdb_id,
             game.title,
             sort,
-            game.play_status
+            game.play_status,
+            by,
+            by
         )
         .fetch_one(&mut *conn)
         .await?;
@@ -83,9 +85,11 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
     }
     for (id, status) in &plan.game_statuses {
         sqlx::query!(
-            "UPDATE games SET play_status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            "UPDATE games SET play_status = ?, updated_by = ?,
+                              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
              WHERE id = ?",
             status,
+            by,
             id
         )
         .execute(&mut *conn)
@@ -93,9 +97,11 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
     }
     for (id, igdb_id) in &plan.game_igdb_links {
         sqlx::query!(
-            "UPDATE games SET igdb_id = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            "UPDATE games SET igdb_id = ?, updated_by = ?,
+                              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
              WHERE id = ?",
             igdb_id,
+            by,
             id
         )
         .execute(&mut *conn)
@@ -137,15 +143,18 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
         match copy.existing {
             None => {
                 sqlx::query!(
-                    "INSERT INTO copies (release_id, status, device_id, format, store_id, condition, notes)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,
+                                         notes, created_by, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     release_id,
                     copy.status,
                     device_id,
                     copy.format,
                     store_id,
                     copy.condition,
-                    copy.notes
+                    copy.notes,
+                    by,
+                    by
                 )
                 .execute(&mut *conn)
                 .await?;
@@ -154,7 +163,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
                 sqlx::query!(
                     "UPDATE copies
                      SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,
-                         condition = ?, notes = ?,
+                         condition = ?, notes = ?, updated_by = ?,
                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                      WHERE id = ?",
                     release_id,
@@ -164,6 +173,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
                     store_id,
                     copy.condition,
                     copy.notes,
+                    by,
                     id
                 )
                 .execute(&mut *conn)

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           WHERE r.game_id = ?\n           ORDER BY c.id",
+  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes, c.created_at,\n                  c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           LEFT JOIN users cu ON cu.id = c.created_by\n           LEFT JOIN users uu ON uu.id = c.updated_by\n           WHERE r.game_id = ?\n           ORDER BY c.id",
   "describe": {
     "columns": [
       {
@@ -90,6 +90,51 @@
             "name": "notes"
           }
         }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "created_by",
+        "ordinal": 9,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "created_by"
+          }
+        }
+      },
+      {
+        "name": "created_by_name",
+        "ordinal": 10,
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "name": "updated_by",
+        "ordinal": 11,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "name": "updated_by_name",
+        "ordinal": 12,
+        "type_info": "Text",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -103,8 +148,13 @@
       true,
       true,
       true,
+      true,
+      false,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "4cb147c309fcef3a788486dd2f6db38c1ba20e5baa619f3b681397fdd3386dd6"
+  "hash": "40a5d2610939f2e0edb0e75168076e22285e5a7a82b324fd2581e83162e736cf"
 }

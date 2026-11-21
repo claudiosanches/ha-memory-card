@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 
 use super::input::{NOTES_MAX, optional, required};
 use crate::AppState;
+use crate::access::Actor;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, CopyFields, GameDetail, GameFields, PlayerCounts, ReleaseFields};
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
@@ -237,10 +238,11 @@ pub async fn list_copies(
 )]
 pub async fn create(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiJson(input): ApiJson<NewGameInput>,
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
     let title = required(&input.title, "title", TITLE_MAX)?;
-    let id = games::create(&state.db, &title, input.play_status.as_deref()).await?;
+    let id = games::create(&state.db, &title, input.play_status.as_deref(), &by).await?;
     Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
 }
 
@@ -268,10 +270,11 @@ pub async fn get(
 )]
 pub async fn update(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<GameInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    games::update(&state.db, id, &input.validate()?).await?;
+    games::update(&state.db, id, &input.validate()?, &by).await?;
     Ok(Json(games::get(&state.db, id).await?))
 }
 
@@ -294,10 +297,11 @@ pub struct PlayStatusInput {
 )]
 pub async fn set_play_status(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<PlayStatusInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    games::set_play_status(&state.db, id, input.play_status.as_deref()).await?;
+    games::set_play_status(&state.db, id, input.play_status.as_deref(), &by).await?;
     Ok(Json(games::get(&state.db, id).await?))
 }
 
@@ -324,11 +328,12 @@ pub struct LastPlayedInput {
 )]
 pub async fn set_last_played(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<LastPlayedInput>,
 ) -> ApiResult<Json<GameDetail>> {
     let at = date(input.last_played_at.as_deref(), "last_played_at")?;
-    games::set_last_played(&state.db, id, at.as_deref(), input.last_played_copy_id).await?;
+    games::set_last_played(&state.db, id, at.as_deref(), input.last_played_copy_id, &by).await?;
     Ok(Json(games::get(&state.db, id).await?))
 }
 
@@ -365,10 +370,11 @@ pub async fn delete(
 )]
 pub async fn add_copy(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<CopyInput>,
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
-    games::add_copy(&state.db, id, &input.validate()?).await?;
+    games::add_copy(&state.db, id, &input.validate()?, &by).await?;
     Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
 }
 
@@ -384,10 +390,11 @@ pub async fn add_copy(
 )]
 pub async fn update_copy(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<CopyInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = games::update_copy(&state.db, id, &input.validate()?).await?;
+    let game_id = games::update_copy(&state.db, id, &input.validate()?, &by).await?;
     Ok(Json(games::get(&state.db, game_id).await?))
 }
 

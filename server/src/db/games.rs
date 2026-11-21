@@ -4,6 +4,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
+use super::users::Person;
 use crate::covers::Owner;
 use crate::domain::{Condition, CopyStatus, Format, Region, sort_title};
 use crate::error::{ApiError, ApiResult};
@@ -17,6 +18,9 @@ pub struct CopyDetail {
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
+    pub created_at: String,
+    pub created_by: Option<Person>,
+    pub updated_by: Option<Person>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -59,6 +63,10 @@ pub struct GameDetail {
     pub online_coop: Option<bool>,
     pub game_mode_ids: Vec<i64>,
     pub genre_ids: Vec<i64>,
+    pub created_at: String,
+    pub created_by: Option<Person>,
+    /// The last person to edit the game itself; copies record their own.
+    pub updated_by: Option<Person>,
     /// In platform list order, then region.
     pub releases: Vec<ReleaseDetail>,
 }
@@ -114,8 +122,14 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                   (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)
                       AS "game_mode_ids!: Json<Vec<i64>>",
                   (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)
-                      AS "genre_ids!: Json<Vec<i64>>"
-           FROM games g WHERE g.id = ?"#,
+                      AS "genre_ids!: Json<Vec<i64>>",
+                  g.created_at, g.created_by,
+                  COALESCE(cu.display_name, cu.name) AS created_by_name,
+                  g.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name
+           FROM games g
+           LEFT JOIN users cu ON cu.id = g.created_by
+           LEFT JOIN users uu ON uu.id = g.updated_by
+           WHERE g.id = ?"#,
         id
     )
     .fetch_optional(pool)
@@ -138,8 +152,12 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     let mut copies = sqlx::query!(
         r#"SELECT c.id AS "id!", c.release_id, c.status AS "status: CopyStatus",
                   c.format AS "format: Format", c.device_id, c.store_id,
-                  c.condition AS "condition: Condition", c.notes
+                  c.condition AS "condition: Condition", c.notes, c.created_at,
+                  c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,
+                  c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name
            FROM copies c JOIN releases r ON r.id = c.release_id
+           LEFT JOIN users cu ON cu.id = c.created_by
+           LEFT JOIN users uu ON uu.id = c.updated_by
            WHERE r.game_id = ?
            ORDER BY c.id"#,
         id
@@ -176,6 +194,9 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                         store_id: c.store_id,
                         condition: c.condition,
                         notes: c.notes,
+                        created_at: c.created_at,
+                        created_by: Person::from_columns(c.created_by, c.created_by_name),
+                        updated_by: Person::from_columns(c.updated_by, c.updated_by_name),
                     })
                     .collect(),
             }
@@ -206,24 +227,35 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         online_coop: game.online_coop,
         game_mode_ids,
         genre_ids,
+        created_at: game.created_at,
+        created_by: Person::from_columns(game.created_by, game.created_by_name),
+        updated_by: Person::from_columns(game.updated_by, game.updated_by_name),
         releases,
     })
 }
 
-pub async fn create(pool: &SqlitePool, title: &str, play_status: Option<&str>) -> ApiResult<i64> {
+pub async fn create(
+    pool: &SqlitePool,
+    title: &str,
+    play_status: Option<&str>,
+    by: &str,
+) -> ApiResult<i64> {
     super::play_statuses::ensure_exists(pool, play_status).await?;
     let sort = sort_title(title);
     Ok(sqlx::query_scalar!(
-        r#"INSERT INTO games (title, sort_title, play_status) VALUES (?, ?, ?) RETURNING id AS "id!""#,
+        r#"INSERT INTO games (title, sort_title, play_status, created_by, updated_by)
+           VALUES (?, ?, ?, ?, ?) RETURNING id AS "id!""#,
         title,
         sort,
-        play_status
+        play_status,
+        by,
+        by
     )
     .fetch_one(pool)
     .await?)
 }
 
-pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResult<()> {
+pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
     super::play_statuses::ensure_exists(&mut *tx, fields.play_status.as_deref()).await?;
 
@@ -236,7 +268,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
         "UPDATE games
          SET title = ?, sort_title = ?, summary = ?, play_status = ?, last_played_at = ?,
              last_played_copy_id = ?, local_max_players = ?, online_max_players = ?,
-             local_coop = ?, online_coop = ?,
+             local_coop = ?, online_coop = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         fields.title,
@@ -249,6 +281,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
         p.online_max_players,
         p.local_coop,
         p.online_coop,
+        by,
         id
     )
     .execute(&mut *tx)
@@ -270,12 +303,19 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
     Ok(())
 }
 
-pub async fn set_play_status(pool: &SqlitePool, id: i64, status: Option<&str>) -> ApiResult<()> {
+pub async fn set_play_status(
+    pool: &SqlitePool,
+    id: i64,
+    status: Option<&str>,
+    by: &str,
+) -> ApiResult<()> {
     super::play_statuses::ensure_exists(pool, status).await?;
     let result = sqlx::query!(
-        "UPDATE games SET play_status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        "UPDATE games SET play_status = ?, updated_by = ?,
+                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         status,
+        by,
         id
     )
     .execute(pool)
@@ -288,14 +328,16 @@ pub async fn set_last_played(
     id: i64,
     at: Option<&str>,
     copy_id: Option<i64>,
+    by: &str,
 ) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
     let result = sqlx::query!(
-        "UPDATE games SET last_played_at = ?, last_played_copy_id = ?,
+        "UPDATE games SET last_played_at = ?, last_played_copy_id = ?, updated_by = ?,
                           updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         at,
         copy_id,
+        by,
         id
     )
     .execute(&mut *tx)
@@ -349,7 +391,12 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<Vec<i64>> {
 
 /// Adds a copy, creating its release when the game has none for that
 /// platform, region and product code.
-pub async fn add_copy(pool: &SqlitePool, game_id: i64, fields: &CopyFields) -> ApiResult<()> {
+pub async fn add_copy(
+    pool: &SqlitePool,
+    game_id: i64,
+    fields: &CopyFields,
+    by: &str,
+) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
     let game_exists: bool = sqlx::query_scalar!(
         r#"SELECT EXISTS (SELECT 1 FROM games WHERE id = ?) AS "exists!: bool""#,
@@ -364,15 +411,18 @@ pub async fn add_copy(pool: &SqlitePool, game_id: i64, fields: &CopyFields) -> A
     let release_id = release_for(&mut tx, game_id, fields).await?;
     let status = fields.status.unwrap_or(CopyStatus::Owned);
     sqlx::query!(
-        "INSERT INTO copies (release_id, status, format, device_id, store_id, condition, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO copies (release_id, status, format, device_id, store_id, condition, notes,
+                             created_by, updated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         release_id,
         status,
         fields.format,
         fields.device_id,
         fields.store_id,
         fields.condition,
-        fields.notes
+        fields.notes,
+        by,
+        by
     )
     .execute(&mut *tx)
     .await?;
@@ -382,7 +432,12 @@ pub async fn add_copy(pool: &SqlitePool, game_id: i64, fields: &CopyFields) -> A
 
 /// Updates a copy and returns its game id. Changing platform, region or
 /// product code moves it to the matching release, creating it if needed.
-pub async fn update_copy(pool: &SqlitePool, copy_id: i64, fields: &CopyFields) -> ApiResult<i64> {
+pub async fn update_copy(
+    pool: &SqlitePool,
+    copy_id: i64,
+    fields: &CopyFields,
+    by: &str,
+) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
     let game_id = copy_game(&mut tx, copy_id).await?;
     check_references(&mut tx, fields).await?;
@@ -390,7 +445,7 @@ pub async fn update_copy(pool: &SqlitePool, copy_id: i64, fields: &CopyFields) -
     sqlx::query!(
         "UPDATE copies
          SET release_id = ?, status = COALESCE(?, status), format = ?, device_id = ?,
-             store_id = ?, condition = ?, notes = ?,
+             store_id = ?, condition = ?, notes = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         release_id,
@@ -400,6 +455,7 @@ pub async fn update_copy(pool: &SqlitePool, copy_id: i64, fields: &CopyFields) -
         fields.store_id,
         fields.condition,
         fields.notes,
+        by,
         copy_id
     )
     .execute(&mut *tx)

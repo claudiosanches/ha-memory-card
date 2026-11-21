@@ -25,6 +25,7 @@ function detail(id: number, title: string): GameDetail {
     online_coop: null,
     game_mode_ids: [],
     genre_ids: [],
+    created_at: '2026-11-01T10:00:00.000Z',
     releases: [
       {
         id: 9,
@@ -40,7 +41,7 @@ function detail(id: number, title: string): GameDetail {
         local_coop: null,
         online_coop: null,
         copies: [
-          { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: 'Spare' },
+          { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: 'Spare', created_at: '2026-11-01T10:00:00.000Z' },
         ],
       },
     ],

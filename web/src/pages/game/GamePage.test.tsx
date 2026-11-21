@@ -28,6 +28,7 @@ const GAME: GameDetail = {
   online_coop: null,
   game_mode_ids: [],
   genre_ids: [],
+  created_at: '2026-11-01T10:00:00.000Z',
   releases: [
     {
       id: 9,
@@ -43,7 +44,7 @@ const GAME: GameDetail = {
       local_coop: null,
       online_coop: null,
       copies: [
-        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null },
+        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z' },
       ],
     },
   ],
@@ -81,6 +82,28 @@ describe('Game page', () => {
     await waitFor(() => expect(within(release).getByText('Nintendo Switch · Europe (PAL)')).toBeInTheDocument());
     expect(within(release).getByText('HAC-AYL3A')).toBeInTheDocument();
     expect(within(screen.getByTestId('copy-21')).getByText(en.condition.cib)).toBeInTheDocument();
+  });
+
+  it('says who added the game and who changed it last', async () => {
+    mockApi({
+      ...SETUP,
+      'GET /api/games/4': {
+        ...GAME,
+        created_by: { id: 'a1', name: 'Sam' },
+        updated_by: { id: 'b2', name: 'Alex' },
+      },
+    });
+    renderAt('/games/4');
+
+    const history = await screen.findByTestId('game-history');
+    expect(history.textContent).toMatch(/^Added by Sam on .+\. Last changed by Alex\.$/);
+  });
+
+  it('leaves out the editor when it is who added the game', async () => {
+    mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, created_by: { id: 'a1', name: null }, updated_by: { id: 'a1' } } });
+    renderAt('/games/4');
+
+    expect((await screen.findByTestId('game-history')).textContent).toMatch(/^Added by someone on [^.]+\.$/);
   });
 
   it('shows a viewer the game without edit controls', async () => {
@@ -122,7 +145,7 @@ describe('Game page', () => {
       addEventListener: () => {},
       removeEventListener: () => {},
     }));
-    const copy = { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: 3, condition: 'cib', notes: 'Sealed spare' };
+    const copy = { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: 3, condition: 'cib', notes: 'Sealed spare', created_at: '2026-11-01T10:00:00.000Z' };
     mockApi({
       ...SETUP,
       'GET /api/stores': [{ id: 3, name: 'Amazon', notes: null, copy_count: 1 }],

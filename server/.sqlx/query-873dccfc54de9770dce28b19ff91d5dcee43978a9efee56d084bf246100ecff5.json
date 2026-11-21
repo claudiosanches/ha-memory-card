@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO users (id, name, display_name) VALUES (?, ?, ?)\n         ON CONFLICT (id) DO UPDATE SET name = excluded.name, display_name = excluded.display_name\n         WHERE name IS NOT excluded.name OR display_name IS NOT excluded.display_name",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "873dccfc54de9770dce28b19ff91d5dcee43978a9efee56d084bf246100ecff5"
+}

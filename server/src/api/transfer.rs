@@ -10,6 +10,7 @@ use time::macros::format_description;
 use utoipa::ToSchema;
 
 use crate::AppState;
+use crate::access::Actor;
 use crate::db::devices::DeviceKind;
 use crate::db::library::{LibraryFilter, Ownership};
 use crate::error::{ApiError, ApiResult, ErrorBody};
@@ -196,7 +197,11 @@ pub async fn preview(State(state): State<AppState>, body: Bytes) -> ApiResult<Js
         (status = UNPROCESSABLE_ENTITY, description = "`import_invalid`: preview the file to see why", body = ErrorBody),
     )
 )]
-pub async fn run(State(state): State<AppState>, body: Bytes) -> ApiResult<Json<ImportResult>> {
+pub async fn run(
+    State(state): State<AppState>,
+    Actor(by): Actor,
+    body: Bytes,
+) -> ApiResult<Json<ImportResult>> {
     let rows = parse(&body).map_err(|_| ApiError::Invalid {
         code: "import_invalid",
         field: None,
@@ -211,7 +216,7 @@ pub async fn run(State(state): State<AppState>, body: Bytes) -> ApiResult<Json<I
             field: None,
         });
     }
-    apply::apply(&mut tx, &plan).await?;
+    apply::apply(&mut tx, &plan, &by).await?;
     tx.commit().await?;
 
     let summary = summarize(&plan);

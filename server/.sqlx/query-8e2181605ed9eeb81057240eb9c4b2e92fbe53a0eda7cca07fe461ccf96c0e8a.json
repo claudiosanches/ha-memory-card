@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.cover_path,\n                  g.cover_source IS 'upload' AS \"cover_uploaded!: bool\", g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.play_status, g.last_played_at, g.last_played_copy_id,\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\"\n           FROM games g WHERE g.id = ?",
+  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.cover_path,\n                  g.cover_source IS 'upload' AS \"cover_uploaded!: bool\", g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.play_status, g.last_played_at, g.last_played_copy_id,\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\",\n                  g.created_at, g.created_by,\n                  COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  g.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM games g\n           LEFT JOIN users cu ON cu.id = g.created_by\n           LEFT JOIN users uu ON uu.id = g.updated_by\n           WHERE g.id = ?",
   "describe": {
     "columns": [
       {
@@ -185,6 +185,51 @@
         "ordinal": 17,
         "type_info": "Integer",
         "origin": "Expression"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 18,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "created_by",
+        "ordinal": 19,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "created_by"
+          }
+        }
+      },
+      {
+        "name": "created_by_name",
+        "ordinal": 20,
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "name": "updated_by",
+        "ordinal": 21,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "name": "updated_by_name",
+        "ordinal": 22,
+        "type_info": "Text",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -208,8 +253,13 @@
       true,
       true,
       true,
+      true,
+      false,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "11be64167f826b5b0024de6182e2f24d1a203300ec65957a4ef7231e62fda259"
+  "hash": "8e2181605ed9eeb81057240eb9c4b2e92fbe53a0eda7cca07fe461ccf96c0e8a"
 }

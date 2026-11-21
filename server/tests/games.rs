@@ -735,3 +735,82 @@ async fn wanted_copies_make_a_wishlist() {
     assert_eq!(titles(&app, "").await, ["Celeste", "Hades II"]);
     assert!(titles(&app, "ownership=wanted").await.is_empty());
 }
+
+/// Sends JSON as a named Home Assistant user.
+async fn json_as(
+    app: &TestApp,
+    user: (&str, &str),
+    method: &str,
+    path: &str,
+    body: Value,
+) -> (StatusCode, Value) {
+    let request = axum::http::Request::builder()
+        .method(method)
+        .uri(path)
+        .header("content-type", "application/json")
+        .header("x-remote-user-id", user.0)
+        .header("x-remote-user-display-name", user.1)
+        .body(axum::body::Body::from(body.to_string()))
+        .unwrap();
+    let (status, bytes) = app.request(common::SUPERVISOR, request).await;
+    (status, serde_json::from_slice(&bytes).unwrap())
+}
+
+#[tokio::test]
+async fn games_and_copies_name_who_added_and_changed_them() {
+    let app = TestApp::with_env(&[("MEMORY_CARD_MANAGERS", "sam,alex")]).await;
+    let sam = ("sam", "Sam");
+    let alex = ("alex", "Alex");
+    let switch = app.platform_id("switch").await;
+
+    let (_, game) = json_as(&app, sam, "POST", "/api/games", json!({"title": "Hades"})).await;
+    let id = game["id"].as_i64().unwrap();
+    assert_eq!(game["created_by"], json!({"id": "sam", "name": "Sam"}));
+    assert_eq!(game["updated_by"]["id"], "sam");
+    assert!(game["created_at"].as_str().unwrap().starts_with("20"));
+
+    let (_, game) = json_as(
+        &app,
+        sam,
+        "POST",
+        &format!("/api/games/{id}/copies"),
+        json!({"platform_id": switch, "region": "eu", "format": "digital"}),
+    )
+    .await;
+    let copy = &game["releases"][0]["copies"][0];
+    assert_eq!(copy["created_by"]["name"], "Sam");
+    let copy_id = copy["id"].as_i64().unwrap();
+
+    let (status, game) = json_as(
+        &app,
+        alex,
+        "PUT",
+        &format!("/api/copies/{copy_id}"),
+        json!({"platform_id": switch, "region": "eu", "format": "digital", "notes": "Gift"}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{game}");
+    let copy = &game["releases"][0]["copies"][0];
+    assert_eq!(copy["created_by"]["id"], "sam");
+    assert_eq!(copy["updated_by"], json!({"id": "alex", "name": "Alex"}));
+    assert_eq!(
+        game["updated_by"]["id"], "sam",
+        "a copy edit leaves the game alone"
+    );
+
+    let renamed = ("alex", "Alex B.");
+    let (_, game) = json_as(
+        &app,
+        renamed,
+        "PUT",
+        &format!("/api/games/{id}/play-status"),
+        json!({"play_status": "playing"}),
+    )
+    .await;
+    assert_eq!(game["updated_by"]["name"], "Alex B.");
+    assert_eq!(
+        game["releases"][0]["copies"][0]["updated_by"]["name"], "Alex B.",
+        "names follow Home Assistant"
+    );
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM users").await, 2);
+}

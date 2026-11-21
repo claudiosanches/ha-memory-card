@@ -61,6 +61,7 @@ function detail(id: number, title: string, copies: number): GameDetail {
     online_coop: null,
     game_mode_ids: [],
     genre_ids: [],
+    created_at: '2026-11-01T10:00:00.000Z',
     releases: [
       {
         id: 12,
@@ -83,6 +84,7 @@ function detail(id: number, title: string, copies: number): GameDetail {
           store_id: null,
           condition: null,
           notes: null,
+          created_at: '2026-11-01T10:00:00.000Z',
         })),
       },
     ],

@@ -625,5 +625,11 @@
     "stop": "Stop",
     "done": "You went through every game on the list.",
     "again": "Back to the start"
+  },
+  "history": {
+    "added": "Added on {{date}}.",
+    "addedBy": "Added by {{name}} on {{date}}.",
+    "changedBy": "Last changed by {{name}}.",
+    "someone": "someone"
   }
 }

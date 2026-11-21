@@ -2591,13 +2591,27 @@
         "required": [
           "id",
           "status",
-          "format"
+          "format",
+          "created_at"
         ],
         "properties": {
           "condition": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "created_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person"
               },
               {
                 "type": "null"
@@ -2633,6 +2647,16 @@
               "null"
             ],
             "format": "int64"
+          },
+          "updated_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -3081,6 +3105,7 @@
           "publishers",
           "game_mode_ids",
           "genre_ids",
+          "created_at",
           "releases"
         ],
         "properties": {
@@ -3093,6 +3118,19 @@
           },
           "cover_uploaded": {
             "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "created_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "developers": {
             "type": "array",
@@ -3198,6 +3236,17 @@
           },
           "title": {
             "type": "string"
+          },
+          "updated_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person",
+                "description": "The last person to edit the game itself; copies record their own."
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -3640,6 +3689,26 @@
           },
           "title": {
             "type": "string"
+          }
+        }
+      },
+      "Person": {
+        "type": "object",
+        "description": "Who added or last changed something.",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Home Assistant user ID."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name, else username; `None` when Home Assistant sent neither."
           }
         }
       },

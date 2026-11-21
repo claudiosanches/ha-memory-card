@@ -7,6 +7,7 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::AppState;
+use crate::access::Actor;
 use crate::db::games::{self, GameDetail};
 use crate::db::titles::{self, TitleDifference};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
@@ -165,8 +166,9 @@ pub struct TitleChoices {
 )]
 pub async fn resolve_titles(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiJson(choices): ApiJson<TitleChoices>,
 ) -> ApiResult<Json<Vec<TitleDifference>>> {
-    titles::resolve(&state.db, &choices.use_igdb, &choices.keep).await?;
+    titles::resolve(&state.db, &choices.use_igdb, &choices.keep, &by).await?;
     Ok(Json(titles::differences(&state.db).await?))
 }

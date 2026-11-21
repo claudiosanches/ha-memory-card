@@ -583,6 +583,8 @@ export interface components {
         Condition: "sealed" | "cib" | "no_manual" | "loose";
         CopyDetail: {
             condition?: components["schemas"]["Condition"] | null;
+            created_at: string;
+            created_by?: components["schemas"]["Person"] | null;
             /** Format: int64 */
             device_id?: number | null;
             format: components["schemas"]["Format"];
@@ -592,6 +594,7 @@ export interface components {
             status: components["schemas"]["CopyStatus"];
             /** Format: int64 */
             store_id?: number | null;
+            updated_by?: components["schemas"]["Person"] | null;
         };
         CopyInput: {
             condition?: components["schemas"]["Condition"] | null;
@@ -710,6 +713,8 @@ export interface components {
             /** @description Relative to the covers URL. */
             cover_path?: string | null;
             cover_uploaded: boolean;
+            created_at: string;
+            created_by?: components["schemas"]["Person"] | null;
             developers: string[];
             first_release_date?: string | null;
             game_mode_ids: number[];
@@ -734,6 +739,7 @@ export interface components {
             releases: components["schemas"]["ReleaseDetail"][];
             summary?: string | null;
             title: string;
+            updated_by?: components["schemas"]["Person"] | null;
         };
         GameInput: {
             game_mode_ids?: number[];
@@ -863,6 +869,13 @@ export interface components {
             /** @description A play status key. */
             play_status?: string | null;
             title: string;
+        };
+        /** @description Who added or last changed something. */
+        Person: {
+            /** @description Home Assistant user ID. */
+            id: string;
+            /** @description Display name, else username; `None` when Home Assistant sent neither. */
+            name?: string | null;
         };
         Platform: {
             abbreviation?: string | null;

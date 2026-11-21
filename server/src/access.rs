@@ -3,11 +3,13 @@
 use std::sync::Arc;
 
 use axum::Json;
-use axum::extract::{MatchedPath, Request, State};
+use axum::extract::{FromRequestParts, MatchedPath, Request, State};
+use axum::http::request::Parts;
 use axum::http::{HeaderMap, Method, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
+use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use crate::error::ErrorBody;
@@ -98,8 +100,38 @@ pub async fn guard(
     next.run(request).await
 }
 
+/// Keeps the names of users who change things. Runs after [`guard`].
+pub async fn remember(State(db): State<SqlitePool>, request: Request, next: Next) -> Response {
+    if !is_read(request.method())
+        && let Some(access) = request.extensions().get::<Access>()
+        && let Err(err) = crate::db::users::record(&db, &access.user).await
+    {
+        tracing::warn!(error = %err, "cannot record the user");
+    }
+    next.run(request).await
+}
+
+/// The ID of the user making a change, for `created_by` and `updated_by`.
+pub struct Actor(pub String);
+
+impl<S: Send + Sync> FromRequestParts<S> for Actor {
+    type Rejection = Response;
+
+    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<Access>()
+            .map(|access| Self(access.user.id.clone()))
+            .ok_or_else(|| deny(StatusCode::UNAUTHORIZED, "identity_required"))
+    }
+}
+
+fn is_read(method: &Method) -> bool {
+    method == Method::GET || method == Method::HEAD
+}
+
 fn required_role(method: &Method, path: &str, viewers_track_progress: bool) -> Role {
-    let open = if method == Method::GET || method == Method::HEAD {
+    let open = if is_read(method) {
         !MANAGER_READS.contains(&path)
     } else {
         method == Method::PUT && PROGRESS_WRITES.contains(&path) && viewers_track_progress

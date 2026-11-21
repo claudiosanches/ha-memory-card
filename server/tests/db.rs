@@ -46,6 +46,7 @@ async fn fresh_database_has_schema_and_seed() {
             "settings",
             "stores",
             "suggestions",
+            "users",
         ]
     );
 

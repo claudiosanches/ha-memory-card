@@ -75,6 +75,10 @@ pub fn app(state: AppState) -> Router {
             state.changes.clone(),
             sensors::track_changes,
         ))
+        .route_layer(middleware::from_fn_with_state(
+            state.db.clone(),
+            access::remember,
+        ))
         // Assets stay open so the UI can explain a missing identity.
         .route_layer(middleware::from_fn_with_state(policy, access::guard))
         .merge(assets::router())
