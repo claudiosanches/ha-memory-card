@@ -1,0 +1,60 @@
+.page { min-width: 0; gap: 24px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; min-width: 0; padding: 28px; overflow: hidden; border: 1px solid var(--mc-border); border-radius: 16px; background: var(--mc-surface); }
+.identity { position: relative; min-width: 0; align-items: flex-start; gap: 22px; }
+.identity :global(.mc-cover) { border-radius: 10px; box-shadow: var(--mc-cover-shadow); }
+.identityText { min-width: 0; padding-bottom: 3px; overflow-wrap: anywhere; }
+.gameTitle { margin-bottom: 8px; font-size: clamp(1.75rem, 3.2vw, 2.75rem); line-height: 1.08; letter-spacing: -0.045em; overflow-wrap: anywhere; }
+.gameActions { flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; padding: 0; }
+.gameActions > :global(button:not([aria-label])) { min-height: 38px; }
+.manageActions { gap: 8px; flex-wrap: nowrap; }
+.manageActions > :global(button[aria-label]) { width: 38px; height: 38px; border: 1px solid var(--mc-border); border-radius: 8px; }
+.metadata { min-width: 0; border-radius: 12px; }
+.overview { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }
+.summaryText { line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
+.playControls { flex-wrap: wrap; }
+.playControls label { margin-bottom: 6px; }
+.playSelect { width: 220px; }
+.copySelect { width: 260px; }
+.lastPlayed { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 8px 12px; border-radius: 8px; background: var(--mc-background); }
+.tagRow { flex-wrap: wrap; }
+.releasesHeading { min-width: 0; }
+.release { min-width: 0; overflow: hidden; border-radius: 12px; }
+.releaseHeader { min-width: 0; }
+.releaseIdentity { min-width: 0; }
+.releaseIdentity > :last-child { min-width: 0; overflow-wrap: anywhere; }
+.releaseActions { flex-shrink: 0; }
+
+@media (max-width: 48em) {
+  .page { gap: 18px; }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px; border-radius: 12px; }
+  .identity { flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+  .identityText { align-items: center; width: 100%; padding: 0; text-align: center; }
+  .gameTitle { margin-bottom: 6px; font-size: clamp(1.3rem, 6vw, 1.65rem); line-height: 1.16; letter-spacing: -0.035em; }
+  .gameActions { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; width: 100%; padding: 0; border: 0; background: transparent; }
+  .gameActions > :global(button:not([aria-label])) { width: 100%; min-width: 0; }
+  .manageActions { display: grid; grid-template-columns: minmax(0, 1fr) 38px; width: 100%; }
+  .manageActions > :global(button:not([aria-label])) { width: 100%; }
+  .manageActions > :global(button[aria-label]) { width: 38px; height: 38px; }
+  .metadata { padding: var(--mantine-spacing-md); }
+  .playControls { align-items: stretch; flex-direction: column; }
+  .playSelect, .copySelect { width: 100%; }
+  .releasesHeading { align-items: center; }
+  .releasesHeading > div { min-width: 0; }
+  .releaseHeader { flex-wrap: wrap; }
+  .releaseIdentity { flex: 1 1 10rem; }
+  .releaseMenuButton { min-height: 44px; }
+}
+
+@media (width > 48em) {
+  .hero { display: flex; flex-wrap: wrap; row-gap: 16px; }
+  .identity { flex: 1 1 48rem; }
+  .gameActions { flex-wrap: wrap; justify-content: flex-start; }
+}
+
+@media (max-width: 24em) {
+  .hero { padding: 14px; }
+  .identity { gap: 12px; }
+  .gameTitle { font-size: 1.25rem; }
+  .identity :global(.mc-cover) { border-radius: 8px; }
+  .releasesHeading { align-items: flex-start; flex-direction: column; }
+}

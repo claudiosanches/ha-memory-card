@@ -6,6 +6,7 @@ import {
   Card,
   Group,
   Loader,
+  Menu,
   Select,
   Stack,
   Text,
@@ -15,6 +16,7 @@ import {
 import {
   IconArrowLeft,
   IconCalendarCheck,
+  IconChevronDown,
   IconLink,
   IconPencil,
   IconPlus,
@@ -52,6 +54,7 @@ import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
 import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
 import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
+import classes from './GamePage.module.css';
 
 const route = getRouteApi('/games/$gameId');
 
@@ -199,19 +202,19 @@ function GameView({ game }: { game: GameDetail }) {
     game.game_mode_ids.every((id) => gameModes.data?.find((mode) => mode.id === id)?.slug === 'single-player');
 
   return (
-    <Stack>
+    <Stack className={classes.page}>
       <BackLink />
-      <Group justify="space-between" align="flex-start">
-        <Group align="flex-start" wrap="nowrap">
+      <section className={classes.hero}>
+        <Group className={classes.identity} align="flex-start" wrap="nowrap">
           <CoverPicker
             target={{ kind: 'game', id: game.id }}
             path={game.cover_path}
             uploaded={game.cover_uploaded}
             title={game.title}
-            width={phone ? 72 : 120}
+            width={phone ? 92 : 160}
           />
-          <Stack gap={4}>
-            <Title order={2}>{game.title}</Title>
+          <Stack className={classes.identityText} gap={4}>
+            <Title order={1} className={classes.gameTitle}>{game.title}</Title>
             {game.igdb_id && (
               <Badge size="xs" variant="light" w="fit-content">
                 {t('game.igdbLinked')}
@@ -234,7 +237,7 @@ function GameView({ game }: { game: GameDetail }) {
             )}
           </Stack>
         </Group>
-        <Group gap="xs">
+        <Group className={classes.gameActions} gap="xs">
           {status.data?.igdb_configured && game.igdb_id && (
             <Button
               variant="default"
@@ -250,96 +253,107 @@ function GameView({ game }: { game: GameDetail }) {
               {game.igdb_id ? t('igdb.relink') : t('igdb.link')}
             </Button>
           )}
-          <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
-            {t('common.edit')}
-          </Button>
-          <ActionIcon
-            variant="subtle"
-            color="red"
-            size="lg"
-            aria-label={t('game.delete')}
-            onClick={() => setDialog({ kind: 'deleteGame' })}
-          >
-            <IconTrash size={18} />
-          </ActionIcon>
-        </Group>
-      </Group>
-
-      <Card withBorder>
-        <Stack gap="sm">
-          <Group align="flex-end" gap="md">
-            <Select
-              label={t('game.playStatus')}
-              placeholder={t('common.notSet')}
-              w={220}
-              data={statuses.options}
-              value={game.play_status ?? null}
-              onChange={(value) => update.mutate({ play_status: value ?? null })}
-              clearable
-              disabled={update.isPending}
-              leftSection={
-                game.play_status ? <Badge size="xs" circle color={statuses.color(game.play_status)} /> : null
-              }
-            />
-            <Select
-              label={t('game.lastPlayedCopy')}
-              placeholder={t('common.notSet')}
-              w={260}
-              data={allCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
-              value={game.last_played_copy_id ? String(game.last_played_copy_id) : null}
-              onChange={(value) => update.mutate({ last_played_copy_id: value ? Number(value) : null })}
-              clearable
-              disabled={update.isPending || allCopies.length === 0}
-            />
-            <Button
-              variant="light"
-              leftSection={<IconCalendarCheck size={16} />}
-              onClick={playedToday}
-              loading={update.isPending}
-            >
-              {t('game.playedToday')}
+          <Group className={classes.manageActions} gap="xs" wrap="nowrap">
+            <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
+              {t('common.edit')}
             </Button>
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              size="lg"
+              aria-label={t('game.delete')}
+              onClick={() => setDialog({ kind: 'deleteGame' })}
+            >
+              <IconTrash size={18} />
+            </ActionIcon>
           </Group>
-          <Text size="sm" data-testid="last-played">
-            {t('game.lastPlayed')}:{' '}
-            {game.last_played_at ? formatDate(game.last_played_at, i18n.language) : t('game.never')}
-          </Text>
-          <Group gap="xs">
-            <Text size="sm">{t('game.gameModes')}:</Text>
-            {game.game_mode_ids.length === 0 && (
-              <Text size="sm" c="dimmed">
-                {t('common.notSet')}
-              </Text>
-            )}
-            {game.game_mode_ids.map((modeId) => (
-              <Badge key={modeId} size="sm" variant="light" tt="none">
-                {names.mode.get(modeId)}
-              </Badge>
-            ))}
-          </Group>
-          {game.genre_ids.length > 0 && (
-            <Group gap="xs">
-              <Text size="sm">{t('game.genres')}:</Text>
-              {game.genre_ids.map((genreId) => (
-                <Badge key={genreId} size="sm" variant="outline" tt="none">
-                  {names.genre.get(genreId)}
+        </Group>
+      </section>
+
+      <div className={classes.overview}>
+        <Card withBorder className={classes.metadata}>
+          <Stack gap="sm">
+            <Title order={4}>{t('game.progressTitle')}</Title>
+            <Group className={classes.playControls} align="flex-end" gap="md">
+              <Select
+                label={t('game.playStatus')}
+                placeholder={t('common.notSet')}
+                className={classes.playSelect}
+                data={statuses.options}
+                value={game.play_status ?? null}
+                onChange={(value) => update.mutate({ play_status: value ?? null })}
+                clearable
+                disabled={update.isPending}
+                leftSection={
+                  game.play_status ? <Badge size="xs" circle color={statuses.color(game.play_status)} /> : null
+                }
+              />
+              <Select
+                label={t('game.lastPlayedCopy')}
+                placeholder={t('common.notSet')}
+                className={classes.copySelect}
+                data={allCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
+                value={game.last_played_copy_id ? String(game.last_played_copy_id) : null}
+                onChange={(value) => update.mutate({ last_played_copy_id: value ? Number(value) : null })}
+                clearable
+                disabled={update.isPending || allCopies.length === 0}
+              />
+              <Button
+                variant="light"
+                leftSection={<IconCalendarCheck size={16} />}
+                onClick={playedToday}
+                loading={update.isPending}
+              >
+                {t('game.playedToday')}
+              </Button>
+            </Group>
+            <div className={classes.lastPlayed} data-testid="last-played">
+              <Text size="xs" c="dimmed">{t('game.lastPlayed')}</Text>
+              <Text size="sm" fw={600}>{game.last_played_at ? formatDate(game.last_played_at, i18n.language) : t('game.never')}</Text>
+            </div>
+          </Stack>
+        </Card>
+
+        <Card withBorder className={classes.metadata}>
+          <Stack gap="sm">
+            <Title order={4}>{t('game.detailsTitle')}</Title>
+            <Group gap="xs" className={classes.tagRow}>
+              <Text size="sm"><strong>{t('game.gameModes')}:</strong></Text>
+              {game.game_mode_ids.length === 0 ? (
+                <Text size="sm" c="dimmed">{t('common.notSet')}</Text>
+              ) : game.game_mode_ids.map((modeId) => (
+                <Badge key={modeId} size="sm" variant="light" tt="none">
+                  {names.mode.get(modeId)}
                 </Badge>
               ))}
             </Group>
-          )}
-          <Text size="sm">
-            {t('game.players')}: {singlePlayerOnly ? t('game.singlePlayer') : describePlayers(t, game)}
-          </Text>
-          {game.summary && (
-            <Text size="sm" c="dimmed">
-              {game.summary}
+            {game.genre_ids.length > 0 && (
+              <Group gap="xs" className={classes.tagRow}>
+                <Text size="sm"><strong>{t('game.genres')}:</strong></Text>
+                {game.genre_ids.map((genreId) => (
+                  <Badge key={genreId} size="sm" variant="outline" tt="none">
+                    {names.genre.get(genreId)}
+                  </Badge>
+                ))}
+              </Group>
+            )}
+            <Text size="sm">
+              <strong>{t('game.players')}:</strong> {singlePlayerOnly ? t('game.singlePlayer') : describePlayers(t, game)}
             </Text>
-          )}
-        </Stack>
-      </Card>
+            {game.summary?.trim() && (
+              <Text size="sm" className={classes.summaryText}>
+                <strong>{t('game.summary')}:</strong> {game.summary}
+              </Text>
+            )}
+          </Stack>
+        </Card>
+      </div>
 
-      <Group justify="space-between">
-        <Title order={4}>{t('game.releasesTitle')}</Title>
+      <Group className={classes.releasesHeading} justify="space-between">
+        <div>
+          <Title order={3}>{t('game.releasesTitle')}</Title>
+          <Text size="sm" c="dimmed" mt={3}>{t('game.releasesDescription')}</Text>
+        </div>
         <Button leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy' })}>
           {t('game.addCopy')}
         </Button>
@@ -348,10 +362,10 @@ function GameView({ game }: { game: GameDetail }) {
       {game.releases.length === 0 && <Text c="dimmed">{t('game.noReleases')}</Text>}
 
       {game.releases.map((release) => (
-        <Card key={release.id} withBorder data-testid={`release-${release.id}`}>
+        <Card key={release.id} withBorder className={classes.release} data-testid={`release-${release.id}`}>
           <Stack gap="xs">
-            <Group justify="space-between" wrap="nowrap" align="flex-start">
-              <Group gap="sm" wrap="nowrap" align="flex-start">
+            <Group className={classes.releaseHeader} justify="space-between" wrap="nowrap" align="flex-start">
+              <Group className={classes.releaseIdentity} gap="sm" wrap="nowrap" align="flex-start">
                 <CoverPicker
                   target={{ kind: 'release', id: release.id }}
                   path={release.cover_path ?? game.cover_path}
@@ -378,32 +392,53 @@ function GameView({ game }: { game: GameDetail }) {
                   )}
                 </Stack>
               </Group>
-              <Group gap={4} wrap="nowrap">
-                <Tooltip label={t('game.addCopyHere')}>
+              {phone ? (
+                <Menu position="bottom-end">
+                  <Menu.Target>
+                    <Button variant="default" size="xs" className={classes.releaseMenuButton} rightSection={<IconChevronDown size={14} />}>
+                      {t('game.manageRelease')}
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy', release })}>
+                      {t('game.addCopyHere')}
+                    </Menu.Item>
+                    <Menu.Item leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editRelease', release })}>
+                      {t('game.editRelease')}
+                    </Menu.Item>
+                    <Menu.Item color="red" leftSection={<IconTrash size={16} />} onClick={() => setDialog({ kind: 'deleteRelease', release })}>
+                      {t('game.deleteRelease')}
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              ) : (
+                <Group className={classes.releaseActions} gap={4} wrap="nowrap">
+                  <Tooltip label={t('game.addCopyHere')}>
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label={t('game.addCopyHere')}
+                      onClick={() => setDialog({ kind: 'addCopy', release })}
+                    >
+                      <IconPlus size={16} />
+                    </ActionIcon>
+                  </Tooltip>
                   <ActionIcon
                     variant="subtle"
-                    aria-label={t('game.addCopyHere')}
-                    onClick={() => setDialog({ kind: 'addCopy', release })}
+                    aria-label={t('game.editRelease')}
+                    onClick={() => setDialog({ kind: 'editRelease', release })}
                   >
-                    <IconPlus size={16} />
+                    <IconPencil size={16} />
                   </ActionIcon>
-                </Tooltip>
-                <ActionIcon
-                  variant="subtle"
-                  aria-label={t('game.editRelease')}
-                  onClick={() => setDialog({ kind: 'editRelease', release })}
-                >
-                  <IconPencil size={16} />
-                </ActionIcon>
-                <ActionIcon
-                  variant="subtle"
-                  color="red"
-                  aria-label={t('game.deleteRelease')}
-                  onClick={() => setDialog({ kind: 'deleteRelease', release })}
-                >
-                  <IconTrash size={16} />
-                </ActionIcon>
-              </Group>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    aria-label={t('game.deleteRelease')}
+                    onClick={() => setDialog({ kind: 'deleteRelease', release })}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Group>
+              )}
             </Group>
 
             {release.copies.length > 0 && (
@@ -411,7 +446,6 @@ function GameView({ game }: { game: GameDetail }) {
                 copies={release.copies}
                 devices={names.device}
                 stores={names.store}
-                compact={phone}
                 onEdit={(copy) => setDialog({ kind: 'editCopy', copy, release })}
                 onDelete={(copy) => setDialog({ kind: 'deleteCopy', copy })}
               />
