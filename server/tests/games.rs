@@ -665,3 +665,62 @@ async fn sets_only_the_play_status() {
         .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn wanted_copies_make_a_wishlist() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let owned_game = new_game(&app, "Celeste").await;
+    add_copy(
+        &app,
+        owned_game,
+        json!({"platform_id": switch, "region": "ww", "format": "digital"}),
+    )
+    .await;
+    let wished = new_game(&app, "Hades II").await;
+    let detail = add_copy(
+        &app,
+        wished,
+        json!({"status": "wanted", "platform_id": switch, "region": "ww", "format": "physical"}),
+    )
+    .await;
+    let copy = detail["releases"][0]["copies"][0].clone();
+    assert_eq!(copy["status"], "wanted");
+    let copy_id = copy["id"].as_i64().unwrap();
+
+    assert_eq!(titles(&app, "").await, ["Celeste"]);
+    assert_eq!(titles(&app, "ownership=wanted").await, ["Hades II"]);
+    let (_, list) = app.json("GET", "/api/games?ownership=wanted", None).await;
+    assert_eq!(list[0]["owned_copies"], 0);
+    assert_eq!(list[0]["wanted_copies"], 1);
+    assert_eq!(
+        list[0]["platforms"],
+        json!([{"platform_id": switch, "copies": 1}])
+    );
+    let (_, status) = app.json("GET", "/api/status", None).await;
+    assert_eq!(status["owned_copies"], 1);
+
+    let (status, body) = app
+        .json(
+            "PUT",
+            &format!("/api/games/{wished}/last-played"),
+            Some(json!({"last_played_at": "2026-11-21", "last_played_copy_id": copy_id})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{body}");
+    assert_eq!(body["code"], "invalid_copy");
+
+    // Leaving the status out keeps it; setting it to owned is "got it".
+    let edit = json!({"platform_id": switch, "region": "ww", "format": "physical", "notes": "Limited Run"});
+    let (status, detail) = app
+        .json("PUT", &format!("/api/copies/{copy_id}"), Some(edit))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["releases"][0]["copies"][0]["status"], "wanted");
+    let got =
+        json!({"status": "owned", "platform_id": switch, "region": "ww", "format": "physical"});
+    app.json("PUT", &format!("/api/copies/{copy_id}"), Some(got))
+        .await;
+    assert_eq!(titles(&app, "").await, ["Celeste", "Hades II"]);
+    assert!(titles(&app, "ownership=wanted").await.is_empty());
+}

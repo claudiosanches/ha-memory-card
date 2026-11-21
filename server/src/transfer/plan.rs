@@ -290,9 +290,6 @@ impl<'a> Planner<'a> {
         let status = issues
             .value(&raw.status, "status", CopyStatus::parse_loose, false)
             .unwrap_or(CopyStatus::Owned);
-        if status == CopyStatus::Wanted {
-            issues.error("status", "wanted_unsupported");
-        }
         let platform_name = issues.text(&raw.platform, "platform", NAME_MAX, has_copy);
         let region = issues.value(&raw.region, "region", Region::parse_loose, has_copy);
         let release_title = issues.text(&raw.release_title, "release_title", TITLE_MAX, false);

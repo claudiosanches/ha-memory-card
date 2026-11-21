@@ -14,6 +14,7 @@ function game(id: number, title: string, play_status: string | null): GameSummar
     play_status,
     last_played_at: null,
     owned_copies: 1,
+    wanted_copies: 0,
     platforms: [{ platform_id: 1, copies: 1 }],
   };
 }

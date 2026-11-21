@@ -28,6 +28,7 @@ const GAMES: GameSummary[] = [
     play_status: 'playing',
     last_played_at: null,
     owned_copies: 2,
+    wanted_copies: 0,
     platforms: [{ platform_id: 1, copies: 2 }],
   },
 ];

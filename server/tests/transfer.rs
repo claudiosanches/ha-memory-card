@@ -82,6 +82,20 @@ async fn export_follows_the_library_filters() {
 }
 
 #[tokio::test]
+async fn wanted_copies_import_and_export() {
+    let app = TestApp::new().await;
+    let csv = format!("{HEADER}\n,wishlist,,Hades II,,PC,ww,,,digital,,,,\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM copies WHERE status = 'wanted'")
+            .await,
+        1
+    );
+    assert!(export(&app).await.contains(",wanted,,Hades II,"));
+}
+
+#[tokio::test]
 async fn template_is_the_header_row() {
     let app = TestApp::new().await;
     let (status, bytes) = app.get("/api/import/template.csv").await;
@@ -276,16 +290,13 @@ async fn errors_block_the_import() {
          ,,,Okami,someday,,,,,,,,,\n"
     );
     let (_, preview) = app.post_csv("/api/import/preview", &csv).await;
-    assert_eq!(preview["summary"]["error_rows"], 7, "{preview}");
+    assert_eq!(preview["summary"]["error_rows"], 6, "{preview}");
     assert_eq!(issues(&preview, 2), [("region".into(), "required".into())]);
     assert_eq!(
         issues(&preview, 3),
         [("condition".into(), "condition_digital".into())]
     );
-    assert_eq!(
-        issues(&preview, 4),
-        [("status".into(), "wanted_unsupported".into())]
-    );
+    assert!(issues(&preview, 4).is_empty(), "wanted copies import");
     assert_eq!(
         issues(&preview, 5),
         [("copy_id".into(), "unknown_copy".into())]

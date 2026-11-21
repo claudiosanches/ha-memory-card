@@ -103,3 +103,18 @@ async fn player_counts_on_a_release_count() {
     let fields = list[0]["fields"].as_array().unwrap();
     assert!(!fields.contains(&json!("players")), "{fields:?}");
 }
+
+#[tokio::test]
+async fn games_only_on_the_wishlist_are_left_out() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let game = new_game(&app, "Hades II").await;
+    add_copy(
+        &app,
+        game,
+        json!({ "status": "wanted", "platform_id": switch, "region": "ww", "format": "digital" }),
+    )
+    .await;
+    let (_, list) = app.json("GET", "/api/missing-details", None).await;
+    assert_eq!(list, json!([]));
+}

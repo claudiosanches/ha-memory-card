@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE games SET last_played_copy_id = NULL WHERE last_played_copy_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "b606f1bf162eeaf1cedb7e0cda771fd4bc549b8698a0748e3bf64fbba2535305"
+}

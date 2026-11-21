@@ -83,6 +83,8 @@ pub struct GameFields {
 }
 
 pub struct CopyFields {
+    /// `None` keeps the current status, or makes a new copy owned.
+    pub status: Option<CopyStatus>,
     pub platform_id: i64,
     pub region: Region,
     pub product_code: Option<String>,
@@ -315,7 +317,7 @@ async fn ensure_game_copy(
     };
     let belongs: bool = sqlx::query_scalar!(
         r#"SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
-                          WHERE c.id = ? AND r.game_id = ?) AS "belongs!: bool""#,
+                          WHERE c.id = ? AND r.game_id = ? AND c.status = 'owned') AS "belongs!: bool""#,
         copy_id,
         game_id
     )
@@ -360,10 +362,12 @@ pub async fn add_copy(pool: &SqlitePool, game_id: i64, fields: &CopyFields) -> A
     }
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
+    let status = fields.status.unwrap_or(CopyStatus::Owned);
     sqlx::query!(
-        "INSERT INTO copies (release_id, format, device_id, store_id, condition, notes)
-         VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO copies (release_id, status, format, device_id, store_id, condition, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)",
         release_id,
+        status,
         fields.format,
         fields.device_id,
         fields.store_id,
@@ -385,10 +389,12 @@ pub async fn update_copy(pool: &SqlitePool, copy_id: i64, fields: &CopyFields) -
     let release_id = release_for(&mut tx, game_id, fields).await?;
     sqlx::query!(
         "UPDATE copies
-         SET release_id = ?, format = ?, device_id = ?, store_id = ?, condition = ?, notes = ?,
+         SET release_id = ?, status = COALESCE(?, status), format = ?, device_id = ?,
+             store_id = ?, condition = ?, notes = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         release_id,
+        fields.status,
         fields.format,
         fields.device_id,
         fields.store_id,
@@ -398,6 +404,15 @@ pub async fn update_copy(pool: &SqlitePool, copy_id: i64, fields: &CopyFields) -
     )
     .execute(&mut *tx)
     .await?;
+    if fields.status == Some(CopyStatus::Wanted) {
+        // Only owned copies can be the one last played.
+        sqlx::query!(
+            "UPDATE games SET last_played_copy_id = NULL WHERE last_played_copy_id = ?",
+            copy_id
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
     tx.commit().await?;
     Ok(game_id)
 }

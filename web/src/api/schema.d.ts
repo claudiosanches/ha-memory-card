@@ -603,6 +603,7 @@ export interface components {
             platform_id: number;
             product_code?: string | null;
             region: components["schemas"]["Region"];
+            status?: components["schemas"]["CopyStatus"] | null;
             /** Format: int64 */
             store_id?: number | null;
         };
@@ -770,10 +771,12 @@ export interface components {
             last_played_at?: string | null;
             /** Format: int64 */
             owned_copies: number;
-            /** @description Platforms with owned copies, in platform list order. */
+            /** @description Platforms with owned copies, or wanted ones on the wishlist, in platform list order. */
             platforms: components["schemas"]["PlatformCount"][];
             play_status?: string | null;
             title: string;
+            /** Format: int64 */
+            wanted_copies: number;
         };
         Genre: {
             /** Format: int64 */
@@ -1127,7 +1130,7 @@ export interface operations {
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
-                ownership?: "owned" | "any";
+                ownership?: "owned" | "wanted" | "any";
                 /** @description Whether the game is linked to IGDB. */
                 igdb?: "linked" | "unlinked";
                 sort?: "title" | "added" | "played";
@@ -1411,7 +1414,7 @@ export interface operations {
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
-                ownership?: "owned" | "any";
+                ownership?: "owned" | "wanted" | "any";
                 /** @description Whether the game is linked to IGDB. */
                 igdb?: "linked" | "unlinked";
                 sort?: "title" | "added" | "played";
@@ -1483,7 +1486,7 @@ export interface operations {
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
-                ownership?: "owned" | "any";
+                ownership?: "owned" | "wanted" | "any";
                 /** @description Whether the game is linked to IGDB. */
                 igdb?: "linked" | "unlinked";
                 sort?: "title" | "added" | "played";

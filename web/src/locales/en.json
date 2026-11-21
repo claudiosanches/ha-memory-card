@@ -264,7 +264,6 @@
     "invalid_value": "Not an accepted value.",
     "unknown_copy": "No copy has this ID. Leave copy_id empty to add a new copy.",
     "duplicate_copy_id": "Another row uses the same copy_id.",
-    "wanted_unsupported": "Wanted copies are not supported yet.",
     "condition_digital": "Digital copies have no condition.",
     "ambiguous_game": "More than one game has this title. Add the igdb_id.",
     "ambiguous_platform": "More than one platform uses this abbreviation. Use the full name.",

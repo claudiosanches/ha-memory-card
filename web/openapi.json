@@ -115,6 +115,7 @@
               "type": "string",
               "enum": [
                 "owned",
+                "wanted",
                 "any"
               ]
             }
@@ -568,6 +569,7 @@
               "type": "string",
               "enum": [
                 "owned",
+                "wanted",
                 "any"
               ]
             }
@@ -750,6 +752,7 @@
               "type": "string",
               "enum": [
                 "owned",
+                "wanted",
                 "any"
               ]
             }
@@ -2681,6 +2684,17 @@
           "region": {
             "$ref": "#/components/schemas/Region"
           },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CopyStatus",
+                "description": "`wanted` puts the copy on the wishlist. Left out, a new copy is owned\nand an existing one keeps its status."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "store_id": {
             "type": [
               "integer",
@@ -3285,6 +3299,7 @@
           "id",
           "title",
           "owned_copies",
+          "wanted_copies",
           "platforms"
         ],
         "properties": {
@@ -3321,7 +3336,7 @@
             "items": {
               "$ref": "#/components/schemas/PlatformCount"
             },
-            "description": "Platforms with owned copies, in platform list order."
+            "description": "Platforms with owned copies, or wanted ones on the wishlist, in platform list order."
           },
           "play_status": {
             "type": [
@@ -3331,6 +3346,10 @@
           },
           "title": {
             "type": "string"
+          },
+          "wanted_copies": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },

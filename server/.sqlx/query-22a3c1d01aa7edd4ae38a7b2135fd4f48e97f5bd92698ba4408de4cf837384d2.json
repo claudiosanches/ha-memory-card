@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id\n                          WHERE c.id = ? AND r.game_id = ?) AS \"belongs!: bool\"",
+  "query": "SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id\n                          WHERE c.id = ? AND r.game_id = ? AND c.status = 'owned') AS \"belongs!: bool\"",
   "describe": {
     "columns": [
       {
@@ -17,5 +17,5 @@
       false
     ]
   },
-  "hash": "216da3b0c4dc326da98b089337586e18f0fa8faef36e6d95d6bb8de572c98deb"
+  "hash": "22a3c1d01aa7edd4ae38a7b2135fd4f48e97f5bd92698ba4408de4cf837384d2"
 }

@@ -11,7 +11,7 @@ use crate::AppState;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, CopyFields, GameDetail, GameFields, PlayerCounts, ReleaseFields};
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
-use crate::domain::{Condition, Format, Region};
+use crate::domain::{Condition, CopyStatus, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 
 const TITLE_MAX: usize = 200;
@@ -55,6 +55,10 @@ pub struct GameInput {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CopyInput {
+    /// `wanted` puts the copy on the wishlist. Left out, a new copy is owned
+    /// and an existing one keeps its status.
+    #[serde(default)]
+    pub status: Option<CopyStatus>,
     pub platform_id: i64,
     pub region: Region,
     #[serde(default)]
@@ -159,6 +163,7 @@ impl CopyInput {
             return Err(ApiError::invalid("condition_digital", "condition"));
         }
         Ok(CopyFields {
+            status: self.status,
             platform_id: self.platform_id,
             region: self.region,
             product_code: optional(self.product_code.as_deref(), "product_code", CODE_MAX)?,

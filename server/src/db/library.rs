@@ -17,8 +17,21 @@ pub enum Ownership {
     /// Games with at least one owned copy.
     #[default]
     Owned,
+    /// Games with at least one wanted copy: the wishlist.
+    Wanted,
     /// Every game, with or without copies.
     Any,
+}
+
+impl Ownership {
+    /// The copy status this ownership looks at, if any.
+    fn status(self) -> Option<&'static str> {
+        match self {
+            Self::Owned => Some("owned"),
+            Self::Wanted => Some("wanted"),
+            Self::Any => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
@@ -142,7 +155,8 @@ pub struct GameSummary {
     pub play_status: Option<String>,
     pub last_played_at: Option<String>,
     pub owned_copies: i64,
-    /// Platforms with owned copies, in platform list order.
+    pub wanted_copies: i64,
+    /// Platforms with owned copies, or wanted ones on the wishlist, in platform list order.
     pub platforms: Vec<PlatformCount>,
 }
 
@@ -155,6 +169,7 @@ struct SummaryRow {
     play_status: Option<String>,
     last_played_at: Option<String>,
     owned_copies: i64,
+    wanted_copies: i64,
     platforms: Json<Vec<PlatformCount>>,
 }
 
@@ -164,10 +179,18 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         "SELECT g.id, g.title, g.igdb_id, g.cover_path, g.play_status, g.last_played_at,
                 (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
                  WHERE r.game_id = g.id AND c.status = 'owned') AS owned_copies,
+                (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
+                 WHERE r.game_id = g.id AND c.status = 'wanted') AS wanted_copies,
                 (SELECT json_group_array(json_object('platform_id', platform_id, 'copies', n)) FROM (
                      SELECT r.platform_id, COUNT(*) AS n FROM releases r
-                     JOIN copies c ON c.release_id = r.id AND c.status = 'owned'
-                     JOIN platforms p ON p.id = r.platform_id
+                     JOIN copies c ON c.release_id = r.id AND c.status = ",
+    );
+    let shown = match filter.ownership.unwrap_or_default() {
+        Ownership::Wanted => "wanted",
+        Ownership::Owned | Ownership::Any => "owned",
+    };
+    qb.push_bind(shown).push(
+        "  JOIN platforms p ON p.id = r.platform_id
                      WHERE r.game_id = g.id
                      GROUP BY r.platform_id ORDER BY MIN(p.sort_order))) AS platforms
          FROM games g WHERE 1 = 1",
@@ -196,7 +219,7 @@ pub enum DeviceMatch {
 
 /// Whether any filter applies to copies rather than games.
 pub fn has_copy_filters(filter: &LibraryFilter) -> bool {
-    filter.ownership.unwrap_or_default() == Ownership::Owned
+    filter.ownership.unwrap_or_default() != Ownership::Any
         || !filter.platform.is_empty()
         || !filter.device.is_empty()
         || !filter.store.is_empty()
@@ -250,8 +273,8 @@ pub fn push_copy_filters(
     filter: &LibraryFilter,
     device: DeviceMatch,
 ) {
-    if filter.ownership.unwrap_or_default() == Ownership::Owned {
-        qb.push(" AND c.status = 'owned'");
+    if let Some(status) = filter.ownership.unwrap_or_default().status() {
+        qb.push(" AND c.status = ").push_bind(status);
     }
     push_in(qb, "r.platform_id", &filter.platform);
     match device {
@@ -390,6 +413,7 @@ pub async fn list(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec
             play_status: row.play_status,
             last_played_at: row.last_played_at,
             owned_copies: row.owned_copies,
+            wanted_copies: row.wanted_copies,
             platforms: row.platforms.0,
         })
         .collect())
