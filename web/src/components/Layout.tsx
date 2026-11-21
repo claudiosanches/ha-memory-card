@@ -1,4 +1,4 @@
-import { ActionIcon, AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
+import { AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
   IconChecklist,
@@ -47,6 +47,9 @@ export function Layout() {
   const wide = useMediaQuery('(min-width: 48em)');
   const rail = collapsed && wide;
 
+  const toggleLabel = collapsed ? t('app.expandSidebar') : t('app.collapseSidebar');
+  const ToggleIcon = collapsed ? IconLayoutSidebarLeftExpand : IconLayoutSidebarLeftCollapse;
+
   const link = ({ key, to, icon: Icon }: NavItem) => (
     <Tooltip key={key} label={t(`nav.${key}`)} position="right" disabled={!rail}>
       <NavLink
@@ -82,17 +85,6 @@ export function Layout() {
               size="sm"
               aria-label={t('app.toggleNavigation')}
             />
-            <ActionIcon
-              visibleFrom="sm"
-              variant="subtle"
-              color="gray"
-              size="lg"
-              aria-label={collapsed ? t('app.expandSidebar') : t('app.collapseSidebar')}
-              aria-expanded={!collapsed}
-              onClick={() => setCollapsed((value) => !value)}
-            >
-              {collapsed ? <IconLayoutSidebarLeftExpand size={20} /> : <IconLayoutSidebarLeftCollapse size={20} />}
-            </ActionIcon>
             <span className={classes.logo}><IconDeviceSdCard size={25} stroke={1.7} /></span>
             <Text className={classes.brand}>{t('app.title')}</Text>
           </Group>
@@ -101,14 +93,29 @@ export function Layout() {
       </AppShell.Header>
 
       <AppShell.Navbar className={classes.navbar} p="md" data-rail={rail || undefined}>
-        {me.data && (
-          <>
-            <Text className={classes.sectionLabel}>{t('app.collection')}</Text>
-            {COLLECTION.map(link)}
-            <Text className={classes.sectionLabel} mt={32}>{t('app.tools')}</Text>
-            {TOOLS.filter((item) => canManage || !item.manager).map(link)}
-          </>
-        )}
+        <AppShell.Section grow>
+          {me.data && (
+            <>
+              <Text className={classes.sectionLabel}>{t('app.collection')}</Text>
+              {COLLECTION.map(link)}
+              <Text className={classes.sectionLabel} mt={32}>{t('app.tools')}</Text>
+              {TOOLS.filter((item) => canManage || !item.manager).map(link)}
+            </>
+          )}
+        </AppShell.Section>
+        <AppShell.Section visibleFrom="sm">
+          <Tooltip label={toggleLabel} position="right" disabled={!rail}>
+            <NavLink
+              component="button"
+              className={classes.navLink}
+              classNames={{ body: classes.navBody, section: classes.navSection }}
+              label={toggleLabel}
+              leftSection={<ToggleIcon size={20} />}
+              aria-expanded={!collapsed}
+              onClick={() => setCollapsed((value) => !value)}
+            />
+          </Tooltip>
+        </AppShell.Section>
       </AppShell.Navbar>
 
       <AppShell.Main className={classes.main}>
