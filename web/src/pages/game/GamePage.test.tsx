@@ -92,6 +92,28 @@ describe('Game page', () => {
     expect(within(card).getByText(`${en.game.players}: Unknown on the same screen, Unknown (co-op) online`)).toBeInTheDocument();
   });
 
+  it('says single player when that is the only mode and counts are unknown', async () => {
+    const modes = [
+      { id: 1, name: 'Single player', slug: 'single-player' },
+      { id: 2, name: 'Multiplayer', slug: 'multiplayer' },
+    ];
+    mockApi({ ...SETUP, 'GET /api/game-modes': modes, 'GET /api/games/4': { ...GAME, game_mode_ids: [1] } });
+    renderAt('/games/4');
+    expect(await screen.findByText(`${en.game.players}: ${en.game.singlePlayer}`)).toBeInTheDocument();
+  });
+
+  it('keeps unknown counts for games with a multiplayer mode', async () => {
+    const modes = [
+      { id: 1, name: 'Single player', slug: 'single-player' },
+      { id: 2, name: 'Multiplayer', slug: 'multiplayer' },
+    ];
+    mockApi({ ...SETUP, 'GET /api/game-modes': modes, 'GET /api/games/4': { ...GAME, game_mode_ids: [1, 2] } });
+    renderAt('/games/4');
+    expect(
+      await screen.findByText(`${en.game.players}: Unknown on the same screen, Unknown online`),
+    ).toBeInTheDocument();
+  });
+
   it('hides a release title equal to the game title', async () => {
     const release = { ...GAME.releases[0], title: 'Metroid Dread' };
     mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, releases: [release] } });

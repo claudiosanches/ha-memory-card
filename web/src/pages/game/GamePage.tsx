@@ -194,6 +194,14 @@ function GameView({ game }: { game: GameDetail }) {
     const value = max ?? t('game.playersUnknown');
     return coop ? t('game.withCoop', { value }) : String(value);
   };
+  // IGDB has no multiplayer data for single player games, only the mode.
+  const singlePlayerOnly =
+    game.local_max_players == null &&
+    game.online_max_players == null &&
+    !game.local_coop &&
+    !game.online_coop &&
+    game.game_mode_ids.length > 0 &&
+    game.game_mode_ids.every((id) => gameModes.data?.find((mode) => mode.id === id)?.slug === 'single-player');
   const players = (counts: PlayerCounts) =>
     t('game.playersSummary', {
       local: playerCount(counts.local_max_players, counts.local_coop),
@@ -330,7 +338,7 @@ function GameView({ game }: { game: GameDetail }) {
             </Group>
           )}
           <Text size="sm">
-            {t('game.players')}: {players(game)}
+            {t('game.players')}: {singlePlayerOnly ? t('game.singlePlayer') : players(game)}
           </Text>
           {game.summary && (
             <Text size="sm" c="dimmed">
