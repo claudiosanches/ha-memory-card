@@ -217,6 +217,15 @@ Settings in Memory Card says whether the sensors are connected.
 | `sensor.memory_card_playing` | Owned games in a status that counts as playing | `games`: their titles, last played first |
 | `sensor.memory_card_last_played` | Title of the game with the latest play session | `date`, `platform` of the copy played |
 | `sensor.memory_card_last_added` | Title of the game whose owned copy was added last | `added_at`, `platform` |
+| `sensor.memory_card_pick` | Title of the latest random pick, from Memory Card or Home Assistant | `suggested_at`, `platforms` of its owned copies |
+| `button.memory_card_roll_pick` | Picks a random owned game from the backlog, as **Pick for me** on the Backlog page does | |
+
+An automation can roll with filters by publishing JSON to
+`memory_card/pick/roll` with the `mqtt.publish` action, for example
+`{"device": [2], "min_local_players": 2}` for a game for two on device 2.
+The fields match the Backlog page's picker: `play_status`, `platform`,
+`device`, `genre`, `game_mode` (lists of keys or IDs) and
+`min_local_players`.
 
 The counts keep long-term statistics, so history graphs show how the
 collection grows. Sensors update a second after each change and show as

@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT g.id AS \"id!\", g.title, s.suggested_at\n           FROM suggestions s JOIN games g ON g.id = s.game_id\n           ORDER BY s.suggested_at DESC, s.id DESC LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "suggested_at",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "suggestions",
+            "name": "suggested_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1924ae69f9a9ef04304baa4d3e3f7acb870757e885122d1243e9fababd1f6a77"
+}

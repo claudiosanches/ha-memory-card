@@ -17,7 +17,9 @@ use tokio::task::JoinHandle;
 use utoipa::ToSchema;
 
 use self::broker::Broker;
-use self::discovery::{AVAILABILITY_TOPIC, DISCOVERY_TOPIC, HA_STATUS_TOPIC, STATE_TOPIC};
+use self::discovery::{
+    AVAILABILITY_TOPIC, DISCOVERY_TOPIC, HA_STATUS_TOPIC, PICK_TOPIC, STATE_TOPIC,
+};
 use crate::AppState;
 use crate::config::{Config, MqttBroker};
 use crate::db;
@@ -95,6 +97,8 @@ impl Sensors {
 enum Signal {
     Connected,
     HomeAssistantOnline,
+    /// Someone pressed Roll a pick, or an automation sent filters.
+    Roll(Vec<u8>),
     Lost,
     /// Our own disconnect went out.
     Closed,
@@ -168,6 +172,9 @@ async fn poll(mut eventloop: EventLoop, signals: mpsc::Sender<Signal>) {
             {
                 Signal::HomeAssistantOnline
             }
+            Ok(Event::Incoming(Packet::Publish(message))) if message.topic == PICK_TOPIC => {
+                Signal::Roll(message.payload.to_vec())
+            }
             Ok(Event::Outgoing(Outgoing::Disconnect)) => {
                 let _ = signals.send(Signal::Closed).await;
                 return;
@@ -212,6 +219,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     connected = true;
                     set_status(state, SensorsStatus::Connected);
                     let _ = client.subscribe(HA_STATUS_TOPIC, QoS::AtLeastOnce).await;
+                    let _ = client.subscribe(PICK_TOPIC, QoS::AtLeastOnce).await;
                     send(&client, DISCOVERY_TOPIC, config.clone()).await;
                     send(&client, AVAILABILITY_TOPIC, "online").await;
                     sent = send_state(&client, state, None).await;
@@ -219,6 +227,12 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                 Some(Signal::HomeAssistantOnline) => {
                     send(&client, DISCOVERY_TOPIC, config.clone()).await;
                     sent = send_state(&client, state, None).await;
+                }
+                Some(Signal::Roll(payload)) => {
+                    roll(state, &payload).await;
+                    if connected {
+                        sent = send_state(&client, state, sent).await;
+                    }
                 }
                 Some(Signal::Lost) => {
                     connected = false;
@@ -241,6 +255,21 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
         closed(&mut events).await;
     }
     poller.abort();
+}
+
+/// Picks a game the way the app's Roll button does; the sensors show it.
+async fn roll(state: &AppState, payload: &[u8]) {
+    let filter = match discovery::pick_filter(payload) {
+        Ok(filter) => filter,
+        Err(err) => {
+            tracing::warn!(error = %err, "ignored a pick request with unreadable filters");
+            return;
+        }
+    };
+    match db::suggestions::suggest(&state.db, filter).await {
+        Ok(pick) => tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant"),
+        Err(err) => tracing::info!(error = %err, "no game to pick for Home Assistant"),
+    }
 }
 
 /// Lets the poller flush the last messages and the disconnect.
@@ -296,7 +325,7 @@ async fn remove(broker: &MqttBroker) {
             match events.recv().await {
                 Some(Signal::Connected) => break true,
                 Some(Signal::Lost | Signal::Closed) | None => break false,
-                Some(Signal::HomeAssistantOnline) => {}
+                Some(Signal::HomeAssistantOnline | Signal::Roll(_)) => {}
             }
         }
     })

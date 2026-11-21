@@ -16,6 +16,16 @@ pub struct Snapshot {
     pub playing_count: i64,
     pub last_played: Option<LastPlayed>,
     pub last_added: Option<LastAdded>,
+    /// The latest suggestion, from the app or Home Assistant.
+    pub pick: Option<Pick>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Pick {
+    pub title: String,
+    pub suggested_at: String,
+    /// Platforms of its owned copies, in platform list order.
+    pub platforms: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -100,7 +110,32 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
         platform: row.platform,
     });
 
+    let pick = match sqlx::query!(
+        r#"SELECT g.id AS "id!", g.title, s.suggested_at
+           FROM suggestions s JOIN games g ON g.id = s.game_id
+           ORDER BY s.suggested_at DESC, s.id DESC LIMIT 1"#
+    )
+    .fetch_optional(pool)
+    .await?
+    {
+        None => None,
+        Some(row) => Some(Pick {
+            platforms: sqlx::query_scalar!(
+                r#"SELECT p.name FROM platforms p
+                   WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
+                                 WHERE r.platform_id = p.id AND r.game_id = ? AND c.status = 'owned')
+                   ORDER BY p.sort_order, p.name"#,
+                row.id
+            )
+            .fetch_all(pool)
+            .await?,
+            title: row.title,
+            suggested_at: row.suggested_at,
+        }),
+    };
+
     Ok(Snapshot {
+        pick,
         games: counts.games,
         copies: counts.copies,
         wishlist: counts.wishlist,

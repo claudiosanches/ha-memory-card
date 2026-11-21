@@ -79,6 +79,19 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
     let last_added = snapshot.last_added.unwrap();
     assert_eq!(last_added.title, "Hades");
     assert_eq!(last_added.platform, "Nintendo Switch");
+    assert!(snapshot.pick.is_none());
+
+    let (status, _) = app
+        .json(
+            "POST",
+            "/api/suggestions",
+            Some(json!({"play_status": ["backlog"]})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let pick = sensors::snapshot(&app.pool).await.unwrap().pick.unwrap();
+    assert_eq!(pick.title, "Tetris", "the only owned backlog game");
+    assert_eq!(pick.platforms, ["PlayStation 4", "Nintendo Switch"]);
 }
 
 #[tokio::test]

@@ -3,12 +3,16 @@
 use serde_json::{Map, Value, json};
 
 use crate::db::sensors::Snapshot;
+use crate::db::suggestions::SuggestionFilter;
 
 pub const DISCOVERY_TOPIC: &str = "homeassistant/device/memory_card/config";
 /// Home Assistant publishes `online` here when it starts.
 pub const HA_STATUS_TOPIC: &str = "homeassistant/status";
 pub const STATE_TOPIC: &str = "memory_card/state";
 pub const AVAILABILITY_TOPIC: &str = "memory_card/availability";
+/// The Roll a pick button publishes here; automations may send filters as JSON.
+pub const PICK_TOPIC: &str = "memory_card/pick/roll";
+const PICK_PRESS: &str = "roll";
 
 /// Home Assistant drops longer states.
 const MAX_STATE: usize = 255;
@@ -22,7 +26,7 @@ struct Sensor {
     attributes: bool,
 }
 
-const SENSORS: [Sensor; 7] = [
+const SENSORS: [Sensor; 8] = [
     Sensor {
         key: "games",
         name: "Games",
@@ -72,7 +76,38 @@ const SENSORS: [Sensor; 7] = [
         unit: None,
         attributes: true,
     },
+    Sensor {
+        key: "pick",
+        name: "Current pick",
+        icon: "mdi:dice-5",
+        unit: None,
+        attributes: true,
+    },
 ];
+
+/// The button that rolls a new pick.
+fn roll_button() -> Value {
+    json!({
+        "platform": "button",
+        "name": "Roll a pick",
+        "unique_id": "memory_card_roll_pick",
+        "default_entity_id": "button.memory_card_roll_pick",
+        "icon": "mdi:dice-5",
+        "command_topic": PICK_TOPIC,
+        "payload_press": PICK_PRESS,
+        "availability_topic": AVAILABILITY_TOPIC,
+    })
+}
+
+/// The filters a message on [`PICK_TOPIC`] asks for: the button's press means
+/// the defaults, anything else must be a suggestion filter as JSON.
+pub fn pick_filter(payload: &[u8]) -> Result<SuggestionFilter, serde_json::Error> {
+    let trimmed = payload.trim_ascii();
+    if trimmed.is_empty() || trimmed == PICK_PRESS.as_bytes() {
+        return Ok(SuggestionFilter::default());
+    }
+    serde_json::from_slice(trimmed)
+}
 
 /// One device with every sensor. `ingress_slug` links the device page to the app.
 pub fn device_config(ingress_slug: Option<&str>) -> Value {
@@ -87,10 +122,11 @@ pub fn device_config(ingress_slug: Option<&str>) -> Value {
         device["configuration_url"] = json!(format!("homeassistant://hassio/ingress/{slug}"));
     }
 
-    let components: Map<String, Value> = SENSORS
+    let mut components: Map<String, Value> = SENSORS
         .iter()
         .map(|sensor| (sensor.key.to_owned(), component(sensor)))
         .collect();
+    components.insert("roll_pick".to_owned(), roll_button());
 
     json!({
         "device": device,
@@ -133,6 +169,7 @@ fn component(sensor: &Sensor) -> Value {
 pub fn state(snapshot: &Snapshot) -> Value {
     let last_played = snapshot.last_played.as_ref();
     let last_added = snapshot.last_added.as_ref();
+    let pick = snapshot.pick.as_ref();
     json!({
         "games": snapshot.games,
         "copies": snapshot.copies,
@@ -141,6 +178,7 @@ pub fn state(snapshot: &Snapshot) -> Value {
         "playing": snapshot.playing_count,
         "last_played": last_played.map(|game| fit(&game.title)),
         "last_added": last_added.map(|game| fit(&game.title)),
+        "pick": pick.map(|game| fit(&game.title)),
         "attributes": {
             "playing": { "games": snapshot.playing },
             "last_played": last_played.map_or_else(
@@ -150,6 +188,10 @@ pub fn state(snapshot: &Snapshot) -> Value {
             "last_added": last_added.map_or_else(
                 || json!({}),
                 |game| json!({ "added_at": game.added_at, "platform": game.platform }),
+            ),
+            "pick": pick.map_or_else(
+                || json!({}),
+                |game| json!({ "suggested_at": game.suggested_at, "platforms": game.platforms }),
             ),
         },
     })
@@ -174,7 +216,9 @@ mod tests {
         assert_eq!(config["origin"]["name"], "Memory Card");
 
         let components = config["components"].as_object().unwrap();
-        assert_eq!(components.len(), SENSORS.len());
+        assert_eq!(components.len(), SENSORS.len() + 1);
+        assert_eq!(components["roll_pick"]["platform"], "button");
+        assert_eq!(components["roll_pick"]["command_topic"], PICK_TOPIC);
         let games = &components["games"];
         assert_eq!(games["platform"], "sensor");
         assert_eq!(games["unique_id"], "memory_card_games");
@@ -197,6 +241,16 @@ mod tests {
     }
 
     #[test]
+    fn the_button_rolls_with_defaults_and_automations_send_filters() {
+        assert!(pick_filter(b"roll").unwrap().platform.is_empty());
+        assert!(pick_filter(b"").unwrap().device.is_empty());
+        let filter = pick_filter(br#"{"device": [3], "min_local_players": 2}"#).unwrap();
+        assert_eq!(filter.device, [3]);
+        assert_eq!(filter.min_local_players, Some(2));
+        assert!(pick_filter(b"{\"colour\": 1}").is_err());
+    }
+
+    #[test]
     fn state_carries_counts_titles_and_attributes() {
         let snapshot = Snapshot {
             games: 3,
@@ -211,6 +265,7 @@ mod tests {
                 platform: None,
             }),
             last_added: None,
+            pick: None,
         };
         let state = state(&snapshot);
         assert_eq!(state["games"], 3);
