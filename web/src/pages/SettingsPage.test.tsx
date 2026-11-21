@@ -2,6 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { TitleDifference } from '../api/types';
 import en from '../locales/en.json';
+import ptBR from '../locales/pt-BR.json';
 import { MANAGER, mockApi, VIEWER } from '../test/api';
 import { renderAt } from '../test/render';
 
@@ -91,5 +92,23 @@ describe('Settings titles', () => {
     await waitFor(() => expect(screen.queryByTestId('title-3')).toBeNull());
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ use_igdb: [3] });
     expect(screen.getByTestId('title-8')).toBeInTheDocument();
+  });
+});
+
+describe('Settings language', () => {
+  it('switches the app to Portuguese and back to the browser language', async () => {
+    mockApi({ 'GET /api/status': STATUS });
+    renderAt('/settings?tab=appearance');
+
+    fireEvent.click(await screen.findByRole('combobox', { name: en.settings.language }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Português (Brasil)', hidden: true }));
+    expect(await screen.findByRole('link', { name: ptBR.nav.library })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('pt-BR');
+    expect(localStorage.getItem('memory-card-language')).toBe('pt-BR');
+
+    fireEvent.click(screen.getByRole('combobox', { name: ptBR.settings.language }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Automático (English)', hidden: true }));
+    expect(await screen.findByRole('link', { name: en.nav.library })).toBeInTheDocument();
+    expect(localStorage.getItem('memory-card-language')).toBeNull();
   });
 });

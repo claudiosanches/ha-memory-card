@@ -1,0 +1,37 @@
+configuration:
+  igdb_client_id:
+    name: ID do cliente IGDB
+    description: >-
+      ID do cliente do seu aplicativo de desenvolvedor da Twitch. Deixe vazio
+      para usar o aplicativo sem informações e capas do IGDB.
+  igdb_client_secret:
+    name: Segredo do cliente IGDB
+    description: Segredo do cliente do mesmo aplicativo da Twitch.
+  log_level:
+    name: Nível de log
+    description: Quanto o aplicativo escreve no log.
+  managers:
+    name: Gestores
+    description: >-
+      IDs de usuário do Home Assistant que podem alterar a coleção. Os demais
+      só podem navegar por ela, e enquanto isto estiver vazio ninguém pode
+      alterá-la. Cada usuário encontra o próprio ID nas Configurações do
+      Memory Card.
+  external_services:
+    name: Usar serviços externos
+    description: >-
+      Buscar jogos, capas e plataformas no IGDB, e códigos de barras no
+      UPCitemdb. Desligue para impedir que o Memory Card acesse a internet;
+      as credenciais do IGDB são ignoradas e os jogos são informados à mão.
+  sensors:
+    name: Sensores do Home Assistant
+    description: >-
+      Publicar contagens da coleção, o que você está jogando e o que adicionou
+      por último como sensores do Home Assistant, com um botão que sorteia um
+      jogo. Precisa do aplicativo Mosquitto broker e da integração MQTT.
+      Desligar remove tudo isso.
+  viewers_track_progress:
+    name: Visualizadores registram progresso
+    description: >-
+      Permitir que usuários que não são gestores mudem o status de jogo e
+      registrem sessões. O resto continua somente leitura para eles.

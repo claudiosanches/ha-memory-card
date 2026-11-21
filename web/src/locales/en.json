@@ -171,6 +171,9 @@
     "loadError": "Could not load status.",
     "appearance": "Appearance",
     "colorSchemeDescription": "Choose light or dark, or follow your system setting. Your choice is saved in this browser.",
+    "language": "Language",
+    "languageDescription": "Saved in this browser. Automatic follows the browser's language.",
+    "languageAuto": "Automatic ({{language}})",
     "theme": "Theme",
     "themes": {
       "default": "Default",
@@ -257,8 +260,8 @@
     "nothingToDo": "Nothing in this file changes your collection.",
     "hasErrors": "Fix the rows below in your spreadsheet, then choose the file again.",
     "done": "Imported {{games}} new games and {{copies}} new copies, updated {{updated}} copies.",
-    "unlinked_one": "{{count}} game is not linked to IGDB yet. Sync with IGDB links games whose title matches and fills in their details.",
-    "unlinked_other": "{{count}} games are not linked to IGDB yet. Sync with IGDB links games whose title matches and fills in their details.",
+    "unlinked_one": "{{count}} game is not linked to IGDB yet.",
+    "unlinked_other": "{{count}} games are not linked to IGDB yet.",
     "summary": {
       "rows": "Rows",
       "new_games": "New games",

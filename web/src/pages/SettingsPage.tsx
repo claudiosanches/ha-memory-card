@@ -19,11 +19,12 @@ import { IconCheck, IconCopy, IconRefresh } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, getRouteApi } from '@tanstack/react-router';
 import { ToolTabList } from '../components/ToolTabList';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ToolSection } from '../components/ToolSection';
 import { PageHeader } from '../components/PageHeader';
 import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
+import { browserLanguage, chooseLanguage, type Language, LANGUAGE_NAMES, LANGUAGES, savedLanguage } from '../i18n';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
 import { queryKeys, useCanManage, useIgdbSync, useMe, useStatus, useTitleDifferences } from '../api/queries';
@@ -85,10 +86,36 @@ export function SettingsPage() {
               description={t('settings.colorSchemeDescription')}
               action={<ColorSchemePicker />}
             />
+            <ToolSection
+              title={t('settings.language')}
+              description={t('settings.languageDescription')}
+              action={<LanguagePicker />}
+            />
           </Stack>
         </Tabs.Panel>
       </Tabs>
     </Stack>
+  );
+}
+
+function LanguagePicker() {
+  const { t } = useTranslation();
+  const [choice, setChoice] = useState<Language | null>(() => savedLanguage());
+  return (
+    <Select
+      aria-label={t('settings.language')}
+      value={choice ?? 'auto'}
+      allowDeselect={false}
+      onChange={(value) => {
+        const next = LANGUAGES.find((language) => language === value) ?? null;
+        setChoice(next);
+        chooseLanguage(next);
+      }}
+      data={[
+        { value: 'auto', label: t('settings.languageAuto', { language: LANGUAGE_NAMES[browserLanguage()] }) },
+        ...LANGUAGES.map((language) => ({ value: language, label: LANGUAGE_NAMES[language] })),
+      ]}
+    />
   );
 }
 

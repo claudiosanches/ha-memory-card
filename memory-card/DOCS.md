@@ -78,6 +78,13 @@ sessions and start games from the backlog, but nothing else.
 Memory Card keeps the name of each user who adds or changes a game or a
 copy, and the game page shows who added it and who changed it last.
 
+## Language
+
+Memory Card follows your browser's language and comes in English and
+Brazilian Portuguese. To pick one, go to **Settings > Appearance >
+Language**; the choice is saved in that browser. The app's options in Home
+Assistant are translated too.
+
 ## Options
 
 | Option | Description |
