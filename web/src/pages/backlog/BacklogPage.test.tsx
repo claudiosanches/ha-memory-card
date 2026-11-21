@@ -105,6 +105,21 @@ describe('Backlog page', () => {
     expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
   });
 
+  it('sorts with number keys and skips with S', async () => {
+    const calls = mockApi({ ...SETUP, 'PUT /api/games/6/play-status': statusPut(6) });
+    renderAt('/backlog');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.backlog.sort }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.keyDown(document.documentElement, { key: '2', code: 'Digit2' });
+    expect(within(dialog).getByTestId('sort-game')).toHaveTextContent('Kirby');
+    fireEvent.keyDown(document.documentElement, { key: 's', code: 'KeyS' });
+    expect(within(dialog).getByText(en.backlog.sortDone)).toBeInTheDocument();
+
+    await waitFor(() => expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ play_status: 'playing' }));
+    expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
+  });
+
   it('picks a random backlog game and starts it', async () => {
     const calls = mockApi({
       ...SETUP,

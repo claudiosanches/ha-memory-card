@@ -1,5 +1,5 @@
-import { Button, Modal, Progress, Stack, Text } from '@mantine/core';
-import { useMediaQuery } from '@mantine/hooks';
+import { Button, Kbd, Modal, Progress, Stack, Text } from '@mantine/core';
+import { useHotkeys, useMediaQuery } from '@mantine/hooks';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GameSummary, PlayStatus } from '../../api/types';
@@ -33,6 +33,15 @@ export function SortModal({
     setStatus.mutate({ id: game.id, status });
     setIndex(index + 1);
   };
+  const skip = () => game && setIndex(index + 1);
+
+  useHotkeys([...CHOICES.map((status, i): [string, () => void] => [String(i + 1), () => choose(status)]), ['s', skip]]);
+  const key = (label: string) =>
+    phone ? undefined : (
+      <Kbd size="xs" aria-hidden>
+        {label}
+      </Kbd>
+    );
 
   return (
     <Modal opened onClose={onClose} title={t('backlog.sortTitle')} fullScreen={phone} centered={!phone}>
@@ -65,12 +74,19 @@ export function SortModal({
 
         {game ? (
           <div className={classes.choices}>
-            {CHOICES.map((status) => (
-              <Button key={status} color={STATUS_COLORS[status]} variant="light" onClick={() => choose(status)}>
+            {CHOICES.map((status, i) => (
+              <Button
+                key={status}
+                color={STATUS_COLORS[status]}
+                variant="light"
+                onClick={() => choose(status)}
+                rightSection={key(String(i + 1))}
+                aria-keyshortcuts={String(i + 1)}
+              >
                 {t(`playStatus.${status}`)}
               </Button>
             ))}
-            <Button variant="default" onClick={() => setIndex(index + 1)}>
+            <Button variant="default" onClick={skip} rightSection={key('S')} aria-keyshortcuts="S">
               {t('backlog.skip')}
             </Button>
           </div>
