@@ -8,6 +8,7 @@ import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import { useDevices, usePlatforms } from '../../api/queries';
 import type { Suggestion } from '../../api/types';
+import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
 import classes from './BacklogPage.module.css';
 import { useSetPlayStatus } from './usePlayStatus';
@@ -44,10 +45,10 @@ export function Picker() {
         <Title order={2} className={classes.sectionTitle}>
           {t('backlog.pickTitle')}
         </Title>
-        <Text size="sm" c="dimmed">
+        <Description>
           {t('backlog.pickText')}
-        </Text>
-        <Group gap="sm" align="flex-end" mt="xs">
+        </Description>
+        <Group className={classes.pickerControls} gap="sm" align="flex-end" mt="xs">
           <Select
             label={t('backlog.device')}
             placeholder={t('backlog.anyDevice')}
@@ -57,7 +58,7 @@ export function Picker() {
             value={device}
             onChange={setDevice}
             clearable
-            w={220}
+            className={classes.deviceSelect}
           />
           <Button
             leftSection={<IconDice5 size={18} className={pick.isPending ? classes.rolling : undefined} />}

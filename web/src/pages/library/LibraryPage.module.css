@@ -1,15 +1,8 @@
-.heading { min-height: 76px; }
-.title { font-size: 2rem; letter-spacing: -0.045em; line-height: 1.2; }
-.count { font-size: 0.8125rem; font-weight: 550; color: var(--mc-muted); background: var(--mc-surface); padding: 4px 10px; border: 1px solid var(--mc-border); border-radius: 6px; }
 .controls { display: flex; flex-direction: column; gap: 20px; }
 .toolbar { display: flex; align-items: center; gap: 10px; }
 .search { flex: 1; min-width: 0; }
 .sort { width: 180px; }
 .viewToggle { padding: 3px; border: 1px solid var(--mc-border); border-radius: 9px; background: var(--mc-surface); }
-.platforms { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid var(--mc-border); }
-.platform { border: 1px solid transparent; border-radius: 7px; background: transparent; padding: 7px 12px; color: var(--mc-muted); font: inherit; font-size: 0.875rem; font-weight: 550; cursor: pointer; transition: background 140ms ease; }
-.platform:hover { background: var(--mantine-color-default-hover); }
-.platform[aria-pressed='true'] { background: var(--mantine-primary-color-light); color: var(--mantine-primary-color-light-color); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 28px 22px; }
 .gameCard { display: flex; flex-direction: column; min-width: 0; text-decoration: none; color: inherit; border-radius: 9px; }
 .artwork { border-radius: 9px; overflow: hidden; box-shadow: var(--mc-cover-shadow); transition: transform 180ms ease, box-shadow 180ms ease; background: var(--mc-surface); }
@@ -35,14 +28,7 @@
 }
 
 @media (max-width: 36em) {
-  .heading { gap: 12px; align-items: flex-start; min-height: 0; }
-  .title { font-size: 1.75rem; }
-  .count { padding: 3px 7px; font-size: 0.75rem; }
-  .heading > div { flex: 1; min-width: 0; }
-  .heading > button { padding-inline: 12px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .gameTitle { font-size: 0.875rem; }
-  .platforms { gap: 4px; }
-  .platform { padding: 7px 9px; }
   .list { grid-template-columns: minmax(0, 1fr); }
 }

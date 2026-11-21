@@ -1,0 +1,12 @@
+.heading { min-height: 76px; }
+.intro { display: grid; gap: 6px; min-width: 0; }
+.title { font-size: 2rem; letter-spacing: -0.045em; line-height: 1.2; }
+.count { font-size: 0.8125rem; font-weight: 550; color: var(--mc-muted); background: var(--mc-surface); padding: 4px 10px; border: 1px solid var(--mc-border); border-radius: 6px; }
+
+@media (max-width: 36em) {
+  .heading { gap: 12px; align-items: flex-start; min-height: 0; }
+  .title { font-size: 1.75rem; }
+  .count { padding: 3px 7px; font-size: 0.75rem; }
+  .intro { flex: 1; min-width: min(100%, 10rem); }
+  .heading > button { padding-inline: 12px; }
+}

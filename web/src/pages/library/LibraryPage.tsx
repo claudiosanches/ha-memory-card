@@ -21,6 +21,8 @@ import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useGames, usePlatforms } from '../../api/queries';
 import type { GameSummary, Platform } from '../../api/types';
+import { FilterBar, FilterButton } from '../../components/FilterBar';
+import { PageHeader } from '../../components/PageHeader';
 import { Cover } from '../../components/Cover';
 import { FormModal } from '../../components/FormModal';
 import { usePlayStatusList } from '../../components/playStatuses';
@@ -62,22 +64,16 @@ export function LibraryPage() {
 
   return (
     <Stack gap={24}>
-      <Group justify="space-between" align="center" className={classes.heading}>
-        <div>
-          <Group gap="sm" align="center">
-            <Title order={1} className={classes.title}>{t('nav.library')}</Title>
-            {games.data && (
-              <Text className={classes.count} data-testid="library-count" aria-live="polite">
-                {t('library.count', { count: games.data.length })}
-              </Text>
-            )}
-          </Group>
-          <Text size="sm" c="dimmed" mt={6}>{t('library.description')}</Text>
-        </div>
+      <PageHeader
+        title={t('nav.library')}
+        description={t('library.description')}
+        count={games.data && t('library.count', { count: games.data.length })}
+        countTestId="library-count"
+      >
         <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
           {t('library.addGame')}
         </Button>
-      </Group>
+      </PageHeader>
 
       <div className={classes.controls}>
         <div className={classes.toolbar}>
@@ -127,16 +123,16 @@ export function LibraryPage() {
           </Group>
         </div>
         {collectionPlatforms.length > 0 && (
-          <div className={classes.platforms} role="group" aria-label={t('library.filter.platform')}>
-            <button type="button" className={classes.platform} aria-pressed={!search.platform?.length} onClick={() => setSearch({ platform: undefined })}>
+          <FilterBar label={t('library.filter.platform')}>
+            <FilterButton selected={!search.platform?.length} onClick={() => setSearch({ platform: undefined })}>
               {t('library.allPlatforms')}
-            </button>
+            </FilterButton>
             {collectionPlatforms.map((platform) => (
-              <button type="button" key={platform.id} className={classes.platform} aria-pressed={search.platform?.includes(platform.id) ?? false} onClick={() => setSearch({ platform: [platform.id] })}>
+              <FilterButton key={platform.id} selected={search.platform?.includes(platform.id) ?? false} onClick={() => setSearch({ platform: [platform.id] })}>
                 {platform.abbreviation ?? platform.name}
-              </button>
+              </FilterButton>
             ))}
-          </div>
+          </FilterBar>
         )}
       </div>
 

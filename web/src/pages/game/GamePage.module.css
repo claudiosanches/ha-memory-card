@@ -12,7 +12,6 @@
 .overview { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; }
 .summaryText { line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
 .playControls { flex-wrap: wrap; }
-.playControls label { margin-bottom: 6px; }
 .playSelect { width: 220px; }
 .copySelect { width: 260px; }
 .lastPlayed { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 8px 12px; border-radius: 8px; background: var(--mc-background); }

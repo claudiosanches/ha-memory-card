@@ -1,0 +1,10 @@
+.filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid var(--mc-border); }
+.filter { border: 1px solid transparent; border-radius: 7px; background: transparent; padding: 7px 12px; color: var(--mc-muted); font: inherit; font-size: 0.875rem; font-weight: 550; cursor: pointer; transition: background 140ms ease; }
+.filter:hover { background: var(--mantine-color-default-hover); }
+.filter[aria-pressed='true'] { background: var(--mantine-primary-color-light); color: var(--mantine-primary-color-light-color); }
+.filterCount { margin-left: 6px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 36em) {
+  .filters { gap: 4px; }
+  .filter { padding: 7px 9px; }
+}

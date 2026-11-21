@@ -1,14 +1,13 @@
-.page { display: flex; flex-direction: column; gap: 32px; }
-.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-.title { font-size: 2rem; letter-spacing: -0.045em; line-height: 1.2; }
-.progress { display: flex; flex-direction: column; gap: 8px; width: min(320px, 100%); }
+.page { display: flex; flex-direction: column; gap: 24px; }
+.progress { flex: 0 1 300px; display: flex; flex-direction: column; gap: 8px; width: min(320px, 100%); }
 .section { display: flex; flex-direction: column; gap: 14px; }
 .sectionTitle { font-size: 1.125rem; letter-spacing: -0.02em; }
 
-.unsorted { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border: 1px dashed var(--mantine-primary-color-filled); border-radius: 12px; background: var(--mantine-primary-color-light); color: var(--mantine-primary-color-light-color); }
+.unsorted { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border: 1px solid var(--mc-border); border-radius: 12px; background: var(--mc-surface); color: var(--mantine-primary-color-light-color); }
 .unsortedText { flex: 1; min-width: 0; color: var(--mantine-color-text); }
 
 .picker { display: flex; align-items: stretch; gap: 24px; flex-wrap: wrap; padding: 20px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 12px; }
+.deviceSelect { width: min(220px, 100%); }
 .pickerIntro { flex: 1 1 300px; display: flex; flex-direction: column; gap: 4px; }
 /* As tall as the picked cover, so most picks and the empty slot fill the same space. */
 .pickerResult { flex: 1 1 300px; display: flex; align-items: center; min-height: 128px; }
@@ -50,7 +49,10 @@
 }
 
 @media (max-width: 36em) {
-  .title { font-size: 1.75rem; }
+  .progress { flex-basis: 100%; }
+  .picker { gap: 16px; padding: 16px; }
+  .pickerControls { flex-direction: column; align-items: stretch; }
+  .pickerControls > * { width: 100%; }
   .pickerResult { min-height: 0; }
   .pickerResult[data-empty] { display: none; }
   .unsorted { flex-wrap: wrap; }

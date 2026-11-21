@@ -1,10 +1,12 @@
-import { Badge, Group, Loader, Stack, Text, Title } from '@mantine/core';
+import { Badge, Group, Loader, Stack, Text } from '@mantine/core';
 import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../api/errors';
 import { useDevices, useDuplicates, usePlatforms, useStores } from '../api/queries';
 import { DUPLICATE_LABELS, type DuplicateCopy, type DuplicateGroup, type DuplicateLabel } from '../api/types';
+import { FilterBar, FilterButton } from '../components/FilterBar';
+import { PageHeader } from '../components/PageHeader';
 import { Cover } from '../components/Cover';
 import classes from './DuplicatesPage.module.css';
 
@@ -18,42 +20,30 @@ export function DuplicatesPage() {
   const counts = new Map(DUPLICATE_LABELS.map((l) => [l, all.filter((g) => g.labels.includes(l)).length]));
 
   return (
-    <Stack gap="lg">
-      <Group justify="space-between" align="center" className={classes.heading}>
-        <div>
-          <Title order={1} className={classes.title}>
-            {t('nav.duplicates')}
-          </Title>
-          <Text size="sm" c="dimmed">
-            {t('duplicates.intro')}
-          </Text>
-        </div>
-        {duplicates.data && (
-          <Text className={classes.count} data-testid="duplicates-count" aria-live="polite">
-            {t('duplicates.count', { count: shown.length })}
-          </Text>
-        )}
-      </Group>
+    <Stack gap={24}>
+      <PageHeader
+        title={t('nav.duplicates')}
+        description={t('duplicates.intro')}
+        count={duplicates.data && t('duplicates.count', { count: shown.length })}
+        countTestId="duplicates-count"
+      />
 
       {all.length > 0 && (
-        <div className={classes.filters} role="group" aria-label={t('duplicates.filter')}>
-          <button type="button" className={classes.filter} aria-pressed={!label} onClick={() => setLabel(null)}>
+        <FilterBar label={t('duplicates.filter')}>
+          <FilterButton count={all.length} selected={!label} onClick={() => setLabel(null)}>
             {t('duplicates.all')}
-            <span className={classes.filterCount}>{all.length}</span>
-          </button>
+          </FilterButton>
           {DUPLICATE_LABELS.filter((l) => counts.get(l)).map((l) => (
-            <button
-              type="button"
+            <FilterButton
               key={l}
-              className={classes.filter}
-              aria-pressed={label === l}
+              count={counts.get(l)}
+              selected={label === l}
               onClick={() => setLabel(l)}
             >
               {t(`duplicates.label.${l}`)}
-              <span className={classes.filterCount}>{counts.get(l)}</span>
-            </button>
+            </FilterButton>
           ))}
-        </div>
+        </FilterBar>
       )}
 
       {duplicates.isPending ? (
@@ -94,12 +84,12 @@ function GroupCard({ group }: { group: DuplicateGroup }) {
             </Badge>
           ))}
         </Group>
-        <ul className={classes.copies}>
-          {group.copies.map((copy) => (
-            <CopyLine key={copy.id} copy={copy} />
-          ))}
-        </ul>
       </div>
+      <ul className={classes.copies}>
+        {group.copies.map((copy) => (
+          <CopyLine key={copy.id} copy={copy} />
+        ))}
+      </ul>
     </article>
   );
 }

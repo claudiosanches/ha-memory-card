@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../api/errors';
 import { useGames, usePlatforms } from '../../api/queries';
 import type { BuiltinStatus, GameSummary, StatusGroup } from '../../api/types';
+import { PageHeader } from '../../components/PageHeader';
+import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { formatDate } from '../../components/status';
@@ -59,13 +61,7 @@ export function BacklogPage() {
 
   return (
     <div className={classes.page}>
-      <header className={classes.header}>
-        <div>
-          <Title order={1} className={classes.title}>
-            {t('backlog.title')}
-          </Title>
-          <Text c="dimmed">{t('backlog.intro')}</Text>
-        </div>
+      <PageHeader title={t('backlog.title')} description={t('backlog.intro')}>
         {total > 0 && (
           <div className={classes.progress}>
             <Text size="sm" fw={600}>
@@ -74,16 +70,16 @@ export function BacklogPage() {
             <Progress value={(cleared / total) * 100} size="lg" radius="xl" aria-hidden />
           </div>
         )}
-      </header>
+      </PageHeader>
 
       {groups.unsorted.length > 0 && (
         <section className={classes.unsorted}>
           <IconSparkles size={28} stroke={1.6} aria-hidden />
           <div className={classes.unsortedText}>
             <Text fw={650}>{t('backlog.unsortedTitle')}</Text>
-            <Text size="sm" c="dimmed">
+            <Description>
               {t('backlog.unsortedText', { count: groups.unsorted.length })}
-            </Text>
+            </Description>
           </div>
           <Button onClick={() => setSorting(groups.unsorted)}>{t('backlog.sort')}</Button>
         </section>
