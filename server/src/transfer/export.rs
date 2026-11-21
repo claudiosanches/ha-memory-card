@@ -1,14 +1,14 @@
 use sqlx::SqlitePool;
 
 use super::{COLUMNS, UTF8_BOM};
-use crate::domain::{Condition, CopyStatus, Format, PlayStatus, Region};
+use crate::domain::{Condition, CopyStatus, Format, Region};
 
 struct ExportRow {
     copy_id: Option<i64>,
     status: Option<CopyStatus>,
     igdb_id: Option<i64>,
     game_title: String,
-    play_status: Option<PlayStatus>,
+    play_status: Option<String>,
     platform: Option<String>,
     region: Option<Region>,
     release_title: Option<String>,
@@ -26,7 +26,7 @@ pub async fn export(pool: &SqlitePool) -> Result<Vec<u8>, ExportError> {
         ExportRow,
         r#"SELECT copy_id AS "copy_id?: i64", status AS "status?: CopyStatus",
                   igdb_id AS "igdb_id?: i64", game_title AS "game_title!: String",
-                  play_status AS "play_status?: PlayStatus", platform AS "platform?: String",
+                  play_status AS "play_status?: String", platform AS "platform?: String",
                   region AS "region?: Region", release_title AS "release_title?: String",
                   product_code AS "product_code?: String", format AS "format?: Format",
                   device AS "device?: String", store AS "store?: String",
@@ -68,7 +68,7 @@ pub async fn export(pool: &SqlitePool) -> Result<Vec<u8>, ExportError> {
                 text(row.status.map(|v| v.as_str().to_owned())),
                 id(row.igdb_id),
                 row.game_title,
-                text(row.play_status.map(|v| v.as_str().to_owned())),
+                text(row.play_status),
                 text(row.platform),
                 text(row.region.map(|v| v.as_str().to_owned())),
                 text(row.release_title),

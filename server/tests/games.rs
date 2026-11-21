@@ -569,7 +569,7 @@ async fn sets_only_the_play_status() {
         .json("PUT", &path, Some(json!({"play_status": "beaten"})))
         .await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
-    assert_eq!(body["code"], "invalid_body");
+    assert_eq!(body["code"], "unknown_play_status");
     let (status, _) = app
         .json(
             "PUT",

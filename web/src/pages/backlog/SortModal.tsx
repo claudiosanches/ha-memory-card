@@ -2,13 +2,11 @@ import { Button, Kbd, Modal, Progress, Stack, Text } from '@mantine/core';
 import { useHotkeys, useMediaQuery } from '@mantine/hooks';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GameSummary, PlayStatus } from '../../api/types';
+import type { GameSummary } from '../../api/types';
 import { Cover } from '../../components/Cover';
-import { STATUS_COLORS } from '../../components/status';
+import { usePlayStatusList } from '../../components/playStatuses';
 import classes from './BacklogPage.module.css';
 import { useSetPlayStatus } from './usePlayStatus';
-
-const CHOICES: PlayStatus[] = ['backlog', 'playing', 'completed', 'mastered', 'dropped'];
 
 /** Walks through games without a play status, one at a time. */
 export function SortModal({
@@ -26,16 +24,19 @@ export function SortModal({
   const [queue] = useState(games);
   const [index, setIndex] = useState(0);
   const setStatus = useSetPlayStatus({ quiet: true });
+  const statuses = usePlayStatusList();
   const game = queue[index];
 
-  const choose = (status: PlayStatus) => {
+  const choose = (status: string) => {
     if (!game) return;
     setStatus.mutate({ id: game.id, status });
     setIndex(index + 1);
   };
   const skip = () => game && setIndex(index + 1);
 
-  useHotkeys([...CHOICES.map((status, i): [string, () => void] => [String(i + 1), () => choose(status)]), ['s', skip]]);
+  // Number keys for the first nine statuses.
+  const keyed = statuses.list.slice(0, 9);
+  useHotkeys([...keyed.map((status, i): [string, () => void] => [String(i + 1), () => choose(status.key)]), ['s', skip]]);
   const key = (label: string) =>
     phone ? undefined : (
       <Kbd size="xs" aria-hidden>
@@ -74,16 +75,16 @@ export function SortModal({
 
         {game ? (
           <div className={classes.choices}>
-            {CHOICES.map((status, i) => (
+            {statuses.list.map((status, i) => (
               <Button
-                key={status}
-                color={STATUS_COLORS[status]}
+                key={status.key}
+                color={status.color}
                 variant="light"
-                onClick={() => choose(status)}
-                rightSection={key(String(i + 1))}
-                aria-keyshortcuts={String(i + 1)}
+                onClick={() => choose(status.key)}
+                rightSection={i < 9 ? key(String(i + 1)) : undefined}
+                aria-keyshortcuts={i < 9 ? String(i + 1) : undefined}
               >
-                {t(`playStatus.${status}`)}
+                {status.name}
               </Button>
             ))}
             <Button variant="default" onClick={skip} rightSection={key('S')} aria-keyshortcuts="S">

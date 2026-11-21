@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { PlayStatus } from '../api/types';
 
 type Handler = (body: unknown) => unknown;
 export type ApiCall = { method: string; path: string; query: URLSearchParams; body: unknown };
@@ -10,12 +11,33 @@ export function json(body: unknown, status = 200): Response {
   });
 }
 
+const builtin = (key: string, color: PlayStatus['color'], counts_as: PlayStatus['counts_as']): PlayStatus => ({
+  key,
+  label: null,
+  color,
+  counts_as,
+  builtin: true,
+  game_count: 0,
+});
+
+/** The statuses a fresh install has. */
+export const BUILTIN_STATUSES: PlayStatus[] = [
+  builtin('backlog', 'gray', 'backlog'),
+  builtin('playing', 'blue', 'playing'),
+  builtin('paused', 'yellow', 'paused'),
+  builtin('completed', 'green', 'finished'),
+  builtin('dropped', 'red', 'finished'),
+  builtin('mastered', 'grape', 'finished'),
+];
+
 /**
  * Stubs fetch with routes keyed by "METHOD /path". A route is a value to
  * return as JSON, a Response, or a function of the request body. Unknown
- * routes answer 404. Returns the list of calls made.
+ * routes answer 404, except the play status list, which defaults to the
+ * built-in statuses. Returns the list of calls made.
  */
-export function mockApi(routes: Record<string, unknown>): ApiCall[] {
+export function mockApi(given: Record<string, unknown>): ApiCall[] {
+  const routes: Record<string, unknown> = { 'GET /api/play-statuses': BUILTIN_STATUSES, ...given };
   const calls: ApiCall[] = [];
   vi.stubGlobal(
     'fetch',

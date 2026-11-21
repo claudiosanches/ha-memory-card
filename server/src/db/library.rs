@@ -8,7 +8,8 @@ use sqlx::types::Json;
 use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::domain::{Format, PlayStatus, Region};
+use super::play_statuses;
+use crate::domain::{Format, Region};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -82,22 +83,28 @@ pub struct LibraryFilter {
     pub sort: Option<LibrarySort>,
 }
 
-/// A play status, or `none` for games without one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// A play status key, or `none` for games without one.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StatusFilter {
-    Set(PlayStatus),
+    Set(String),
     Unset,
 }
 
 impl<'de> Deserialize<'de> for StatusFilter {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = String::deserialize(deserializer)?;
-        if raw == "none" {
+        if raw == play_statuses::NONE {
             return Ok(Self::Unset);
         }
-        serde_json::from_value(serde_json::Value::String(raw))
-            .map(Self::Set)
-            .map_err(serde::de::Error::custom)
+        let valid = !raw.is_empty()
+            && raw
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_');
+        if valid {
+            Ok(Self::Set(raw))
+        } else {
+            Err(serde::de::Error::custom("invalid play status key"))
+        }
     }
 }
 
@@ -132,7 +139,7 @@ pub struct GameSummary {
     pub igdb_id: Option<i64>,
     /// Relative to the covers URL.
     pub cover_path: Option<String>,
-    pub play_status: Option<PlayStatus>,
+    pub play_status: Option<String>,
     pub last_played_at: Option<String>,
     pub owned_copies: i64,
     /// Platforms with owned copies, in platform list order.
@@ -145,7 +152,7 @@ struct SummaryRow {
     title: String,
     igdb_id: Option<i64>,
     cover_path: Option<String>,
-    play_status: Option<PlayStatus>,
+    play_status: Option<String>,
     last_played_at: Option<String>,
     owned_copies: i64,
     platforms: Json<Vec<PlatformCount>>,
@@ -266,10 +273,10 @@ pub fn push_copy_filters(
 }
 
 fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &[StatusFilter]) {
-    let statuses: Vec<PlayStatus> = filter
+    let statuses: Vec<String> = filter
         .iter()
         .filter_map(|s| match s {
-            StatusFilter::Set(status) => Some(*status),
+            StatusFilter::Set(status) => Some(status.clone()),
             StatusFilter::Unset => None,
         })
         .collect();
@@ -341,14 +348,17 @@ mod tests {
         .unwrap();
         assert_eq!(filter.platform, [1, 2]);
         assert_eq!(filter.region, [Region::Eu, Region::Jp]);
-        assert_eq!(filter.play_status, [StatusFilter::Set(PlayStatus::Backlog)]);
+        assert_eq!(
+            filter.play_status,
+            [StatusFilter::Set("backlog".to_owned())]
+        );
         assert_eq!(filter.format, Some(Format::Digital));
         assert!(serde_urlencoded::from_str::<LibraryFilter>("region=mars").is_err());
         let filter: LibraryFilter = serde_urlencoded::from_str("play_status=none,paused").unwrap();
         assert_eq!(
             filter.play_status,
-            [StatusFilter::Unset, StatusFilter::Set(PlayStatus::Paused)]
+            [StatusFilter::Unset, StatusFilter::Set("paused".to_owned())]
         );
-        assert!(serde_urlencoded::from_str::<LibraryFilter>("play_status=nope").is_err());
+        assert!(serde_urlencoded::from_str::<LibraryFilter>("play_status=Nope!").is_err());
     }
 }

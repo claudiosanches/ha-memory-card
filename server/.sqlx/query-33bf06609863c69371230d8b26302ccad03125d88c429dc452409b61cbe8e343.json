@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT builtin AS \"builtin: bool\" FROM play_statuses WHERE key = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "builtin: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "play_statuses",
+            "name": "builtin"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "33bf06609863c69371230d8b26302ccad03125d88c429dc452409b61cbe8e343"
+}

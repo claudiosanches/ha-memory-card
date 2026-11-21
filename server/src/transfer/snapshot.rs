@@ -2,7 +2,8 @@
 
 use sqlx::SqliteConnection;
 
-use crate::domain::{Condition, CopyStatus, Format, PlayStatus, Region};
+use crate::db::play_statuses::{self, StatusName};
+use crate::domain::{Condition, CopyStatus, Format, Region};
 
 #[derive(Debug, Clone)]
 pub struct PlatformRow {
@@ -30,7 +31,7 @@ pub struct GameRow {
     pub id: i64,
     pub igdb_id: Option<i64>,
     pub title: String,
-    pub play_status: Option<PlayStatus>,
+    pub play_status: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -63,6 +64,7 @@ pub struct Snapshot {
     pub games: Vec<GameRow>,
     pub releases: Vec<ReleaseRow>,
     pub copies: Vec<CopyRow>,
+    pub play_statuses: Vec<StatusName>,
 }
 
 pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
@@ -95,7 +97,7 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
 
     let games = sqlx::query_as!(
         GameRow,
-        r#"SELECT id AS "id!", igdb_id, title, play_status AS "play_status: PlayStatus" FROM games"#
+        r#"SELECT id AS "id!", igdb_id, title, play_status FROM games"#
     )
     .fetch_all(&mut *conn)
     .await?;
@@ -117,6 +119,8 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
     .fetch_all(&mut *conn)
     .await?;
 
+    let play_statuses = play_statuses::names(&mut *conn).await?;
+
     Ok(Snapshot {
         platforms,
         devices,
@@ -124,5 +128,6 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
         games,
         releases,
         copies,
+        play_statuses,
     })
 }

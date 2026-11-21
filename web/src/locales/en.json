@@ -43,7 +43,8 @@
     "tabs": {
       "devices": "Devices",
       "stores": "Stores",
-      "platforms": "Platforms"
+      "platforms": "Platforms",
+      "playStatuses": "Play statuses"
     }
   },
   "devices": {
@@ -147,7 +148,7 @@
     "invalid_body": "The request was not valid.",
     "unknown_platform": "One of the platforms no longer exists.",
     "platform_in_use": "Games or devices use this platform. Deactivate it instead.",
-    "invalid_order": "The platform list changed. Reload the page.",
+    "invalid_order": "The list changed. Reload the page.",
     "import_invalid": "The file has errors. Check it again before importing.",
     "invalid_copy": "Pick a copy of this game.",
     "invalid_date": "Use the format YYYY-MM-DD.",
@@ -166,7 +167,9 @@
     "platform_builtin": "Platforms that come with the app cannot be deleted. Remove it from your platforms instead.",
     "invalid_image": "Use a JPEG, PNG or WebP image.",
     "no_candidates": "Nothing in your backlog matches.",
-    "image_too_large": "Use an image of 10 MB or less."
+    "image_too_large": "Use an image of 10 MB or less.",
+    "unknown_play_status": "That play status no longer exists. Reload the page.",
+    "builtin_status": "Built-in play statuses cannot be deleted or moved to another group."
   },
   "import": {
     "exportTitle": "Export",
@@ -274,6 +277,52 @@
     "completed": "Completed",
     "dropped": "Dropped",
     "mastered": "Mastered"
+  },
+  "playStatuses": {
+    "intro": "Shown in this order wherever you pick a status. Drag to reorder. The six built-in statuses can be renamed but not deleted, so integrations can rely on them.",
+    "add": "Add status",
+    "edit": "Edit status",
+    "name": "Name",
+    "defaultName": "Leave blank to use \"{{name}}\".",
+    "color": "Color",
+    "countsAs": "Counts as",
+    "countsAsHint": "Decides where its games show on the Backlog page and whether \"Pick for me\" can choose them.",
+    "builtinGroup": "Built-in statuses keep their group.",
+    "builtin": "Built-in",
+    "summary": "Counts as {{group}}",
+    "deleteTitle": "Delete {{name}}?",
+    "moveTo_one": "{{count}} game has this status. Move it to:",
+    "moveTo_other": "{{count}} games have this status. Move them to:",
+    "group": {
+      "backlog": "Backlog",
+      "playing": "Playing",
+      "paused": "On hold",
+      "finished": "Finished",
+      "not_counted": "Not counted"
+    },
+    "colors": {
+      "gray": "Gray",
+      "red": "Red",
+      "pink": "Pink",
+      "grape": "Grape",
+      "violet": "Violet",
+      "indigo": "Indigo",
+      "blue": "Blue",
+      "cyan": "Cyan",
+      "teal": "Teal",
+      "green": "Green",
+      "lime": "Lime",
+      "yellow": "Yellow",
+      "orange": "Orange"
+    },
+    "drag": {
+      "handle": "Move {{name}}",
+      "instructions": "To move a status, press space or enter, use the arrow keys, then press space or enter again. Press escape to cancel.",
+      "start": "Picked up {{name}}.",
+      "over": "{{name}} is at position {{position}}.",
+      "end": "{{name}} dropped at position {{position}}.",
+      "cancel": "Moving {{name}} was cancelled."
+    }
   },
   "library": {
     "search": "Search titles",

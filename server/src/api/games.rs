@@ -11,7 +11,7 @@ use crate::AppState;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, CopyFields, GameDetail, GameFields, PlayerCounts, ReleaseFields};
 use crate::db::library::{self, GameSummary, LibraryFilter};
-use crate::domain::{Condition, Format, PlayStatus, Region};
+use crate::domain::{Condition, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 
 const TITLE_MAX: usize = 200;
@@ -22,8 +22,9 @@ const PLAYERS_MAX: i64 = 99;
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct NewGameInput {
     pub title: String,
+    /// A play status key.
     #[serde(default)]
-    pub play_status: Option<PlayStatus>,
+    pub play_status: Option<String>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -31,8 +32,9 @@ pub struct GameInput {
     pub title: String,
     #[serde(default)]
     pub summary: Option<String>,
+    /// A play status key.
     #[serde(default)]
-    pub play_status: Option<PlayStatus>,
+    pub play_status: Option<String>,
     /// `YYYY-MM-DD`.
     #[serde(default)]
     pub last_played_at: Option<String>,
@@ -137,7 +139,7 @@ impl GameInput {
         Ok(GameFields {
             title: required(&self.title, "title", TITLE_MAX)?,
             summary: optional(self.summary.as_deref(), "summary", SUMMARY_MAX)?,
-            play_status: self.play_status,
+            play_status: self.play_status.clone(),
             last_played_at: date(self.last_played_at.as_deref(), "last_played_at")?,
             last_played_copy_id: self.last_played_copy_id,
             players: players(
@@ -214,7 +216,7 @@ pub async fn create(
     ApiJson(input): ApiJson<NewGameInput>,
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
     let title = required(&input.title, "title", TITLE_MAX)?;
-    let id = games::create(&state.db, &title, input.play_status).await?;
+    let id = games::create(&state.db, &title, input.play_status.as_deref()).await?;
     Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
 }
 
@@ -252,8 +254,8 @@ pub async fn update(
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PlayStatusInput {
-    /// `null` clears it.
-    pub play_status: Option<PlayStatus>,
+    /// A play status key; `null` clears it.
+    pub play_status: Option<String>,
 }
 
 #[utoipa::path(
@@ -271,7 +273,7 @@ pub async fn set_play_status(
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<PlayStatusInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    games::set_play_status(&state.db, id, input.play_status).await?;
+    games::set_play_status(&state.db, id, input.play_status.as_deref()).await?;
     Ok(Json(games::get(&state.db, id).await?))
 }
 

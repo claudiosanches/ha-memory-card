@@ -22,10 +22,13 @@ export type Platform = Schemas['Platform'];
 export type PlatformCategory = Schemas['PlatformCategory'];
 export type PlatformInput = Schemas['PlatformInput'];
 export type PlayStatus = Schemas['PlayStatus'];
+export type PlayStatusFields = Schemas['PlayStatusFields'];
 export type Region = Schemas['Region'];
 export type ReleaseDetail = Schemas['ReleaseDetail'];
 export type ReleaseInput = Schemas['ReleaseInput'];
 export type Store = Schemas['Store'];
+export type StatusColor = Schemas['StatusColor'];
+export type StatusGroup = Schemas['StatusGroup'];
 export type StoreInput = Schemas['StoreInput'];
 export type Suggestion = Schemas['Suggestion'];
 export type SuggestionFilter = Schemas['SuggestionFilter'];
@@ -50,11 +53,21 @@ export const DUPLICATE_LABELS: readonly DuplicateLabel[] = [
   'physical_digital',
 ];
 export const CONDITIONS: readonly Condition[] = ['sealed', 'cib', 'no_manual', 'loose'];
-export const PLAY_STATUSES: readonly PlayStatus[] = [
-  'backlog',
-  'playing',
-  'paused',
-  'completed',
-  'dropped',
-  'mastered',
+/** Keys of the play statuses every install has. */
+export type BuiltinStatus = 'backlog' | 'playing' | 'paused' | 'completed' | 'dropped' | 'mastered';
+export const STATUS_COLORS: readonly StatusColor[] = [
+  'gray',
+  'red',
+  'pink',
+  'grape',
+  'violet',
+  'indigo',
+  'blue',
+  'cyan',
+  'teal',
+  'green',
+  'lime',
+  'yellow',
+  'orange',
 ];
+export const STATUS_GROUPS: readonly StatusGroup[] = ['backlog', 'playing', 'paused', 'finished', 'not_counted'];

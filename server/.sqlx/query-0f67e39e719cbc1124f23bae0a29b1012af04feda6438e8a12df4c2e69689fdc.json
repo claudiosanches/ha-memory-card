@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT builtin AS \"builtin: bool\", counts_as AS \"counts_as: StatusGroup\"\n           FROM play_statuses WHERE key = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "builtin: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "play_statuses",
+            "name": "builtin"
+          }
+        }
+      },
+      {
+        "name": "counts_as: StatusGroup",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "play_statuses",
+            "name": "counts_as"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "0f67e39e719cbc1124f23bae0a29b1012af04feda6438e8a12df4c2e69689fdc"
+}

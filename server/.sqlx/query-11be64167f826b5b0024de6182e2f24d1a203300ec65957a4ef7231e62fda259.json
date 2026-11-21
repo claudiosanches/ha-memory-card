@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.cover_path,\n                  g.cover_source IS 'upload' AS \"cover_uploaded!: bool\", g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.play_status AS \"play_status: PlayStatus\", g.last_played_at, g.last_played_copy_id,\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\"\n           FROM games g WHERE g.id = ?",
+  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.cover_path,\n                  g.cover_source IS 'upload' AS \"cover_uploaded!: bool\", g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.play_status, g.last_played_at, g.last_played_copy_id,\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\"\n           FROM games g WHERE g.id = ?",
   "describe": {
     "columns": [
       {
@@ -98,7 +98,7 @@
         }
       },
       {
-        "name": "play_status: PlayStatus",
+        "name": "play_status",
         "ordinal": 9,
         "type_info": "Text",
         "origin": {
@@ -211,5 +211,5 @@
       true
     ]
   },
-  "hash": "68a1e81827bce2b11e548e64ee7cb68978a29e613813bd5c6dccda05c77e72ee"
+  "hash": "11be64167f826b5b0024de6182e2f24d1a203300ec65957a4ef7231e62fda259"
 }

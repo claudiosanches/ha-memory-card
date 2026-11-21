@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use super::games::{self, GameDetail};
 use super::library::{self, DeviceMatch, LibraryFilter, Ownership, StatusFilter};
-use crate::domain::PlayStatus;
+use super::play_statuses;
 use crate::error::{ApiError, ApiResult};
 
 /// Values inside one filter are OR, filters are AND, and the copy filters
@@ -14,9 +14,9 @@ use crate::error::{ApiError, ApiResult};
 #[derive(Debug, Default, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct SuggestionFilter {
-    /// Empty means backlog.
+    /// Play status keys. Empty means every status that counts as backlog.
     #[serde(default)]
-    pub play_status: Vec<PlayStatus>,
+    pub play_status: Vec<String>,
     #[serde(default)]
     pub platform: Vec<i64>,
     /// Copies on these devices, or with no device on a platform one of them plays.
@@ -41,16 +41,13 @@ pub struct Suggestion {
 /// Picks a random match, skipping games suggested in the last day unless
 /// nothing else matches, then records the pick.
 pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<Suggestion> {
+    let statuses = if filter.play_status.is_empty() {
+        play_statuses::backlog_keys(pool).await?
+    } else {
+        filter.play_status
+    };
     let filter = LibraryFilter {
-        play_status: if filter.play_status.is_empty() {
-            vec![StatusFilter::Set(PlayStatus::Backlog)]
-        } else {
-            filter
-                .play_status
-                .into_iter()
-                .map(StatusFilter::Set)
-                .collect()
-        },
+        play_status: statuses.into_iter().map(StatusFilter::Set).collect(),
         platform: filter.platform,
         device: filter.device,
         genre: filter.genre,

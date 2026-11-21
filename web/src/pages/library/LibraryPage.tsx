@@ -20,10 +20,10 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useGames, usePlatforms } from '../../api/queries';
-import { type GameSummary, PLAY_STATUSES, type Platform, type PlayStatus } from '../../api/types';
+import type { GameSummary, Platform } from '../../api/types';
 import { Cover } from '../../components/Cover';
 import { FormModal } from '../../components/FormModal';
-import { STATUS_COLORS } from '../../components/status';
+import { usePlayStatusList } from '../../components/playStatuses';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { FiltersDrawer } from './FiltersDrawer';
 import { activeFilterCount, type LibrarySearch, toApiQuery } from './search';
@@ -172,7 +172,7 @@ export function LibraryPage() {
 }
 
 function GameCard({ game, platformsById }: { game: GameSummary; platformsById: Map<number, Platform> }) {
-  const { t } = useTranslation();
+  const statuses = usePlayStatusList();
   return (
     <Link
       className={classes.gameCard}
@@ -198,8 +198,8 @@ function GameCard({ game, platformsById }: { game: GameSummary; platformsById: M
             );
           })}
           {game.play_status && (
-            <Badge size="sm" color={STATUS_COLORS[game.play_status]} variant="light" tt="none" className={classes.status}>
-              {t(`playStatus.${game.play_status}`)}
+            <Badge size="sm" color={statuses.color(game.play_status)} variant="light" tt="none" className={classes.status}>
+              {statuses.name(game.play_status)}
             </Badge>
           )}
         </Group>
@@ -210,6 +210,7 @@ function GameCard({ game, platformsById }: { game: GameSummary; platformsById: M
 
 function AddGameModal({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
+  const statuses = usePlayStatusList();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const form = useForm({
@@ -224,7 +225,7 @@ function AddGameModal({ onClose }: { onClose: () => void }) {
         api.POST('/api/games', {
           body: {
             title: values.title,
-            play_status: (values.play_status || null) as PlayStatus | null,
+            play_status: values.play_status || null,
           },
         }),
       ),
@@ -249,7 +250,7 @@ function AddGameModal({ onClose }: { onClose: () => void }) {
       <TextInput label={t('game.title')} required data-autofocus {...form.getInputProps('title')} />
       <Select
         label={t('game.playStatus')}
-        data={PLAY_STATUSES.map((s) => ({ value: s, label: t(`playStatus.${s}`) }))}
+        data={statuses.options}
         clearable
         {...form.getInputProps('play_status')}
       />

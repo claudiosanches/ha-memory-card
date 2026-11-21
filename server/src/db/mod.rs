@@ -3,6 +3,7 @@ pub mod duplicates;
 pub mod games;
 pub mod library;
 pub mod platforms;
+pub mod play_statuses;
 pub mod premigration;
 pub mod stores;
 pub mod suggestions;

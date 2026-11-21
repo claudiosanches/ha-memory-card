@@ -8,6 +8,7 @@
 .handle { cursor: grab; touch-action: none; }
 .row[data-dragging] { position: relative; z-index: 1; cursor: grabbing; box-shadow: 0 8px 20px #00000030; }
 .actions { flex-shrink: 0; }
+.swatch { cursor: pointer; }
 .filters { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .filter { border: 1px solid transparent; border-radius: 7px; background: transparent; padding: 6px 11px; color: var(--mc-muted); font: inherit; font-size: 0.875rem; font-weight: 550; cursor: pointer; transition: background 140ms ease; }
 .filter:hover { background: var(--mantine-color-default-hover); }

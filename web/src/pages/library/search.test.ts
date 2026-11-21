@@ -16,7 +16,7 @@ describe('library search', () => {
       }),
     ).toEqual({ q: 'zelda', platform: [1, 2], region: ['eu'], play_status: ['backlog'], sort: 'played' });
     expect(validateLibrarySearch({ platform: 'not-a-list', min_local_players: 4 })).toEqual({ min_local_players: 4 });
-    expect(validateLibrarySearch({ play_status: ['none', 'unknown', 'paused'] })).toEqual({
+    expect(validateLibrarySearch({ play_status: ['none', 'Not a key!', 3, 'paused'] })).toEqual({
       play_status: ['none', 'paused'],
     });
     expect(toApiQuery({ play_status: ['none', 'paused'] })).toEqual({ play_status: 'none,paused' });

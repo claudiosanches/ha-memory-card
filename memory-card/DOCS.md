@@ -65,7 +65,7 @@ collection in a spreadsheet.
 | `status` | `owned` (empty means owned) |
 | `igdb_id` | IGDB game id, optional |
 | `game_title` | Required |
-| `play_status` | `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered` |
+| `play_status` | `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write the key. |
 | `platform` | Platform name, abbreviation or slug |
 | `region` | `na`, `eu`, `au`, `nz`, `jp`, `cn`, `asia`, `kr`, `br`, `ww` (worldwide or region-free); also `NTSC-U`, `PAL`, `NTSC-J` |
 | `release_title` | Title on this release, when it differs |
@@ -75,6 +75,20 @@ collection in a spreadsheet.
 | `store` | Store name |
 | `condition` | Physical only: `sealed`, `cib`, `no_manual`, `loose` |
 | `notes` | Free text |
+
+## Play statuses
+
+Manage > Play statuses lists the statuses in the order the app shows them.
+The six built-in statuses can be renamed, recolored and reordered, but not
+deleted, and their keys never change, so CSV files and integrations can rely
+on them. Statuses you add have a name, a color and a "counts as" group:
+
+- Backlog: shown in the backlog grid and picked by "Pick for me".
+- Playing and On hold: shown in those sections of the Backlog page.
+- Finished: counted as cleared in the backlog progress.
+- Not counted: left out of the Backlog page.
+
+Deleting a status moves its games to another status, or leaves them with none.
 
 ## Data and backups
 

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", igdb_id, title, play_status AS \"play_status: PlayStatus\" FROM games",
+  "query": "SELECT id AS \"id!\", igdb_id, title, play_status FROM games",
   "describe": {
     "columns": [
       {
@@ -37,7 +37,7 @@
         }
       },
       {
-        "name": "play_status: PlayStatus",
+        "name": "play_status",
         "ordinal": 3,
         "type_info": "Text",
         "origin": {
@@ -58,5 +58,5 @@
       true
     ]
   },
-  "hash": "ccd0cb4b7419f102f688ff0c7432b8dc0885a115254f80cf49b104b96e4cac4b"
+  "hash": "02299f8bd9400ee69f7bac0a11b52b6814e175be57677d7ac140f5c156fc3ca8"
 }

@@ -1469,6 +1469,243 @@
         }
       }
     },
+    "/api/play-statuses": {
+      "get": {
+        "tags": [
+          "play statuses"
+        ],
+        "operationId": "listPlayStatuses",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlayStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "play statuses"
+        ],
+        "operationId": "createPlayStatus",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayStatusFields"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayStatus"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`name_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/play-statuses/order": {
+      "put": {
+        "tags": [
+          "play statuses"
+        ],
+        "operationId": "reorderPlayStatuses",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayStatusOrder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlayStatus"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_order`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/play-statuses/{key}": {
+      "put": {
+        "tags": [
+          "play statuses"
+        ],
+        "operationId": "updatePlayStatus",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayStatusFields"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`name_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`builtin_status` when changing a built-in's group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "play statuses"
+        ],
+        "operationId": "deletePlayStatus",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "move_to",
+            "in": "query",
+            "description": "Status for the deleted status's games; absent leaves them with none.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted; its games moved to `move_to` or to no status"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`builtin_status`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`unknown_play_status`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/releases/{id}": {
       "put": {
         "tags": [
@@ -2407,14 +2644,11 @@
             "format": "int64"
           },
           "play_status": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PlayStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A play status key."
           },
           "publishers": {
             "type": "array",
@@ -2495,14 +2729,11 @@
             "format": "int64"
           },
           "play_status": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PlayStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A play status key."
           },
           "summary": {
             "type": [
@@ -2580,13 +2811,9 @@
             "description": "Platforms with owned copies, in platform list order."
           },
           "play_status": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PlayStatus"
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "title": {
@@ -2783,14 +3010,11 @@
         ],
         "properties": {
           "play_status": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PlayStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A play status key."
           },
           "title": {
             "type": "string"
@@ -2954,33 +3178,90 @@
         }
       },
       "PlayStatus": {
-        "type": "string",
-        "description": "`mastered` means 100% completion.",
-        "enum": [
-          "backlog",
-          "playing",
-          "paused",
-          "completed",
-          "dropped",
-          "mastered"
-        ]
+        "type": "object",
+        "required": [
+          "key",
+          "color",
+          "counts_as",
+          "builtin",
+          "game_count"
+        ],
+        "properties": {
+          "builtin": {
+            "type": "boolean"
+          },
+          "color": {
+            "$ref": "#/components/schemas/StatusColor"
+          },
+          "counts_as": {
+            "$ref": "#/components/schemas/StatusGroup"
+          },
+          "game_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`null` for a built-in status that keeps its default name."
+          }
+        }
+      },
+      "PlayStatusFields": {
+        "type": "object",
+        "required": [
+          "color",
+          "counts_as"
+        ],
+        "properties": {
+          "color": {
+            "$ref": "#/components/schemas/StatusColor"
+          },
+          "counts_as": {
+            "$ref": "#/components/schemas/StatusGroup",
+            "description": "Fixed for built-in statuses."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Blank resets a built-in status to its default name."
+          }
+        }
       },
       "PlayStatusInput": {
         "type": "object",
         "properties": {
           "play_status": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PlayStatus",
-                "description": "`null` clears it."
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A play status key; `null` clears it."
           }
         },
         "additionalProperties": false
+      },
+      "PlayStatusOrder": {
+        "type": "object",
+        "required": [
+          "keys"
+        ],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every status key, in the new order."
+          }
+        }
       },
       "Region": {
         "type": "string",
@@ -3253,6 +3534,36 @@
           }
         }
       },
+      "StatusColor": {
+        "type": "string",
+        "description": "Mantine palette names.",
+        "enum": [
+          "gray",
+          "red",
+          "pink",
+          "grape",
+          "violet",
+          "indigo",
+          "blue",
+          "cyan",
+          "teal",
+          "green",
+          "lime",
+          "yellow",
+          "orange"
+        ]
+      },
+      "StatusGroup": {
+        "type": "string",
+        "description": "How the backlog page and suggestions treat a play status.",
+        "enum": [
+          "backlog",
+          "playing",
+          "paused",
+          "finished",
+          "not_counted"
+        ]
+      },
       "Store": {
         "type": "object",
         "required": [
@@ -3362,9 +3673,9 @@
           "play_status": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PlayStatus"
+              "type": "string"
             },
-            "description": "Empty means backlog."
+            "description": "Play status keys. Empty means every status that counts as backlog."
           }
         },
         "additionalProperties": false

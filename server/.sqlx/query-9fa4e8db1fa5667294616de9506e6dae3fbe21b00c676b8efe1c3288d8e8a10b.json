@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE play_statuses SET label = ?, color = ?, counts_as = ? WHERE key = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "9fa4e8db1fa5667294616de9506e6dae3fbe21b00c676b8efe1c3288d8e8a10b"
+}

@@ -17,6 +17,7 @@
 
 .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .more { align-self: flex-start; }
+.customStatus { align-self: flex-start; }
 .row { display: flex; align-items: center; gap: 16px; padding: 10px 14px 10px 10px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 10px; }
 .rowLink { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; color: inherit; text-decoration: none; border-radius: 6px; }
 .rowLink:hover .gameTitle { color: var(--mantine-primary-color-light-color); }

@@ -41,6 +41,7 @@ async fn fresh_database_has_schema_and_seed() {
             "games",
             "genres",
             "platforms",
+            "play_statuses",
             "releases",
             "settings",
             "stores",

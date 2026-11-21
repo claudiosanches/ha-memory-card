@@ -1,14 +1,3 @@
-import type { PlayStatus } from '../api/types';
-
-export const STATUS_COLORS: Record<PlayStatus, string> = {
-  backlog: 'gray',
-  playing: 'blue',
-  paused: 'yellow',
-  completed: 'green',
-  dropped: 'red',
-  mastered: 'grape',
-};
-
 /** Today in the browser's time zone, as YYYY-MM-DD. */
 export function today(): string {
   const now = new Date();

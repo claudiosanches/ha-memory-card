@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_statuses (key, label, color, counts_as, sort_order)\n         VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM play_statuses))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "442c662bb453031879cfeccf4472fc39810e779456a0c749e2ee8a01a0bea51a"
+}

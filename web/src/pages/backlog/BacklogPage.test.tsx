@@ -1,11 +1,11 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { GameDetail, GameSummary, PlayStatus } from '../../api/types';
+import type { GameDetail, GameSummary } from '../../api/types';
 import en from '../../locales/en.json';
-import { json, mockApi } from '../../test/api';
+import { BUILTIN_STATUSES, json, mockApi } from '../../test/api';
 import { renderAt } from '../../test/render';
 
-function game(id: number, title: string, play_status: PlayStatus | null): GameSummary {
+function game(id: number, title: string, play_status: string | null): GameSummary {
   return {
     id,
     title,
@@ -28,7 +28,7 @@ const GAMES = [
   game(7, 'Kirby', null),
 ];
 
-function detail(summary: GameSummary, play_status: PlayStatus | null): GameDetail {
+function detail(summary: GameSummary, play_status: string | null): GameDetail {
   return {
     id: summary.id,
     igdb_id: null,
@@ -59,7 +59,7 @@ const SETUP = {
 };
 
 const statusPut = (id: number) => (body: unknown) =>
-  detail(GAMES.find((g) => g.id === id) as GameSummary, (body as { play_status: PlayStatus }).play_status);
+  detail(GAMES.find((g) => g.id === id) as GameSummary, (body as { play_status: string }).play_status);
 
 describe('Backlog page', () => {
   it('groups games by play status and shows progress', async () => {
@@ -72,6 +72,24 @@ describe('Backlog page', () => {
     expect(screen.getByTestId('backlog-3')).toHaveTextContent('Celeste');
     expect(screen.queryByTestId('backlog-5')).toBeNull();
     expect(screen.getByText('2 games have no play status, so they are not in the backlog yet.')).toBeInTheDocument();
+  });
+
+  it('groups custom statuses by what they count as', async () => {
+    mockApi({
+      ...SETUP,
+      'GET /api/games': [...GAMES, game(8, 'Okami HD', 'replaying'), game(9, 'Pong', 'collected')],
+      'GET /api/play-statuses': [
+        ...BUILTIN_STATUSES,
+        { key: 'replaying', label: 'Replaying', color: 'teal', counts_as: 'playing', builtin: false, game_count: 1 },
+        { key: 'collected', label: 'Collected', color: 'gray', counts_as: 'not_counted', builtin: false, game_count: 1 },
+      ],
+    });
+    renderAt('/backlog');
+
+    expect(await screen.findByText('1 of 6 cleared')).toBeInTheDocument();
+    expect(screen.getByTestId('row-8')).toHaveTextContent('Replaying');
+    expect(screen.getByTestId('row-1')).not.toHaveTextContent('Playing');
+    expect(screen.queryByText('Pong')).toBeNull();
   });
 
   it('finishes a game from the playing row and starts one from the backlog', async () => {

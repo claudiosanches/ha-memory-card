@@ -360,6 +360,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/play-statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPlayStatuses"];
+        put?: never;
+        post: operations["createPlayStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/play-statuses/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reorderPlayStatuses"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/play-statuses/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updatePlayStatus"];
+        post?: never;
+        delete: operations["deletePlayStatus"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/releases/{id}": {
         parameters: {
             query?: never;
@@ -584,7 +632,8 @@ export interface components {
             online_coop?: boolean | null;
             /** Format: int64 */
             online_max_players?: number | null;
-            play_status?: components["schemas"]["PlayStatus"] | null;
+            /** @description A play status key. */
+            play_status?: string | null;
             publishers: string[];
             /** @description In platform list order, then region. */
             releases: components["schemas"]["ReleaseDetail"][];
@@ -606,7 +655,8 @@ export interface components {
             online_coop?: boolean | null;
             /** Format: int64 */
             online_max_players?: number | null;
-            play_status?: components["schemas"]["PlayStatus"] | null;
+            /** @description A play status key. */
+            play_status?: string | null;
             summary?: string | null;
             title: string;
         };
@@ -628,7 +678,7 @@ export interface components {
             owned_copies: number;
             /** @description Platforms with owned copies, in platform list order. */
             platforms: components["schemas"]["PlatformCount"][];
-            play_status?: components["schemas"]["PlayStatus"] | null;
+            play_status?: string | null;
             title: string;
         };
         Genre: {
@@ -680,7 +730,8 @@ export interface components {
             platforms: string[];
         };
         NewGameInput: {
-            play_status?: components["schemas"]["PlayStatus"] | null;
+            /** @description A play status key. */
+            play_status?: string | null;
             title: string;
         };
         Platform: {
@@ -729,13 +780,30 @@ export interface components {
             /** @description Every platform id, once, in the new order. */
             ids: number[];
         };
-        /**
-         * @description `mastered` means 100% completion.
-         * @enum {string}
-         */
-        PlayStatus: "backlog" | "playing" | "paused" | "completed" | "dropped" | "mastered";
+        PlayStatus: {
+            builtin: boolean;
+            color: components["schemas"]["StatusColor"];
+            counts_as: components["schemas"]["StatusGroup"];
+            /** Format: int64 */
+            game_count: number;
+            key: string;
+            /** @description `null` for a built-in status that keeps its default name. */
+            label?: string | null;
+        };
+        PlayStatusFields: {
+            color: components["schemas"]["StatusColor"];
+            /** @description Fixed for built-in statuses. */
+            counts_as: components["schemas"]["StatusGroup"];
+            /** @description Blank resets a built-in status to its default name. */
+            label?: string | null;
+        };
         PlayStatusInput: {
-            play_status?: components["schemas"]["PlayStatus"] | null;
+            /** @description A play status key; `null` clears it. */
+            play_status?: string | null;
+        };
+        PlayStatusOrder: {
+            /** @description Every status key, in the new order. */
+            keys: string[];
         };
         /**
          * @description Release region, matching IGDB's release regions. `ww` also covers region-free.
@@ -807,6 +875,16 @@ export interface components {
             owned_copies: number;
             version: string;
         };
+        /**
+         * @description Mantine palette names.
+         * @enum {string}
+         */
+        StatusColor: "gray" | "red" | "pink" | "grape" | "violet" | "indigo" | "blue" | "cyan" | "teal" | "green" | "lime" | "yellow" | "orange";
+        /**
+         * @description How the backlog page and suggestions treat a play status.
+         * @enum {string}
+         */
+        StatusGroup: "backlog" | "playing" | "paused" | "finished" | "not_counted";
         Store: {
             /**
              * Format: int64
@@ -842,8 +920,8 @@ export interface components {
              */
             min_local_players?: number | null;
             platform?: number[];
-            /** @description Empty means backlog. */
-            play_status?: components["schemas"]["PlayStatus"][];
+            /** @description Play status keys. Empty means every status that counts as backlog. */
+            play_status?: string[];
         };
         SyncStatus: {
             done: number;
@@ -1967,6 +2045,197 @@ export interface operations {
             };
             /** @description `platform_in_use`: releases or devices use it */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listPlayStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayStatus"][];
+                };
+            };
+        };
+    };
+    createPlayStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlayStatusFields"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayStatus"];
+                };
+            };
+            /** @description `name_taken` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    reorderPlayStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlayStatusOrder"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayStatus"][];
+                };
+            };
+            /** @description `invalid_order` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updatePlayStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlayStatusFields"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayStatus"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `name_taken` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `builtin_status` when changing a built-in's group */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deletePlayStatus: {
+        parameters: {
+            query?: {
+                /** @description Status for the deleted status's games; absent leaves them with none. */
+                move_to?: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted; its games moved to `move_to` or to no status */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `builtin_status` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `unknown_play_status` */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

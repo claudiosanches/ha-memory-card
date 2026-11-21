@@ -42,13 +42,12 @@ import {
 import {
   type CopyDetail,
   type GameDetail,
-  PLAY_STATUSES,
-  type PlayStatus,
   type ReleaseDetail,
 } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { notifyError, notifySuccess } from '../../components/notify';
-import { formatDate, STATUS_COLORS, today } from '../../components/status';
+import { usePlayStatusList } from '../../components/playStatuses';
+import { formatDate, today } from '../../components/status';
 import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
 import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
@@ -107,6 +106,7 @@ function BackLink() {
 
 function GameView({ game }: { game: GameDetail }) {
   const { t, i18n } = useTranslation();
+  const statuses = usePlayStatusList();
   const [dialog, setDialog] = useState<Dialog>(null);
   const phone = useMediaQuery('(max-width: 48em)');
   const close = () => setDialog(null);
@@ -272,13 +272,13 @@ function GameView({ game }: { game: GameDetail }) {
               label={t('game.playStatus')}
               placeholder={t('common.notSet')}
               w={220}
-              data={PLAY_STATUSES.map((s) => ({ value: s, label: t(`playStatus.${s}`) }))}
+              data={statuses.options}
               value={game.play_status ?? null}
-              onChange={(value) => update.mutate({ play_status: (value as PlayStatus | null) ?? null })}
+              onChange={(value) => update.mutate({ play_status: value ?? null })}
               clearable
               disabled={update.isPending}
               leftSection={
-                game.play_status ? <Badge size="xs" circle color={STATUS_COLORS[game.play_status]} /> : null
+                game.play_status ? <Badge size="xs" circle color={statuses.color(game.play_status)} /> : null
               }
             />
             <Select

@@ -3,9 +3,10 @@ import { getRouteApi } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { DevicesTab } from './DevicesTab';
 import { PlatformsTab } from './PlatformsTab';
+import { PlayStatusesTab } from './PlayStatusesTab';
 import { StoresTab } from './StoresTab';
 
-export const MANAGE_TABS = ['devices', 'stores', 'platforms'] as const;
+export const MANAGE_TABS = ['devices', 'stores', 'platforms', 'playStatuses'] as const;
 export type ManageTab = (typeof MANAGE_TABS)[number];
 
 const route = getRouteApi('/manage');
@@ -38,6 +39,9 @@ export function ManagePage() {
         </Tabs.Panel>
         <Tabs.Panel value="platforms">
           <PlatformsTab />
+        </Tabs.Panel>
+        <Tabs.Panel value="playStatuses">
+          <PlayStatusesTab />
         </Tabs.Panel>
       </Tabs>
     </Stack>

@@ -1,4 +1,4 @@
-import { Button, Group, Loader, Progress, Text, Title } from '@mantine/core';
+import { Badge, Button, Group, Loader, Progress, Text, Title } from '@mantine/core';
 import {
   IconCheck,
   IconPlayerPause,
@@ -12,27 +12,24 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../api/errors';
 import { useGames, usePlatforms } from '../../api/queries';
-import type { GameSummary, PlayStatus } from '../../api/types';
+import type { BuiltinStatus, GameSummary, StatusGroup } from '../../api/types';
 import { Cover } from '../../components/Cover';
+import { usePlayStatusList } from '../../components/playStatuses';
 import { formatDate } from '../../components/status';
 import classes from './BacklogPage.module.css';
 import { Picker } from './Picker';
 import { SortModal } from './SortModal';
 import { useSetPlayStatus } from './usePlayStatus';
 
-type Groups = Record<PlayStatus | 'unsorted', GameSummary[]>;
+type Groups = Record<StatusGroup | 'unsorted', GameSummary[]>;
 
-function groupByStatus(games: GameSummary[]): Groups {
-  const groups: Groups = {
-    unsorted: [],
-    backlog: [],
-    playing: [],
-    paused: [],
-    completed: [],
-    dropped: [],
-    mastered: [],
-  };
-  for (const game of games) groups[game.play_status ?? 'unsorted'].push(game);
+/** Groups games by what their status counts as. */
+function groupByStatus(games: GameSummary[], groupOf: (key: string) => StatusGroup | undefined): Groups {
+  const groups: Groups = { unsorted: [], backlog: [], playing: [], paused: [], finished: [], not_counted: [] };
+  for (const game of games) {
+    const group = game.play_status ? groupOf(game.play_status) : 'unsorted';
+    if (group) groups[group].push(game);
+  }
   return groups;
 }
 
@@ -41,18 +38,22 @@ export function BacklogPage() {
   // The library's default query, so both pages share one cached list.
   const games = useGames({});
   const platforms = usePlatforms();
+  const statuses = usePlayStatusList();
   const [sorting, setSorting] = useState<GameSummary[] | null>(null);
 
-  const groups = useMemo(() => groupByStatus(games.data ?? []), [games.data]);
+  const groups = useMemo(
+    () => groupByStatus(games.data ?? [], (key) => statuses.get(key)?.counts_as),
+    [games.data, statuses],
+  );
   const platformNames = useMemo(
     () => new Map((platforms.data ?? []).map((p) => [p.id, p.abbreviation ?? p.name])),
     [platforms.data],
   );
 
-  if (games.isPending) return <Loader size="sm" />;
+  if (games.isPending || statuses.isPending) return <Loader size="sm" />;
   if (games.isError) return <Text c="red">{errorMessage(t, games.error)}</Text>;
 
-  const cleared = groups.completed.length + groups.mastered.length + groups.dropped.length;
+  const cleared = groups.finished.length;
   const open = groups.backlog.length + groups.playing.length + groups.paused.length;
   const total = cleared + open;
 
@@ -138,7 +139,7 @@ function Section({ title, count, children }: { title: string; count: number; chi
   );
 }
 
-type Action = { status: PlayStatus; label: 'complete' | 'master' | 'pause' | 'resume' | 'drop'; icon: typeof IconCheck };
+type Action = { status: BuiltinStatus; label: 'complete' | 'master' | 'pause' | 'resume' | 'drop'; icon: typeof IconCheck };
 
 const PLAYING_ACTIONS: Action[] = [
   { status: 'completed', label: 'complete', icon: IconCheck },
@@ -187,6 +188,18 @@ function RowList({
   );
 }
 
+/** The status name, for statuses the user added, since the section title only names the group. */
+function CustomStatus({ game }: { game: GameSummary }) {
+  const statuses = usePlayStatusList();
+  const status = game.play_status ? statuses.get(game.play_status) : undefined;
+  if (!status || status.builtin) return null;
+  return (
+    <Badge size="xs" variant="light" color={status.color} tt="none" className={classes.customStatus}>
+      {status.name}
+    </Badge>
+  );
+}
+
 function GameRow({
   game,
   platformNames,
@@ -206,6 +219,7 @@ function GameRow({
           <Text fw={600} className={classes.gameTitle}>
             {game.title}
           </Text>
+          <CustomStatus game={game} />
           <Text size="xs" c="dimmed">
             {platformList(game, platformNames).join(t('common.separator'))}
             {game.last_played_at &&
@@ -244,6 +258,7 @@ function BacklogCard({ game, platformNames }: { game: GameSummary; platformNames
         <Text fw={600} size="sm" className={classes.gameTitle}>
           {game.title}
         </Text>
+        <CustomStatus game={game} />
         <Text size="xs" c="dimmed">
           {platformList(game, platformNames).join(t('common.separator'))}
         </Text>

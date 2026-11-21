@@ -2,7 +2,8 @@ import { Button, Drawer, MultiSelect, NumberInput, SegmentedControl, Select, Sta
 import { useTranslation } from 'react-i18next';
 import { useDevices, useGameModes, useGenres, usePlatforms, useStores } from '../../api/queries';
 import { FORMATS, type Format, REGIONS, type Region } from '../../api/types';
-import { type LibrarySearch, STATUS_FILTERS, type StatusFilter } from './search';
+import { usePlayStatusList } from '../../components/playStatuses';
+import { type LibrarySearch, NO_STATUS, type StatusFilter } from './search';
 
 type Props = {
   opened: boolean;
@@ -17,6 +18,7 @@ const fromIds = (values?: number[]) => (values ?? []).map(String);
 
 export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Props) {
   const { t } = useTranslation();
+  const statuses = usePlayStatusList();
   const platforms = usePlatforms();
   const devices = useDevices();
   const stores = useStores();
@@ -41,10 +43,7 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
         />
         <MultiSelect
           label={t('library.filter.playStatus')}
-          data={STATUS_FILTERS.map((s) => ({
-            value: s,
-            label: s === 'none' ? t('common.notSet') : t(`playStatus.${s}`),
-          }))}
+          data={[...statuses.options, { value: NO_STATUS, label: t('common.notSet') }]}
           value={search.play_status ?? []}
           onChange={(values) => onChange({ play_status: values.length ? (values as StatusFilter[]) : undefined })}
           clearable

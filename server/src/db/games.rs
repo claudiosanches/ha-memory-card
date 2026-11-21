@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use super::found;
 use crate::covers::Owner;
-use crate::domain::{Condition, CopyStatus, Format, PlayStatus, Region, sort_title};
+use crate::domain::{Condition, CopyStatus, Format, Region, sort_title};
 use crate::error::{ApiError, ApiResult};
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -49,7 +49,8 @@ pub struct GameDetail {
     pub first_release_date: Option<String>,
     pub developers: Vec<String>,
     pub publishers: Vec<String>,
-    pub play_status: Option<PlayStatus>,
+    /// A play status key.
+    pub play_status: Option<String>,
     pub last_played_at: Option<String>,
     pub last_played_copy_id: Option<i64>,
     pub local_max_players: Option<i64>,
@@ -74,7 +75,7 @@ pub struct PlayerCounts {
 pub struct GameFields {
     pub title: String,
     pub summary: Option<String>,
-    pub play_status: Option<PlayStatus>,
+    pub play_status: Option<String>,
     pub last_played_at: Option<String>,
     pub last_played_copy_id: Option<i64>,
     pub players: PlayerCounts,
@@ -105,7 +106,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                   g.cover_source IS 'upload' AS "cover_uploaded!: bool", g.first_release_date,
                   g.developers AS "developers: Json<Vec<String>>",
                   g.publishers AS "publishers: Json<Vec<String>>",
-                  g.play_status AS "play_status: PlayStatus", g.last_played_at, g.last_played_copy_id,
+                  g.play_status, g.last_played_at, g.last_played_copy_id,
                   g.local_max_players, g.online_max_players,
                   g.local_coop AS "local_coop: bool", g.online_coop AS "online_coop: bool",
                   (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)
@@ -207,11 +208,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     })
 }
 
-pub async fn create(
-    pool: &SqlitePool,
-    title: &str,
-    play_status: Option<PlayStatus>,
-) -> ApiResult<i64> {
+pub async fn create(pool: &SqlitePool, title: &str, play_status: Option<&str>) -> ApiResult<i64> {
+    super::play_statuses::ensure_exists(pool, play_status).await?;
     let sort = sort_title(title);
     Ok(sqlx::query_scalar!(
         r#"INSERT INTO games (title, sort_title, play_status) VALUES (?, ?, ?) RETURNING id AS "id!""#,
@@ -225,6 +223,7 @@ pub async fn create(
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
+    super::play_statuses::ensure_exists(&mut *tx, fields.play_status.as_deref()).await?;
 
     if let Some(copy_id) = fields.last_played_copy_id {
         let belongs: bool = sqlx::query_scalar!(
@@ -287,11 +286,8 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
     Ok(())
 }
 
-pub async fn set_play_status(
-    pool: &SqlitePool,
-    id: i64,
-    status: Option<PlayStatus>,
-) -> ApiResult<()> {
+pub async fn set_play_status(pool: &SqlitePool, id: i64, status: Option<&str>) -> ApiResult<()> {
+    super::play_statuses::ensure_exists(pool, status).await?;
     let result = sqlx::query!(
         "UPDATE games SET play_status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",

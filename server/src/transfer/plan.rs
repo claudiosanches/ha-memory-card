@@ -9,7 +9,8 @@ use utoipa::ToSchema;
 use super::parse::RawRow;
 use super::snapshot::{CopyRow, Snapshot};
 use crate::db::devices::DeviceKind;
-use crate::domain::{Condition, CopyStatus, Format, PlayStatus, Region};
+use crate::db::play_statuses;
+use crate::domain::{Condition, CopyStatus, Format, Region};
 
 const TITLE_MAX: usize = 200;
 const NAME_MAX: usize = 100;
@@ -34,7 +35,7 @@ pub struct NewDevice {
 pub struct NewGame {
     pub igdb_id: Option<i64>,
     pub title: String,
-    pub play_status: Option<PlayStatus>,
+    pub play_status: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -95,7 +96,7 @@ pub struct Plan {
     pub games: Vec<NewGame>,
     pub releases: Vec<NewRelease>,
     /// Existing games whose play status changes.
-    pub game_statuses: Vec<(i64, PlayStatus)>,
+    pub game_statuses: Vec<(i64, String)>,
     /// Existing games that get an IGDB id.
     pub game_igdb_links: Vec<(i64, i64)>,
     /// Existing releases whose title changes.
@@ -156,7 +157,7 @@ struct Planner<'a> {
     releases: HashMap<(Ref, Ref, Region, String), Ref>,
     copies: HashMap<i64, &'a CopyRow>,
     seen_copies: HashMap<i64, u64>,
-    game_statuses: HashMap<Ref, PlayStatus>,
+    game_statuses: HashMap<Ref, String>,
     release_titles: HashMap<Ref, String>,
     /// Per new device: true while every row using it is digital.
     new_device_digital_only: Vec<bool>,
@@ -236,7 +237,7 @@ impl<'a> Planner<'a> {
             game_statuses: snapshot
                 .games
                 .iter()
-                .filter_map(|g| g.play_status.map(|s| (Ref::Existing(g.id), s)))
+                .filter_map(|g| g.play_status.clone().map(|s| (Ref::Existing(g.id), s)))
                 .collect(),
             release_titles: snapshot
                 .releases
@@ -276,12 +277,13 @@ impl<'a> Planner<'a> {
         // ---- read every cell ----
         let title = issues.text(&raw.game_title, "game_title", TITLE_MAX, true);
         let igdb_id = issues.id(&raw.igdb_id, "igdb_id");
-        let play_status = issues.value(
-            &raw.play_status,
-            "play_status",
-            PlayStatus::parse_loose,
-            false,
-        );
+        let play_status = raw.play_status.as_deref().and_then(|value| {
+            let found = play_statuses::resolve_name(&self.snapshot.play_statuses, value);
+            if found.is_none() {
+                issues.error("play_status", "invalid_value");
+            }
+            found
+        });
 
         let has_copy = raw.has_copy_columns();
         let copy_id = issues.id(&raw.copy_id, "copy_id");
@@ -330,11 +332,11 @@ impl<'a> Planner<'a> {
                 None
             }
         };
-        if let (Some(status), Some(game)) = (play_status, game.map(|g| g.0))
+        if let (Some(status), Some(game)) = (play_status.as_deref(), game.map(|g| g.0))
             && self
                 .game_statuses
                 .get(&game)
-                .is_some_and(|planned| *planned != status)
+                .is_some_and(|planned| planned != status)
             && self.status_set_by_import(game)
         {
             issues.error("play_status", "conflicting_play_status");
@@ -487,7 +489,7 @@ impl<'a> Planner<'a> {
         found: Option<(Ref, bool)>,
         igdb_id: Option<i64>,
         title: &str,
-        play_status: Option<PlayStatus>,
+        play_status: Option<String>,
     ) -> Ref {
         let game = match found {
             Some((game, link)) => {
@@ -522,7 +524,7 @@ impl<'a> Planner<'a> {
         if let Some(status) = play_status
             && self.game_statuses.get(&game) != Some(&status)
         {
-            self.game_statuses.insert(game, status);
+            self.game_statuses.insert(game, status.clone());
             match game {
                 Ref::New(i) => self.plan.games[i].play_status = Some(status),
                 Ref::Existing(id) => self.plan.game_statuses.push((id, status)),

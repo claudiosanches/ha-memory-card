@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 /// Lowercase and keep only letters, digits and `%`, so "NTSC-U", "ntsc u"
 /// and "Ntsc_U" compare equal.
-fn loose(value: &str) -> String {
+pub fn loose(value: &str) -> String {
     value
         .chars()
         .flat_map(char::to_lowercase)
@@ -89,14 +89,44 @@ value_list! {
 }
 
 value_list! {
-    /// `mastered` means 100% completion.
-    PlayStatus {
+    /// The play statuses every install has. Users can add more; see `play_statuses`.
+    BuiltinStatus {
         Backlog = "backlog" [],
         Playing = "playing" [],
         Paused = "paused" ["onhold"],
         Completed = "completed" ["beaten", "finished"],
         Dropped = "dropped" ["abandoned"],
         Mastered = "mastered" ["100", "100%"],
+    }
+}
+
+value_list! {
+    /// How the backlog page and suggestions treat a play status.
+    StatusGroup {
+        Backlog = "backlog" [],
+        Playing = "playing" [],
+        Paused = "paused" [],
+        Finished = "finished" [],
+        NotCounted = "not_counted" [],
+    }
+}
+
+value_list! {
+    /// Mantine palette names.
+    StatusColor {
+        Gray = "gray" [],
+        Red = "red" [],
+        Pink = "pink" [],
+        Grape = "grape" [],
+        Violet = "violet" [],
+        Indigo = "indigo" [],
+        Blue = "blue" [],
+        Cyan = "cyan" [],
+        Teal = "teal" [],
+        Green = "green" [],
+        Lime = "lime" [],
+        Yellow = "yellow" [],
+        Orange = "orange" [],
     }
 }
 
@@ -134,7 +164,10 @@ mod tests {
             Some(Condition::NoManual)
         );
         assert_eq!(Condition::parse_loose("CIB"), Some(Condition::Cib));
-        assert_eq!(PlayStatus::parse_loose("100%"), Some(PlayStatus::Mastered));
+        assert_eq!(
+            BuiltinStatus::parse_loose("100%"),
+            Some(BuiltinStatus::Mastered)
+        );
         assert_eq!(Format::parse_loose("Cartridge"), Some(Format::Physical));
     }
 
@@ -143,8 +176,8 @@ mod tests {
         for region in Region::ALL {
             assert_eq!(Region::parse_loose(region.as_str()), Some(*region));
         }
-        for status in PlayStatus::ALL {
-            assert_eq!(PlayStatus::parse_loose(status.as_str()), Some(*status));
+        for status in BuiltinStatus::ALL {
+            assert_eq!(BuiltinStatus::parse_loose(status.as_str()), Some(*status));
         }
     }
 

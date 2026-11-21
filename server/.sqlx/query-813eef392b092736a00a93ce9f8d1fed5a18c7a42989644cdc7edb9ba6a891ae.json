@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE play_statuses SET sort_order = ? WHERE key = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "813eef392b092736a00a93ce9f8d1fed5a18c7a42989644cdc7edb9ba6a891ae"
+}
