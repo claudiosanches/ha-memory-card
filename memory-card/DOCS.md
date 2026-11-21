@@ -102,6 +102,14 @@ owned anywhere else: the library, backlog, duplicates and Missing details
 only look at copies you own. **Show > Wishlist** in the library filters
 lists the games on it.
 
+## Photos of copies
+
+To keep photos of a copy, such as the box, the cartridge or the manual,
+choose **Add photos** from the copy's **⋯** menu on the game page. On a
+phone this offers the camera. Each copy takes up to 20 JPEG, PNG or WebP
+photos of up to 10 MB each. They are stored with the app's data, so Home
+Assistant backups include them.
+
 ## Bundles
 
 A bundle is one copy that holds several games, such as a collection on a

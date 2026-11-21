@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO copy_photos (copy_id, path, created_by) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "de668ab503724097557d92f72367aa7944edfe8286f293bbea331ccda538cc93"
+}

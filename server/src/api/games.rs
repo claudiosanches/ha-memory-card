@@ -373,6 +373,7 @@ pub async fn delete(
     for release in releases {
         covers::keep_only(&dir, Owner::Release(release), None).await;
     }
+    super::photos::prune(&state).await;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -459,6 +460,7 @@ pub async fn delete_copy(
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::delete_copy(&state.db, id).await?;
+    super::photos::prune(&state).await;
     Ok(Json(games::get(&state.db, game_id).await?))
 }
 
@@ -496,6 +498,7 @@ pub async fn delete_release(
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::delete_release(&state.db, id).await?;
     covers::keep_only(&state.config.covers_dir(), Owner::Release(id), None).await;
+    super::photos::prune(&state).await;
     Ok(Json(games::get(&state.db, game_id).await?))
 }
 

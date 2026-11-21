@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/copies/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addCopyPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -412,6 +428,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/photos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteCopyPhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platforms": {
         parameters: {
             query?: never;
@@ -672,6 +704,8 @@ export interface components {
             /** Format: int64 */
             id: number;
             notes?: string | null;
+            /** @description Oldest first. */
+            photos: components["schemas"]["CopyPhoto"][];
             /** @description Decimal text such as `59.99`: paid for an owned copy, expected for a wanted one. */
             price?: string | null;
             /** @description `YYYY-MM-DD`. */
@@ -709,6 +743,13 @@ export interface components {
             /** Format: int64 */
             game_id: number;
             title: string;
+        };
+        CopyPhoto: {
+            created_at: string;
+            /** Format: int64 */
+            id: number;
+            /** @description Relative to the covers URL. */
+            path: string;
         };
         /** @description One copy in the copies view, with its release and game. */
         CopyRow: {
@@ -1549,6 +1590,58 @@ export interface operations {
                 };
             };
             /** @description `same_game`, `unknown_game` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    addCopyPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": components["schemas"]["Image"];
+            };
+        };
+        responses: {
+            /** @description The copy's game */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `too_many_photos`: 20 per copy */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid_image` or `image_too_large` */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2571,6 +2664,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MissingDetails"][];
+                };
+            };
+        };
+    };
+    deleteCopyPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The photo's game */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

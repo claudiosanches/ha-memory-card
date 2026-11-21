@@ -9,3 +9,8 @@
   .copy { gap: 8px; padding: 6px 10px; }
   .actions button { width: 44px; height: 44px; }
 }
+
+.photos { display: flex; flex-wrap: wrap; gap: 6px; margin-block: 4px; }
+.thumb { width: 56px; height: 56px; padding: 0; border: 1px solid var(--mc-border); border-radius: 6px; overflow: hidden; cursor: pointer; background: none; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo { display: block; width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; }

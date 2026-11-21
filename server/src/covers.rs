@@ -1,5 +1,6 @@
-//! Cover files: `game-<id>/` and `release-<id>/` under the covers directory.
-//! Paths stored in the database are relative to it.
+//! Image files under the covers directory: covers in `game-<id>/` and
+//! `release-<id>/`, copy photos in `copy-<id>/`. Paths stored in the database
+//! are relative to it.
 
 use std::io;
 use std::path::Path;
@@ -31,16 +32,58 @@ pub async fn write(
     file_name: &str,
     bytes: &[u8],
 ) -> io::Result<String> {
-    let dir = covers_dir.join(owner.dir());
-    tokio::fs::create_dir_all(&dir).await?;
-    let partial = dir.join(format!("{file_name}.part"));
+    write_in(covers_dir, &owner.dir(), file_name, bytes).await
+}
+
+/// The directory holding a copy's photos.
+pub fn copy_dir(copy_id: i64) -> String {
+    format!("copy-{copy_id}")
+}
+
+/// Writes `file_name` into `dir` and returns its relative path.
+pub async fn write_in(
+    covers_dir: &Path,
+    dir: &str,
+    file_name: &str,
+    bytes: &[u8],
+) -> io::Result<String> {
+    let full = covers_dir.join(dir);
+    tokio::fs::create_dir_all(&full).await?;
+    let partial = full.join(format!("{file_name}.part"));
     tokio::fs::write(&partial, bytes).await?;
-    tokio::fs::rename(&partial, dir.join(file_name)).await?;
-    Ok(owner.path(file_name))
+    tokio::fs::rename(&partial, full.join(file_name)).await?;
+    Ok(format!("{dir}/{file_name}"))
 }
 
 pub async fn exists(covers_dir: &Path, relative: &str) -> io::Result<bool> {
     tokio::fs::try_exists(covers_dir.join(relative)).await
+}
+
+/// Copy ids that have a photo directory.
+pub async fn copy_dirs(covers_dir: &Path) -> Vec<i64> {
+    let Ok(mut entries) = tokio::fs::read_dir(covers_dir).await else {
+        return Vec::new();
+    };
+    let mut ids = Vec::new();
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        if let Some(id) = entry
+            .file_name()
+            .to_str()
+            .and_then(|name| name.strip_prefix("copy-"))
+            .and_then(|id| id.parse().ok())
+        {
+            ids.push(id);
+        }
+    }
+    ids
+}
+
+pub async fn remove_file(covers_dir: &Path, relative: &str) {
+    if let Err(err) = tokio::fs::remove_file(covers_dir.join(relative)).await
+        && err.kind() != io::ErrorKind::NotFound
+    {
+        tracing::warn!(path = relative, error = %err, "could not delete an image");
+    }
 }
 
 /// Deletes the owner's files except `kept`, a relative path. Best effort.

@@ -4,6 +4,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
+use super::photos::CopyPhoto;
 use super::sessions::{self, PlaySession};
 use super::users::Person;
 use crate::covers::Owner;
@@ -32,6 +33,8 @@ pub struct CopyDetail {
     pub bundle: Option<CopyLink>,
     /// Copies of other games that came in this one, by title.
     pub contents: Vec<CopyLink>,
+    /// Oldest first.
+    pub photos: Vec<CopyPhoto>,
     pub created_at: String,
     pub created_by: Option<Person>,
     pub updated_by: Option<Person>,
@@ -290,6 +293,26 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     )
     .fetch_all(pool)
     .await?;
+    let photos = sqlx::query!(
+        r#"SELECT p.id AS "id!", p.copy_id, p.path, p.created_at
+           FROM copy_photos p JOIN copies c ON c.id = p.copy_id
+           JOIN releases r ON r.id = c.release_id
+           WHERE r.game_id = ? ORDER BY p.id"#,
+        id
+    )
+    .fetch_all(pool)
+    .await?;
+    let photos_of = |copy_id: i64| {
+        photos
+            .iter()
+            .filter(|p| p.copy_id == copy_id)
+            .map(|p| CopyPhoto {
+                id: p.id,
+                path: p.path.clone(),
+                created_at: p.created_at.clone(),
+            })
+            .collect()
+    };
     let bundle_of = |copy_id: i64| {
         links
             .iter()
@@ -350,6 +373,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                         currency: c.currency,
                         bundle: bundle_of(c.id),
                         contents: contents_of(c.id),
+                        photos: photos_of(c.id),
                         created_at: c.created_at,
                         created_by: Person::from_columns(c.created_by, c.created_by_name),
                         updated_by: Person::from_columns(c.updated_by, c.updated_by_name),

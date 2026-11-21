@@ -229,7 +229,8 @@
     "nested_bundle": "This copy is inside a bundle, so it cannot hold games.",
     "already_in_bundle": "That game is already in this bundle.",
     "same_game": "A bundle cannot hold its own game.",
-    "unknown_game": "That game no longer exists."
+    "unknown_game": "That game no longer exists.",
+    "too_many_photos": "A copy can have up to 20 photos."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -503,6 +504,8 @@
     "editCopy": "Edit copy",
     "saveAnother": "Save and add another",
     "deleteCopy": "Delete copy?",
+    "deleteCopyAction": "Delete copy",
+    "moreCopyActions": "More actions for this copy",
     "copyStatus": "Do you own it?",
     "gotIt": "Got it",
     "gotItTitle": "Move to your collection",
@@ -738,5 +741,15 @@
     "original": "original",
     "main_version": "main version",
     "edition": "edition"
+  },
+  "photos": {
+    "add": "Add photos",
+    "added": "Photos added",
+    "open": "Open photo {{number}}",
+    "title": "Photo {{number}} of {{count}}",
+    "alt": "Photo {{number}} of this copy",
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "delete": "Delete photo"
   }
 }

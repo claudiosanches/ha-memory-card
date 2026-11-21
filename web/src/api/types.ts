@@ -5,6 +5,7 @@ type Schemas = components['schemas'];
 export type Condition = Schemas['Condition'];
 export type CopyDetail = Schemas['CopyDetail'];
 export type CopyInput = Schemas['CopyInput'];
+export type CopyPhoto = Schemas['CopyPhoto'];
 export type CopyStatus = Schemas['CopyStatus'];
 export type Device = Schemas['Device'];
 export type DeviceInput = Schemas['DeviceInput'];

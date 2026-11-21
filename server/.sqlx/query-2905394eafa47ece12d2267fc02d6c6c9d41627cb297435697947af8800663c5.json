@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.id AS \"id!\", p.copy_id, p.path, p.created_at\n           FROM copy_photos p JOIN copies c ON c.id = p.copy_id\n           JOIN releases r ON r.id = c.release_id\n           WHERE r.game_id = ? ORDER BY p.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copy_photos",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "copy_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copy_photos",
+            "name": "copy_id"
+          }
+        }
+      },
+      {
+        "name": "path",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copy_photos",
+            "name": "path"
+          }
+        }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copy_photos",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2905394eafa47ece12d2267fc02d6c6c9d41627cb297435697947af8800663c5"
+}

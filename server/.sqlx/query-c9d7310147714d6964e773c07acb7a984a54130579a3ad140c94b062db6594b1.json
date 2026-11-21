@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT r.game_id, (SELECT COUNT(*) FROM copy_photos WHERE copy_id = c.id) AS \"photos!: i64\"\n           FROM copies c JOIN releases r ON r.id = c.release_id WHERE c.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "photos!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c9d7310147714d6964e773c07acb7a984a54130579a3ad140c94b062db6594b1"
+}

@@ -152,7 +152,7 @@ async fn restore_igdb_covers(state: &AppState, game_id: i64) {
     }
 }
 
-fn image_extension(bytes: &[u8]) -> Option<&'static str> {
+pub(crate) fn image_extension(bytes: &[u8]) -> Option<&'static str> {
     match bytes {
         [0xFF, 0xD8, 0xFF, ..] => Some("jpg"),
         [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A, ..] => Some("png"),

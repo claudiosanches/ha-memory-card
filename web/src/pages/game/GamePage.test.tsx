@@ -45,7 +45,7 @@ const GAME: GameDetail = {
       local_coop: null,
       online_coop: null,
       copies: [
-        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z', contents: [] },
+        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [] },
       ],
     },
   ],
@@ -73,6 +73,13 @@ const SETUP = {
   'GET /api/stores': [],
   'GET /api/game-modes': [],
 };
+
+/** Picks an item from a copy's menu. */
+async function copyAction(copyId: number, name: string) {
+  const copy = await screen.findByTestId(`copy-${copyId}`);
+  fireEvent.click(within(copy).getByRole('button', { name: en.game.moreCopyActions }));
+  fireEvent.click(await screen.findByRole('menuitem', { name }));
+}
 
 describe('Game page', () => {
   it('shows releases and copies', async () => {
@@ -194,6 +201,7 @@ describe('Game page', () => {
       currency: 'USD',
       created_at: '2026-11-01T10:00:00.000Z',
       contents: [],
+      photos: [],
       created_by: { id: 'a1', name: 'Sam' },
     };
     mockApi({
@@ -377,7 +385,7 @@ describe('Game page', () => {
     });
     renderAt('/games/4');
 
-    fireEvent.click(await screen.findByRole('button', { name: en.bundle.add }));
+    await copyAction(21, en.bundle.add);
     const dialog = await screen.findByRole('dialog');
     expect(await within(dialog).findByLabelText('Super Mario Sunshine (2002)')).toBeChecked();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add 2 games' }));
@@ -400,6 +408,31 @@ describe('Game page', () => {
     expect(within(item).queryByRole('button', { name: en.game.editCopy })).not.toBeInTheDocument();
   });
 
+  it('uploads photos of a copy and shows them', async () => {
+    const photo = { id: 3, path: 'copy-21/photo-1.jpg', created_at: '2026-11-21T10:00:00Z' };
+    const withPhoto = {
+      ...GAME,
+      releases: [{ ...GAME.releases[0]!, copies: [{ ...GAME.releases[0]!.copies[0]!, photos: [photo] }] }],
+    };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': GAME,
+      'POST /api/copies/21/photos': withPhoto,
+      'DELETE /api/photos/3': GAME,
+    });
+    renderAt('/games/4');
+
+    const input = await screen.findByTestId('photo-input-21');
+    const file = new File(['jpeg'], 'box.jpg', { type: 'image/jpeg' });
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/copies/21/photos')).toBe(true));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open photo 1' }));
+    const viewer = await screen.findByRole('dialog', { name: 'Photo 1 of 1' });
+    fireEvent.click(within(viewer).getByRole('button', { name: en.photos.delete }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/photos/3')).toBe(true));
+  });
+
   it('offers to delete the game with its last copy', async () => {
     const calls = mockApi({
       ...SETUP,
@@ -409,7 +442,7 @@ describe('Game page', () => {
     });
     renderAt('/games/4');
 
-    fireEvent.click((await screen.findAllByRole('button', { name: en.game.deleteCopy }))[0]!);
+    await copyAction(21, en.game.deleteCopyAction);
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent(en.game.lastCopy.replace('{{title}}', GAME.title));
     fireEvent.click(within(dialog).getByRole('button', { name: en.game.deleteGameToo }));
@@ -425,8 +458,7 @@ describe('Game page', () => {
     const calls = mockApi({ ...SETUP, 'GET /api/games/4': game, 'DELETE /api/copies/22': GAME });
     renderAt('/games/4');
 
-    const buttons = await screen.findAllByRole('button', { name: en.game.deleteCopy });
-    fireEvent.click(buttons[1]!);
+    await copyAction(22, en.game.deleteCopyAction);
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByRole('button', { name: en.game.deleteGameToo })).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: en.common.delete }));

@@ -342,6 +342,76 @@
         }
       }
     },
+    "/api/copies/{id}/photos": {
+      "post": {
+        "tags": [
+          "photos"
+        ],
+        "operationId": "addCopyPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Image"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The copy's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`too_many_photos`: 20 per copy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_image` or `image_too_large`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/devices": {
       "get": {
         "tags": [
@@ -1803,6 +1873,46 @@
         }
       }
     },
+    "/api/photos/{id}": {
+      "delete": {
+        "tags": [
+          "photos"
+        ],
+        "operationId": "deleteCopyPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The photo's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platforms": {
       "get": {
         "tags": [
@@ -2887,6 +2997,7 @@
           "status",
           "format",
           "contents",
+          "photos",
           "created_at"
         ],
         "properties": {
@@ -2963,6 +3074,13 @@
               "string",
               "null"
             ]
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyPhoto"
+            },
+            "description": "Oldest first."
           },
           "price": {
             "type": [
@@ -3114,6 +3232,27 @@
           },
           "title": {
             "type": "string"
+          }
+        }
+      },
+      "CopyPhoto": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative to the covers URL."
           }
         }
       },
