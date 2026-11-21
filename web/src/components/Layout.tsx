@@ -21,14 +21,14 @@ import { useMe } from '../api/queries';
 import { ThemePicker } from './ThemePicker';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'wishlist' | 'backlog' | 'duplicates' | 'setup' | 'import' | 'manage' | 'settings';
+type NavKey = 'library' | 'backlog' | 'duplicates' | 'wishlist' | 'setup' | 'import' | 'manage' | 'settings';
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
   { key: 'library', to: '/', icon: IconLibrary },
-  { key: 'wishlist', to: '/wishlist', icon: IconHeart },
   { key: 'backlog', to: '/backlog', icon: IconStack2 },
   { key: 'duplicates', to: '/duplicates', icon: IconCopy },
+  { key: 'wishlist', to: '/wishlist', icon: IconHeart },
 ];
 
 const TOOLS: NavItem[] = [

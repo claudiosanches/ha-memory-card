@@ -14,9 +14,9 @@
   },
   "nav": {
     "library": "Library",
-    "wishlist": "Wishlist",
     "backlog": "Backlog",
     "duplicates": "Duplicates",
+    "wishlist": "Wishlist",
     "setup": "Fill in details",
     "import": "Import and export",
     "manage": "Manage",
