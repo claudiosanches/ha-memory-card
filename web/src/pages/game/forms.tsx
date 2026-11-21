@@ -215,6 +215,8 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
             clearable
             searchable
             {...form.getInputProps('device_id')}
+            // Select treats an empty string as a value and would offer to clear it.
+            value={form.values.device_id || null}
           />
           <Checkbox
             size="xs"
@@ -232,6 +234,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
         clearable
         searchable
         {...form.getInputProps('store_id')}
+        value={form.values.store_id || null}
       />
       {values.format === 'physical' && (
         <Select
@@ -239,6 +242,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
           data={CONDITIONS.map((c) => ({ value: c, label: t(`condition.${c}`) }))}
           clearable
           {...form.getInputProps('condition')}
+          value={form.values.condition || null}
         />
       )}
       <Textarea label={t('common.notes')} autosize minRows={2} {...form.getInputProps('notes')} />

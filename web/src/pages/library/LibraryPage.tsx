@@ -240,7 +240,7 @@ function GameCard({ game, platformsById }: { game: GameSummary; platformsById: M
           })}
           {game.owned_copies === 0 && game.wanted_copies > 0 && (
             <Badge size="sm" color="pink" variant="light" tt="none" className={classes.status}>
-              {t('copyStatus.wanted')}
+              {t('copyStatus.badge')}
             </Badge>
           )}
           {game.play_status && (

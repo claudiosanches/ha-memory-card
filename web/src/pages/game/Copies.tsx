@@ -26,8 +26,8 @@ export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt }: P
   const anyWanted = copies.some((copy) => copy.status === 'wanted');
   const wanted = (copy: CopyDetail) =>
     copy.status === 'wanted' && (
-      <Badge size="xs" variant="light" color="pink" ml={6}>
-        {t('copyStatus.wanted')}
+      <Badge size="xs" variant="light" color="pink" ml={6} style={{ overflow: 'visible' }}>
+        {t('copyStatus.badge')}
       </Badge>
     );
   const actions = (copy: CopyDetail) => editable && (

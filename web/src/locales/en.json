@@ -292,7 +292,8 @@
   },
   "copyStatus": {
     "owned": "I own it",
-    "wanted": "On my wishlist"
+    "wanted": "On my wishlist",
+    "badge": "Wishlist"
   },
   "format": {
     "physical": "Physical",
