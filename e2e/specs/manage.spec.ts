@@ -16,7 +16,7 @@ test('stores: add, rename, delete', async ({ page }, testInfo) => {
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel(en.common.name).fill(name);
   await dialog.getByLabel(en.common.notes).fill('Prime');
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   await expect(dialog).toBeHidden();
 
   const row = page.getByTestId(`store-${name}`);
@@ -24,7 +24,7 @@ test('stores: add, rename, delete', async ({ page }, testInfo) => {
 
   await row.getByRole('button', { name: en.common.edit }).click();
   await dialog.getByLabel(en.common.name).fill(`${name} BR`);
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   const renamed = page.getByTestId(`store-${name} BR`);
   await expect(renamed).toBeVisible();
 
@@ -47,7 +47,7 @@ test('devices: add with platforms, reject a taken name', async ({ page }, testIn
   await page.getByRole('option', { name: 'Nintendo Switch', exact: true }).click();
   // Close the dropdown, which covers the Save button.
   await dialog.getByLabel(en.common.name).click();
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   await expect(dialog).toBeHidden();
 
   const row = page.getByTestId(`device-${name}`);
@@ -56,7 +56,7 @@ test('devices: add with platforms, reject a taken name', async ({ page }, testIn
 
   await page.getByRole('button', { name: en.devices.add }).click();
   await dialog.getByLabel(en.common.name).fill(name.toUpperCase());
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   await expect(dialog.getByText(en.errors.name_taken)).toBeVisible();
 });
 
@@ -88,7 +88,7 @@ test('platforms: add from the catalog, reorder, remove, delete a custom one', as
   await page.getByRole('button', { name: en.platforms.add }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel(en.common.name).fill('Homebrew Console');
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   await expect(dialog).toBeHidden();
   const custom = page.getByTestId('platform-homebrew-console');
   await custom.getByRole('button', { name: en.common.delete }).click();

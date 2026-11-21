@@ -15,7 +15,7 @@ test('add a game and a copy, then find and delete it', async ({ page }, testInfo
   await page.getByRole('button', { name: en.library.addGame }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel(en.game.title).fill(title);
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
 
   await expect(page).toHaveURL(/#\/games\/\d+$/);
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
@@ -24,7 +24,7 @@ test('add a game and a copy, then find and delete it', async ({ page }, testInfo
   await pick(page, dialog, en.game.platform, 'Nintendo Switch');
   await pick(page, dialog, en.game.region, en.region.eu);
   await pick(page, dialog, en.game.condition, en.condition.cib);
-  await dialog.getByRole('button', { name: en.common.save }).click();
+  await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText('Nintendo Switch · Europe (PAL)')).toBeVisible();
 
