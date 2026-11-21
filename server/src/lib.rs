@@ -14,6 +14,7 @@ pub mod logging;
 pub mod money;
 pub mod sensors;
 pub mod shutdown;
+pub mod tags;
 pub mod transfer;
 
 use std::net::IpAddr;
@@ -31,6 +32,7 @@ use crate::config::Config;
 use crate::igdb::sync::SyncStatus;
 use crate::igdb::{Endpoints, Igdb};
 use crate::sensors::SensorsStatus;
+use crate::tags::{PendingLink, TagsStatus};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -42,6 +44,9 @@ pub struct AppState {
     /// Signalled after anything the sensors report may have changed.
     pub changes: Arc<Notify>,
     pub sensors: Arc<Mutex<SensorsStatus>>,
+    pub tag_status: Arc<Mutex<TagsStatus>>,
+    /// The copy waiting for the next tag scan.
+    pub tag_link: Arc<Mutex<Option<PendingLink>>>,
 }
 
 impl AppState {
@@ -51,6 +56,7 @@ impl AppState {
             .clone()
             .map(|credentials| Arc::new(Igdb::new(credentials, Endpoints::default())));
         let sensors = SensorsStatus::initial(&config);
+        let tags = TagsStatus::initial(config.home_assistant.as_ref());
         Self {
             db,
             config,
@@ -58,6 +64,8 @@ impl AppState {
             sync: Arc::default(),
             changes: Arc::default(),
             sensors: Arc::new(Mutex::new(sensors)),
+            tag_status: Arc::new(Mutex::new(tags)),
+            tag_link: Arc::default(),
         }
     }
 }

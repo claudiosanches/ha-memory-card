@@ -12,6 +12,7 @@ pub mod sessions;
 pub mod stats;
 pub mod stores;
 pub mod suggestions;
+pub mod tags;
 pub mod titles;
 pub mod users;
 

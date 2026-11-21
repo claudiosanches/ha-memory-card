@@ -1,5 +1,5 @@
 import { ActionIcon, Anchor, Badge, Group, Menu, Text } from '@mantine/core';
-import { IconCamera, IconCheck, IconDots, IconPackages, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconCamera, IconCheck, IconDots, IconNfc, IconNfcOff, IconPackages, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Fragment, type ReactNode, useRef, useState } from 'react';
@@ -26,6 +26,8 @@ type Props = {
   onGotIt?: (copy: CopyDetail) => void;
   /** Adds games that came inside this copy. */
   onAddContents?: (copy: CopyDetail) => void;
+  /** Waits for a Home Assistant tag scan to link; only while Memory Card hears scans. */
+  onLinkTag?: (copy: CopyDetail) => void;
 };
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp';
@@ -60,7 +62,7 @@ export function Copies(props: Props) {
   );
 }
 
-function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddContents }: Props & { copy: CopyDetail }) {
+function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddContents, onLinkTag }: Props & { copy: CopyDetail }) {
   const { t, i18n } = useTranslation();
   const saved = useGameSaved();
   const input = useRef<HTMLInputElement>(null);
@@ -84,6 +86,18 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
       return latest;
     },
     onSuccess: (game) => game && saved(game, t('photos.added')),
+    onError: (error) => notifyError(errorMessage(t, error)),
+  });
+
+  const unlinkTags = useMutation({
+    mutationFn: async () => {
+      let latest: GameDetail | null = null;
+      for (const tag of copy.tags) {
+        latest = await call(api.DELETE('/api/tags/{id}', { params: { path: { id: tag.tag_id } } }));
+      }
+      return latest;
+    },
+    onSuccess: (game) => game && saved(game, t('tags.unlinked')),
     onError: (error) => notifyError(errorMessage(t, error)),
   });
 
@@ -131,6 +145,12 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
         {copy.notes && (
           <Text size="xs" c="dimmed" className={classes.notes}>
             {copy.notes}
+          </Text>
+        )}
+        {copy.tags.length > 0 && (
+          <Text size="xs" c="dimmed" data-testid={`tags-${copy.id}`}>
+            <IconNfc size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} aria-hidden />
+            {t('tags.count', { count: copy.tags.length })}
           </Text>
         )}
         {copy.photos.length > 0 && (
@@ -183,6 +203,16 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
               {onAddContents && (
                 <Menu.Item leftSection={<IconPackages size={16} />} onClick={() => onAddContents(copy)}>
                   {t('bundle.add')}
+                </Menu.Item>
+              )}
+              {onLinkTag && !wanted && (
+                <Menu.Item leftSection={<IconNfc size={16} />} onClick={() => onLinkTag(copy)}>
+                  {t('tags.link')}
+                </Menu.Item>
+              )}
+              {copy.tags.length > 0 && (
+                <Menu.Item leftSection={<IconNfcOff size={16} />} onClick={() => unlinkTags.mutate()}>
+                  {t('tags.unlink')}
                 </Menu.Item>
               )}
               <Menu.Item color="red" leftSection={<IconTrash size={16} />} onClick={() => onDelete(copy)}>

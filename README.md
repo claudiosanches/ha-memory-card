@@ -62,6 +62,7 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_MQTT_PASSWORD` | unset | Broker password |
 | `MEMORY_CARD_SUPERVISOR_URL` | `http://supervisor` | Supervisor API, asked for the broker when `SUPERVISOR_TOKEN` is set |
 | `MEMORY_CARD_BARCODE_URL` | UPCitemdb's trial lookup | Barcode lookup endpoint, for tests |
+| `MEMORY_CARD_HA_URL`, `MEMORY_CARD_HA_TOKEN` | none | A Home Assistant URL (`http://`) and long-lived token to hear tag scans outside Home Assistant |
 
 ## Releasing
 

@@ -84,6 +84,62 @@ pub async fn add(
     Ok(())
 }
 
+/// What a tag scan does: logs today's session for the copy, once a day, and
+/// sets the game to playing unless its status already counts as playing.
+/// Returns the game id. A wanted copy is left alone.
+pub async fn start_from_tag(
+    pool: &SqlitePool,
+    copy_id: i64,
+    today: &str,
+    user: Option<&str>,
+) -> ApiResult<i64> {
+    let mut tx = super::write_tx(pool).await?;
+    let copy = sqlx::query!(
+        r#"SELECT r.game_id, c.status, g.play_status,
+                  (SELECT counts_as FROM play_statuses WHERE key = g.play_status) AS counts_as
+           FROM copies c JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id
+           WHERE c.id = ?"#,
+        copy_id
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+    if copy.status != "owned" {
+        return Ok(copy.game_id);
+    }
+    if let Some(user) = user {
+        // Known by ID only until they open Memory Card.
+        sqlx::query!("INSERT OR IGNORE INTO users (id) VALUES (?)", user)
+            .execute(&mut *tx)
+            .await?;
+    }
+    sqlx::query!(
+        "INSERT INTO play_sessions (game_id, copy_id, played_on, created_by)
+         SELECT ?1, ?2, ?3, ?4
+         WHERE NOT EXISTS (SELECT 1 FROM play_sessions
+                           WHERE game_id = ?1 AND copy_id = ?2 AND played_on = ?3)",
+        copy.game_id,
+        copy_id,
+        today,
+        user
+    )
+    .execute(&mut *tx)
+    .await?;
+    if copy.counts_as.as_deref() != Some("playing") {
+        sqlx::query!(
+            "UPDATE games SET play_status = 'playing', updated_by = COALESCE(?, updated_by),
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            user,
+            copy.game_id
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+    tx.commit().await?;
+    Ok(copy.game_id)
+}
+
 /// Updates a session and returns its game id.
 pub async fn update(pool: &SqlitePool, id: i64, fields: &SessionFields) -> ApiResult<i64> {
     let mut tx = super::write_tx(pool).await?;

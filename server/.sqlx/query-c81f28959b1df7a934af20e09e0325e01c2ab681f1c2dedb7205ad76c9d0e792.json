@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT t.tag_id AS \"tag_id!\", t.copy_id, t.created_at\n           FROM nfc_tags t JOIN copies c ON c.id = t.copy_id\n           JOIN releases r ON r.id = c.release_id\n           WHERE r.game_id = ? ORDER BY t.created_at, t.tag_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "tag_id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "nfc_tags",
+            "name": "tag_id"
+          }
+        }
+      },
+      {
+        "name": "copy_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "nfc_tags",
+            "name": "copy_id"
+          }
+        }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "nfc_tags",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c81f28959b1df7a934af20e09e0325e01c2ab681f1c2dedb7205ad76c9d0e792"
+}

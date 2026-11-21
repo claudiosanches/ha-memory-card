@@ -232,6 +232,20 @@ collection grows. Sensors update a second after each change and show as
 unavailable while Memory Card is stopped. Turning off the `sensors` option
 removes the device on the next start.
 
+## NFC tags
+
+Put an NFC tag on a game's box, and scanning it with the Home Assistant
+companion app starts that copy: Memory Card logs a play session for today
+and sets the game to playing. To link a tag, choose **Link NFC tag** from the
+copy's **⋯** menu on the game page, then scan the tag within a minute. Any
+tag Home Assistant reports works, including ones written under **Settings >
+Tags** in Home Assistant.
+
+Scanning the same tag again on the same day does not add another session.
+Memory Card hears scans through the Home Assistant API, which is why the app
+asks for access to it; the Status section under Settings says whether it is
+listening. **Unlink NFC tags** in the same menu removes a copy's tags.
+
 ## Data and backups
 
 Everything the app stores lives in the app's data folder, which Home Assistant

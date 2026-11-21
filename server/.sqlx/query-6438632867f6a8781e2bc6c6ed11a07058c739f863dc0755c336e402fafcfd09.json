@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT copy_id FROM nfc_tags WHERE tag_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "copy_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "nfc_tags",
+            "name": "copy_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6438632867f6a8781e2bc6c6ed11a07058c739f863dc0755c336e402fafcfd09"
+}

@@ -452,6 +452,78 @@
         }
       }
     },
+    "/api/copies/{id}/tag-link": {
+      "post": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "startTagLink",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The next tag scanned in Home Assistant links to this copy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagLink"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`home_assistant_unavailable`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "cancelTagLink",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The copy no longer waits for a scan"
+          }
+        }
+      }
+    },
     "/api/devices": {
       "get": {
         "tags": [
@@ -2982,6 +3054,46 @@
           }
         }
       }
+    },
+    "/api/tags/{id}": {
+      "delete": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "unlinkTag",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Home Assistant tag ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The tag's copy's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3106,6 +3218,7 @@
           "format",
           "contents",
           "photos",
+          "tags",
           "created_at"
         ],
         "properties": {
@@ -3220,6 +3333,13 @@
               "null"
             ],
             "format": "int64"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyTag"
+            },
+            "description": "Home Assistant tags that start playing this copy, oldest first."
           },
           "updated_by": {
             "oneOf": [
@@ -3529,6 +3649,21 @@
           "owned",
           "wanted"
         ]
+      },
+      "CopyTag": {
+        "type": "object",
+        "required": [
+          "tag_id",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "tag_id": {
+            "type": "string"
+          }
+        }
       },
       "Device": {
         "type": "object",
@@ -5275,7 +5410,8 @@
           "owned_copies",
           "wishlist_items",
           "duplicate_games",
-          "sensors"
+          "sensors",
+          "tags"
         ],
         "properties": {
           "duplicate_games": {
@@ -5310,6 +5446,10 @@
           "sensors": {
             "$ref": "#/components/schemas/SensorsStatus",
             "description": "Whether Home Assistant sensors are being published."
+          },
+          "tags": {
+            "$ref": "#/components/schemas/TagsStatus",
+            "description": "Whether Memory Card hears Home Assistant tag scans."
           },
           "version": {
             "type": "string"
@@ -5553,6 +5693,27 @@
             "minimum": 0
           }
         }
+      },
+      "TagLink": {
+        "type": "object",
+        "required": [
+          "expires_at"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": "string",
+            "description": "When the copy stops waiting for a scan."
+          }
+        }
+      },
+      "TagsStatus": {
+        "type": "string",
+        "enum": [
+          "unavailable",
+          "connecting",
+          "connected",
+          "disconnected"
+        ]
       },
       "TitleChoices": {
         "type": "object",

@@ -17,6 +17,7 @@ const STATUS = {
   games: 2,
   owned_copies: 2,
   sensors: 'connected',
+  tags: 'unavailable',
 };
 
 describe('Settings access', () => {

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO nfc_tags (tag_id, copy_id, created_by) VALUES (?, ?, ?)\n         ON CONFLICT (tag_id) DO UPDATE SET copy_id = excluded.copy_id,\n             created_by = excluded.created_by, created_at = excluded.created_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "ce3af4a64b81b3f393c49abfd8abd75b5471ca0b71cfa3ef8023591a1ec32415"
+}

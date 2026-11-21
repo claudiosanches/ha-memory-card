@@ -161,6 +161,13 @@
       "no_broker": "No MQTT broker. Install the Mosquitto broker app, then restart Memory Card.",
       "off": "Off in the app configuration."
     },
+    "tags": "NFC tag scans",
+    "tagsStatus": {
+      "connected": "Listening",
+      "connecting": "Connecting to Home Assistant.",
+      "disconnected": "Cannot reach Home Assistant. Retrying.",
+      "unavailable": "Only inside Home Assistant."
+    },
     "loadError": "Could not load status.",
     "appearance": "Appearance",
     "colorSchemeDescription": "Choose light or dark, or follow your system setting. Your choice is saved in this browser.",
@@ -231,7 +238,8 @@
     "same_game": "A bundle cannot hold its own game.",
     "unknown_game": "That game no longer exists.",
     "too_many_photos": "A copy can have up to 20 photos.",
-    "invalid_barcode": "Not a valid UPC or EAN. Check the digits under the bars."
+    "invalid_barcode": "Not a valid UPC or EAN. Check the digits under the bars.",
+    "home_assistant_unavailable": "Memory Card cannot hear Home Assistant tag scans right now."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -771,5 +779,16 @@
     "unknown": "The barcode database does not know this code. Enter the game yourself.",
     "offline": "Memory Card is set to stay offline, so it cannot look the code up. Enter the game yourself.",
     "failed": "The barcode database did not answer. It allows 100 lookups a day; try again later or enter the game yourself."
+  },
+  "tags": {
+    "link": "Link NFC tag",
+    "linkTitle": "Link an NFC tag",
+    "scanNow": "Scan the tag with the Home Assistant app now. Waiting {{seconds}} s.",
+    "expired": "No tag was scanned in time. Close this and try again.",
+    "linked": "Tag linked. Scanning it starts this copy.",
+    "unlink": "Unlink NFC tags",
+    "unlinked": "Tags unlinked",
+    "count_one": "{{count}} NFC tag starts this copy",
+    "count_other": "{{count}} NFC tags start this copy"
   }
 }

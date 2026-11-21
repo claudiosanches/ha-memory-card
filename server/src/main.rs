@@ -6,6 +6,7 @@ use std::time::Duration;
 use clap::{Parser, Subcommand};
 use memory_card::config::Config;
 use memory_card::sensors::Sensors;
+use memory_card::tags::Tags;
 use memory_card::{AppState, db, logging, shutdown};
 use tokio::sync::Notify;
 
@@ -72,6 +73,7 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
     let listen = config.listen;
     let state = AppState::new(pool.clone(), Arc::new(config));
     let sensors = Sensors::start(state.clone());
+    let tags = Tags::start(state.clone());
     let app = memory_card::app(state);
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
@@ -100,6 +102,9 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     sensors.stop().await;
+    if let Some(tags) = tags {
+        tags.stop().await;
+    }
     db::close(&pool).await;
     tracing::info!("stopped");
     Ok(())

@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/copies/{id}/tag-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["startTagLink"];
+        delete: operations["cancelTagLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -684,6 +700,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tags/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unlinkTag"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -750,6 +782,8 @@ export interface components {
             status: components["schemas"]["CopyStatus"];
             /** Format: int64 */
             store_id?: number | null;
+            /** @description Home Assistant tags that start playing this copy, oldest first. */
+            tags: components["schemas"]["CopyTag"][];
             updated_by?: components["schemas"]["Person"] | null;
         };
         CopyInput: {
@@ -831,6 +865,10 @@ export interface components {
         };
         /** @enum {string} */
         CopyStatus: "owned" | "wanted";
+        CopyTag: {
+            created_at: string;
+            tag_id: string;
+        };
         Device: {
             active: boolean;
             /**
@@ -1352,6 +1390,8 @@ export interface components {
             owned_copies: number;
             /** @description Whether Home Assistant sensors are being published. */
             sensors: components["schemas"]["SensorsStatus"];
+            /** @description Whether Memory Card hears Home Assistant tag scans. */
+            tags: components["schemas"]["TagsStatus"];
             version: string;
             /**
              * Format: int64
@@ -1431,6 +1471,12 @@ export interface components {
             /** @description Linked games refreshed. */
             updated: number;
         };
+        TagLink: {
+            /** @description When the copy stops waiting for a scan. */
+            expires_at: string;
+        };
+        /** @enum {string} */
+        TagsStatus: "unavailable" | "connecting" | "connected" | "disconnected";
         TitleChoices: {
             /** @description Games whose title stays; they leave the list until IGDB renames them. */
             keep?: number[];
@@ -1730,6 +1776,65 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
+            };
+        };
+    };
+    startTagLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The next tag scanned in Home Assistant links to this copy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagLink"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `home_assistant_unavailable` */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cancelTagLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The copy no longer waits for a scan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3598,6 +3703,37 @@ export interface operations {
             };
             /** @description `invalid_body` */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    unlinkTag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Home Assistant tag ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The tag's copy's game */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

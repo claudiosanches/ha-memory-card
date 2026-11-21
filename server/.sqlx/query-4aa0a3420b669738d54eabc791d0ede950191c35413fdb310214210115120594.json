@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT r.game_id FROM nfc_tags t JOIN copies c ON c.id = t.copy_id\n           JOIN releases r ON r.id = c.release_id WHERE t.tag_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4aa0a3420b669738d54eabc791d0ede950191c35413fdb310214210115120594"
+}

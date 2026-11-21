@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT r.game_id, c.status, g.play_status,\n                  (SELECT counts_as FROM play_statuses WHERE key = g.play_status) AS counts_as\n           FROM copies c JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id\n           WHERE c.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "status",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "name": "play_status",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "play_status"
+          }
+        }
+      },
+      {
+        "name": "counts_as",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "play_statuses",
+            "name": "counts_as"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "43464a6d4f6be8e95f4b45dea2b5a70b3fde546f2ec12b0e3f6e1b0a9e948c51"
+}

@@ -55,6 +55,7 @@ import { history } from '../../components/history';
 import { formatDate, today } from '../../components/status';
 import { BundleContentsModal } from './BundleContents';
 import { Copies } from './Copies';
+import { TagLinkModal } from './TagLink';
 import { defaultCopy, Sessions } from './Sessions';
 import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
@@ -73,6 +74,7 @@ type Dialog =
   | { kind: 'gotIt'; copy: CopyDetail; release: ReleaseDetail }
   | { kind: 'deleteCopy'; copy: CopyDetail }
   | { kind: 'contents'; copy: CopyDetail }
+  | { kind: 'linkTag'; copy: CopyDetail }
   | { kind: 'editRelease'; release: ReleaseDetail }
   | { kind: 'deleteRelease'; release: ReleaseDetail }
   | null;
@@ -527,6 +529,9 @@ function GameView({ game }: { game: GameDetail }) {
                 onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}
                 onGotIt={canManage ? (copy) => setDialog({ kind: 'gotIt', copy, release }) : undefined}
                 onAddContents={canManage ? (copy) => setDialog({ kind: 'contents', copy }) : undefined}
+                onLinkTag={
+                  canManage && status.data?.tags === 'connected' ? (copy) => setDialog({ kind: 'linkTag', copy }) : undefined
+                }
               />
             )}
           </Stack>
@@ -561,6 +566,7 @@ function GameView({ game }: { game: GameDetail }) {
         onClose={close}
       />
       {dialog?.kind === 'contents' && <BundleContentsModal game={game} copy={dialog.copy} onClose={close} />}
+      {dialog?.kind === 'linkTag' && <TagLinkModal gameId={game.id} copy={dialog.copy} onClose={close} />}
       <ConfirmModal
         opened={dialog?.kind === 'deleteCopy'}
         title={dialog?.kind === 'deleteCopy' && dialog.copy.bundle ? t('bundle.removeTitle') : t('game.deleteCopy')}

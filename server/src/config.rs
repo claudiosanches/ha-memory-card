@@ -147,8 +147,48 @@ pub struct Config {
     pub supervisor_url: String,
     /// UPCitemdb's lookup endpoint; tests point it elsewhere.
     pub barcode_url: String,
+    /// Home Assistant's API, for tag scans: through the Supervisor inside
+    /// Home Assistant, or `MEMORY_CARD_HA_URL` and `MEMORY_CARD_HA_TOKEN`.
+    pub home_assistant: Option<HomeAssistantApi>,
     /// Set by the Supervisor inside Home Assistant.
     pub supervisor_token: Option<Secret>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HomeAssistantApi {
+    /// REST base, ending in `/api`.
+    pub rest: String,
+    pub websocket: String,
+    pub token: Secret,
+}
+
+impl HomeAssistantApi {
+    fn from_env(env: &impl Fn(&str) -> Option<String>, supervisor_url: &str) -> Option<Self> {
+        let (base, token) = match (
+            non_empty(env("MEMORY_CARD_HA_URL")),
+            non_empty(env("MEMORY_CARD_HA_TOKEN")),
+        ) {
+            (Some(url), Some(token)) => (url.trim_end_matches('/').to_owned(), token),
+            _ => (
+                format!("{supervisor_url}/core"),
+                non_empty(env("SUPERVISOR_TOKEN"))?,
+            ),
+        };
+        let websocket = base
+            .replacen("https://", "wss://", 1)
+            .replacen("http://", "ws://", 1);
+        // The Supervisor proxy serves the websocket at /core/websocket, Home Assistant at /api/websocket.
+        let websocket = if base.ends_with("/core") {
+            format!("{websocket}/websocket")
+        } else {
+            format!("{websocket}/api/websocket")
+        };
+        Some(Self {
+            rest: format!("{base}/api"),
+            websocket,
+            token: Secret(token),
+        })
+    }
 }
 
 impl Config {
@@ -247,7 +287,10 @@ impl Config {
             .trim_end_matches('/')
             .to_owned();
 
+        let home_assistant = HomeAssistantApi::from_env(&env, &supervisor_url);
+
         Ok(Self {
+            home_assistant,
             data_dir,
             tmp_dir,
             listen,
@@ -326,6 +369,29 @@ mod tests {
             .collect();
         map.insert("MEMORY_CARD_DATA_DIR".into(), dir.display().to_string());
         Config::load(|name| map.get(name).cloned())
+    }
+
+    #[test]
+    fn home_assistant_api_comes_from_the_supervisor_or_the_environment() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = load_with(dir.path(), &[("SUPERVISOR_TOKEN", "sup")]).unwrap();
+        let api = config.home_assistant.unwrap();
+        assert_eq!(api.rest, "http://supervisor/core/api");
+        assert_eq!(api.websocket, "ws://supervisor/core/websocket");
+
+        let config = load_with(
+            dir.path(),
+            &[
+                ("MEMORY_CARD_HA_URL", "http://ha.local:8123/"),
+                ("MEMORY_CARD_HA_TOKEN", "t"),
+            ],
+        )
+        .unwrap();
+        let api = config.home_assistant.unwrap();
+        assert_eq!(api.rest, "http://ha.local:8123/api");
+        assert_eq!(api.websocket, "ws://ha.local:8123/api/websocket");
+
+        assert!(load_with(dir.path(), &[]).unwrap().home_assistant.is_none());
     }
 
     #[test]

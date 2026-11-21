@@ -15,6 +15,7 @@ pub mod stats;
 pub mod status;
 pub mod stores;
 pub mod suggestions;
+pub mod tags;
 pub mod transfer;
 
 use utoipa::OpenApi;
@@ -57,6 +58,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::add_content))
         .routes(routes!(photos::add))
         .routes(routes!(photos::delete))
+        .routes(routes!(tags::start_link, tags::cancel_link))
+        .routes(routes!(tags::unlink))
         .routes(routes!(games::update_release, games::delete_release))
         .routes(routes!(covers::upload_game, covers::remove_game))
         .routes(routes!(covers::upload_release, covers::remove_release))

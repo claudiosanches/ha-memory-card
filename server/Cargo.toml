@@ -24,6 +24,8 @@ thiserror = "2.0.21"
 time = { version = "0.3.55", features = ["formatting", "parsing", "macros"] }
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "signal", "fs", "time"] }
 unicode-normalization = "0.1.26"
+tokio-tungstenite = "0.30.0"
+futures-util = { version = "0.3.34", default-features = false, features = ["sink", "std"] }
 tower-http = { version = "0.7.1", features = ["trace", "fs"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }

@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 use crate::AppState;
 use crate::error::{ApiError, ErrorBody};
 use crate::sensors::SensorsStatus;
+use crate::tags::TagsStatus;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Status {
@@ -25,6 +26,8 @@ pub struct Status {
     pub last_currency: Option<String>,
     /// Whether Home Assistant sensors are being published.
     pub sensors: SensorsStatus,
+    /// Whether Memory Card hears Home Assistant tag scans.
+    pub tags: TagsStatus,
 }
 
 #[utoipa::path(
@@ -72,5 +75,6 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
         duplicate_games,
         last_currency,
         sensors: *state.sensors.lock().expect("sensors status lock"),
+        tags: *state.tag_status.lock().expect("tag status lock"),
     }))
 }

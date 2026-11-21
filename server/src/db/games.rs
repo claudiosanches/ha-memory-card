@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 use super::found;
 use super::photos::CopyPhoto;
 use super::sessions::{self, PlaySession};
+use super::tags::CopyTag;
 use super::users::Person;
 use crate::covers::Owner;
 use crate::domain::{Condition, CopyStatus, Format, Region, sort_title};
@@ -37,6 +38,8 @@ pub struct CopyDetail {
     pub contents: Vec<CopyLink>,
     /// Oldest first.
     pub photos: Vec<CopyPhoto>,
+    /// Home Assistant tags that start playing this copy, oldest first.
+    pub tags: Vec<CopyTag>,
     pub created_at: String,
     pub created_by: Option<Person>,
     pub updated_by: Option<Person>,
@@ -316,6 +319,24 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
             })
             .collect()
     };
+    let tags = sqlx::query!(
+        r#"SELECT t.tag_id AS "tag_id!", t.copy_id, t.created_at
+           FROM nfc_tags t JOIN copies c ON c.id = t.copy_id
+           JOIN releases r ON r.id = c.release_id
+           WHERE r.game_id = ? ORDER BY t.created_at, t.tag_id"#,
+        id
+    )
+    .fetch_all(pool)
+    .await?;
+    let tags_of = |copy_id: i64| {
+        tags.iter()
+            .filter(|t| t.copy_id == copy_id)
+            .map(|t| CopyTag {
+                tag_id: t.tag_id.clone(),
+                created_at: t.created_at.clone(),
+            })
+            .collect()
+    };
     let bundle_of = |copy_id: i64| {
         links
             .iter()
@@ -378,6 +399,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                         bundle: bundle_of(c.id),
                         contents: contents_of(c.id),
                         photos: photos_of(c.id),
+                        tags: tags_of(c.id),
                         created_at: c.created_at,
                         created_by: Person::from_columns(c.created_by, c.created_by_name),
                         updated_by: Person::from_columns(c.updated_by, c.updated_by_name),
@@ -807,6 +829,20 @@ fn price_columns(fields: &CopyFields) -> (Option<i64>, Option<&str>) {
         .as_ref()
         .map(|p| (p.minor, p.currency.as_str()))
         .unzip()
+}
+
+pub async fn copy_exists(pool: &SqlitePool, copy_id: i64) -> ApiResult<()> {
+    let exists: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM copies WHERE id = ?) AS "exists!: bool""#,
+        copy_id
+    )
+    .fetch_one(pool)
+    .await?;
+    if exists {
+        Ok(())
+    } else {
+        Err(ApiError::NotFound)
+    }
 }
 
 async fn release_game(pool: &SqlitePool, release_id: i64) -> ApiResult<i64> {

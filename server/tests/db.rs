@@ -43,6 +43,7 @@ async fn fresh_database_has_schema_and_seed() {
             "game_names",
             "games",
             "genres",
+            "nfc_tags",
             "platforms",
             "play_sessions",
             "play_statuses",

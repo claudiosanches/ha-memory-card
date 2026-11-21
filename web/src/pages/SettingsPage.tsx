@@ -142,6 +142,18 @@ function Status() {
                 )}
               </dd>
             </div>
+            <div>
+              <dt>{t('settings.tags')}</dt>
+              <dd data-testid="tags-status">
+                {status.data.tags === 'connected' ? (
+                  <Badge color="green">{t('settings.tagsStatus.connected')}</Badge>
+                ) : (
+                  <Text size="sm" c="dimmed">
+                    {t(`settings.tagsStatus.${status.data.tags}`)}
+                  </Text>
+                )}
+              </dd>
+            </div>
           </dl>
         </ToolSection>
       )}

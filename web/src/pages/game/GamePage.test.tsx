@@ -45,7 +45,7 @@ const GAME: GameDetail = {
       local_coop: null,
       online_coop: null,
       copies: [
-        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [] },
+        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
       ],
     },
   ],
@@ -202,6 +202,7 @@ describe('Game page', () => {
       created_at: '2026-11-01T10:00:00.000Z',
       contents: [],
       photos: [],
+      tags: [],
       created_by: { id: 'a1', name: 'Sam' },
     };
     mockApi({
@@ -431,6 +432,33 @@ describe('Game page', () => {
     const viewer = await screen.findByRole('dialog', { name: 'Photo 1 of 1' });
     fireEvent.click(within(viewer).getByRole('button', { name: en.photos.delete }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/photos/3')).toBe(true));
+  });
+
+  it('links an NFC tag once Home Assistant reports a scan', async () => {
+    const tagged = {
+      ...GAME,
+      releases: [
+        { ...GAME.releases[0]!, copies: [{ ...GAME.releases[0]!.copies[0]!, tags: [{ tag_id: 'a1', created_at: '2026-11-21T10:00:00Z' }] }] },
+      ],
+    };
+    let scanned = false;
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, games: 1, owned_copies: 1, sensors: 'off', tags: 'connected' },
+      'GET /api/games/4': () => (scanned ? tagged : GAME),
+      'POST /api/copies/21/tag-link': () => {
+        scanned = true;
+        return { expires_at: new Date(Date.now() + 60_000).toISOString() };
+      },
+      'DELETE /api/copies/21/tag-link': new Response(null, { status: 204 }),
+    });
+    renderAt('/games/4');
+
+    await copyAction(21, en.tags.link);
+    expect(await screen.findByTestId('tag-waiting')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument(), { timeout: 4000 });
+    expect(await screen.findByTestId('tags-21')).toHaveTextContent('1 NFC tag starts this copy');
+    expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/copies/21/tag-link')).toBe(true);
   });
 
   it('offers to delete the game with its last copy', async () => {

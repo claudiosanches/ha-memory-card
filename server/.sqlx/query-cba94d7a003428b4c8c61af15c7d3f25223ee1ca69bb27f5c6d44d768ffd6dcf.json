@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_sessions (game_id, copy_id, played_on, created_by)\n         SELECT ?1, ?2, ?3, ?4\n         WHERE NOT EXISTS (SELECT 1 FROM play_sessions\n                           WHERE game_id = ?1 AND copy_id = ?2 AND played_on = ?3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "cba94d7a003428b4c8c61af15c7d3f25223ee1ca69bb27f5c6d44d768ffd6dcf"
+}
