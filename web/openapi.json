@@ -911,6 +911,64 @@
         }
       }
     },
+    "/api/games/{id}/last-played": {
+      "put": {
+        "tags": [
+          "games"
+        ],
+        "operationId": "setLastPlayed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LastPlayedInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/games/{id}/play-status": {
       "put": {
         "tags": [
@@ -2994,6 +3052,27 @@
           }
         }
       },
+      "LastPlayedInput": {
+        "type": "object",
+        "properties": {
+          "last_played_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`YYYY-MM-DD`; `null` clears it."
+          },
+          "last_played_copy_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Must be a copy of this game; `null` clears it."
+          }
+        },
+        "additionalProperties": false
+      },
       "LinkInput": {
         "type": "object",
         "required": [
@@ -3014,9 +3093,14 @@
         "type": "object",
         "required": [
           "role",
-          "enforced"
+          "enforced",
+          "can_track_progress"
         ],
         "properties": {
+          "can_track_progress": {
+            "type": "boolean",
+            "description": "May change play status and last played."
+          },
           "enforced": {
             "type": "boolean",
             "description": "False while no managers are configured, when everyone manages."

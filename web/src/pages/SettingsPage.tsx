@@ -85,7 +85,9 @@ function Access() {
     ? t('settings.accessOpen')
     : me.role === 'manager'
       ? t('settings.accessManager')
-      : t('settings.accessViewer');
+      : me.can_track_progress
+        ? t('settings.accessViewerProgress')
+        : t('settings.accessViewer');
   const user = me.user;
   return (
     <ToolSection title={t('settings.access')} description={description}>

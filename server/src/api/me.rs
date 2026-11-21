@@ -12,6 +12,8 @@ pub struct Me {
     pub role: Role,
     /// False while no managers are configured, when everyone manages.
     pub enforced: bool,
+    /// May change play status and last played.
+    pub can_track_progress: bool,
 }
 
 #[utoipa::path(
@@ -29,5 +31,6 @@ pub async fn get_me(Extension(access): Extension<Access>) -> Json<Me> {
         user: access.user,
         role: access.role,
         enforced: access.enforced,
+        can_track_progress: access.can_track_progress,
     })
 }

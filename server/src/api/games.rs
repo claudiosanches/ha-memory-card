@@ -277,6 +277,37 @@ pub async fn set_play_status(
     Ok(Json(games::get(&state.db, id).await?))
 }
 
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct LastPlayedInput {
+    /// `YYYY-MM-DD`; `null` clears it.
+    #[serde(default)]
+    pub last_played_at: Option<String>,
+    /// Must be a copy of this game; `null` clears it.
+    #[serde(default)]
+    pub last_played_copy_id: Option<i64>,
+}
+
+#[utoipa::path(
+    put, path = "/games/{id}/last-played", tag = "games", operation_id = "setLastPlayed",
+    params(("id" = i64, Path)),
+    request_body = LastPlayedInput,
+    responses(
+        (status = OK, body = GameDetail),
+        (status = NOT_FOUND, body = ErrorBody),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
+    )
+)]
+pub async fn set_last_played(
+    State(state): State<AppState>,
+    ApiPath(id): ApiPath<i64>,
+    ApiJson(input): ApiJson<LastPlayedInput>,
+) -> ApiResult<Json<GameDetail>> {
+    let at = date(input.last_played_at.as_deref(), "last_played_at")?;
+    games::set_last_played(&state.db, id, at.as_deref(), input.last_played_copy_id).await?;
+    Ok(Json(games::get(&state.db, id).await?))
+}
+
 #[utoipa::path(
     delete, path = "/games/{id}", tag = "games", operation_id = "deleteGame",
     params(("id" = i64, Path)),

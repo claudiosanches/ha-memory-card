@@ -233,6 +233,34 @@ async fn game_status_last_played_and_modes() {
         assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
         assert_eq!(error, json!({"code": code, "field": field}));
     }
+
+    let path = format!("/api/games/{game}/last-played");
+    let (status, detail) = app
+        .json("PUT", &path, Some(json!({"last_played_at": "2026-11-21"})))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["last_played_at"], "2026-11-21");
+    assert_eq!(detail["last_played_copy_id"], Value::Null);
+    assert_eq!(detail["play_status"], "playing", "other fields stay");
+
+    let (status, error) = app
+        .json(
+            "PUT",
+            &path,
+            Some(json!({"last_played_copy_id": other_copy})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(error["code"], "invalid_copy");
+    let (status, error) = app
+        .json("PUT", &path, Some(json!({"last_played_at": "yesterday"})))
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(error["code"], "invalid_date");
+    let (status, _) = app
+        .json("PUT", "/api/games/9999/last-played", Some(json!({})))
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]

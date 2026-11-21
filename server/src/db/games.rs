@@ -225,19 +225,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
     let mut tx = crate::db::write_tx(pool).await?;
     super::play_statuses::ensure_exists(&mut *tx, fields.play_status.as_deref()).await?;
 
-    if let Some(copy_id) = fields.last_played_copy_id {
-        let belongs: bool = sqlx::query_scalar!(
-            r#"SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
-                              WHERE c.id = ? AND r.game_id = ?) AS "belongs!: bool""#,
-            copy_id,
-            id
-        )
-        .fetch_one(&mut *tx)
-        .await?;
-        if !belongs {
-            return Err(ApiError::invalid("invalid_copy", "last_played_copy_id"));
-        }
-    }
+    ensure_game_copy(&mut tx, id, fields.last_played_copy_id).await?;
     let modes = game_mode_ids(&mut tx, &fields.game_mode_ids).await?;
 
     let sort = sort_title(&fields.title);
@@ -291,6 +279,53 @@ pub async fn set_play_status(pool: &SqlitePool, id: i64, status: Option<&str>) -
     .execute(pool)
     .await?;
     found(result.rows_affected())
+}
+
+pub async fn set_last_played(
+    pool: &SqlitePool,
+    id: i64,
+    at: Option<&str>,
+    copy_id: Option<i64>,
+) -> ApiResult<()> {
+    let mut tx = crate::db::write_tx(pool).await?;
+    let result = sqlx::query!(
+        "UPDATE games SET last_played_at = ?, last_played_copy_id = ?,
+                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE id = ?",
+        at,
+        copy_id,
+        id
+    )
+    .execute(&mut *tx)
+    .await?;
+    found(result.rows_affected())?;
+    ensure_game_copy(&mut tx, id, copy_id).await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+/// The last played copy must be a copy of the game.
+async fn ensure_game_copy(
+    conn: &mut SqliteConnection,
+    game_id: i64,
+    copy_id: Option<i64>,
+) -> ApiResult<()> {
+    let Some(copy_id) = copy_id else {
+        return Ok(());
+    };
+    let belongs: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
+                          WHERE c.id = ? AND r.game_id = ?) AS "belongs!: bool""#,
+        copy_id,
+        game_id
+    )
+    .fetch_one(conn)
+    .await?;
+    if belongs {
+        Ok(())
+    } else {
+        Err(ApiError::invalid("invalid_copy", "last_played_copy_id"))
+    }
 }
 
 /// Deletes a game with its releases and copies, and returns the release ids.

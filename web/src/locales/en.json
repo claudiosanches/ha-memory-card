@@ -145,6 +145,7 @@
     "accessOpen": "Everyone who opens Memory Card can change the collection. To limit that, add the user IDs of the people who manage it to the managers option in the app configuration.",
     "accessManager": "You can change the collection.",
     "accessViewer": "You can browse the collection. Ask a manager to make changes.",
+    "accessViewerProgress": "You can browse the collection and track play progress. Ask a manager to make other changes.",
     "signedInAs": "Signed in as",
     "role": "Role",
     "roles": {

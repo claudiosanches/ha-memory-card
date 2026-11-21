@@ -184,6 +184,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/games/{id}/last-played": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setLastPlayed"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/games/{id}/play-status": {
         parameters: {
             query?: never;
@@ -731,6 +747,15 @@ export interface components {
             updated_releases: number;
             warning_rows: number;
         };
+        LastPlayedInput: {
+            /** @description `YYYY-MM-DD`; `null` clears it. */
+            last_played_at?: string | null;
+            /**
+             * Format: int64
+             * @description Must be a copy of this game; `null` clears it.
+             */
+            last_played_copy_id?: number | null;
+        };
         LinkInput: {
             /** Format: int64 */
             igdb_id: number;
@@ -741,6 +766,8 @@ export interface components {
             overwrite?: boolean;
         };
         Me: {
+            /** @description May change play status and last played. */
+            can_track_progress: boolean;
             /** @description False while no managers are configured, when everyone manages. */
             enforced: boolean;
             role: components["schemas"]["Role"];
@@ -1617,6 +1644,47 @@ export interface operations {
             };
             /** @description `igdb_not_configured` */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    setLastPlayed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LastPlayedInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

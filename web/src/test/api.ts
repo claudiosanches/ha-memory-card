@@ -35,6 +35,7 @@ export const VIEWER: Me = {
   user: { id: 'viewer-id', name: 'sam', display_name: 'Sam' },
   role: 'viewer',
   enforced: true,
+  can_track_progress: false,
 };
 
 /**
@@ -48,7 +49,7 @@ export const VIEWER: Me = {
 export function mockApi(given: Record<string, unknown>): ApiCall[] {
   const routes: Record<string, unknown> = {
     'GET /api/play-statuses': BUILTIN_STATUSES,
-    'GET /api/me': { user: null, role: 'manager', enforced: false } satisfies Me,
+    'GET /api/me': { user: null, role: 'manager', enforced: false, can_track_progress: true } satisfies Me,
     ...given,
   };
   const calls: ApiCall[] = [];

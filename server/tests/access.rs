@@ -50,7 +50,7 @@ async fn everyone_manages_until_managers_are_configured() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         me,
-        json!({ "user": null, "role": "manager", "enforced": false })
+        json!({ "user": null, "role": "manager", "enforced": false, "can_track_progress": true })
     );
 
     let (status, _) = send(
@@ -77,6 +77,7 @@ async fn me_names_the_user_and_role() {
             "user": { "id": MANAGER, "name": "sam", "display_name": "Sam" },
             "role": "manager",
             "enforced": true,
+            "can_track_progress": true,
         })
     );
 
@@ -224,4 +225,43 @@ async fn every_route_checks_the_role() {
         }
     }
     assert!(checked > 40, "only {checked} operations found");
+}
+
+#[tokio::test]
+async fn viewers_track_progress_when_the_option_allows_it() {
+    let app = TestApp::with_env(&[
+        ("MEMORY_CARD_MANAGERS", MANAGER),
+        ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true"),
+    ])
+    .await;
+    let release = app.release("Tunic", "switch").await;
+    let game: i64 = sqlx::query_scalar("SELECT game_id FROM releases WHERE id = ?")
+        .bind(release)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+
+    let (_, me) = send(&app, SUPERVISOR, "GET", "/api/me", Some(VIEWER), None).await;
+    assert_eq!(me["role"], "viewer");
+    assert_eq!(me["can_track_progress"], true);
+
+    for (path, body) in [
+        ("play-status", json!({ "play_status": "playing" })),
+        ("last-played", json!({ "last_played_at": "2026-11-21" })),
+    ] {
+        let uri = format!("/api/games/{game}/{path}");
+        let (status, body) = send(&app, SUPERVISOR, "PUT", &uri, Some(VIEWER), Some(body)).await;
+        assert_eq!(status, StatusCode::OK, "{path}: {body}");
+    }
+
+    let (status, _) = send(
+        &app,
+        SUPERVISOR,
+        "PUT",
+        &format!("/api/games/{game}"),
+        Some(VIEWER),
+        Some(json!({ "title": "Renamed" })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
 }

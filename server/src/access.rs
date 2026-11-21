@@ -29,6 +29,17 @@ const MANAGER_READS: [&str; 4] = [
 /// Changes anyone may make. A suggestion only records what was rolled.
 const VIEWER_WRITES: [&str; 1] = ["/api/suggestions"];
 
+/// Play progress, open to viewers when the option allows it.
+const PROGRESS_WRITES: [&str; 2] = ["/api/games/{id}/play-status", "/api/games/{id}/last-played"];
+
+/// Who may do what, from the app options.
+#[derive(Debug)]
+pub struct Policy {
+    /// Home Assistant user IDs; empty means everyone manages.
+    pub managers: Vec<String>,
+    pub viewers_track_progress: bool,
+}
+
 /// The Home Assistant user behind a request.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, ToSchema)]
 pub struct User {
@@ -54,21 +65,23 @@ pub struct Access {
     pub role: Role,
     /// False while no managers are configured, when everyone manages.
     pub enforced: bool,
+    /// May change play status and last played.
+    pub can_track_progress: bool,
 }
 
 /// Resolves the user and role, then rejects requests the role does not allow.
 /// With no managers configured, everyone is a manager and identity is optional.
 pub async fn guard(
-    State(managers): State<Arc<[String]>>,
+    State(policy): State<Arc<Policy>>,
     mut request: Request,
     next: Next,
 ) -> Response {
     let user = user(request.headers());
-    let enforced = !managers.is_empty();
+    let enforced = !policy.managers.is_empty();
     let role = match &user {
         _ if !enforced => Role::Manager,
         None => return deny(StatusCode::UNAUTHORIZED, "identity_required"),
-        Some(user) if managers.contains(&user.id) => Role::Manager,
+        Some(user) if policy.managers.contains(&user.id) => Role::Manager,
         Some(_) => Role::Viewer,
     };
 
@@ -76,7 +89,7 @@ pub async fn guard(
         Some(matched) => matched.as_str(),
         None => request.uri().path(),
     };
-    if role < required_role(request.method(), path) {
+    if role < required_role(request.method(), path, policy.viewers_track_progress) {
         tracing::debug!(method = %request.method(), path, "viewer denied");
         return deny(StatusCode::FORBIDDEN, "manager_required");
     }
@@ -85,13 +98,16 @@ pub async fn guard(
         user,
         role,
         enforced,
+        can_track_progress: role == Role::Manager || policy.viewers_track_progress,
     });
     next.run(request).await
 }
 
-fn required_role(method: &Method, path: &str) -> Role {
+fn required_role(method: &Method, path: &str, viewers_track_progress: bool) -> Role {
     let open = if method == Method::GET || method == Method::HEAD {
         !MANAGER_READS.contains(&path)
+    } else if method == Method::PUT && PROGRESS_WRITES.contains(&path) {
+        viewers_track_progress
     } else {
         method == Method::POST && VIEWER_WRITES.contains(&path)
     };
@@ -176,35 +192,53 @@ mod tests {
 
     #[test]
     fn viewers_read_and_roll_suggestions() {
-        assert_eq!(required_role(&Method::GET, "/api/games"), Role::Viewer);
         assert_eq!(
-            required_role(&Method::HEAD, "/api/games/{id}"),
+            required_role(&Method::GET, "/api/games", false),
             Role::Viewer
         );
         assert_eq!(
-            required_role(&Method::POST, "/api/suggestions"),
+            required_role(&Method::HEAD, "/api/games/{id}", false),
+            Role::Viewer
+        );
+        assert_eq!(
+            required_role(&Method::POST, "/api/suggestions", false),
             Role::Viewer
         );
     }
 
     #[test]
     fn managers_change_things_and_use_tools() {
-        assert_eq!(required_role(&Method::POST, "/api/games"), Role::Manager);
         assert_eq!(
-            required_role(&Method::PUT, "/api/suggestions"),
+            required_role(&Method::POST, "/api/games", true),
             Role::Manager
         );
         assert_eq!(
-            required_role(&Method::DELETE, "/api/copies/{id}"),
+            required_role(&Method::PUT, "/api/suggestions", true),
             Role::Manager
         );
         assert_eq!(
-            required_role(&Method::GET, "/api/export.csv"),
+            required_role(&Method::PUT, "/api/games/{id}", true),
             Role::Manager
         );
         assert_eq!(
-            required_role(&Method::GET, "/api/igdb/search"),
+            required_role(&Method::DELETE, "/api/copies/{id}", true),
             Role::Manager
         );
+        assert_eq!(
+            required_role(&Method::GET, "/api/export.csv", true),
+            Role::Manager
+        );
+        assert_eq!(
+            required_role(&Method::GET, "/api/igdb/search", true),
+            Role::Manager
+        );
+    }
+
+    #[test]
+    fn progress_follows_the_option() {
+        for path in PROGRESS_WRITES {
+            assert_eq!(required_role(&Method::PUT, path, false), Role::Manager);
+            assert_eq!(required_role(&Method::PUT, path, true), Role::Viewer);
+        }
     }
 }

@@ -35,6 +35,11 @@ export function useCanManage() {
   return useMe().data?.role === 'manager';
 }
 
+/** Whether the user may change play status and last played. */
+export function useCanTrackProgress() {
+  return useMe().data?.can_track_progress ?? false;
+}
+
 export function useStatus() {
   return useQuery({ queryKey: queryKeys.status, queryFn: () => call(api.GET('/api/status')) });
 }

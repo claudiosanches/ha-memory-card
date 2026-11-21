@@ -88,6 +88,7 @@ struct Options {
     igdb_client_secret: Option<String>,
     log_level: Option<LogLevel>,
     managers: Option<Vec<String>>,
+    viewers_track_progress: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -101,6 +102,8 @@ pub struct Config {
     /// Home Assistant user IDs allowed to change the collection. Empty means
     /// every ingress user may, and identity is not required.
     pub managers: Vec<String>,
+    /// Lets viewers change play status and last played.
+    pub viewers_track_progress: bool,
 }
 
 impl Config {
@@ -162,6 +165,20 @@ impl Config {
             .filter_map(|id| non_empty(Some(id)))
             .collect();
 
+        let viewers_track_progress = match env("MEMORY_CARD_VIEWERS_TRACK_PROGRESS") {
+            None => options.viewers_track_progress.unwrap_or(false),
+            Some(raw) => match raw.trim().to_ascii_lowercase().as_str() {
+                "true" | "1" => true,
+                "false" | "0" => false,
+                _ => {
+                    return Err(ConfigError::InvalidEnv {
+                        name: "MEMORY_CARD_VIEWERS_TRACK_PROGRESS",
+                        value: raw,
+                    });
+                }
+            },
+        };
+
         Ok(Self {
             data_dir,
             tmp_dir,
@@ -170,6 +187,7 @@ impl Config {
             log_level,
             igdb,
             managers,
+            viewers_track_progress,
         })
     }
 
@@ -228,6 +246,7 @@ mod tests {
         assert_eq!(config.log_level, LogLevel::Info);
         assert!(config.igdb.is_none());
         assert!(config.managers.is_empty());
+        assert!(!config.viewers_track_progress);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
     }
 
@@ -236,13 +255,14 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("options.json"),
-            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""]}"#,
+            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true}"#,
         )
         .unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
         assert_eq!(config.log_level, LogLevel::Warning);
         assert_eq!(config.log_level.as_directive(), "warn");
         assert_eq!(config.managers, vec!["abc123"]);
+        assert!(config.viewers_track_progress);
         let igdb = config.igdb.unwrap();
         assert_eq!(igdb.client_id, "id");
         assert!(!format!("{igdb:?}").contains("secret\""));
@@ -263,12 +283,14 @@ mod tests {
                 ("MEMORY_CARD_TRUSTED_PEER", "127.0.0.1, ::1"),
                 ("MEMORY_CARD_LISTEN", "127.0.0.1:18099"),
                 ("MEMORY_CARD_MANAGERS", "one, two,"),
+                ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "1"),
             ],
         )
         .unwrap();
         assert_eq!(config.log_level, LogLevel::Debug);
         assert_eq!(config.trusted_peers.len(), 2);
         assert_eq!(config.managers, vec!["one", "two"]);
+        assert!(config.viewers_track_progress);
         assert!(config.igdb.is_none(), "empty secret disables IGDB");
     }
 

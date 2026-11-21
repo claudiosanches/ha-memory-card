@@ -11,7 +11,7 @@ import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../api/errors';
-import { useCanManage, useGames, usePlatforms } from '../../api/queries';
+import { useCanTrackProgress, useGames, usePlatforms } from '../../api/queries';
 import type { BuiltinStatus, GameSummary, StatusGroup } from '../../api/types';
 import { PageHeader } from '../../components/PageHeader';
 import { Description } from '../../components/Description';
@@ -42,7 +42,7 @@ export function BacklogPage() {
   const platforms = usePlatforms();
   const statuses = usePlayStatusList();
   const [sorting, setSorting] = useState<GameSummary[] | null>(null);
-  const canManage = useCanManage();
+  const canTrack = useCanTrackProgress();
 
   const groups = useMemo(
     () => groupByStatus(games.data ?? [], (key) => statuses.get(key)?.counts_as),
@@ -73,7 +73,7 @@ export function BacklogPage() {
         )}
       </PageHeader>
 
-      {canManage && groups.unsorted.length > 0 && (
+      {canTrack && groups.unsorted.length > 0 && (
         <section className={classes.unsorted}>
           <IconSparkles size={28} stroke={1.6} aria-hidden />
           <div className={classes.unsortedText}>
@@ -90,13 +90,13 @@ export function BacklogPage() {
 
       {groups.playing.length > 0 && (
         <Section title={t('backlog.playing')} count={groups.playing.length}>
-          <RowList games={groups.playing} platformNames={platformNames} actions={canManage ? PLAYING_ACTIONS : []} />
+          <RowList games={groups.playing} platformNames={platformNames} actions={canTrack ? PLAYING_ACTIONS : []} />
         </Section>
       )}
 
       {groups.paused.length > 0 && (
         <Section title={t('backlog.paused')} count={groups.paused.length}>
-          <RowList games={groups.paused} platformNames={platformNames} actions={canManage ? PAUSED_ACTIONS : []} />
+          <RowList games={groups.paused} platformNames={platformNames} actions={canTrack ? PAUSED_ACTIONS : []} />
         </Section>
       )}
 
@@ -109,7 +109,7 @@ export function BacklogPage() {
         ) : (
           <ul className={classes.grid}>
             {groups.backlog.map((game) => (
-              <BacklogCard key={game.id} game={game} platformNames={platformNames} canStart={canManage} />
+              <BacklogCard key={game.id} game={game} platformNames={platformNames} canStart={canTrack} />
             ))}
           </ul>
         )}

@@ -46,6 +46,10 @@ add, edit or delete anything, change play progress, import or export CSV
 files, manage devices, stores, platforms and play statuses, or sync with
 IGDB. Requests that Home Assistant does not tie to a user are refused.
 
+To let viewers keep track of what they play, turn on
+`viewers_track_progress`. They can then change play status and last played,
+and start games from the backlog, but nothing else.
+
 To let everyone change the collection again, empty `managers` and restart.
 
 ## Options
@@ -56,6 +60,7 @@ To let everyone change the collection again, empty `managers` and restart.
 | `igdb_client_secret` | Twitch application client secret. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) lets everyone change it. |
+| `viewers_track_progress` | Lets viewers change play status and last played. Off by default. |
 
 ## Import and export (CSV)
 

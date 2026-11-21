@@ -203,7 +203,7 @@ describe('Game page', () => {
     const calls = mockApi({
       ...SETUP,
       'GET /api/games/4': GAME,
-      'PUT /api/games/4': (body: unknown) => ({ ...GAME, ...(body as object) }),
+      'PUT /api/games/4/last-played': (body: unknown) => ({ ...GAME, ...(body as object) }),
     });
     renderAt('/games/4');
 
@@ -213,8 +213,20 @@ describe('Game page', () => {
     const body = calls.find((c) => c.method === 'PUT')?.body as Record<string, unknown>;
     expect(body.last_played_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(body.last_played_copy_id).toBe(21);
-    expect(body.play_status).toBe('backlog');
-    expect(body.title).toBe('Metroid Dread');
+  });
+
+  it('lets a viewer track progress when the option allows it', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/me': { ...VIEWER, can_track_progress: true },
+      'GET /api/games/4': GAME,
+      'PUT /api/games/4/last-played': (body: unknown) => ({ ...GAME, ...(body as object) }),
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.game.playedToday }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/games/4/last-played')).toBe(true));
+    expect(screen.queryByRole('button', { name: en.common.edit })).not.toBeInTheDocument();
   });
 
   it('links the game to an IGDB search result', async () => {

@@ -52,14 +52,17 @@ impl AppState {
 
 pub fn app(state: AppState) -> Router {
     let trusted: Arc<[IpAddr]> = state.config.trusted_peers.clone().into();
-    let managers: Arc<[String]> = state.config.managers.clone().into();
+    let policy = Arc::new(access::Policy {
+        managers: state.config.managers.clone(),
+        viewers_track_progress: state.config.viewers_track_progress,
+    });
     let (api, _) = api::router().split_for_parts();
 
     let covers = ServeDir::new(state.config.covers_dir());
 
     api.nest_service("/covers", covers)
         // Assets stay open so the UI can explain a missing identity.
-        .route_layer(middleware::from_fn_with_state(managers, access::guard))
+        .route_layer(middleware::from_fn_with_state(policy, access::guard))
         .merge(assets::router())
         // CSV imports of a large collection exceed axum's 2 MB default.
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024))

@@ -16,3 +16,8 @@ configuration:
       Home Assistant user IDs that can change the collection. Everyone else
       can only browse it. Leave empty to let everyone change it. Each user
       finds their ID under Settings in Memory Card.
+  viewers_track_progress:
+    name: Viewers track play progress
+    description: >-
+      Let users who are not managers change play status and last played.
+      Everything else stays read only for them.

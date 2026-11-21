@@ -33,6 +33,7 @@ import { ApiError, call, errorMessage } from '../../api/errors';
 import {
   queryKeys,
   useCanManage,
+  useCanTrackProgress,
   useDevices,
   useGame,
   useGameModes,
@@ -54,7 +55,7 @@ import { formatDate, today } from '../../components/status';
 import { Copies } from './Copies';
 import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
-import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
+import { CopyForm, GameForm, ReleaseForm, useGameSaved } from './forms';
 import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
 import classes from './GamePage.module.css';
 
@@ -126,6 +127,7 @@ function GameView({ game }: { game: GameDetail }) {
   const devices = useDevices();
   const stores = useStores();
   const canManage = useCanManage();
+  const canTrack = useCanTrackProgress();
 
   const names = useMemo(
     () => ({
@@ -140,12 +142,25 @@ function GameView({ game }: { game: GameDetail }) {
 
   const allCopies = game.releases.flatMap((release) => release.copies.map((copy) => ({ copy, release })));
 
-  const update = useMutation({
-    mutationFn: (patch: Partial<ReturnType<typeof gameInput>>) =>
-      call(api.PUT('/api/games/{id}', { params: { path: { id: game.id } }, body: { ...gameInput(game), ...patch } })),
+  // Progress has its own routes, which viewers may be allowed to use.
+  const setStatus = useMutation({
+    mutationFn: (play_status: string | null) =>
+      call(api.PUT('/api/games/{id}/play-status', { params: { path: { id: game.id } }, body: { play_status } })),
     onSuccess: (updated) => saved(updated),
     onError: (error) => notifyError(errorMessage(t, error)),
   });
+  const setLastPlayed = useMutation({
+    mutationFn: (patch: { last_played_at?: string | null; last_played_copy_id?: number | null }) =>
+      call(
+        api.PUT('/api/games/{id}/last-played', {
+          params: { path: { id: game.id } },
+          body: { last_played_at: game.last_played_at, last_played_copy_id: game.last_played_copy_id, ...patch },
+        }),
+      ),
+    onSuccess: (updated) => saved(updated),
+    onError: (error) => notifyError(errorMessage(t, error)),
+  });
+  const saving = setStatus.isPending || setLastPlayed.isPending;
 
   const removeGame = useMutation({
     mutationFn: () => call(api.DELETE('/api/games/{id}', { params: { path: { id: game.id } } })),
@@ -180,7 +195,7 @@ function GameView({ game }: { game: GameDetail }) {
 
   const playedToday = () => {
     const copyId = game.last_played_copy_id ?? (allCopies.length === 1 ? allCopies[0]?.copy.id : null) ?? null;
-    update.mutate({ last_played_at: today(), last_played_copy_id: copyId });
+    setLastPlayed.mutate({ last_played_at: today(), last_played_copy_id: copyId });
   };
 
   const copyLabel = (copy: CopyDetail, release: ReleaseDetail) =>
@@ -287,11 +302,11 @@ function GameView({ game }: { game: GameDetail }) {
                 className={classes.playSelect}
                 data={statuses.options}
                 value={game.play_status ?? null}
-                onChange={(value) => update.mutate({ play_status: value ?? null })}
-                clearable={canManage}
-                readOnly={!canManage}
-                rightSection={canManage ? undefined : null}
-                disabled={update.isPending}
+                onChange={(value) => setStatus.mutate(value ?? null)}
+                clearable={canTrack}
+                readOnly={!canTrack}
+                rightSection={canTrack ? undefined : null}
+                disabled={saving}
                 leftSection={
                   game.play_status ? <Badge size="xs" circle color={statuses.color(game.play_status)} /> : null
                 }
@@ -302,18 +317,18 @@ function GameView({ game }: { game: GameDetail }) {
                 className={classes.copySelect}
                 data={allCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
                 value={game.last_played_copy_id ? String(game.last_played_copy_id) : null}
-                onChange={(value) => update.mutate({ last_played_copy_id: value ? Number(value) : null })}
-                clearable={canManage}
-                readOnly={!canManage}
-                rightSection={canManage ? undefined : null}
-                disabled={update.isPending || allCopies.length === 0}
+                onChange={(value) => setLastPlayed.mutate({ last_played_copy_id: value ? Number(value) : null })}
+                clearable={canTrack}
+                readOnly={!canTrack}
+                rightSection={canTrack ? undefined : null}
+                disabled={saving || allCopies.length === 0}
               />
-              {canManage && (
+              {canTrack && (
                 <Button
                   variant="light"
                   leftSection={<IconCalendarCheck size={16} />}
                   onClick={playedToday}
-                  loading={update.isPending}
+                  loading={saving}
                 >
                   {t('game.playedToday')}
                 </Button>
