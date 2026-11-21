@@ -238,13 +238,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
             return Err(ApiError::invalid("invalid_copy", "last_played_copy_id"));
         }
     }
-    let modes = id_list(
-        &mut tx,
-        "game_modes",
-        &fields.game_mode_ids,
-        "game_mode_ids",
-    )
-    .await?;
+    let modes = game_mode_ids(&mut tx, &fields.game_mode_ids).await?;
 
     let sort = sort_title(&fields.title);
     let p = &fields.players;
@@ -505,24 +499,20 @@ async fn release_for(
     .await?)
 }
 
-/// Deduplicates ids, checks they exist in `table`, returns them as a JSON array.
-async fn id_list(
-    conn: &mut SqliteConnection,
-    table: &'static str,
-    ids: &[i64],
-    field: &'static str,
-) -> ApiResult<String> {
+/// Deduplicates ids, checks they exist in `game_modes`, returns them as a JSON array.
+async fn game_mode_ids(conn: &mut SqliteConnection, ids: &[i64]) -> ApiResult<String> {
     let mut ids = ids.to_vec();
     ids.sort_unstable();
     ids.dedup();
     let json = serde_json::to_string(&ids).expect("integers serialize");
-    let sql = format!("SELECT COUNT(*) FROM {table} WHERE id IN (SELECT value FROM json_each(?))");
-    let known: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
-        .bind(&json)
-        .fetch_one(&mut *conn)
-        .await?;
+    let known: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM game_modes WHERE id IN (SELECT value FROM json_each(?))",
+    )
+    .bind(&json)
+    .fetch_one(&mut *conn)
+    .await?;
     if known != ids.len() as i64 {
-        return Err(ApiError::invalid("unknown_id", field));
+        return Err(ApiError::invalid("unknown_id", "game_mode_ids"));
     }
     Ok(json)
 }

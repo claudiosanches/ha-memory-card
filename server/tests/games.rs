@@ -350,6 +350,19 @@ async fn library_lists_owned_games_by_default() {
 }
 
 #[tokio::test]
+async fn imported_titles_and_search_terms_keep_literal_punctuation() {
+    let app = TestApp::new().await;
+    let title = "Pilot's Log; 100%_Complete";
+    let csv = format!("game_title\n{title}\nOther Game\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let query = serde_urlencoded::to_string([("ownership", "any"), ("q", title)]).unwrap();
+    assert_eq!(titles(&app, &query).await, [title]);
+    assert_eq!(titles(&app, "ownership=any&q=%25_").await, [title]);
+    assert_eq!(titles(&app, "ownership=any").await.len(), 2);
+}
+
+#[tokio::test]
 async fn library_filters_by_igdb_link() {
     let app = library_app().await;
     sqlx::query("UPDATE games SET igdb_id = 7 WHERE title = 'Splatoon'")

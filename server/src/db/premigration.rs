@@ -65,6 +65,8 @@ async fn applied_versions(pool: &SqlitePool, migrator: &Migrator) -> Result<Vec<
         return Ok(Vec::new());
     }
 
+    // SQLite parameters represent values only. Double embedded quotes in identifiers.
+    let table = table.replace('"', "\"\"");
     let sql = format!("SELECT version FROM \"{table}\" WHERE success = 1");
     Ok(sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
         .fetch_all(pool)

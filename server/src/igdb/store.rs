@@ -51,7 +51,7 @@ pub async fn apply(
     let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
 
     // The stored value wins unless overwriting; a missing IGDB value never clears one.
-    let fill = |column: &str, param: u8| {
+    let fill = |column: &'static str, param: u8| {
         if overwrite {
             format!("{column} = COALESCE(?{param}, {column})")
         } else {

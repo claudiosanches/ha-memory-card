@@ -295,14 +295,14 @@ fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &[StatusFilter]) {
     }
 }
 
-fn push_in<T>(qb: &mut QueryBuilder<Sqlite>, column: &str, values: &[T])
+fn push_in<T>(qb: &mut QueryBuilder<Sqlite>, column: &'static str, values: &[T])
 where
     T: Clone + for<'q> sqlx::Encode<'q, Sqlite> + sqlx::Type<Sqlite> + 'static,
 {
     if values.is_empty() {
         return;
     }
-    qb.push(format_args!(" AND {column} IN "));
+    qb.push(" AND ").push(column).push(" IN ");
     push_list(qb, values);
 }
 
