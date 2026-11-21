@@ -428,7 +428,7 @@
     "noStore": "No store",
     "showAllDevices": "Show devices that do not list this platform",
     "copyOf": "{{format}} on {{device}}",
-    "igdbLinked": "Linked to IGDB",
+    "igdbLinked": "Info from IGDB",
     "releaseHeading": "{{platform}} · {{region}}",
     "datePlaceholder": "YYYY-MM-DD",
     "firstRelease": "First released",
