@@ -42,11 +42,13 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
         sqlx::query_as(
             "WITH per_game AS (
                 SELECT COUNT(*) FILTER (WHERE c.status = 'owned') AS owned,
-                       COUNT(*) FILTER (WHERE c.status = 'wanted') AS wanted
+                       -- A bundle is one item, however many games it holds.
+                       COUNT(*) FILTER (WHERE c.status = 'owned' AND c.bundle_id IS NULL) AS owned_items,
+                       COUNT(*) FILTER (WHERE c.status = 'wanted' AND c.bundle_id IS NULL) AS wanted
                 FROM copies c JOIN releases r ON r.id = c.release_id
                 GROUP BY r.game_id
              )
-             SELECT COUNT(*) FILTER (WHERE owned > 0), COALESCE(SUM(owned), 0),
+             SELECT COUNT(*) FILTER (WHERE owned > 0), COALESCE(SUM(owned_items), 0),
                     COALESCE(SUM(wanted), 0), COUNT(*) FILTER (WHERE owned > 1)
              FROM per_game",
         )

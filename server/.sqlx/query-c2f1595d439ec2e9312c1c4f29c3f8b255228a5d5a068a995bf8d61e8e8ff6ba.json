@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.id AS \"copy_id!\", r.game_id, g.title,\n                  b.id AS \"bundle_copy_id!\", br.game_id AS bundle_game_id, bg.title AS bundle_title\n           FROM copies c\n           JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id\n           JOIN copies b ON b.id = c.bundle_id\n           JOIN releases br ON br.id = b.release_id JOIN games bg ON bg.id = br.game_id\n           WHERE r.game_id = ?1 OR br.game_id = ?1\n           ORDER BY g.sort_title, c.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "copy_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "game_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "bundle_copy_id!",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "bundle_game_id",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "bundle_title",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c2f1595d439ec2e9312c1c4f29c3f8b255228a5d5a068a995bf8d61e8e8ff6ba"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT bundle_id FROM copies WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "bundle_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "bundle_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "7f955c47f504fa9ceb84388bfe8764c3193b5b4fcacd96f2845ac3df4c8473f6"
+}

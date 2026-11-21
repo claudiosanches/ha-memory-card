@@ -37,8 +37,8 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
         r#"SELECT
              (SELECT COUNT(DISTINCT r.game_id) FROM copies c JOIN releases r ON r.id = c.release_id
                WHERE c.status = 'owned') AS "games!: i64",
-             (SELECT COUNT(*) FROM copies WHERE status = 'owned') AS "copies!: i64",
-             (SELECT COUNT(*) FROM copies WHERE status = 'wanted') AS "wishlist!: i64",
+             (SELECT COUNT(*) FROM copies WHERE status = 'owned' AND bundle_id IS NULL) AS "copies!: i64",
+             (SELECT COUNT(*) FROM copies WHERE status = 'wanted' AND bundle_id IS NULL) AS "wishlist!: i64",
              (SELECT COUNT(*) FROM games g JOIN play_statuses s ON s.key = g.play_status
                WHERE s.counts_as = 'backlog' AND EXISTS (
                  SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id

@@ -1,26 +1,21 @@
-import { ActionIcon, Badge, Button, Group, Loader, ScrollArea, Stack, Text, TextInput, Title, Tooltip } from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { IconCheck, IconHeart, IconPlus, IconSearch, IconTrash } from '@tabler/icons-react';
+import { ActionIcon, Button, Group, Loader, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { IconCheck, IconHeart, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
-import { queryKeys, useCanManage, useCopies, useGame, useGames, usePlatforms, useStatus, useStores } from '../api/queries';
+import { queryKeys, useCanManage, useCopies, useGame, usePlatforms, useStores } from '../api/queries';
 import type { CopyRow } from '../api/types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Cover } from '../components/Cover';
 import { formatMoney } from '../components/money';
-import { FormModal } from '../components/FormModal';
 import { PageHeader } from '../components/PageHeader';
 import { notifyError, notifySuccess } from '../components/notify';
+import { createGame, PickGameModal, type Target } from '../components/PickGame';
 import { CopyForm, useGameSaved } from './game/forms';
-import { IgdbHits, type IgdbHit, useIgdbSearch } from './game/IgdbLink';
 import classes from './WishlistPage.module.css';
-
-/** Where a new wishlist copy goes: a game in the collection, or one to create. */
-type Target = { kind: 'existing'; id: number; title: string } | { kind: 'new'; title: string; igdbId: number | null };
 
 type Dialog =
   | { kind: 'pickGame' }
@@ -35,6 +30,8 @@ export function WishlistPage() {
   const { t, i18n } = useTranslation();
   const canManage = useCanManage();
   const copies = useCopies(WISHLIST);
+  // A bundle's contents are wished for through the bundle copy.
+  const wishes = useMemo(() => (copies.data ?? []).filter((row) => row.bundle_copy_id == null), [copies.data]);
   const platforms = usePlatforms();
   const stores = useStores();
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -48,7 +45,7 @@ export function WishlistPage() {
       <PageHeader
         title={t('nav.wishlist')}
         description={t('wishlist.description')}
-        count={copies.data && t('wishlist.count', { count: copies.data.length })}
+        count={copies.data && t('wishlist.count', { count: wishes.length })}
         countTestId="wishlist-count"
       >
         {canManage && (
@@ -64,7 +61,7 @@ export function WishlistPage() {
         <Text c="red" role="alert">
           {errorMessage(t, copies.error)}
         </Text>
-      ) : copies.data.length === 0 ? (
+      ) : wishes.length === 0 ? (
         <Stack align="center" className={classes.empty}>
           <IconHeart size={48} stroke={1.2} />
           <Title order={3}>{t('wishlist.empty')}</Title>
@@ -74,7 +71,7 @@ export function WishlistPage() {
         </Stack>
       ) : (
         <ul className={classes.list}>
-          {copies.data.map((row) => {
+          {wishes.map((row) => {
             const details = [
               platformName.get(row.platform_id),
               t(`region.${row.region}`),
@@ -139,7 +136,12 @@ export function WishlistPage() {
       )}
 
       {dialog?.kind === 'pickGame' && (
-        <PickGameModal onClose={close} onNext={(target) => setDialog({ kind: 'addCopy', target })} />
+        <PickGameModal
+          title={t('wishlist.add')}
+          submitLabel={t('wishlist.next')}
+          onClose={close}
+          onNext={(target) => setDialog({ kind: 'addCopy', target })}
+        />
       )}
       {dialog?.kind === 'addCopy' && <AddWishCopy target={dialog.target} onClose={close} />}
       {dialog?.kind === 'gotIt' && (
@@ -169,97 +171,6 @@ export function WishlistPage() {
   );
 }
 
-/** Step one of adding to the wishlist: which game, from IGDB, the collection or a new title. */
-function PickGameModal({ onClose, onNext }: { onClose: () => void; onNext: (target: Target) => void }) {
-  const { t } = useTranslation();
-  const igdb = useStatus().data?.igdb_configured ?? false;
-  const games = useGames({ ownership: 'any' });
-  const { results, searched, search } = useIgdbSearch();
-  const [picked, setPicked] = useState<IgdbHit | null>(null);
-  const form = useForm({
-    initialValues: { title: '' },
-    validate: { title: (value) => (value.trim() ? null : t('errors.required')) },
-  });
-
-  const typed = form.values.title.trim().toLocaleLowerCase();
-  const existing = picked
-    ? null
-    : (games.data ?? []).find((game) => game.title.trim().toLocaleLowerCase() === typed);
-
-  const target = (title: string): Target => {
-    if (picked?.game_id != null) return { kind: 'existing', id: picked.game_id, title: picked.name };
-    if (existing) return { kind: 'existing', id: existing.id, title: existing.title };
-    return { kind: 'new', title: title.trim(), igdbId: picked?.igdb_id ?? null };
-  };
-
-  const pick = (hit: IgdbHit) => {
-    if (picked?.igdb_id === hit.igdb_id) {
-      setPicked(null);
-      return;
-    }
-    setPicked(hit);
-    form.setFieldValue('title', hit.name);
-  };
-
-  return (
-    <FormModal
-      opened
-      title={t('wishlist.add')}
-      saving={false}
-      submitLabel={t('wishlist.next')}
-      onClose={onClose}
-      onSubmit={form.onSubmit((values) => onNext(target(values.title)))}
-    >
-      <TextInput
-        label={t('game.title')}
-        description={igdb ? t('library.addIgdbHint') : undefined}
-        required
-        data-autofocus
-        {...form.getInputProps('title')}
-        onChange={(event) => {
-          form.setFieldValue('title', event.currentTarget.value);
-          setPicked(null);
-        }}
-      />
-      {existing && (
-        <Text size="sm" c="dimmed" data-testid="wish-existing">
-          {t('wishlist.existing', { title: existing.title })}
-        </Text>
-      )}
-      {igdb && (
-        <Button
-          variant="light"
-          style={{ alignSelf: 'flex-start' }}
-          leftSection={<IconSearch size={16} />}
-          loading={results.isFetching}
-          disabled={!form.values.title.trim()}
-          onClick={() => search(form.values.title)}
-        >
-          {t('igdb.search')}
-        </Button>
-      )}
-      {searched && (
-        <ScrollArea.Autosize mah={320} type="auto" offsetScrollbars>
-          <Stack gap="xs">
-            <IgdbHits
-              results={results}
-              onPick={pick}
-              selectedId={picked?.igdb_id ?? null}
-              badge={(hit) =>
-                hit.igdb_id === picked?.igdb_id ? (
-                  <Badge variant="light">{t('igdb.selected')}</Badge>
-                ) : hit.game_id != null ? (
-                  <Badge variant="light" color="gray">{t('igdb.inCollection')}</Badge>
-                ) : null
-              }
-            />
-          </Stack>
-        </ScrollArea.Autosize>
-      )}
-    </FormModal>
-  );
-}
-
 /** Step two: the copy you want. A new game is created only when the copy is saved. */
 function AddWishCopy({ target, onClose }: { target: Target; onClose: () => void }) {
   const { t } = useTranslation();
@@ -267,23 +178,8 @@ function AddWishCopy({ target, onClose }: { target: Target; onClose: () => void 
 
   const resolveGame = async () => {
     if (target.kind === 'existing') return target.id;
-    if (created.current != null) return created.current;
-    const game = await call(api.POST('/api/games', { body: { title: target.title, play_status: null } }));
-    created.current = game.id;
-    if (target.igdbId != null) {
-      // The game exists either way; a failed link leaves it to be linked from its page.
-      try {
-        await call(
-          api.POST('/api/games/{id}/igdb', {
-            params: { path: { id: game.id } },
-            body: { igdb_id: target.igdbId, overwrite: false },
-          }),
-        );
-      } catch (error) {
-        notifyError(errorMessage(t, error));
-      }
-    }
-    return game.id;
+    created.current ??= await createGame(target, t);
+    return created.current;
   };
 
   return (

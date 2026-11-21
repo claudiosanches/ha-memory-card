@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE copies SET release_id = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "60a448bb47a0309b7c9300ff37d4163758b2c4c6e737692f3b6be00024ee8aa0"
+}

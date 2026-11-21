@@ -47,6 +47,12 @@ pub async fn search(
         return Ok(Json(Vec::new()));
     }
     let mut hits = igdb.search(text).await?;
+    mark_collected(&state, &mut hits).await?;
+    Ok(Json(hits))
+}
+
+/// Fills `game_id` for hits already in the collection.
+async fn mark_collected(state: &AppState, hits: &mut [SearchHit]) -> ApiResult<()> {
     let ids = serde_json::to_string(&hits.iter().map(|hit| hit.igdb_id).collect::<Vec<_>>())
         .expect("a list of numbers serializes");
     let owned: Vec<(i64, i64)> = sqlx::query_as(
@@ -55,12 +61,35 @@ pub async fn search(
     .bind(ids)
     .fetch_all(&state.db)
     .await?;
-    for hit in &mut hits {
+    for hit in hits {
         hit.game_id = owned
             .iter()
             .find(|(igdb_id, _)| *igdb_id == hit.igdb_id)
             .map(|(_, id)| *id);
     }
+    Ok(())
+}
+
+#[utoipa::path(
+    get, path = "/games/{id}/igdb-contents", tag = "igdb", operation_id = "igdbBundleContents",
+    params(("id" = i64, Path)),
+    responses(
+        (status = OK, description = "Games IGDB lists in this bundle; empty when the game has no IGDB link", body = Vec<SearchHit>),
+        (status = NOT_FOUND, body = ErrorBody),
+        (status = SERVICE_UNAVAILABLE, description = "`igdb_not_configured`", body = ErrorBody),
+        (status = BAD_GATEWAY, description = "`igdb_failed`", body = ErrorBody),
+    )
+)]
+pub async fn bundle_contents(
+    State(state): State<AppState>,
+    ApiPath(id): ApiPath<i64>,
+) -> ApiResult<Json<Vec<SearchHit>>> {
+    let igdb = client(&state)?;
+    let Some(bundle) = games::get(&state.db, id).await?.igdb_id else {
+        return Ok(Json(Vec::new()));
+    };
+    let mut hits = igdb.bundle_contents(bundle).await?;
+    mark_collected(&state, &mut hits).await?;
     Ok(Json(hits))
 }
 

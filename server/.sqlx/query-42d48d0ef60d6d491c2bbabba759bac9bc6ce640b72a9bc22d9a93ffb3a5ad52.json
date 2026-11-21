@@ -1,0 +1,49 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n             (SELECT COUNT(DISTINCT r.game_id) FROM copies c JOIN releases r ON r.id = c.release_id\n               WHERE c.status = 'owned') AS \"games!: i64\",\n             (SELECT COUNT(*) FROM copies WHERE status = 'owned' AND bundle_id IS NULL) AS \"copies!: i64\",\n             (SELECT COUNT(*) FROM copies WHERE status = 'wanted' AND bundle_id IS NULL) AS \"wishlist!: i64\",\n             (SELECT COUNT(*) FROM games g JOIN play_statuses s ON s.key = g.play_status\n               WHERE s.counts_as = 'backlog' AND EXISTS (\n                 SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                  WHERE r.game_id = g.id AND c.status = 'owned')) AS \"backlog!: i64\",\n             (SELECT COUNT(*) FROM games g JOIN play_statuses s ON s.key = g.play_status\n               WHERE s.counts_as = 'playing' AND EXISTS (\n                 SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                  WHERE r.game_id = g.id AND c.status = 'owned')) AS \"playing!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "games!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "wishlist!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "backlog!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "playing!: i64",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "42d48d0ef60d6d491c2bbabba759bac9bc6ce640b72a9bc22d9a93ffb3a5ad52"
+}

@@ -53,6 +53,7 @@ import { notifyError, notifySuccess } from '../../components/notify';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { history } from '../../components/history';
 import { formatDate, today } from '../../components/status';
+import { BundleContentsModal } from './BundleContents';
 import { Copies } from './Copies';
 import { defaultCopy, Sessions } from './Sessions';
 import { CoverPicker } from './CoverPicker';
@@ -71,6 +72,7 @@ type Dialog =
   | { kind: 'editCopy'; copy: CopyDetail; release: ReleaseDetail }
   | { kind: 'gotIt'; copy: CopyDetail; release: ReleaseDetail }
   | { kind: 'deleteCopy'; copy: CopyDetail }
+  | { kind: 'contents'; copy: CopyDetail }
   | { kind: 'editRelease'; release: ReleaseDetail }
   | { kind: 'deleteRelease'; release: ReleaseDetail }
   | null;
@@ -495,6 +497,7 @@ function GameView({ game }: { game: GameDetail }) {
                 onEdit={canManage ? (copy) => setDialog({ kind: 'editCopy', copy, release }) : undefined}
                 onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}
                 onGotIt={canManage ? (copy) => setDialog({ kind: 'gotIt', copy, release }) : undefined}
+                onAddContents={canManage ? (copy) => setDialog({ kind: 'contents', copy }) : undefined}
               />
             )}
           </Stack>
@@ -528,9 +531,10 @@ function GameView({ game }: { game: GameDetail }) {
         onConfirm={() => removeGame.mutate()}
         onClose={close}
       />
+      {dialog?.kind === 'contents' && <BundleContentsModal game={game} copy={dialog.copy} onClose={close} />}
       <ConfirmModal
         opened={dialog?.kind === 'deleteCopy'}
-        title={t('game.deleteCopy')}
+        title={dialog?.kind === 'deleteCopy' && dialog.copy.bundle ? t('bundle.removeTitle') : t('game.deleteCopy')}
         message={lastCopy ? t('game.lastCopy', { title: game.title }) : undefined}
         confirmLabel={t('common.delete')}
         busy={removeCopy.isPending}

@@ -1,5 +1,6 @@
-import { ActionIcon, Badge, Group, Text } from '@mantine/core';
-import { IconCheck, IconPencil, IconTrash } from '@tabler/icons-react';
+import { ActionIcon, Anchor, Badge, Group, Text } from '@mantine/core';
+import { IconCheck, IconPackages, IconPencil, IconTrash } from '@tabler/icons-react';
+import { Link } from '@tanstack/react-router';
 import { Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CopyDetail } from '../../api/types';
@@ -17,7 +18,17 @@ type Props = {
   onDelete?: (copy: CopyDetail) => void;
   /** Moves a wanted copy into the collection. */
   onGotIt?: (copy: CopyDetail) => void;
+  /** Adds games that came inside this copy. */
+  onAddContents?: (copy: CopyDetail) => void;
 };
+
+function GameLink({ id, title }: { id: number; title: string }) {
+  return (
+    <Anchor inherit renderRoot={(props) => <Link to="/games/$gameId" params={{ gameId: String(id) }} {...props} />}>
+      {title}
+    </Anchor>
+  );
+}
 
 /** Parts in their own elements, joined by the separator. */
 function Parts({ parts }: { parts: ReactNode[] }) {
@@ -31,7 +42,7 @@ function Parts({ parts }: { parts: ReactNode[] }) {
   ));
 }
 
-export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt }: Props) {
+export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt, onAddContents }: Props) {
   const { t, i18n } = useTranslation();
   const editable = onEdit && onDelete;
 
@@ -64,6 +75,22 @@ export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt }: P
                   <Parts parts={where} />
                 </Text>
               )}
+              {copy.bundle && (
+                <Text size="xs" data-testid={`bundle-${copy.id}`}>
+                  {t('bundle.partOf')} <GameLink id={copy.bundle.game_id} title={copy.bundle.title} />
+                </Text>
+              )}
+              {copy.contents.length > 0 && (
+                <Text size="xs" data-testid={`contents-${copy.id}`}>
+                  {t('bundle.includes')}{' '}
+                  {copy.contents.map((item, i) => (
+                    <Fragment key={item.copy_id}>
+                      {i > 0 && ', '}
+                      <GameLink id={item.game_id} title={item.title} />
+                    </Fragment>
+                  ))}
+                </Text>
+              )}
               {copy.notes && (
                 <Text size="xs" c="dimmed" className={classes.notes}>
                   {copy.notes}
@@ -73,8 +100,20 @@ export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt }: P
                 {history(copy, t, i18n.language)}
               </Text>
             </div>
-            {editable && (
+            {editable && copy.bundle && (
               <Group gap={4} wrap="nowrap" className={classes.actions}>
+                <ActionIcon variant="subtle" color="red" aria-label={t('bundle.remove')} onClick={() => onDelete(copy)}>
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </Group>
+            )}
+            {editable && !copy.bundle && (
+              <Group gap={4} wrap="nowrap" className={classes.actions}>
+                {onAddContents && (
+                  <ActionIcon variant="subtle" aria-label={t('bundle.add')} onClick={() => onAddContents(copy)}>
+                    <IconPackages size={16} />
+                  </ActionIcon>
+                )}
                 {onGotIt && wanted && (
                   <ActionIcon variant="subtle" color="green" aria-label={t('game.gotIt')} onClick={() => onGotIt(copy)}>
                     <IconCheck size={16} />

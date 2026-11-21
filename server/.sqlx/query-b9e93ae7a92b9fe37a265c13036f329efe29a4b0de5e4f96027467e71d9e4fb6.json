@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT r.platform_id AS \"platform_id!\", COUNT(DISTINCT r.game_id) AS \"games!: i64\",\n                  COUNT(*) AS \"copies!: i64\"\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           JOIN platforms p ON p.id = r.platform_id\n           WHERE c.status = 'owned'\n           GROUP BY r.platform_id\n           ORDER BY MIN(p.sort_order), MIN(p.name)",
+  "query": "SELECT r.platform_id AS \"platform_id!\", COUNT(DISTINCT r.game_id) AS \"games!: i64\",\n                  COUNT(*) AS \"copies!: i64\"\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           JOIN platforms p ON p.id = r.platform_id\n           WHERE c.status = 'owned' AND c.bundle_id IS NULL\n           GROUP BY r.platform_id\n           ORDER BY MIN(p.sort_order), MIN(p.name)",
   "describe": {
     "columns": [
       {
@@ -36,5 +36,5 @@
       false
     ]
   },
-  "hash": "8b31f498bad3f4ea9db18329be119616eec0a00a467376c3c7b9295ddb37cc28"
+  "hash": "b9e93ae7a92b9fe37a265c13036f329efe29a4b0de5e4f96027467e71d9e4fb6"
 }

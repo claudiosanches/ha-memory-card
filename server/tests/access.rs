@@ -179,6 +179,7 @@ async fn every_route_checks_the_role() {
         "/api/import/template.csv",
         "/api/igdb/search",
         "/api/igdb/titles",
+        "/api/games/{id}/igdb-contents",
     ];
 
     let openapi = memory_card::openapi();

@@ -87,6 +87,7 @@ function detail(id: number, title: string, copies: number): GameDetail {
           condition: null,
           notes: null,
           created_at: '2026-11-01T10:00:00.000Z',
+          contents: [],
         })),
       },
     ],

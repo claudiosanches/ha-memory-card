@@ -27,9 +27,22 @@ pub struct CopyDetail {
     pub price: Option<String>,
     /// ISO 4217 code of `price`.
     pub currency: Option<String>,
+    /// The bundle copy this copy came in. Its status, format, device, store,
+    /// condition, platform and region follow that copy.
+    pub bundle: Option<CopyLink>,
+    /// Copies of other games that came in this one, by title.
+    pub contents: Vec<CopyLink>,
     pub created_at: String,
     pub created_by: Option<Person>,
     pub updated_by: Option<Person>,
+}
+
+/// A copy of another game.
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct CopyLink {
+    pub copy_id: i64,
+    pub game_id: i64,
+    pub title: String,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -183,6 +196,41 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     .fetch_all(pool)
     .await?;
 
+    let links = sqlx::query!(
+        r#"SELECT c.id AS "copy_id!", r.game_id, g.title,
+                  b.id AS "bundle_copy_id!", br.game_id AS bundle_game_id, bg.title AS bundle_title
+           FROM copies c
+           JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id
+           JOIN copies b ON b.id = c.bundle_id
+           JOIN releases br ON br.id = b.release_id JOIN games bg ON bg.id = br.game_id
+           WHERE r.game_id = ?1 OR br.game_id = ?1
+           ORDER BY g.sort_title, c.id"#,
+        id
+    )
+    .fetch_all(pool)
+    .await?;
+    let bundle_of = |copy_id: i64| {
+        links
+            .iter()
+            .find(|l| l.copy_id == copy_id && l.game_id == id)
+            .map(|l| CopyLink {
+                copy_id: l.bundle_copy_id,
+                game_id: l.bundle_game_id,
+                title: l.bundle_title.clone(),
+            })
+    };
+    let contents_of = |copy_id: i64| {
+        links
+            .iter()
+            .filter(|l| l.bundle_copy_id == copy_id && l.bundle_game_id == id)
+            .map(|l| CopyLink {
+                copy_id: l.copy_id,
+                game_id: l.game_id,
+                title: l.title.clone(),
+            })
+            .collect()
+    };
+
     let releases = releases
         .into_iter()
         .map(|r| {
@@ -219,6 +267,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                             .zip(c.currency.as_deref())
                             .map(|(minor, currency)| money::format(minor, currency)),
                         currency: c.currency,
+                        bundle: bundle_of(c.id),
+                        contents: contents_of(c.id),
                         created_at: c.created_at,
                         created_by: Person::from_columns(c.created_by, c.created_by_name),
                         updated_by: Person::from_columns(c.updated_by, c.updated_by_name),
@@ -417,6 +467,25 @@ pub async fn update_copy(
 ) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
     let game_id = copy_game(&mut tx, copy_id).await?;
+    let in_bundle = sqlx::query_scalar!("SELECT bundle_id FROM copies WHERE id = ?", copy_id)
+        .fetch_one(&mut *tx)
+        .await?
+        .is_some();
+    if in_bundle {
+        // Everything else follows the bundle copy.
+        sqlx::query!(
+            "UPDATE copies SET notes = ?, updated_by = ?,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?",
+            fields.notes,
+            by,
+            copy_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        return Ok(game_id);
+    }
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
     let (price, currency) = price_columns(fields);
@@ -443,8 +512,104 @@ pub async fn update_copy(
     )
     .execute(&mut *tx)
     .await?;
+    sync_contents(&mut tx, copy_id).await?;
     tx.commit().await?;
     Ok(game_id)
+}
+
+/// Copies the bundle copy's shared fields onto its contents and moves them
+/// to their games' releases on the bundle's platform and region.
+async fn sync_contents(conn: &mut SqliteConnection, bundle_id: i64) -> ApiResult<()> {
+    sqlx::query!(
+        "UPDATE copies
+         SET status = b.status, format = b.format, device_id = b.device_id,
+             store_id = b.store_id, condition = b.condition,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         FROM (SELECT status, format, device_id, store_id, condition FROM copies WHERE id = ?1) AS b
+         WHERE copies.bundle_id = ?1",
+        bundle_id
+    )
+    .execute(&mut *conn)
+    .await?;
+    let moved = sqlx::query!(
+        r#"SELECT c.id AS "id!", r.game_id, br.platform_id, br.region AS "region: Region"
+           FROM copies c JOIN releases r ON r.id = c.release_id
+           JOIN copies b ON b.id = c.bundle_id JOIN releases br ON br.id = b.release_id
+           WHERE c.bundle_id = ? AND (r.platform_id != br.platform_id OR r.region != br.region)"#,
+        bundle_id
+    )
+    .fetch_all(&mut *conn)
+    .await?;
+    for copy in moved {
+        let release = release_id(conn, copy.game_id, copy.platform_id, copy.region, None).await?;
+        sqlx::query!(
+            "UPDATE copies SET release_id = ? WHERE id = ?",
+            release,
+            copy.id
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+    Ok(())
+}
+
+/// Adds a copy of `game_id` inside a bundle copy and returns the bundle's game id.
+pub async fn add_content(
+    pool: &SqlitePool,
+    bundle_id: i64,
+    game_id: i64,
+    by: &str,
+) -> ApiResult<i64> {
+    let mut tx = crate::db::write_tx(pool).await?;
+    let bundle = sqlx::query!(
+        r#"SELECT c.bundle_id, r.game_id, r.platform_id, r.region AS "region: Region"
+           FROM copies c JOIN releases r ON r.id = c.release_id WHERE c.id = ?"#,
+        bundle_id
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+    if bundle.bundle_id.is_some() {
+        return Err(ApiError::Conflict("nested_bundle"));
+    }
+    if bundle.game_id == game_id {
+        return Err(ApiError::invalid("same_game", "game_id"));
+    }
+    let exists: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM games WHERE id = ?) AS "exists!: bool""#,
+        game_id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    if !exists {
+        return Err(ApiError::invalid("unknown_game", "game_id"));
+    }
+    let already: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
+                          WHERE c.bundle_id = ? AND r.game_id = ?) AS "already!: bool""#,
+        bundle_id,
+        game_id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    if already {
+        return Err(ApiError::Conflict("already_in_bundle"));
+    }
+    let release = release_id(&mut tx, game_id, bundle.platform_id, bundle.region, None).await?;
+    sqlx::query!(
+        "INSERT INTO copies (release_id, status, format, device_id, store_id, condition,
+                             bundle_id, created_by, updated_by)
+         SELECT ?, status, format, device_id, store_id, condition, id, ?, ?
+         FROM copies WHERE id = ?",
+        release,
+        by,
+        by,
+        bundle_id
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(bundle.game_id)
 }
 
 /// Deletes a copy and returns its game id. The release stays.
@@ -561,14 +726,32 @@ async fn release_for(
     game_id: i64,
     fields: &CopyFields,
 ) -> ApiResult<i64> {
+    release_id(
+        conn,
+        game_id,
+        fields.platform_id,
+        fields.region,
+        fields.product_code.as_deref(),
+    )
+    .await
+}
+
+/// The game's release for this platform, region and product code, created if needed.
+async fn release_id(
+    conn: &mut SqliteConnection,
+    game_id: i64,
+    platform_id: i64,
+    region: Region,
+    product_code: Option<&str>,
+) -> ApiResult<i64> {
     let existing = sqlx::query_scalar!(
         r#"SELECT id AS "id!" FROM releases
            WHERE game_id = ? AND platform_id = ? AND region = ?
              AND lower(COALESCE(product_code, '')) = lower(COALESCE(?, ''))"#,
         game_id,
-        fields.platform_id,
-        fields.region,
-        fields.product_code
+        platform_id,
+        region,
+        product_code
     )
     .fetch_optional(&mut *conn)
     .await?;
@@ -579,9 +762,9 @@ async fn release_for(
         r#"INSERT INTO releases (game_id, platform_id, region, product_code)
            VALUES (?, ?, ?, ?) RETURNING id AS "id!""#,
         game_id,
-        fields.platform_id,
-        fields.region,
-        fields.product_code
+        platform_id,
+        region,
+        product_code
     )
     .fetch_one(&mut *conn)
     .await?)

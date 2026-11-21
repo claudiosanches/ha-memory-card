@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/copies/{id}/contents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -198,6 +214,22 @@ export interface paths {
          *     IGDB id refreshes it.
          */
         post: operations["linkGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/games/{id}/igdb-contents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["igdbBundleContents"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -620,8 +652,15 @@ export interface components {
          * @enum {string}
          */
         Condition: "sealed" | "cib" | "no_manual" | "loose";
+        ContentInput: {
+            /** Format: int64 */
+            game_id: number;
+        };
         CopyDetail: {
+            bundle?: components["schemas"]["CopyLink"] | null;
             condition?: components["schemas"]["Condition"] | null;
+            /** @description Copies of other games that came in this one, by title. */
+            contents: components["schemas"]["CopyLink"][];
             created_at: string;
             created_by?: components["schemas"]["Person"] | null;
             /** @description ISO 4217 code of `price`. */
@@ -663,8 +702,21 @@ export interface components {
             /** Format: int64 */
             store_id?: number | null;
         };
+        /** @description A copy of another game. */
+        CopyLink: {
+            /** Format: int64 */
+            copy_id: number;
+            /** Format: int64 */
+            game_id: number;
+            title: string;
+        };
         /** @description One copy in the copies view, with its release and game. */
         CopyRow: {
+            /**
+             * Format: int64
+             * @description The bundle copy this copy came in.
+             */
+            bundle_copy_id?: number | null;
             condition?: components["schemas"]["Condition"] | null;
             /** Format: int64 */
             copy_id: number;
@@ -1431,6 +1483,59 @@ export interface operations {
             };
         };
     };
+    addContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The bundle copy */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentInput"];
+            };
+        };
+        responses: {
+            /** @description The bundle's game */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `nested_bundle`: the copy is itself in a bundle; `already_in_bundle` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `same_game`, `unknown_game` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     listDevices: {
         parameters: {
             query?: never;
@@ -1999,6 +2104,54 @@ export interface operations {
             };
             /** @description `igdb_not_found` */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_failed` */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `igdb_not_configured` */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    igdbBundleContents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Games IGDB lists in this bundle; empty when the game has no IGDB link */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchHit"][];
+                };
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

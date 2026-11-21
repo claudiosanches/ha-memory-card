@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id\n                          WHERE c.bundle_id = ? AND r.game_id = ?) AS \"already!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "already!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "eebd8801bdc1a5abe52e3342949a6afd68d72935dde44d891244818e14d3f449"
+}

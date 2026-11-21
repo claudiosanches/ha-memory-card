@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.bundle_id, r.game_id, r.platform_id, r.region AS \"region: Region\"\n           FROM copies c JOIN releases r ON r.id = c.release_id WHERE c.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "bundle_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "bundle_id"
+          }
+        }
+      },
+      {
+        "name": "game_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "platform_id",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "platform_id"
+          }
+        }
+      },
+      {
+        "name": "region: Region",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "region"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b2831f0108414a24f18d1f9ca4482d25781429ab671b59c38b07865820127089"
+}

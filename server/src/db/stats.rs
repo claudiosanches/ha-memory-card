@@ -1,4 +1,5 @@
-//! Collection totals for the stats page. Counts cover owned copies unless named otherwise.
+//! Collection totals for the stats page. Counts cover owned copies unless named
+//! otherwise; a bundle counts as one copy, not one per game inside it.
 
 use serde::Serialize;
 use sqlx::SqlitePool;
@@ -108,7 +109,7 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
              COUNT(*) FILTER (WHERE status = 'owned' AND format = 'digital') AS "digital!: i64",
              COUNT(*) FILTER (WHERE status = 'wanted') AS "wishlist!: i64",
              COUNT(*) FILTER (WHERE status = 'owned' AND price IS NULL) AS "unpriced!: i64"
-           FROM copies"#
+           FROM copies WHERE bundle_id IS NULL"#
     )
     .fetch_one(pool)
     .await?;
@@ -170,7 +171,7 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
                   COUNT(*) AS "copies!: i64"
            FROM copies c JOIN releases r ON r.id = c.release_id
            JOIN platforms p ON p.id = r.platform_id
-           WHERE c.status = 'owned'
+           WHERE c.status = 'owned' AND c.bundle_id IS NULL
            GROUP BY r.platform_id
            ORDER BY MIN(p.sort_order), MIN(p.name)"#
     )
@@ -180,7 +181,7 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
     let stores = sqlx::query_as!(
         StoreCount,
         r#"SELECT store_id AS "store_id?", COUNT(*) AS "copies!: i64"
-           FROM copies WHERE status = 'owned'
+           FROM copies WHERE status = 'owned' AND bundle_id IS NULL
            GROUP BY store_id
            ORDER BY COUNT(*) DESC, store_id IS NULL, store_id"#
     )

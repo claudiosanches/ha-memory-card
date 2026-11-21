@@ -271,6 +271,77 @@
         }
       }
     },
+    "/api/copies/{id}/contents": {
+      "post": {
+        "tags": [
+          "games"
+        ],
+        "operationId": "addContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The bundle copy",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The bundle's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`nested_bundle`: the copy is itself in a bundle; `already_in_bundle`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`same_game`, `unknown_game`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/devices": {
       "get": {
         "tags": [
@@ -1187,6 +1258,69 @@
           },
           "422": {
             "description": "`igdb_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`igdb_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`igdb_not_configured`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{id}/igdb-contents": {
+      "get": {
+        "tags": [
+          "igdb"
+        ],
+        "operationId": "igdbBundleContents",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Games IGDB lists in this bundle; empty when the game has no IGDB link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchHit"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -2733,15 +2867,40 @@
           "loose"
         ]
       },
+      "ContentInput": {
+        "type": "object",
+        "required": [
+          "game_id"
+        ],
+        "properties": {
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
       "CopyDetail": {
         "type": "object",
         "required": [
           "id",
           "status",
           "format",
+          "contents",
           "created_at"
         ],
         "properties": {
+          "bundle": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CopyLink",
+                "description": "The bundle copy this copy came in. Its status, format, device, store,\ncondition, platform and region follow that copy."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "condition": {
             "oneOf": [
               {
@@ -2751,6 +2910,13 @@
                 "type": "null"
               }
             ]
+          },
+          "contents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyLink"
+            },
+            "description": "Copies of other games that came in this one, by title."
           },
           "created_at": {
             "type": "string"
@@ -2929,6 +3095,28 @@
           }
         }
       },
+      "CopyLink": {
+        "type": "object",
+        "description": "A copy of another game.",
+        "required": [
+          "copy_id",
+          "game_id",
+          "title"
+        ],
+        "properties": {
+          "copy_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "CopyRow": {
         "type": "object",
         "description": "One copy in the copies view, with its release and game.",
@@ -2943,6 +3131,14 @@
           "format"
         ],
         "properties": {
+          "bundle_copy_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The bundle copy this copy came in."
+          },
           "condition": {
             "oneOf": [
               {

@@ -223,7 +223,13 @@
     "unknown_play_status": "That play status no longer exists. Reload the page.",
     "builtin_status": "Built-in play statuses cannot be deleted or moved to another group.",
     "manager_required": "Only managers can change the collection.",
-    "identity_required": "Home Assistant did not say who you are. Reload the page."
+    "identity_required": "Home Assistant did not say who you are. Reload the page.",
+    "invalid_price": "Enter an amount, such as 59.99.",
+    "invalid_currency": "Choose a currency.",
+    "nested_bundle": "This copy is inside a bundle, so it cannot hold games.",
+    "already_in_bundle": "That game is already in this bundle.",
+    "same_game": "A bundle cannot hold its own game.",
+    "unknown_game": "That game no longer exists."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -706,5 +712,18 @@
     "copiesCount_other": "{{count}} copies",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games"
+  },
+  "bundle": {
+    "add": "Add games inside this copy",
+    "addTitle": "Games inside {{title}}",
+    "addOne": "Add to bundle",
+    "addPicked_one": "Add {{count}} game",
+    "addPicked_other": "Add {{count}} games",
+    "other": "Another game",
+    "igdbListed": "IGDB lists these games in this bundle. Each one gets a copy that follows this one.",
+    "includes": "Includes",
+    "partOf": "Came in",
+    "remove": "Remove from bundle",
+    "removeTitle": "Remove this game from the bundle?"
   }
 }

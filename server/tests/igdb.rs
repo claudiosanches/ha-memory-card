@@ -50,6 +50,9 @@ async fn games(headers: HeaderMap, body: String) -> (StatusCode, axum::Json<Valu
                 "total_rating_count": 900}])
     } else if body.contains(r#"name ~ "super mario odyssey""#) || body.contains("where id = (1)") {
         json!([odyssey()])
+    } else if body.contains("where bundles = (1)") {
+        json!([{"id": 1, "name": "Super Mario Odyssey", "platforms": [{"name": "Nintendo Switch", "abbreviation": "Switch"}]},
+               {"id": 7, "name": "Super Mario 64", "first_release_date": 835228800}])
     } else if body.contains(r#"name ~ "Doom""#) {
         json!([{"id": 2, "name": "Doom", "platforms": [6]}, {"id": 3, "name": "DOOM", "platforms": [48]}])
     } else {
@@ -425,4 +428,32 @@ async fn overwrite_replaces_hand_edits_where_igdb_has_values() {
             .await,
         1
     );
+}
+
+#[tokio::test]
+async fn igdb_lists_what_a_bundle_holds() {
+    let app = with_igdb().await;
+    let (_, bundle) = app
+        .json("POST", "/api/games", Some(json!({"title": "Mario Pack"})))
+        .await;
+    let bundle = bundle["id"].as_i64().unwrap();
+    let (status, hits) = app
+        .json("GET", &format!("/api/games/{bundle}/igdb-contents"), None)
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(hits, json!([]), "an unlinked game lists nothing");
+
+    // Linking makes it IGDB game 1, which the stand-in treats as the bundle.
+    app.json(
+        "POST",
+        &format!("/api/games/{bundle}/igdb"),
+        Some(json!({"igdb_id": 1})),
+    )
+    .await;
+    let (_, hits) = app
+        .json("GET", &format!("/api/games/{bundle}/igdb-contents"), None)
+        .await;
+    assert_eq!(hits[0]["game_id"], bundle, "already in the collection");
+    assert_eq!(hits[1]["name"], "Super Mario 64");
+    assert_eq!(hits[1]["year"], 1996);
 }

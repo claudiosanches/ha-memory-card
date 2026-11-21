@@ -194,22 +194,36 @@ impl Igdb {
         let mut hits: Vec<RawHit> = self.post("games", &body).await?;
         // IGDB ranks fan hacks next to the real game; rated games come first.
         hits.sort_by_key(|hit| std::cmp::Reverse(hit.total_rating_count.unwrap_or(0)));
-        Ok(hits
-            .into_iter()
-            .map(|hit| SearchHit {
-                igdb_id: hit.id,
-                name: hit.name,
-                year: hit.first_release_date.and_then(year),
-                platforms: hit
-                    .platforms
-                    .into_iter()
-                    .map(|p| p.abbreviation.unwrap_or(p.name))
-                    .collect(),
-                game_id: None,
-            })
-            .collect())
+        Ok(search_hits(hits))
     }
 
+    /// The games IGDB lists inside a bundle, by name.
+    pub async fn bundle_contents(&self, bundle: i64) -> Result<Vec<SearchHit>, IgdbError> {
+        let body = format!(
+            "fields name,first_release_date,platforms.name,platforms.abbreviation,total_rating_count; where bundles = ({bundle}); sort name asc; limit 100;"
+        );
+        let hits: Vec<RawHit> = self.post("games", &body).await?;
+        Ok(search_hits(hits))
+    }
+}
+
+fn search_hits(hits: Vec<RawHit>) -> Vec<SearchHit> {
+    hits.into_iter()
+        .map(|hit| SearchHit {
+            igdb_id: hit.id,
+            name: hit.name,
+            year: hit.first_release_date.and_then(year),
+            platforms: hit
+                .platforms
+                .into_iter()
+                .map(|p| p.abbreviation.unwrap_or(p.name))
+                .collect(),
+            game_id: None,
+        })
+        .collect()
+}
+
+impl Igdb {
     pub async fn games(&self, ids: &[i64]) -> Result<Vec<GameData>, IgdbError> {
         let ids: Vec<String> = ids.iter().map(i64::to_string).collect();
         let body = format!(

@@ -91,6 +91,20 @@ owned anywhere else: the library, backlog, duplicates and Missing details
 only look at copies you own. **Show > Wishlist** in the library filters
 lists the games on it.
 
+## Bundles
+
+A bundle is one copy that holds several games, such as a collection on a
+single cartridge. Add the bundle as a game with its copy, then use **Add
+games inside this copy** on that copy. When the bundle is linked to IGDB,
+Memory Card offers the games IGDB lists in it.
+
+Each game inside gets its own copy, so it shows in the library, the backlog
+and duplicates. Those copies follow the bundle copy: change the bundle's
+platform, region, format, device, store, condition or wishlist status and
+they change too. Price and purchase date stay on the bundle copy. Counts of
+copies, in Settings, the stats page and the Home Assistant sensors, count a
+bundle once. Bundle contents are not part of the CSV export.
+
 ## Import and export (CSV)
 
 **Import and export** in the sidebar downloads your collection as a CSV file

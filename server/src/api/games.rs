@@ -371,6 +371,36 @@ pub async fn add_copy(
     Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
 }
 
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ContentInput {
+    pub game_id: i64,
+}
+
+#[utoipa::path(
+    post, path = "/copies/{id}/contents", tag = "games", operation_id = "addContent",
+    params(("id" = i64, Path, description = "The bundle copy")),
+    request_body = ContentInput,
+    responses(
+        (status = CREATED, description = "The bundle's game", body = GameDetail),
+        (status = NOT_FOUND, body = ErrorBody),
+        (status = CONFLICT, description = "`nested_bundle`: the copy is itself in a bundle; `already_in_bundle`", body = ErrorBody),
+        (status = UNPROCESSABLE_ENTITY, description = "`same_game`, `unknown_game`", body = ErrorBody),
+    )
+)]
+pub async fn add_content(
+    State(state): State<AppState>,
+    Actor(by): Actor,
+    ApiPath(id): ApiPath<i64>,
+    ApiJson(input): ApiJson<ContentInput>,
+) -> ApiResult<(StatusCode, Json<GameDetail>)> {
+    let game_id = games::add_content(&state.db, id, input.game_id, &by).await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(games::get(&state.db, game_id).await?),
+    ))
+}
+
 #[utoipa::path(
     put, path = "/copies/{id}", tag = "games", operation_id = "updateCopy",
     params(("id" = i64, Path)),

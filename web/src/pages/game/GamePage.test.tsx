@@ -43,7 +43,7 @@ const GAME: GameDetail = {
       local_coop: null,
       online_coop: null,
       copies: [
-        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z' },
+        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z', contents: [] },
       ],
     },
   ],
@@ -151,6 +151,7 @@ describe('Game page', () => {
       price: '59.90',
       currency: 'USD',
       created_at: '2026-11-01T10:00:00.000Z',
+      contents: [],
       created_by: { id: 'a1', name: 'Sam' },
     };
     mockApi({
@@ -307,6 +308,54 @@ describe('Game page', () => {
       price: '1.299,90',
       currency: 'BRL',
     });
+  });
+
+  it('adds the games IGDB lists in a bundle', async () => {
+    const bundle = { ...GAME, igdb_id: 50 };
+    const withContents = {
+      ...bundle,
+      releases: [
+        {
+          ...GAME.releases[0]!,
+          copies: [{ ...GAME.releases[0]!.copies[0]!, contents: [{ copy_id: 30, game_id: 7, title: 'Super Mario 64' }] }],
+        },
+      ],
+    };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 1, owned_copies: 1, sensors: 'off' },
+      'GET /api/games/4': bundle,
+      'GET /api/games/4/igdb-contents': [
+        { igdb_id: 64, name: 'Super Mario 64', year: 1996, platforms: [], game_id: 7 },
+        { igdb_id: 65, name: 'Super Mario Sunshine', year: 2002, platforms: [], game_id: null },
+      ],
+      'POST /api/games': { ...GAME, id: 8, title: 'Super Mario Sunshine' },
+      'POST /api/games/8/igdb': { ...GAME, id: 8 },
+      'POST /api/copies/21/contents': withContents,
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.bundle.add }));
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByLabelText('Super Mario Sunshine (2002)')).toBeChecked();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add 2 games' }));
+
+    await waitFor(() => expect(calls.filter((c) => c.path === '/api/copies/21/contents')).toHaveLength(2));
+    expect(calls.filter((c) => c.path === '/api/copies/21/contents').map((c) => c.body)).toEqual([{ game_id: 7 }, { game_id: 8 }]);
+    expect(calls.find((c) => c.path === '/api/games/8/igdb')?.body).toEqual({ igdb_id: 65, overwrite: false });
+    const contents = await screen.findByTestId('contents-21');
+    expect(within(contents).getByRole('link', { name: 'Super Mario 64' })).toBeInTheDocument();
+  });
+
+  it('shows a copy that came in a bundle with only a remove action', async () => {
+    const inside = { ...GAME.releases[0]!.copies[0]!, bundle: { copy_id: 3, game_id: 9, title: 'Mario Pack' } };
+    mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, releases: [{ ...GAME.releases[0]!, copies: [inside] }] } });
+    renderAt('/games/4');
+
+    const item = await screen.findByTestId('copy-21');
+    expect(within(screen.getByTestId('bundle-21')).getByRole('link', { name: 'Mario Pack' })).toBeInTheDocument();
+    expect(within(item).getByRole('button', { name: en.bundle.remove })).toBeInTheDocument();
+    expect(within(item).queryByRole('button', { name: en.game.editCopy })).not.toBeInTheDocument();
   });
 
   it('offers to delete the game with its last copy', async () => {
