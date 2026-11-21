@@ -2,6 +2,7 @@ import { AppShell, Burger, Group, NavLink, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCopy,
+  IconStack2,
   IconDeviceGamepad2,
   IconFileImport,
   IconLibrary,
@@ -14,10 +15,11 @@ import { useTranslation } from 'react-i18next';
 import { ThemePicker } from './ThemePicker';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'duplicates' | 'import' | 'manage' | 'settings';
+type NavKey = 'library' | 'backlog' | 'duplicates' | 'import' | 'manage' | 'settings';
 
 const NAV: { key: NavKey; to: string; icon: ComponentType<{ size?: number }> }[] = [
   { key: 'library', to: '/', icon: IconLibrary },
+  { key: 'backlog', to: '/backlog', icon: IconStack2 },
   { key: 'duplicates', to: '/duplicates', icon: IconCopy },
   { key: 'import', to: '/import', icon: IconFileImport },
   { key: 'manage', to: '/manage', icon: IconDeviceGamepad2 },
@@ -59,9 +61,9 @@ export function Layout() {
 
       <AppShell.Navbar className={classes.navbar} p="md">
         <Text className={classes.sectionLabel}>{t('app.collection')}</Text>
-        {NAV.map(({ key, to, icon: Icon }, index) => (
+        {NAV.map(({ key, to, icon: Icon }) => (
           <div key={key}>
-            {index === 2 && <Text className={classes.sectionLabel} mt={32}>{t('app.tools')}</Text>}
+            {key === 'import' && <Text className={classes.sectionLabel} mt={32}>{t('app.tools')}</Text>}
             <NavLink
               className={classes.navLink}
               label={t(`nav.${key}`)}

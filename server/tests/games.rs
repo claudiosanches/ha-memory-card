@@ -529,3 +529,42 @@ async fn library_queries_use_indexes() {
         }
     }
 }
+
+#[tokio::test]
+async fn sets_only_the_play_status() {
+    let app = TestApp::new().await;
+    let (_, game) = app
+        .json(
+            "POST",
+            "/api/games",
+            Some(json!({"title": "Okami", "play_status": "backlog"})),
+        )
+        .await;
+    let path = format!("/api/games/{}/play-status", game["id"]);
+
+    let (status, detail) = app
+        .json("PUT", &path, Some(json!({"play_status": "playing"})))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["play_status"], "playing");
+    assert_eq!(detail["title"], "Okami");
+
+    let (_, detail) = app
+        .json("PUT", &path, Some(json!({"play_status": null})))
+        .await;
+    assert_eq!(detail["play_status"], Value::Null);
+
+    let (status, body) = app
+        .json("PUT", &path, Some(json!({"play_status": "beaten"})))
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body["code"], "invalid_body");
+    let (status, _) = app
+        .json(
+            "PUT",
+            "/api/games/999/play-status",
+            Some(json!({"play_status": "playing"})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}

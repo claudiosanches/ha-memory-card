@@ -249,6 +249,32 @@ pub async fn update(
     Ok(Json(games::get(&state.db, id).await?))
 }
 
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PlayStatusInput {
+    /// `null` clears it.
+    pub play_status: Option<PlayStatus>,
+}
+
+#[utoipa::path(
+    put, path = "/games/{id}/play-status", tag = "games", operation_id = "setPlayStatus",
+    params(("id" = i64, Path)),
+    request_body = PlayStatusInput,
+    responses(
+        (status = OK, body = GameDetail),
+        (status = NOT_FOUND, body = ErrorBody),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
+    )
+)]
+pub async fn set_play_status(
+    State(state): State<AppState>,
+    ApiPath(id): ApiPath<i64>,
+    ApiJson(input): ApiJson<PlayStatusInput>,
+) -> ApiResult<Json<GameDetail>> {
+    games::set_play_status(&state.db, id, input.play_status).await?;
+    Ok(Json(games::get(&state.db, id).await?))
+}
+
 #[utoipa::path(
     delete, path = "/games/{id}", tag = "games", operation_id = "deleteGame",
     params(("id" = i64, Path)),

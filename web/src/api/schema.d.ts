@@ -184,6 +184,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/games/{id}/play-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setPlayStatus"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/genres": {
         parameters: {
             query?: never;
@@ -718,6 +734,9 @@ export interface components {
          * @enum {string}
          */
         PlayStatus: "backlog" | "playing" | "paused" | "completed" | "dropped" | "mastered";
+        PlayStatusInput: {
+            play_status?: components["schemas"]["PlayStatus"] | null;
+        };
         /**
          * @description Release region, matching IGDB's release regions. `ww` also covers region-free.
          * @enum {string}
@@ -813,28 +832,18 @@ export interface components {
          *     apply to the same owned copy.
          */
         SuggestionFilter: {
-            /**
-             * @description Copies on these devices, or with no device on a platform one of them plays.
-             * @default []
-             */
-            device: number[];
-            /** @default [] */
-            game_mode: number[];
-            /** @default [] */
-            genre: number[];
+            /** @description Copies on these devices, or with no device on a platform one of them plays. */
+            device?: number[];
+            game_mode?: number[];
+            genre?: number[];
             /**
              * Format: int64
              * @description Local (same screen) players, release value first, then the game's.
-             * @default null
              */
-            min_local_players: number | null;
-            /** @default [] */
-            platform: number[];
-            /**
-             * @description Empty means backlog.
-             * @default []
-             */
-            play_status: components["schemas"]["PlayStatus"][];
+            min_local_players?: number | null;
+            platform?: number[];
+            /** @description Empty means backlog. */
+            play_status?: components["schemas"]["PlayStatus"][];
         };
         SyncStatus: {
             done: number;
@@ -1497,6 +1506,47 @@ export interface operations {
             };
             /** @description `igdb_not_configured` */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    setPlayStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlayStatusInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

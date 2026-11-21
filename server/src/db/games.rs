@@ -287,6 +287,22 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields) -> ApiResul
     Ok(())
 }
 
+pub async fn set_play_status(
+    pool: &SqlitePool,
+    id: i64,
+    status: Option<PlayStatus>,
+) -> ApiResult<()> {
+    let result = sqlx::query!(
+        "UPDATE games SET play_status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE id = ?",
+        status,
+        id
+    )
+    .execute(pool)
+    .await?;
+    found(result.rows_affected())
+}
+
 /// Deletes a game with its releases and copies, and returns the release ids.
 pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<Vec<i64>> {
     let mut tx = crate::db::write_tx(pool).await?;

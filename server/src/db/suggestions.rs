@@ -12,16 +12,22 @@ use crate::error::{ApiError, ApiResult};
 /// Values inside one filter are OR, filters are AND, and the copy filters
 /// apply to the same owned copy.
 #[derive(Debug, Default, Deserialize, ToSchema)]
-#[serde(default, deny_unknown_fields)]
+#[serde(deny_unknown_fields)]
 pub struct SuggestionFilter {
     /// Empty means backlog.
+    #[serde(default)]
     pub play_status: Vec<PlayStatus>,
+    #[serde(default)]
     pub platform: Vec<i64>,
     /// Copies on these devices, or with no device on a platform one of them plays.
+    #[serde(default)]
     pub device: Vec<i64>,
+    #[serde(default)]
     pub genre: Vec<i64>,
+    #[serde(default)]
     pub game_mode: Vec<i64>,
     /// Local (same screen) players, release value first, then the game's.
+    #[serde(default)]
     pub min_local_players: Option<i64>,
 }
 

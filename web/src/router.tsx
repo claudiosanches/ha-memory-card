@@ -6,6 +6,7 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router';
 import { Layout } from './components/Layout';
+import { BacklogPage } from './pages/backlog/BacklogPage';
 import { DuplicatesPage } from './pages/DuplicatesPage';
 import { ImportPage } from './pages/ImportPage';
 import { GamePage } from './pages/game/GamePage';
@@ -24,6 +25,7 @@ const routeTree = rootRoute.addChildren([
     validateSearch: validateLibrarySearch,
   }),
   createRoute({ getParentRoute: () => rootRoute, path: '/games/$gameId', component: GamePage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/import', component: ImportPage }),
   createRoute({

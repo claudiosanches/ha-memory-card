@@ -911,6 +911,64 @@
         }
       }
     },
+    "/api/games/{id}/play-status": {
+      "put": {
+        "tags": [
+          "games"
+        ],
+        "operationId": "setPlayStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayStatusInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/genres": {
       "get": {
         "tags": [
@@ -2907,6 +2965,23 @@
           "mastered"
         ]
       },
+      "PlayStatusInput": {
+        "type": "object",
+        "properties": {
+          "play_status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PlayStatus",
+                "description": "`null` clears it."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "Region": {
         "type": "string",
         "description": "Release region, matching IGDB's release regions. `ww` also covers region-free.",
@@ -3253,24 +3328,21 @@
               "type": "integer",
               "format": "int64"
             },
-            "description": "Copies on these devices, or with no device on a platform one of them plays.",
-            "default": []
+            "description": "Copies on these devices, or with no device on a platform one of them plays."
           },
           "game_mode": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "int64"
-            },
-            "default": []
+            }
           },
           "genre": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "int64"
-            },
-            "default": []
+            }
           },
           "min_local_players": {
             "type": [
@@ -3278,24 +3350,21 @@
               "null"
             ],
             "format": "int64",
-            "description": "Local (same screen) players, release value first, then the game's.",
-            "default": null
+            "description": "Local (same screen) players, release value first, then the game's."
           },
           "platform": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "int64"
-            },
-            "default": []
+            }
           },
           "play_status": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PlayStatus"
             },
-            "description": "Empty means backlog.",
-            "default": []
+            "description": "Empty means backlog."
           }
         },
         "additionalProperties": false
