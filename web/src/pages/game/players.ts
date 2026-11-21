@@ -25,19 +25,23 @@ export function hasPlayerData(counts: PlayerCounts): boolean {
 /**
  * IGDB's multiplayer entries leave out what a game does not support, so a
  * count on one side with nothing on the other means that side has none.
+ * "On the same screen" only fits two or more local players.
  */
 export function describePlayers(t: TFunction, counts: PlayerCounts): string {
   const local = counts.local_max_players ?? null;
   const online = counts.online_max_players ?? null;
   const noOnline = local != null && online == null && !counts.online_coop;
   const soloLocally = online != null && local == null && !counts.local_coop;
+  const localCount = soloLocally ? 1 : local;
+  const shown = (max: number | null) => max ?? t('game.playersUnknown');
+  const coop = (text: string, on?: boolean | null) => (on ? t('game.withCoop', { value: text }) : text);
 
-  const value = (max: number | null, coop?: boolean | null) => {
-    const shown = max ?? t('game.playersUnknown');
-    return coop ? t('game.withCoop', { value: shown }) : String(shown);
-  };
-  return t('game.playersSummary', {
-    local: t('game.localPlayers', { value: value(soloLocally ? 1 : local, counts.local_coop) }),
-    online: noOnline ? t('game.noOnline') : t('game.onlinePlayers', { value: value(online, counts.online_coop) }),
-  });
+  const localText =
+    localCount != null && localCount >= 2
+      ? coop(t('game.localPlayers', { value: localCount }), counts.local_coop)
+      : t('game.localSolo', { value: shown(localCount) });
+  const onlineText = noOnline
+    ? t('game.noOnline')
+    : coop(t('game.onlinePlayers', { value: shown(online) }), counts.online_coop);
+  return t('game.playersSummary', { local: localText, online: onlineText });
 }

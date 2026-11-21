@@ -127,11 +127,11 @@ describe('Game page', () => {
     renderAt('/games/4');
 
     expect(
-      await screen.findByText(wholeText(`${en.game.players}: 2 (co-op) on the same screen, no online play`)),
+      await screen.findByText(wholeText(`${en.game.players}: 2 on the same screen (co-op), no online play`)),
     ).toBeInTheDocument();
     // The release adds online co-op to the game's values.
     const card = screen.getByTestId('release-9');
-    expect(within(card).getByText(`${en.game.players}: 2 (co-op) on the same screen, Unknown (co-op) online`)).toBeInTheDocument();
+    expect(within(card).getByText(`${en.game.players}: 2 on the same screen (co-op), Unknown online (co-op)`)).toBeInTheDocument();
   });
 
   it('shows one player when single player is the only mode and counts are unknown', async () => {
@@ -152,7 +152,7 @@ describe('Game page', () => {
     mockApi({ ...SETUP, 'GET /api/game-modes': modes, 'GET /api/games/4': { ...GAME, game_mode_ids: [1, 2] } });
     renderAt('/games/4');
     expect(
-      await screen.findByText(wholeText(`${en.game.players}: Unknown on the same screen, Unknown online`)),
+      await screen.findByText(wholeText(`${en.game.players}: Unknown locally, Unknown online`)),
     ).toBeInTheDocument();
   });
 

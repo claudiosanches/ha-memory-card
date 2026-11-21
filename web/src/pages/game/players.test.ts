@@ -7,21 +7,25 @@ const say = (counts: Partial<PlayerCounts>) => describePlayers(i18n.t, { ...none
 
 describe('describePlayers', () => {
   it('says unknown when nothing is known', () => {
-    expect(say({})).toBe('Unknown on the same screen, Unknown online');
+    expect(say({})).toBe('Unknown locally, Unknown online');
   });
 
   it('reads a missing online count next to a local one as no online play', () => {
     expect(say({ local_max_players: 4 })).toBe('4 on the same screen, no online play');
-    expect(say({ local_max_players: 2, online_coop: true })).toBe('2 on the same screen, Unknown (co-op) online');
+    expect(say({ local_max_players: 2, online_coop: true })).toBe('2 on the same screen, Unknown online (co-op)');
   });
 
   it('reads a missing local count next to an online one as one player', () => {
-    expect(say({ online_max_players: 8 })).toBe('1 on the same screen, 8 online');
+    expect(say({ online_max_players: 8 })).toBe('1 locally, 8 online');
   });
 
-  it('marks co-op', () => {
+  it('says on the same screen only for two or more local players', () => {
+    expect(say({ local_max_players: 1, online_max_players: 2, online_coop: true })).toBe('1 locally, 2 online (co-op)');
+  });
+
+  it('marks co-op after each side', () => {
     expect(say({ local_max_players: 2, local_coop: true, online_max_players: 4 })).toBe(
-      '2 (co-op) on the same screen, 4 online',
+      '2 on the same screen (co-op), 4 online',
     );
   });
 });

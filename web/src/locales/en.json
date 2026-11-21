@@ -422,6 +422,7 @@
     "playersUnknown": "Unknown",
     "playersSummary": "{{local}}, {{online}}",
     "localPlayers": "{{value}} on the same screen",
+    "localSolo": "{{value}} locally",
     "onlinePlayers": "{{value}} online",
     "noOnline": "no online play",
     "withCoop": "{{value}} (co-op)",
