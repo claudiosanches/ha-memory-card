@@ -13,6 +13,7 @@ export const queryKeys = {
   gameModes: ['game-modes'],
   genres: ['genres'],
   igdbSync: ['igdb-sync'],
+  duplicates: ['duplicates'],
 } as const;
 
 export function useStatus() {
@@ -66,4 +67,8 @@ export function useIgdbSync(enabled: boolean) {
     enabled,
     refetchInterval: (query) => (query.state.data?.running ? 1000 : false),
   });
+}
+
+export function useDuplicates() {
+  return useQuery({ queryKey: queryKeys.duplicates, queryFn: () => call(api.GET('/api/duplicates')) });
 }

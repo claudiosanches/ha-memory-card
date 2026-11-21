@@ -30,7 +30,8 @@
     "notes": "Notes",
     "save": "Save",
     "saved": "Saved",
-    "warning": "Warning"
+    "warning": "Warning",
+    "separator": " · "
   },
   "placeholder": {
     "notBuilt": "This screen is not built yet."
@@ -349,5 +350,20 @@
     "syncProgress": "{{done}} of {{total}} games",
     "syncResult": "Last sync: {{linked}} linked, {{updated}} updated, {{unmatched}} not matched, {{failed}} failed.",
     "overwrite": "Replace the title, summary, game modes, player counts and release titles and dates with IGDB's"
+  },
+  "duplicates": {
+    "intro": "Games you own more than one copy of.",
+    "count_one": "{{count}} game",
+    "count_other": "{{count}} games",
+    "filter": "Show duplicates by difference",
+    "all": "All",
+    "empty": "No duplicates. You own one copy of every game.",
+    "label": {
+      "same_release": "Same release",
+      "cross_platform": "Different platforms",
+      "cross_region": "Different regions",
+      "cross_device": "Different devices",
+      "physical_digital": "Physical and digital"
+    }
   }
 }
