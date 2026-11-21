@@ -5,6 +5,13 @@
 .sectionLabel { margin: 16px 12px 10px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mc-muted); }
 .navLink { border-radius: 8px; padding: 12px; margin-bottom: 4px; color: var(--mc-muted); }
 .navLink[data-active], .navLink[data-active]:hover { background: var(--mc-selected); color: var(--mc-selected-text); font-weight: 650; }
+/* In the rail, section labels become a thin divider. */
+.navbar[data-rail] .sectionLabel { height: 1px; margin: 12px 8px !important; overflow: hidden; color: transparent; background: var(--mc-border); }
+.navbar[data-rail] .sectionLabel:first-child { display: none; }
+.navbar[data-rail] .navLink { justify-content: center; }
+.navbar[data-rail] .navSection { margin: 0; }
+/* Hidden from view but still the link's accessible name. */
+.navbar[data-rail] .navBody { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .main { background: var(--mc-background); }
 .content { max-width: 1840px; margin-inline: auto; padding: 36px; }
 .skipLink { position: fixed; top: -100px; left: 16px; z-index: 1000; padding: 12px 20px; border-radius: 8px; background: var(--mc-surface); color: var(--mantine-color-text); }

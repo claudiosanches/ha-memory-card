@@ -1,10 +1,12 @@
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import en from './locales/en.json';
 import { json, mockApi, VIEWER } from './test/api';
 import { renderAt } from './test/render';
 
 describe('App', () => {
+  afterEach(() => localStorage.clear());
+
   it('shows every navigation entry from the locale file', async () => {
     mockApi({ 'GET /api/games': [] });
     renderAt('/');
@@ -12,6 +14,23 @@ describe('App', () => {
       expect(await screen.findByRole('link', { name: label })).toBeInTheDocument();
     }
     expect(screen.getByRole('heading', { name: en.nav.library })).toBeInTheDocument();
+  });
+
+  it('collapses the sidebar to icons and remembers it', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('min-width'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    mockApi({ 'GET /api/games': [] });
+    renderAt('/');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.app.collapseSidebar }));
+    expect(screen.getByRole('button', { name: en.app.expandSidebar })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('navigation')).toHaveAttribute('data-rail');
+    expect(screen.getByRole('link', { name: en.nav.library })).toBeInTheDocument();
+    expect(localStorage.getItem('memory-card-sidebar-collapsed')).toBe('true');
   });
 
   it('leaves manager tools out of a viewer navigation', async () => {

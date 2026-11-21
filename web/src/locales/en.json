@@ -2,6 +2,8 @@
   "app": {
     "title": "Memory Card",
     "toggleNavigation": "Toggle navigation",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
     "collection": "Collection",
     "tools": "Tools",
     "skipNavigation": "Skip to content",

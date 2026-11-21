@@ -1,5 +1,5 @@
-import { AppShell, Burger, Group, Loader, NavLink, Text } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { ActionIcon, AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
+import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
   IconCopy,
   IconStack2,
@@ -8,6 +8,8 @@ import {
   IconLibrary,
   IconSettings,
   IconDeviceSdCard,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
 } from '@tabler/icons-react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import type { ComponentType } from 'react';
@@ -38,23 +40,29 @@ export function Layout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const me = useMe();
   const canManage = me.data?.role === 'manager';
+  const [collapsed, setCollapsed] = useLocalStorage({ key: 'memory-card-sidebar-collapsed', defaultValue: false });
+  // Phones open the full menu from the burger, so only wider screens get the icon rail.
+  const wide = useMediaQuery('(min-width: 48em)');
+  const rail = collapsed && wide;
 
   const link = ({ key, to, icon: Icon }: NavItem) => (
-    <NavLink
-      key={key}
-      className={classes.navLink}
-      label={t(`nav.${key}`)}
-      leftSection={<Icon size={20} />}
-      active={pathname === to || (key === 'library' && pathname.startsWith('/games/'))}
-      onClick={close}
-      renderRoot={(props) => <Link to={to} {...props} aria-current={pathname === to ? 'page' : undefined} />}
-    />
+    <Tooltip key={key} label={t(`nav.${key}`)} position="right" disabled={!rail}>
+      <NavLink
+        className={classes.navLink}
+        classNames={{ body: classes.navBody, section: classes.navSection }}
+        label={t(`nav.${key}`)}
+        leftSection={<Icon size={20} />}
+        active={pathname === to || (key === 'library' && pathname.startsWith('/games/'))}
+        onClick={close}
+        renderRoot={(props) => <Link to={to} {...props} aria-current={pathname === to ? 'page' : undefined} />}
+      />
+    </Tooltip>
   );
 
   return (
     <AppShell
       header={{ height: 68 }}
-      navbar={{ width: 224, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+      navbar={{ width: rail ? 80 : 224, breakpoint: 'sm', collapsed: { mobile: !opened } }}
       padding={0}
     >
       <a href="#main-content" className={classes.skipLink} onClick={(event) => {
@@ -72,6 +80,17 @@ export function Layout() {
               size="sm"
               aria-label={t('app.toggleNavigation')}
             />
+            <ActionIcon
+              visibleFrom="sm"
+              variant="subtle"
+              color="gray"
+              size="lg"
+              aria-label={collapsed ? t('app.expandSidebar') : t('app.collapseSidebar')}
+              aria-expanded={!collapsed}
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              {collapsed ? <IconLayoutSidebarLeftExpand size={20} /> : <IconLayoutSidebarLeftCollapse size={20} />}
+            </ActionIcon>
             <span className={classes.logo}><IconDeviceSdCard size={25} stroke={1.7} /></span>
             <Text className={classes.brand}>{t('app.title')}</Text>
           </Group>
@@ -79,7 +98,7 @@ export function Layout() {
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar className={classes.navbar} p="md">
+      <AppShell.Navbar className={classes.navbar} p="md" data-rail={rail || undefined}>
         {me.data && (
           <>
             <Text className={classes.sectionLabel}>{t('app.collection')}</Text>
