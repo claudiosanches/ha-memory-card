@@ -8,7 +8,6 @@ import {
   Loader,
   Select,
   Stack,
-  Table,
   Text,
   Title,
   Tooltip,
@@ -48,6 +47,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { formatDate, today } from '../../components/status';
+import { Copies } from './Copies';
 import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
 import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
@@ -407,54 +407,14 @@ function GameView({ game }: { game: GameDetail }) {
             </Group>
 
             {release.copies.length > 0 && (
-              <Table.ScrollContainer minWidth={560}>
-                <Table>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>{t('game.format')}</Table.Th>
-                      <Table.Th>{t('game.device')}</Table.Th>
-                      <Table.Th>{t('game.store')}</Table.Th>
-                      <Table.Th>{t('game.condition')}</Table.Th>
-                      <Table.Th>{t('common.notes')}</Table.Th>
-                      <Table.Th w={80} />
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {release.copies.map((copy) => (
-                      <Table.Tr key={copy.id} data-testid={`copy-${copy.id}`}>
-                        <Table.Td>{t(`format.${copy.format}`)}</Table.Td>
-                        <Table.Td>{copy.device_id ? names.device.get(copy.device_id) : null}</Table.Td>
-                        <Table.Td>{copy.store_id ? names.store.get(copy.store_id) : null}</Table.Td>
-                        <Table.Td>{copy.condition ? t(`condition.${copy.condition}`) : null}</Table.Td>
-                        <Table.Td>
-                          <Text size="sm" lineClamp={2}>
-                            {copy.notes}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td>
-                          <Group gap={4} wrap="nowrap">
-                            <ActionIcon
-                              variant="subtle"
-                              aria-label={t('game.editCopy')}
-                              onClick={() => setDialog({ kind: 'editCopy', copy, release })}
-                            >
-                              <IconPencil size={16} />
-                            </ActionIcon>
-                            <ActionIcon
-                              variant="subtle"
-                              color="red"
-                              aria-label={t('game.deleteCopy')}
-                              onClick={() => setDialog({ kind: 'deleteCopy', copy })}
-                            >
-                              <IconTrash size={16} />
-                            </ActionIcon>
-                          </Group>
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </Table.ScrollContainer>
+              <Copies
+                copies={release.copies}
+                devices={names.device}
+                stores={names.store}
+                compact={phone}
+                onEdit={(copy) => setDialog({ kind: 'editCopy', copy, release })}
+                onDelete={(copy) => setDialog({ kind: 'deleteCopy', copy })}
+              />
             )}
           </Stack>
         </Card>

@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GameDetail } from '../../api/types';
 import en from '../../locales/en.json';
 import { json, mockApi } from '../../test/api';
@@ -75,6 +75,30 @@ describe('Game page', () => {
     await waitFor(() => expect(within(release).getByText('Nintendo Switch · Europe (PAL)')).toBeInTheDocument());
     expect(within(release).getByText('HAC-AYL3A')).toBeInTheDocument();
     expect(within(screen.getByTestId('copy-21')).getByText(en.condition.cib)).toBeInTheDocument();
+  });
+
+  it('lists copies without a table on a phone', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    const copy = { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: 3, condition: 'cib', notes: 'Sealed spare' };
+    mockApi({
+      ...SETUP,
+      'GET /api/stores': [{ id: 3, name: 'Amazon', notes: null, copy_count: 1 }],
+      'GET /api/games/4': { ...GAME, releases: [{ ...GAME.releases[0], copies: [copy] }] },
+    });
+    renderAt('/games/4');
+
+    const item = await screen.findByTestId('copy-21');
+    expect(item.tagName).toBe('LI');
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(within(item).getByText(`${en.format.physical} · ${en.condition.cib}`)).toBeInTheDocument();
+    expect(await within(item).findByText('Amazon')).toBeInTheDocument();
+    expect(within(item).getByText('Sealed spare')).toBeInTheDocument();
+    expect(within(item).getByRole('button', { name: en.game.editCopy })).toBeInTheDocument();
   });
 
   it('shows co-op next to player counts', async () => {
