@@ -67,6 +67,7 @@ type Dialog =
   | { kind: 'deleteGame' }
   | { kind: 'addCopy'; release?: ReleaseDetail }
   | { kind: 'editCopy'; copy: CopyDetail; release: ReleaseDetail }
+  | { kind: 'gotIt'; copy: CopyDetail; release: ReleaseDetail }
   | { kind: 'deleteCopy'; copy: CopyDetail }
   | { kind: 'editRelease'; release: ReleaseDetail }
   | { kind: 'deleteRelease'; release: ReleaseDetail }
@@ -141,6 +142,9 @@ function GameView({ game }: { game: GameDetail }) {
   );
 
   const allCopies = game.releases.flatMap((release) => release.copies.map((copy) => ({ copy, release })));
+  // Only copies you have can be played.
+  const ownedCopies = allCopies.filter(({ copy }) => copy.status === 'owned');
+  const wishlistOnly = ownedCopies.length === 0 && allCopies.length > 0;
   const lastCopy = dialog?.kind === 'deleteCopy' && allCopies.length === 1;
 
   // Progress has its own routes, which viewers may be allowed to use.
@@ -195,7 +199,7 @@ function GameView({ game }: { game: GameDetail }) {
   });
 
   const playedToday = () => {
-    const copyId = game.last_played_copy_id ?? (allCopies.length === 1 ? allCopies[0]?.copy.id : null) ?? null;
+    const copyId = game.last_played_copy_id ?? (ownedCopies.length === 1 ? ownedCopies[0]?.copy.id : null) ?? null;
     setLastPlayed.mutate({ last_played_at: today(), last_played_copy_id: copyId });
   };
 
@@ -235,11 +239,18 @@ function GameView({ game }: { game: GameDetail }) {
           />
           <Stack className={classes.identityText} gap={4}>
             <Title order={1} className={classes.gameTitle}>{game.title}</Title>
-            {game.igdb_id && (
-              <Badge size="xs" variant="light" w="fit-content">
-                {t('game.igdbLinked')}
-              </Badge>
-            )}
+            <Group gap={6}>
+              {wishlistOnly && (
+                <Badge size="xs" variant="light" color="pink" w="fit-content">
+                  {t('game.onWishlist')}
+                </Badge>
+              )}
+              {game.igdb_id && (
+                <Badge size="xs" variant="light" w="fit-content">
+                  {t('game.igdbLinked')}
+                </Badge>
+              )}
+            </Group>
             {game.first_release_date && (
               <Text size="sm" c="dimmed">
                 {t('game.firstRelease')}: {formatDate(game.first_release_date, i18n.language)}
@@ -316,13 +327,13 @@ function GameView({ game }: { game: GameDetail }) {
                 label={t('game.lastPlayedCopy')}
                 placeholder={t('common.notSet')}
                 className={classes.copySelect}
-                data={allCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
+                data={ownedCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
                 value={game.last_played_copy_id ? String(game.last_played_copy_id) : null}
                 onChange={(value) => setLastPlayed.mutate({ last_played_copy_id: value ? Number(value) : null })}
                 clearable={canTrack}
                 readOnly={!canTrack}
                 rightSection={canTrack ? undefined : null}
-                disabled={saving || allCopies.length === 0}
+                disabled={saving || ownedCopies.length === 0}
               />
               {canTrack && (
                 <Button
@@ -490,6 +501,7 @@ function GameView({ game }: { game: GameDetail }) {
                 stores={names.store}
                 onEdit={canManage ? (copy) => setDialog({ kind: 'editCopy', copy, release }) : undefined}
                 onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}
+                onGotIt={canManage ? (copy) => setDialog({ kind: 'gotIt', copy, release }) : undefined}
               />
             )}
           </Stack>
@@ -501,6 +513,16 @@ function GameView({ game }: { game: GameDetail }) {
       {dialog?.kind === 'addCopy' && <CopyForm gameId={game.id} release={dialog.release} onClose={close} />}
       {dialog?.kind === 'editCopy' && (
         <CopyForm gameId={game.id} copy={dialog.copy} release={dialog.release} onClose={close} />
+      )}
+      {dialog?.kind === 'gotIt' && (
+        <CopyForm
+          gameId={game.id}
+          copy={dialog.copy}
+          release={dialog.release}
+          status="owned"
+          title={t('game.gotItTitle')}
+          onClose={close}
+        />
       )}
       {dialog?.kind === 'editRelease' && <ReleaseForm release={dialog.release} onClose={close} />}
 

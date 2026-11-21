@@ -14,6 +14,7 @@
   },
   "nav": {
     "library": "Library",
+    "wishlist": "Wishlist",
     "backlog": "Backlog",
     "duplicates": "Duplicates",
     "setup": "Fill in details",
@@ -289,6 +290,10 @@
     "br": "Brazil",
     "ww": "Worldwide or region-free"
   },
+  "copyStatus": {
+    "owned": "I own it",
+    "wanted": "On my wishlist"
+  },
   "format": {
     "physical": "Physical",
     "digital": "Digital"
@@ -382,6 +387,7 @@
       "minLocalPlayers": "Players on the same screen, at least",
       "ownership": "Show",
       "owned": "Games I own",
+      "wanted": "Wishlist",
       "any": "All games",
       "sort": "Sort by",
       "igdb": "IGDB",
@@ -453,6 +459,10 @@
     "editCopy": "Edit copy",
     "saveAnother": "Save and add another",
     "deleteCopy": "Delete copy?",
+    "copyStatus": "Do you own it?",
+    "gotIt": "Got it",
+    "gotItTitle": "Move to your collection",
+    "onWishlist": "On your wishlist",
     "lastCopy": "This is the last copy of {{title}}. Delete the game too, or keep it without copies.",
     "deleteGameToo": "Delete the game too",
     "editRelease": "Edit release",
@@ -510,6 +520,21 @@
     "keepTitle": "Keep mine",
     "useAllIgdbTitles": "Use IGDB's for all",
     "titlesSaved": "Titles updated"
+  },
+  "wishlist": {
+    "description": "Games you want, with the platform and edition you are after.",
+    "count_one": "{{count}} copy",
+    "count_other": "{{count}} copies",
+    "add": "Add to wishlist",
+    "addTitle": "Add {{title}} to your wishlist",
+    "next": "Next",
+    "existing": "{{title}} is already in your collection. The copy goes on that game.",
+    "store": "At {{store}}",
+    "remove": "Remove from wishlist",
+    "removeTitle": "Remove from wishlist?",
+    "empty": "Your wishlist is empty",
+    "emptyHint": "Add a game you want, or add a copy marked On my wishlist from a game's page.",
+    "emptyViewer": "Nothing on the wishlist yet."
   },
   "backlog": {
     "title": "Backlog",

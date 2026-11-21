@@ -7,6 +7,7 @@
 .deviceColumn, .storeColumn { width: 17%; }
 .conditionColumn { width: 17%; }
 .actionsColumn { width: 88px; }
+.actionsColumnWide { width: 124px; }
 .table th { white-space: normal; }
 .table td { vertical-align: middle; overflow-wrap: anywhere; }
 .notes { white-space: normal; overflow-wrap: anywhere; }

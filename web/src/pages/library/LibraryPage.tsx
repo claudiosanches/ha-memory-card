@@ -212,6 +212,7 @@ export function LibraryPage() {
 }
 
 function GameCard({ game, platformsById }: { game: GameSummary; platformsById: Map<number, Platform> }) {
+  const { t } = useTranslation();
   const statuses = usePlayStatusList();
   return (
     <Link
@@ -237,6 +238,11 @@ function GameCard({ game, platformsById }: { game: GameSummary; platformsById: M
               </span>
             );
           })}
+          {game.owned_copies === 0 && game.wanted_copies > 0 && (
+            <Badge size="sm" color="pink" variant="light" tt="none" className={classes.status}>
+              {t('copyStatus.wanted')}
+            </Badge>
+          )}
           {game.play_status && (
             <Badge size="sm" color={statuses.color(game.play_status)} variant="light" tt="none" className={classes.status}>
               {statuses.name(game.play_status)}

@@ -74,6 +74,19 @@ and start games from the backlog, but nothing else.
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
 | `viewers_track_progress` | Lets viewers change play status and last played. Off by default. |
 
+## Wishlist
+
+**Wishlist** in the sidebar lists the copies you want, each with its
+platform, region and format. **Add to wishlist** asks for the game first,
+then the copy. A copy can also go on the wishlist from a game's page:
+choose **On my wishlist** when adding it.
+
+When you get one, **Got it** moves it into your collection and lets you
+fill in the device, store and condition. Wishlist copies do not count as
+owned anywhere else: the library, backlog, duplicates and Fill in details
+only look at copies you own. **Show > Wishlist** in the library filters
+lists the games on it.
+
 ## Import and export (CSV)
 
 **Import and export** in the sidebar downloads your collection as a CSV file
@@ -105,7 +118,7 @@ After an import, games without an IGDB link can be linked with
 | Column | Accepted values |
 |---|---|
 | `copy_id` | Number from the export, or empty |
-| `status` | `owned` (empty means owned) |
+| `status` | `owned` or `wanted` (empty means owned). `wishlist` is read as `wanted`. |
 | `igdb_id` | IGDB game id, optional |
 | `game_title` | Required |
 | `play_status` | `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write the key. |

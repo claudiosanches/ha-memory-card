@@ -22,6 +22,7 @@ import {
   CONDITIONS,
   type CopyDetail,
   type CopyInput,
+  type CopyStatus,
   type Format,
   type GameDetail,
   type GameInput,
@@ -71,13 +72,19 @@ const textOrNull = (value: string) => (value.trim() ? value : null);
 export const checkedOrNull = (value: boolean, before?: boolean | null) => (value ? true : before === false ? false : null);
 
 type CopyFormProps = {
-  gameId: number;
+  /** The game a new copy goes to. */
+  gameId?: number;
+  /** Called on save when there is no `gameId`, to create the game only once the copy is saved. */
+  resolveGame?: () => Promise<number>;
   copy?: CopyDetail;
-  release?: ReleaseDetail;
+  release?: Pick<ReleaseDetail, 'platform_id' | 'region' | 'product_code'>;
+  /** Starts the form on this status, such as owned for a wanted copy just bought. */
+  status?: CopyStatus;
+  title?: string;
   onClose: () => void;
 };
 
-export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
+export function CopyForm({ gameId, resolveGame, copy, release, status, title, onClose }: CopyFormProps) {
   const { t } = useTranslation();
   const platforms = usePlatforms();
   const devices = useDevices();
@@ -89,6 +96,7 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
 
   const form = useForm({
     initialValues: {
+      status: status ?? copy?.status ?? ('owned' as CopyStatus),
       platform_id: release ? String(release.platform_id) : '',
       region: (release?.region ?? '') as Region | '',
       product_code: release?.product_code ?? '',
@@ -121,18 +129,19 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
 
   // "Save and add another" keeps the form open for the same release.
   const save = useMutation({
-    mutationFn: ({ body }: { body: CopyInput; another: boolean }) =>
-      copy
-        ? call(api.PUT('/api/copies/{id}', { params: { path: { id: copy.id } }, body }))
-        : call(api.POST('/api/games/{id}/copies', { params: { path: { id: gameId } }, body })),
+    mutationFn: async ({ body }: { body: CopyInput; another: boolean }) => {
+      if (copy) return call(api.PUT('/api/copies/{id}', { params: { path: { id: copy.id } }, body }));
+      const id = gameId ?? (await resolveGame!());
+      return call(api.POST('/api/games/{id}/copies', { params: { path: { id } }, body }));
+    },
     onSuccess: (game, { another }) => {
       saved(game);
       if (!another) {
         onClose();
         return;
       }
-      const { platform_id, region, product_code, format } = form.getValues();
-      form.setValues({ platform_id, region, product_code, format, device_id: '', store_id: '', condition: '', notes: '' });
+      const { status, platform_id, region, product_code, format } = form.getValues();
+      form.setValues({ status, platform_id, region, product_code, format, device_id: '', store_id: '', condition: '', notes: '' });
       form.resetDirty();
       setRound((value) => value + 1);
     },
@@ -141,12 +150,15 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
 
   const submit = (addAnother: boolean) =>
     form.onSubmit((v) => {
+      const wanted = v.status === 'wanted';
       const body: CopyInput = {
+        status: v.status,
         platform_id: Number(v.platform_id),
         region: v.region as Region,
         product_code: textOrNull(v.product_code),
         format: v.format,
-        device_id: v.device_id ? Number(v.device_id) : null,
+        // A copy you do not have yet is on no device.
+        device_id: v.device_id && !wanted ? Number(v.device_id) : null,
         store_id: v.store_id ? Number(v.store_id) : null,
         condition: v.format === 'physical' && v.condition ? (v.condition as CopyInput['condition']) : null,
         notes: textOrNull(v.notes),
@@ -157,7 +169,7 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
   return (
     <FormModal
       opened
-      title={copy ? t('game.editCopy') : t('game.addCopy')}
+      title={title ?? (copy ? t('game.editCopy') : t('game.addCopy'))}
       saving={save.isPending && !save.variables.another}
       onClose={onClose}
       onSubmit={submit(false)}
@@ -169,6 +181,11 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
         )
       }
     >
+      <SegmentedControl
+        aria-label={t('game.copyStatus')}
+        data={(['owned', 'wanted'] as const).map((value) => ({ value, label: t(`copyStatus.${value}`) }))}
+        {...form.getInputProps('status')}
+      />
       <Select
         label={t('game.platform')}
         required
@@ -188,21 +205,25 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
         data={(['physical', 'digital'] as const).map((f) => ({ value: f, label: t(`format.${f}`) }))}
         {...form.getInputProps('format')}
       />
-      <Select
-        key={`device-${round}`}
-        label={t('game.device')}
-        placeholder={t('game.noDevice')}
-        data={deviceOptions}
-        clearable
-        searchable
-        {...form.getInputProps('device_id')}
-      />
-      <Checkbox
-        size="xs"
-        label={t('game.showAllDevices')}
-        checked={allDevices}
-        onChange={(event) => setAllDevices(event.currentTarget.checked)}
-      />
+      {values.status === 'owned' && (
+        <>
+          <Select
+            key={`device-${round}`}
+            label={t('game.device')}
+            placeholder={t('game.noDevice')}
+            data={deviceOptions}
+            clearable
+            searchable
+            {...form.getInputProps('device_id')}
+          />
+          <Checkbox
+            size="xs"
+            label={t('game.showAllDevices')}
+            checked={allDevices}
+            onChange={(event) => setAllDevices(event.currentTarget.checked)}
+          />
+        </>
+      )}
       <Select
         key={`store-${round}`}
         label={t('game.store')}

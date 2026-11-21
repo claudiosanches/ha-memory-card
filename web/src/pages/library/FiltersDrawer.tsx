@@ -35,9 +35,10 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
         <SegmentedControl
           fullWidth
           value={search.ownership ?? 'owned'}
-          onChange={(value) => onChange({ ownership: value === 'any' ? 'any' : undefined })}
+          onChange={(value) => onChange({ ownership: value === 'any' || value === 'wanted' ? value : undefined })}
           data={[
             { value: 'owned', label: t('library.filter.owned') },
+            { value: 'wanted', label: t('library.filter.wanted') },
             { value: 'any', label: t('library.filter.any') },
           ]}
         />

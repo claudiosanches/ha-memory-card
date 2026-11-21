@@ -278,6 +278,29 @@ describe('Game page', () => {
     expect(calls.find((c) => c.method === 'DELETE')?.path).toBe('/api/copies/22');
   });
 
+  it('plays only owned copies and moves a wanted one into the collection', async () => {
+    const wanted = { ...GAME.releases[0]!.copies[0]!, id: 22, status: 'wanted' as const };
+    const game = { ...GAME, releases: [{ ...GAME.releases[0]!, copies: [...GAME.releases[0]!.copies, wanted] }] };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': game,
+      'PUT /api/games/4/last-played': (body: unknown) => ({ ...game, ...(body as object) }),
+      'PUT /api/copies/22': GAME,
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.game.playedToday }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/games/4/last-played')).toBe(true));
+    expect((calls.find((c) => c.path === '/api/games/4/last-played')?.body as Record<string, unknown>).last_played_copy_id).toBe(21);
+
+    expect(screen.getAllByRole('button', { name: en.game.gotIt })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: en.game.gotIt }));
+    const dialog = await screen.findByRole('dialog', { name: en.game.gotItTitle });
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/copies/22')).toBe(true));
+    expect(calls.find((c) => c.path === '/api/copies/22')?.body).toMatchObject({ status: 'owned' });
+  });
+
   it('marks the only copy as played today', async () => {
     const calls = mockApi({
       ...SETUP,

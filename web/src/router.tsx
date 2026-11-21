@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router';
 import { Layout } from './components/Layout';
 import { ManagerOnly } from './components/ManagerOnly';
+import { WishlistPage } from './pages/WishlistPage';
 import { BacklogPage } from './pages/backlog/BacklogPage';
 import { DuplicatesPage } from './pages/DuplicatesPage';
 import { ImportPage } from './pages/ImportPage';
@@ -27,6 +28,7 @@ const routeTree = rootRoute.addChildren([
     validateSearch: validateLibrarySearch,
   }),
   createRoute({ getParentRoute: () => rootRoute, path: '/games/$gameId', component: GamePage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/wishlist', component: WishlistPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
   createRoute({

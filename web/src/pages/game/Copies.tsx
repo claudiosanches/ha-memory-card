@@ -1,5 +1,5 @@
-import { ActionIcon, Group, Table, Text } from '@mantine/core';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { ActionIcon, Badge, Group, Table, Text } from '@mantine/core';
+import { IconCheck, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { useTranslation } from 'react-i18next';
 import type { CopyDetail } from '../../api/types';
@@ -12,17 +12,31 @@ type Props = {
   /** Without handlers, the copies are read only. */
   onEdit?: (copy: CopyDetail) => void;
   onDelete?: (copy: CopyDetail) => void;
+  /** Moves a wanted copy into the collection. */
+  onGotIt?: (copy: CopyDetail) => void;
 };
 
-export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
+export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt }: Props) {
   const { t } = useTranslation();
   const phone = useMediaQuery('(max-width: 48em)');
   const device = (copy: CopyDetail) => (copy.device_id ? devices.get(copy.device_id) : null);
   const store = (copy: CopyDetail) => (copy.store_id ? stores.get(copy.store_id) : null);
   const condition = (copy: CopyDetail) => (copy.condition ? t(`condition.${copy.condition}`) : null);
   const editable = onEdit && onDelete;
+  const anyWanted = copies.some((copy) => copy.status === 'wanted');
+  const wanted = (copy: CopyDetail) =>
+    copy.status === 'wanted' && (
+      <Badge size="xs" variant="light" color="pink" ml={6}>
+        {t('copyStatus.wanted')}
+      </Badge>
+    );
   const actions = (copy: CopyDetail) => editable && (
     <Group gap={4} wrap="nowrap" className={classes.actions}>
+      {onGotIt && copy.status === 'wanted' && (
+        <ActionIcon variant="subtle" color="green" aria-label={t('game.gotIt')} onClick={() => onGotIt(copy)}>
+          <IconCheck size={16} />
+        </ActionIcon>
+      )}
       <ActionIcon variant="subtle" aria-label={t('game.editCopy')} onClick={() => onEdit(copy)}>
         <IconPencil size={16} />
       </ActionIcon>
@@ -43,6 +57,7 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
               <div className={classes.details}>
                 <Text size="sm" fw={500}>
                   {line([t(`format.${copy.format}`), condition(copy)])}
+                  {wanted(copy)}
                 </Text>
                 {where && (
                   <Text size="xs" c="dimmed">
@@ -71,7 +86,7 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
         <col className={classes.storeColumn} />
         <col className={classes.conditionColumn} />
         <col />
-        {editable && <col className={classes.actionsColumn} />}
+        {editable && <col className={anyWanted ? classes.actionsColumnWide : classes.actionsColumn} />}
       </colgroup>
       <Table.Thead>
         <Table.Tr>
@@ -86,7 +101,10 @@ export function Copies({ copies, devices, stores, onEdit, onDelete }: Props) {
       <Table.Tbody>
         {copies.map((copy) => (
           <Table.Tr key={copy.id} data-testid={`copy-${copy.id}`}>
-            <Table.Td>{t(`format.${copy.format}`)}</Table.Td>
+            <Table.Td>
+              {t(`format.${copy.format}`)}
+              {wanted(copy)}
+            </Table.Td>
             <Table.Td>{device(copy)}</Table.Td>
             <Table.Td>{store(copy)}</Table.Td>
             <Table.Td>{condition(copy)}</Table.Td>

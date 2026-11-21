@@ -11,11 +11,12 @@ type Props = {
   onSubmit: (event?: FormEvent<HTMLFormElement>) => void;
   /** Another button next to Save, such as "Save and add another". */
   extraAction?: ReactNode;
+  submitLabel?: string;
   children: ReactNode;
 };
 
 /** Modal with a form and Save/Cancel buttons; full screen on phones. */
-export function FormModal({ opened, title, saving, onClose, onSubmit, extraAction, children }: Props) {
+export function FormModal({ opened, title, saving, onClose, onSubmit, extraAction, submitLabel, children }: Props) {
   const { t } = useTranslation();
   const phone = useMediaQuery('(max-width: 48em)');
 
@@ -31,7 +32,7 @@ export function FormModal({ opened, title, saving, onClose, onSubmit, extraActio
             </Button>
             {extraAction}
             <Button type="submit" loading={saving}>
-              {t('common.save')}
+              {submitLabel ?? t('common.save')}
             </Button>
           </Group>
         </Stack>

@@ -28,7 +28,7 @@ export type LibrarySearch = {
   play_status?: StatusFilter[];
   format?: Format;
   min_local_players?: number;
-  ownership?: 'any';
+  ownership?: 'any' | 'wanted';
   igdb?: 'linked' | 'unlinked';
   sort?: 'added' | 'played';
 };
@@ -62,7 +62,7 @@ export function validateLibrarySearch(search: Record<string, unknown>): LibraryS
   if (FORMATS.includes(search.format as Format)) result.format = search.format as Format;
   const players = Number(search.min_local_players);
   if (Number.isInteger(players) && players > 1) result.min_local_players = players;
-  if (search.ownership === 'any') result.ownership = 'any';
+  if (search.ownership === 'any' || search.ownership === 'wanted') result.ownership = search.ownership;
   if (search.igdb === 'linked' || search.igdb === 'unlinked') result.igdb = search.igdb;
   if (search.sort === 'added' || search.sort === 'played') result.sort = search.sort;
   return result;
