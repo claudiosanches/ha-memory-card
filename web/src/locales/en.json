@@ -447,6 +447,8 @@
     "editCopy": "Edit copy",
     "saveAnother": "Save and add another",
     "deleteCopy": "Delete copy?",
+    "lastCopy": "This is the last copy of {{title}}. Delete the game too, or keep it without copies.",
+    "deleteGameToo": "Delete the game too",
     "editRelease": "Edit release",
     "deleteRelease": "Delete release?",
     "deleteReleaseCopies_one": "Its {{count}} copy will be deleted too.",

@@ -141,6 +141,7 @@ function GameView({ game }: { game: GameDetail }) {
   );
 
   const allCopies = game.releases.flatMap((release) => release.copies.map((copy) => ({ copy, release })));
+  const lastCopy = dialog?.kind === 'deleteCopy' && allCopies.length === 1;
 
   // Progress has its own routes, which viewers may be allowed to use.
   const setStatus = useMutation({
@@ -515,10 +516,24 @@ function GameView({ game }: { game: GameDetail }) {
       <ConfirmModal
         opened={dialog?.kind === 'deleteCopy'}
         title={t('game.deleteCopy')}
+        message={lastCopy ? t('game.lastCopy', { title: game.title }) : undefined}
         confirmLabel={t('common.delete')}
         busy={removeCopy.isPending}
         onConfirm={() => dialog?.kind === 'deleteCopy' && removeCopy.mutate(dialog.copy.id)}
         onClose={close}
+        extraAction={
+          lastCopy && (
+            <Button
+              variant="outline"
+              color="red"
+              loading={removeGame.isPending}
+              disabled={removeCopy.isPending}
+              onClick={() => removeGame.mutate()}
+            >
+              {t('game.deleteGameToo')}
+            </Button>
+          )
+        }
       />
       <ConfirmModal
         opened={dialog?.kind === 'deleteRelease'}

@@ -1,4 +1,5 @@
 import { Button, Group, Modal, Stack, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type Props = {
@@ -9,9 +10,11 @@ type Props = {
   busy: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  /** Another button before the confirm button. */
+  extraAction?: ReactNode;
 };
 
-export function ConfirmModal({ opened, title, message, confirmLabel, busy, onConfirm, onClose }: Props) {
+export function ConfirmModal({ opened, title, message, confirmLabel, busy, onConfirm, onClose, extraAction }: Props) {
   const { t } = useTranslation();
   return (
     <Modal opened={opened} onClose={onClose} title={title} centered>
@@ -21,6 +24,7 @@ export function ConfirmModal({ opened, title, message, confirmLabel, busy, onCon
           <Button variant="default" onClick={onClose}>
             {t('common.cancel')}
           </Button>
+          {extraAction}
           <Button color="red" onClick={onConfirm} loading={busy}>
             {confirmLabel}
           </Button>

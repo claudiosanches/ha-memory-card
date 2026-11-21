@@ -244,6 +244,40 @@ describe('Game page', () => {
     expect(within(dialog).getByRole('combobox', { name: en.game.region })).toHaveValue(en.region.jp);
   });
 
+  it('offers to delete the game with its last copy', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': GAME,
+      'DELETE /api/games/4': new Response(null, { status: 204 }),
+      'GET /api/games': [],
+    });
+    renderAt('/games/4');
+
+    fireEvent.click((await screen.findAllByRole('button', { name: en.game.deleteCopy }))[0]!);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent(en.game.lastCopy.replace('{{title}}', GAME.title));
+    fireEvent.click(within(dialog).getByRole('button', { name: en.game.deleteGameToo }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/games/4')).toBe(true));
+    expect(calls.some((c) => c.path.startsWith('/api/copies'))).toBe(false);
+    expect(await screen.findByRole('heading', { name: en.nav.library })).toBeInTheDocument();
+  });
+
+  it('deletes only the copy when the game keeps others', async () => {
+    const second = { ...GAME.releases[0]!.copies[0]!, id: 22 };
+    const game = { ...GAME, releases: [{ ...GAME.releases[0]!, copies: [...GAME.releases[0]!.copies, second] }] };
+    const calls = mockApi({ ...SETUP, 'GET /api/games/4': game, 'DELETE /api/copies/22': GAME });
+    renderAt('/games/4');
+
+    const buttons = await screen.findAllByRole('button', { name: en.game.deleteCopy });
+    fireEvent.click(buttons[1]!);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).queryByRole('button', { name: en.game.deleteGameToo })).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.delete }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
+    expect(calls.find((c) => c.method === 'DELETE')?.path).toBe('/api/copies/22');
+  });
+
   it('marks the only copy as played today', async () => {
     const calls = mockApi({
       ...SETUP,
