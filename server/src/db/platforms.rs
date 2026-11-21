@@ -1,9 +1,21 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use super::found;
 use crate::error::{ApiError, ApiResult};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
+#[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
+pub enum PlatformCategory {
+    Console,
+    Handheld,
+    Computer,
+    Mobile,
+    Arcade,
+    Other,
+}
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Platform {
@@ -16,6 +28,8 @@ pub struct Platform {
     pub generation: Option<i64>,
     pub active: bool,
     pub sort_order: i64,
+    /// `None` for platforms added by hand without one.
+    pub category: Option<PlatformCategory>,
     /// Games with a release on this platform.
     pub game_count: i64,
     pub device_count: i64,
@@ -24,6 +38,7 @@ pub struct Platform {
 pub struct PlatformFields {
     pub name: String,
     pub abbreviation: Option<String>,
+    pub category: Option<PlatformCategory>,
     pub active: bool,
 }
 
@@ -32,6 +47,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Platform>> {
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
+                  p.category AS "category: PlatformCategory",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
@@ -46,6 +62,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
+                  p.category AS "category: PlatformCategory",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
@@ -71,12 +88,13 @@ pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64
     let slug = unique_slug(&base, &taken);
 
     let id = sqlx::query_scalar!(
-        r#"INSERT INTO platforms (name, abbreviation, slug, active, sort_order)
-           VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
+        r#"INSERT INTO platforms (name, abbreviation, slug, category, active, sort_order)
+           VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active))
            RETURNING id AS "id!""#,
         fields.name,
         fields.abbreviation,
         slug,
+        fields.category,
         fields.active
     )
     .fetch_one(&mut *tx)
@@ -89,9 +107,16 @@ pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &PlatformFields) -> ApiResult<()> {
     let result = sqlx::query!(
-        "UPDATE platforms SET name = ?, abbreviation = ?, active = ? WHERE id = ?",
+        // A platform switched on goes to the end of the active list.
+        "UPDATE platforms
+         SET name = ?1, abbreviation = ?2, category = ?3, active = ?4,
+             sort_order = CASE WHEN ?4 AND NOT active
+                 THEN (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active)
+                 ELSE sort_order END
+         WHERE id = ?5",
         fields.name,
         fields.abbreviation,
+        fields.category,
         fields.active,
         id
     )

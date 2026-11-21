@@ -2442,6 +2442,17 @@
           "active": {
             "type": "boolean"
           },
+          "category": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PlatformCategory",
+                "description": "`None` for platforms added by hand without one."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "device_count": {
             "type": "integer",
             "format": "int64"
@@ -2487,6 +2498,17 @@
           }
         }
       },
+      "PlatformCategory": {
+        "type": "string",
+        "enum": [
+          "console",
+          "handheld",
+          "computer",
+          "mobile",
+          "arcade",
+          "other"
+        ]
+      },
       "PlatformCount": {
         "type": "object",
         "required": [
@@ -2518,6 +2540,16 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "category": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PlatformCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "name": {
             "type": "string"

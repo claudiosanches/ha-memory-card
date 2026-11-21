@@ -322,8 +322,16 @@ async fn platform_list_is_in_sort_order_with_usage() {
     let (status, list) = app.json("GET", "/api/platforms", None).await;
     assert_eq!(status, StatusCode::OK);
     let list = list.as_array().unwrap();
-    assert_eq!(list.len(), 25);
+    // 25 curated platforms plus the rest of IGDB's catalog, inactive.
+    assert_eq!(list.len(), 214);
+    assert_eq!(list.iter().filter(|p| p["active"] == true).count(), 7);
     assert_eq!(list[0]["slug"], "pc");
+    assert_eq!(list[0]["category"], "computer");
+    let switch_2 = list.iter().find(|p| p["slug"] == "switch-2").unwrap();
+    assert_eq!(switch_2["igdb_platform_id"], 508, "linked by name");
+    let dreamcast = list.iter().find(|p| p["igdb_platform_id"] == 23).unwrap();
+    assert_eq!(dreamcast["category"], "console");
+    assert_eq!(dreamcast["active"], false);
     assert_eq!(list[0]["igdb_platform_id"], 6);
     let switch = list.iter().find(|p| p["slug"] == "switch").unwrap();
     assert_eq!(switch["game_count"], 1);
@@ -337,15 +345,15 @@ async fn platform_create_update_delete() {
         .json(
             "POST",
             "/api/platforms",
-            Some(json!({"name": "Sega Dreamcast", "abbreviation": "DC"})),
+            Some(json!({"name": "Homebrew Console", "abbreviation": "DC"})),
         )
         .await;
     assert_eq!(status, StatusCode::CREATED, "{created}");
-    assert_eq!(created["slug"], "sega-dreamcast");
+    assert_eq!(created["slug"], "homebrew-console");
     assert_eq!(created["igdb_platform_id"], Value::Null);
     assert_eq!(
-        created["sort_order"], 64,
-        "appended after the last seed (54)"
+        created["sort_order"], 60,
+        "appended after the last active platform (50)"
     );
     let id = created["id"].as_i64().unwrap();
 
@@ -359,14 +367,14 @@ async fn platform_create_update_delete() {
         .json(
             "PUT",
             &format!("/api/platforms/{id}"),
-            Some(json!({"name": "Dreamcast", "active": false})),
+            Some(json!({"name": "Homebrew Box", "active": false})),
         )
         .await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(updated["name"], "Dreamcast");
+    assert_eq!(updated["name"], "Homebrew Box");
     assert_eq!(updated["abbreviation"], Value::Null);
     assert_eq!(updated["active"], false);
-    assert_eq!(updated["slug"], "sega-dreamcast", "slug is stable");
+    assert_eq!(updated["slug"], "homebrew-console", "slug is stable");
 
     let (status, _) = app
         .json("DELETE", &format!("/api/platforms/{id}"), None)
@@ -406,13 +414,14 @@ async fn platform_reorder() {
         .iter()
         .map(|p| p["id"].as_i64().unwrap())
         .collect();
+    let last = list.as_array().unwrap().last().unwrap()["slug"].clone();
     ids.reverse();
 
     let (status, reordered) = app
         .json("PUT", "/api/platforms/order", Some(json!({"ids": ids})))
         .await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(reordered[0]["slug"], "gb");
+    assert_eq!(reordered[0]["slug"], last);
     assert_eq!(reordered[0]["sort_order"], 10);
 
     ids.pop();

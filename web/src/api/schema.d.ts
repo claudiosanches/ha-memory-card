@@ -600,6 +600,7 @@ export interface components {
         Platform: {
             abbreviation?: string | null;
             active: boolean;
+            category?: components["schemas"]["PlatformCategory"] | null;
             /** Format: int64 */
             device_count: number;
             family?: string | null;
@@ -619,6 +620,8 @@ export interface components {
             /** Format: int64 */
             sort_order: number;
         };
+        /** @enum {string} */
+        PlatformCategory: "console" | "handheld" | "computer" | "mobile" | "arcade" | "other";
         PlatformCount: {
             /** Format: int64 */
             copies: number;
@@ -628,6 +631,7 @@ export interface components {
         PlatformInput: {
             abbreviation?: string | null;
             active?: boolean;
+            category?: components["schemas"]["PlatformCategory"] | null;
             name: string;
         };
         PlatformOrder: {

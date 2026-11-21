@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use super::input::{NAME_MAX, SHORT_MAX, optional, required};
 use crate::AppState;
-use crate::db::platforms::{self, Platform, PlatformFields};
+use crate::db::platforms::{self, Platform, PlatformCategory, PlatformFields};
 use crate::error::{ApiJson, ApiPath, ApiResult, ErrorBody};
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -14,6 +14,8 @@ pub struct PlatformInput {
     pub name: String,
     #[serde(default)]
     pub abbreviation: Option<String>,
+    #[serde(default)]
+    pub category: Option<PlatformCategory>,
     #[serde(default = "default_active")]
     pub active: bool,
 }
@@ -27,6 +29,7 @@ impl PlatformInput {
         Ok(PlatformFields {
             name: required(&self.name, "name", NAME_MAX)?,
             abbreviation: optional(self.abbreviation.as_deref(), "abbreviation", SHORT_MAX)?,
+            category: self.category,
             active: self.active,
         })
     }
