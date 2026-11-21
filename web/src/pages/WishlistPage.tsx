@@ -146,6 +146,10 @@ export function WishlistPage() {
             store_id: dialog.row.store_id,
             condition: dialog.row.condition,
             notes: dialog.row.notes,
+            edition: dialog.row.edition,
+            purchased_on: dialog.row.purchased_on,
+            price: dialog.row.price,
+            currency: dialog.row.currency,
           }}
           release={dialog.row}
           status="owned"

@@ -1,16 +1,9 @@
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .copy { display: flex; align-items: center; gap: 16px; min-width: 0; padding: 9px 12px; border-radius: 8px; background: var(--mc-background); border: 1px solid var(--mc-border); }
-.details { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.details { flex: 1; min-width: 0; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 2px; }
+.notes { white-space: pre-line; }
+.history { opacity: 0.8; }
 .actions { flex-shrink: 0; }
-.table { width: 100%; table-layout: fixed; }
-.formatColumn { width: 12%; }
-.deviceColumn, .storeColumn { width: 17%; }
-.conditionColumn { width: 17%; }
-.actionsColumn { width: 88px; }
-.actionsColumnWide { width: 124px; }
-.table th { white-space: normal; }
-.table td { vertical-align: middle; overflow-wrap: anywhere; }
-.notes { white-space: normal; overflow-wrap: anywhere; }
 
 @media (max-width: 48em) {
   .copy { gap: 8px; padding: 6px 10px; }

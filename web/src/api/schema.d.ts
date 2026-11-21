@@ -524,6 +524,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/status": {
         parameters: {
             query?: never;
@@ -592,6 +608,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Amount: {
+            /** @description Decimal text, such as `59.99`. */
+            amount: string;
+            /** Format: int64 */
+            copies: number;
+            currency: string;
+        };
         /**
          * @description Physical copies only.
          * @enum {string}
@@ -601,12 +624,19 @@ export interface components {
             condition?: components["schemas"]["Condition"] | null;
             created_at: string;
             created_by?: components["schemas"]["Person"] | null;
+            /** @description ISO 4217 code of `price`. */
+            currency?: string | null;
             /** Format: int64 */
             device_id?: number | null;
+            edition?: string | null;
             format: components["schemas"]["Format"];
             /** Format: int64 */
             id: number;
             notes?: string | null;
+            /** @description Decimal text such as `59.99`: paid for an owned copy, expected for a wanted one. */
+            price?: string | null;
+            /** @description `YYYY-MM-DD`. */
+            purchased_on?: string | null;
             status: components["schemas"]["CopyStatus"];
             /** Format: int64 */
             store_id?: number | null;
@@ -614,13 +644,20 @@ export interface components {
         };
         CopyInput: {
             condition?: components["schemas"]["Condition"] | null;
+            /** @description ISO 4217 code. */
+            currency?: string | null;
             /** Format: int64 */
             device_id?: number | null;
+            edition?: string | null;
             format: components["schemas"]["Format"];
             notes?: string | null;
             /** Format: int64 */
             platform_id: number;
+            /** @description Decimal text such as `59.99`; needs `currency`. */
+            price?: string | null;
             product_code?: string | null;
+            /** @description `YYYY-MM-DD`. */
+            purchased_on?: string | null;
             region: components["schemas"]["Region"];
             status?: components["schemas"]["CopyStatus"] | null;
             /** Format: int64 */
@@ -633,8 +670,10 @@ export interface components {
             copy_id: number;
             /** @description The release cover, else the game's. Relative to the covers URL. */
             cover_path?: string | null;
+            currency?: string | null;
             /** Format: int64 */
             device_id?: number | null;
+            edition?: string | null;
             format: components["schemas"]["Format"];
             /** Format: int64 */
             game_id: number;
@@ -644,7 +683,10 @@ export interface components {
             /** Format: int64 */
             platform_id: number;
             play_status?: string | null;
+            /** @description Decimal text; see `CopyDetail`. */
+            price?: string | null;
             product_code?: string | null;
+            purchased_on?: string | null;
             region: components["schemas"]["Region"];
             /** Format: int64 */
             release_id: number;
@@ -861,6 +903,13 @@ export interface components {
          * @enum {string}
          */
         MissingField: "play_status" | "cover" | "game_modes" | "players" | "copies" | "device" | "store" | "condition" | "igdb";
+        MonthPlay: {
+            /** Format: int64 */
+            minutes: number;
+            month: string;
+            /** Format: int64 */
+            sessions: number;
+        };
         NewDeviceReport: {
             kind: components["schemas"]["DeviceKind"];
             name: string;
@@ -975,6 +1024,15 @@ export interface components {
             /** @description Every status key, in the new order. */
             keys: string[];
         };
+        PlayedGame: {
+            /** Format: int64 */
+            game_id: number;
+            /** Format: int64 */
+            minutes: number;
+            /** Format: int64 */
+            sessions: number;
+            title: string;
+        };
         /**
          * @description Release region, matching IGDB's release regions. `ww` also covers region-free.
          * @enum {string}
@@ -1058,6 +1116,49 @@ export interface components {
             /** @description `YYYY-MM-DD`. */
             played_on: string;
         };
+        Stats: {
+            /** Format: int64 */
+            copies: number;
+            /** Format: int64 */
+            digital: number;
+            /**
+             * Format: int64
+             * @description Games with an owned copy.
+             */
+            games: number;
+            /** @description By session count, then minutes. */
+            most_played: components["schemas"]["PlayedGame"][];
+            /** Format: int64 */
+            physical: number;
+            /** @description In platform list order. */
+            platforms: components["schemas"]["PlatformCount"][];
+            /** @description Owned games per play status, in play status order; `None` is not set. */
+            play_statuses: components["schemas"]["StatusCount"][];
+            /** @description Sessions in the last 12 months, by `YYYY-MM`; months without play are left out. */
+            sessions_by_month: components["schemas"]["MonthPlay"][];
+            /** @description What owned copies cost, per currency, largest first. */
+            spent: components["schemas"]["Amount"][];
+            /** @description By the year of the purchase date; copies without one are left out. */
+            spent_by_year: components["schemas"]["YearAmount"][];
+            /** @description Largest first; `None` is copies with no store. */
+            stores: components["schemas"]["StoreCount"][];
+            /** Format: int64 */
+            total_minutes: number;
+            /** Format: int64 */
+            total_sessions: number;
+            /**
+             * Format: int64
+             * @description Owned copies without a price.
+             */
+            unpriced: number;
+            /**
+             * Format: int64
+             * @description Wanted copies.
+             */
+            wishlist: number;
+            /** @description What wanted copies are expected to cost, per currency. */
+            wishlist_value: components["schemas"]["Amount"][];
+        };
         Status: {
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
@@ -1068,6 +1169,8 @@ export interface components {
             games: number;
             /** @description IGDB credentials are set and external services are on. */
             igdb_configured: boolean;
+            /** @description Currency of the copy priced last; new prices start with it. */
+            last_currency?: string | null;
             /** Format: int64 */
             owned_copies: number;
             /** @description Whether Home Assistant sensors are being published. */
@@ -1079,6 +1182,11 @@ export interface components {
          * @enum {string}
          */
         StatusColor: "gray" | "red" | "pink" | "grape" | "violet" | "indigo" | "blue" | "cyan" | "teal" | "green" | "lime" | "yellow" | "orange";
+        StatusCount: {
+            /** Format: int64 */
+            games: number;
+            play_status?: string | null;
+        };
         /**
          * @description How the backlog page and suggestions treat a play status.
          * @enum {string}
@@ -1094,6 +1202,12 @@ export interface components {
             id: number;
             name: string;
             notes?: string | null;
+        };
+        StoreCount: {
+            /** Format: int64 */
+            copies: number;
+            /** Format: int64 */
+            store_id?: number | null;
         };
         StoreInput: {
             name: string;
@@ -1157,6 +1271,13 @@ export interface components {
             id: string;
             /** @description Display only. */
             name?: string | null;
+        };
+        YearAmount: {
+            amount: string;
+            /** Format: int64 */
+            copies: number;
+            currency: string;
+            year: string;
         };
     };
     responses: never;
@@ -2846,6 +2967,33 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    getStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stats"];
+                };
+            };
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

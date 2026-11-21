@@ -227,6 +227,10 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
           store_id: edit.store_id ? Number(edit.store_id) : copy.store_id,
           condition: (edit.condition as CopyInput['condition']) || copy.condition,
           notes: copy.notes,
+          edition: copy.edition,
+          purchased_on: copy.purchased_on,
+          price: copy.price,
+          currency: copy.currency,
         };
         latest = await call(api.PUT('/api/copies/{id}', { params: { path: { id: copy.id } }, body }));
       }

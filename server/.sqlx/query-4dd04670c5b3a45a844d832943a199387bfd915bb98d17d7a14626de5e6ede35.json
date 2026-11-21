@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT store_id AS \"store_id?\", COUNT(*) AS \"copies!: i64\"\n           FROM copies WHERE status = 'owned'\n           GROUP BY store_id\n           ORDER BY COUNT(*) DESC, store_id IS NULL, store_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "store_id?",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "store_id"
+          }
+        }
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "4dd04670c5b3a45a844d832943a199387bfd915bb98d17d7a14626de5e6ede35"
+}

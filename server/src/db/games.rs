@@ -9,6 +9,7 @@ use super::users::Person;
 use crate::covers::Owner;
 use crate::domain::{Condition, CopyStatus, Format, Region, sort_title};
 use crate::error::{ApiError, ApiResult};
+use crate::money;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CopyDetail {
@@ -19,6 +20,13 @@ pub struct CopyDetail {
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
+    pub edition: Option<String>,
+    /// `YYYY-MM-DD`.
+    pub purchased_on: Option<String>,
+    /// Decimal text such as `59.99`: paid for an owned copy, expected for a wanted one.
+    pub price: Option<String>,
+    /// ISO 4217 code of `price`.
+    pub currency: Option<String>,
     pub created_at: String,
     pub created_by: Option<Person>,
     pub updated_by: Option<Person>,
@@ -100,6 +108,16 @@ pub struct CopyFields {
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
+    pub edition: Option<String>,
+    pub purchased_on: Option<String>,
+    pub price: Option<Price>,
+}
+
+/// An amount in minor units and its currency.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Price {
+    pub minor: i64,
+    pub currency: String,
 }
 
 pub struct ReleaseFields {
@@ -151,7 +169,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     let mut copies = sqlx::query!(
         r#"SELECT c.id AS "id!", c.release_id, c.status AS "status: CopyStatus",
                   c.format AS "format: Format", c.device_id, c.store_id,
-                  c.condition AS "condition: Condition", c.notes, c.created_at,
+                  c.condition AS "condition: Condition", c.notes, c.edition, c.purchased_on,
+                  c.price, c.currency, c.created_at,
                   c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,
                   c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name
            FROM copies c JOIN releases r ON r.id = c.release_id
@@ -193,6 +212,13 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                         store_id: c.store_id,
                         condition: c.condition,
                         notes: c.notes,
+                        edition: c.edition,
+                        purchased_on: c.purchased_on,
+                        price: c
+                            .price
+                            .zip(c.currency.as_deref())
+                            .map(|(minor, currency)| money::format(minor, currency)),
+                        currency: c.currency,
                         created_at: c.created_at,
                         created_by: Person::from_columns(c.created_by, c.created_by_name),
                         updated_by: Person::from_columns(c.updated_by, c.updated_by_name),
@@ -356,10 +382,11 @@ pub async fn add_copy(
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
     let status = fields.status.unwrap_or(CopyStatus::Owned);
+    let (price, currency) = price_columns(fields);
     sqlx::query!(
         "INSERT INTO copies (release_id, status, format, device_id, store_id, condition, notes,
-                             created_by, updated_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             edition, purchased_on, price, currency, created_by, updated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         release_id,
         status,
         fields.format,
@@ -367,6 +394,10 @@ pub async fn add_copy(
         fields.store_id,
         fields.condition,
         fields.notes,
+        fields.edition,
+        fields.purchased_on,
+        price,
+        currency,
         by,
         by
     )
@@ -388,10 +419,12 @@ pub async fn update_copy(
     let game_id = copy_game(&mut tx, copy_id).await?;
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
+    let (price, currency) = price_columns(fields);
     sqlx::query!(
         "UPDATE copies
          SET release_id = ?, status = COALESCE(?, status), format = ?, device_id = ?,
-             store_id = ?, condition = ?, notes = ?, updated_by = ?,
+             store_id = ?, condition = ?, notes = ?, edition = ?, purchased_on = ?,
+             price = ?, currency = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         release_id,
@@ -401,6 +434,10 @@ pub async fn update_copy(
         fields.store_id,
         fields.condition,
         fields.notes,
+        fields.edition,
+        fields.purchased_on,
+        price,
+        currency,
         by,
         copy_id
     )
@@ -457,6 +494,14 @@ pub async fn delete_release(pool: &SqlitePool, release_id: i64) -> ApiResult<i64
         .execute(pool)
         .await?;
     Ok(game_id)
+}
+
+fn price_columns(fields: &CopyFields) -> (Option<i64>, Option<&str>) {
+    fields
+        .price
+        .as_ref()
+        .map(|p| (p.minor, p.currency.as_str()))
+        .unzip()
 }
 
 async fn release_game(pool: &SqlitePool, release_id: i64) -> ApiResult<i64> {

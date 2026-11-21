@@ -9,6 +9,7 @@ pub mod missing;
 pub mod platforms;
 pub mod play_statuses;
 pub mod sessions;
+pub mod stats;
 pub mod status;
 pub mod stores;
 pub mod suggestions;
@@ -30,6 +31,7 @@ struct ApiDoc;
 pub fn router() -> OpenApiRouter<AppState> {
     let api = OpenApiRouter::new()
         .routes(routes!(status::get_status))
+        .routes(routes!(stats::get))
         .routes(routes!(me::get_me))
         .routes(routes!(platforms::list, platforms::create))
         .routes(routes!(platforms::reorder))

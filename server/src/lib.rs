@@ -10,6 +10,7 @@ pub mod http;
 pub mod igdb;
 pub mod ingress;
 pub mod logging;
+pub mod money;
 pub mod sensors;
 pub mod shutdown;
 pub mod transfer;

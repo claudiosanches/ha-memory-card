@@ -6,14 +6,17 @@ use time::Date;
 use time::macros::format_description;
 use utoipa::ToSchema;
 
-use super::input::{NOTES_MAX, optional, required};
+use super::input::{NAME_MAX, NOTES_MAX, optional, required};
 use crate::AppState;
 use crate::access::Actor;
 use crate::covers::{self, Owner};
-use crate::db::games::{self, CopyFields, GameDetail, GameFields, PlayerCounts, ReleaseFields};
+use crate::db::games::{
+    self, CopyFields, GameDetail, GameFields, PlayerCounts, Price, ReleaseFields,
+};
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
 use crate::domain::{Condition, CopyStatus, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
+use crate::money;
 
 const TITLE_MAX: usize = 200;
 const SUMMARY_MAX: usize = 5000;
@@ -68,6 +71,17 @@ pub struct CopyInput {
     pub condition: Option<Condition>,
     #[serde(default)]
     pub notes: Option<String>,
+    #[serde(default)]
+    pub edition: Option<String>,
+    /// `YYYY-MM-DD`.
+    #[serde(default)]
+    pub purchased_on: Option<String>,
+    /// Decimal text such as `59.99`; needs `currency`.
+    #[serde(default)]
+    pub price: Option<String>,
+    /// ISO 4217 code.
+    #[serde(default)]
+    pub currency: Option<String>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -109,6 +123,22 @@ pub(super) fn date(value: Option<&str>, field: &'static str) -> ApiResult<Option
     Date::parse(value, format_description!("[year]-[month]-[day]"))
         .map(|_| Some(value.to_owned()))
         .map_err(|_| ApiError::invalid("invalid_date", field))
+}
+
+/// A price needs a currency; a currency alone is dropped.
+fn price(amount: Option<&str>, currency: Option<&str>) -> ApiResult<Option<Price>> {
+    let Some(amount) = amount.map(str::trim).filter(|a| !a.is_empty()) else {
+        return Ok(None);
+    };
+    let currency = match currency.map(str::trim).filter(|c| !c.is_empty()) {
+        None => return Err(ApiError::invalid("required", "currency")),
+        Some(code) => {
+            money::currency(code).ok_or(ApiError::invalid("invalid_currency", "currency"))?
+        }
+    };
+    let minor =
+        money::parse(amount, &currency).ok_or(ApiError::invalid("invalid_price", "price"))?;
+    Ok(Some(Price { minor, currency }))
 }
 
 fn players(
@@ -165,6 +195,9 @@ impl CopyInput {
             store_id: self.store_id,
             condition: self.condition,
             notes: optional(self.notes.as_deref(), "notes", NOTES_MAX)?,
+            edition: optional(self.edition.as_deref(), "edition", NAME_MAX)?,
+            purchased_on: date(self.purchased_on.as_deref(), "purchased_on")?,
+            price: price(self.price.as_deref(), self.currency.as_deref())?,
         })
     }
 }

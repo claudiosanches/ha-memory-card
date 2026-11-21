@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE copies\n         SET release_id = ?, status = COALESCE(?, status), format = ?, device_id = ?,\n             store_id = ?, condition = ?, notes = ?, edition = ?, purchased_on = ?,\n             price = ?, currency = ?, updated_by = ?,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 13
+    },
+    "nullable": []
+  },
+  "hash": "00f13042c68d2c5662520ea4ba00ea25c1852f774bc0f032e0109bcb58938b87"
+}

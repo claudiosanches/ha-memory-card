@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes, c.created_at,\n                  c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           LEFT JOIN users cu ON cu.id = c.created_by\n           LEFT JOIN users uu ON uu.id = c.updated_by\n           WHERE r.game_id = ?\n           ORDER BY c.id",
+  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes, c.edition, c.purchased_on,\n                  c.price, c.currency, c.created_at,\n                  c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           LEFT JOIN users cu ON cu.id = c.created_by\n           LEFT JOIN users uu ON uu.id = c.updated_by\n           WHERE r.game_id = ?\n           ORDER BY c.id",
   "describe": {
     "columns": [
       {
@@ -92,8 +92,52 @@
         }
       },
       {
-        "name": "created_at",
+        "name": "edition",
         "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "edition"
+          }
+        }
+      },
+      {
+        "name": "purchased_on",
+        "ordinal": 9,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "purchased_on"
+          }
+        }
+      },
+      {
+        "name": "price",
+        "ordinal": 10,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "price"
+          }
+        }
+      },
+      {
+        "name": "currency",
+        "ordinal": 11,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "currency"
+          }
+        }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 12,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -104,7 +148,7 @@
       },
       {
         "name": "created_by",
-        "ordinal": 9,
+        "ordinal": 13,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -115,13 +159,13 @@
       },
       {
         "name": "created_by_name",
-        "ordinal": 10,
+        "ordinal": 14,
         "type_info": "Text",
         "origin": "Expression"
       },
       {
         "name": "updated_by",
-        "ordinal": 11,
+        "ordinal": 15,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -132,7 +176,7 @@
       },
       {
         "name": "updated_by_name",
-        "ordinal": 12,
+        "ordinal": 16,
         "type_info": "Text",
         "origin": "Expression"
       }
@@ -149,6 +193,10 @@
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
       false,
       true,
       true,
@@ -156,5 +204,5 @@
       true
     ]
   },
-  "hash": "40a5d2610939f2e0edb0e75168076e22285e5a7a82b324fd2581e83162e736cf"
+  "hash": "15042ff31d939ce7593b573a9ee27b29d00a78fdbd199589ea52ab681a4cc35f"
 }

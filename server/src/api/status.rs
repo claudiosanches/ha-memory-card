@@ -17,6 +17,8 @@ pub struct Status {
     /// Games with at least one owned copy.
     pub games: i64,
     pub owned_copies: i64,
+    /// Currency of the copy priced last; new prices start with it.
+    pub last_currency: Option<String>,
     /// Whether Home Assistant sensors are being published.
     pub sensors: SensorsStatus,
 }
@@ -43,12 +45,20 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
             .fetch_one(&state.db)
             .await?;
 
+    let last_currency: Option<String> = sqlx::query_scalar(
+        "SELECT currency FROM copies WHERE currency IS NOT NULL
+         ORDER BY updated_at DESC, id DESC LIMIT 1",
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
     Ok(Json(Status {
         version: env!("CARGO_PKG_VERSION"),
         igdb_configured: state.igdb.is_some(),
         external_services: state.config.external_services,
         games,
         owned_copies,
+        last_currency,
         sensors: *state.sensors.lock().expect("sensors status lock"),
     }))
 }

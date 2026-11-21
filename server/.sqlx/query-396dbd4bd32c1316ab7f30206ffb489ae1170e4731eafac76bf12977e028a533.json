@@ -1,0 +1,47 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT substr(purchased_on, 1, 4) AS \"year!: String\", currency AS \"currency!\",\n                  SUM(price) AS \"minor!: i64\", COUNT(*) AS \"copies!: i64\"\n           FROM copies\n           WHERE status = 'owned' AND purchased_on IS NOT NULL\n             AND price IS NOT NULL AND currency IS NOT NULL\n           GROUP BY 1, currency\n           ORDER BY 1, currency",
+  "describe": {
+    "columns": [
+      {
+        "name": "year!: String",
+        "ordinal": 0,
+        "type_info": "Null",
+        "origin": "Expression"
+      },
+      {
+        "name": "currency!",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "currency"
+          }
+        }
+      },
+      {
+        "name": "minor!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "396dbd4bd32c1316ab7f30206ffb489ae1170e4731eafac76bf12977e028a533"
+}

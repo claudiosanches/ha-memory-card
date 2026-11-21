@@ -1,0 +1,28 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) AS \"sessions!: i64\", COALESCE(SUM(minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions",
+  "describe": {
+    "columns": [
+      {
+        "name": "sessions!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "minutes!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "bda230de2159faab45d66542c28be3d041b59bde37690c1e4594ba6c14401d51"
+}

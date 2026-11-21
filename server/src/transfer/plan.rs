@@ -11,6 +11,7 @@ use super::snapshot::{CopyRow, Snapshot};
 use crate::db::devices::DeviceKind;
 use crate::db::play_statuses;
 use crate::domain::{Condition, CopyStatus, Format, Region};
+use crate::money;
 
 const TITLE_MAX: usize = 200;
 const NAME_MAX: usize = 100;
@@ -58,6 +59,10 @@ pub struct CopyWrite {
     pub store: Option<Ref>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
+    pub edition: Option<String>,
+    pub purchased_on: Option<String>,
+    pub price: Option<i64>,
+    pub currency: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
@@ -302,6 +307,26 @@ impl<'a> Planner<'a> {
             issues.error("condition", "condition_digital");
         }
         let notes = issues.text(&raw.notes, "notes", NOTES_MAX, false);
+        let edition = issues.text(&raw.edition, "edition", NAME_MAX, false);
+        let purchased_on = issues.value(&raw.purchased_on, "purchased_on", date, false);
+        let currency = issues.value(&raw.currency, "currency", money::currency, false);
+        let price = match (raw.price.as_deref(), currency.as_deref()) {
+            (None, _) => None,
+            (Some(_), None) => {
+                if raw.currency.is_none() {
+                    issues.error("currency", "required");
+                }
+                None
+            }
+            (Some(text), Some(currency)) => {
+                let minor = money::parse(text, currency);
+                if minor.is_none() {
+                    issues.error("price", "invalid_value");
+                }
+                minor
+            }
+        };
+        let currency = currency.filter(|_| price.is_some());
 
         let existing_copy = match copy_id {
             None => None,
@@ -396,6 +421,10 @@ impl<'a> Planner<'a> {
             store,
             condition,
             notes,
+            edition,
+            purchased_on,
+            price,
+            currency,
         };
         let action = match existing_copy {
             None => RowAction::NewCopy,
@@ -626,6 +655,20 @@ fn same_copy(copy: &CopyRow, write: &CopyWrite) -> bool {
         && write.store == copy.store_id.map(Ref::Existing)
         && write.condition == copy.condition
         && write.notes == copy.notes
+        && write.edition == copy.edition
+        && write.purchased_on == copy.purchased_on
+        && write.price == copy.price
+        && write.currency == copy.currency
+}
+
+/// A `YYYY-MM-DD` date.
+fn date(value: &str) -> Option<String> {
+    time::Date::parse(
+        value,
+        time::macros::format_description!("[year]-[month]-[day]"),
+    )
+    .ok()
+    .map(|_| value.to_owned())
 }
 
 #[derive(Default)]

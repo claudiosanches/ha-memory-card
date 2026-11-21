@@ -1,0 +1,52 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT status, currency AS \"currency!\", SUM(price) AS \"minor!: i64\",\n                  COUNT(*) AS \"copies!: i64\"\n           FROM copies WHERE price IS NOT NULL AND currency IS NOT NULL\n           GROUP BY status, currency\n           ORDER BY COUNT(*) DESC, currency",
+  "describe": {
+    "columns": [
+      {
+        "name": "status",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "name": "currency!",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "currency"
+          }
+        }
+      },
+      {
+        "name": "minor!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "dff4454af3b1c06fb7289b686474a6e692cea0e3f0fa669c470e05fe41630021"
+}

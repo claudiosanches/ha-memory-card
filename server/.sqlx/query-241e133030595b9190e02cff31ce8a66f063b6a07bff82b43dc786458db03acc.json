@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", release_id, status AS \"status: CopyStatus\", device_id,\n                  format AS \"format: Format\", store_id, condition AS \"condition: Condition\", notes\n           FROM copies",
+  "query": "SELECT id AS \"id!\", release_id, status AS \"status: CopyStatus\", device_id,\n                  format AS \"format: Format\", store_id, condition AS \"condition: Condition\", notes,\n                  edition, purchased_on, price, currency\n           FROM copies",
   "describe": {
     "columns": [
       {
@@ -90,6 +90,50 @@
             "name": "notes"
           }
         }
+      },
+      {
+        "name": "edition",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "edition"
+          }
+        }
+      },
+      {
+        "name": "purchased_on",
+        "ordinal": 9,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "purchased_on"
+          }
+        }
+      },
+      {
+        "name": "price",
+        "ordinal": 10,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "price"
+          }
+        }
+      },
+      {
+        "name": "currency",
+        "ordinal": 11,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "currency"
+          }
+        }
       }
     ],
     "parameters": {
@@ -103,8 +147,12 @@
       false,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "0b86cdbde014b67293af01af3d8d897a1f94c9d2b153dca37610d952732d108e"
+  "hash": "241e133030595b9190e02cff31ce8a66f063b6a07bff82b43dc786458db03acc"
 }

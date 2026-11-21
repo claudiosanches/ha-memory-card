@@ -368,6 +368,14 @@ pub struct CopyRow {
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
+    pub edition: Option<String>,
+    pub purchased_on: Option<String>,
+    /// Decimal text; see `CopyDetail`.
+    #[sqlx(skip)]
+    pub price: Option<String>,
+    pub currency: Option<String>,
+    #[serde(skip)]
+    price_minor: Option<i64>,
     /// The game's latest session.
     pub last_played_at: Option<String>,
 }
@@ -379,6 +387,7 @@ pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
                 COALESCE(r.cover_path, g.cover_path) AS cover_path, g.play_status,
                 r.id AS release_id, r.platform_id, r.region, r.title AS release_title,
                 r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes,
+                c.edition, c.purchased_on, c.price AS price_minor, c.currency,
                 (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) AS last_played_at
          FROM copies c
          JOIN releases r ON r.id = c.release_id
@@ -400,7 +409,17 @@ pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
 }
 
 pub async fn list_copies(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec<CopyRow>> {
-    copies_query(filter).build_query_as().fetch_all(pool).await
+    let mut rows: Vec<CopyRow> = copies_query(filter)
+        .build_query_as()
+        .fetch_all(pool)
+        .await?;
+    for row in &mut rows {
+        row.price = row
+            .price_minor
+            .zip(row.currency.as_deref())
+            .map(|(minor, currency)| crate::money::format(minor, currency));
+    }
+    Ok(rows)
 }
 
 pub async fn list(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec<GameSummary>> {

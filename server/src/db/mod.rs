@@ -8,6 +8,7 @@ pub mod play_statuses;
 pub mod premigration;
 pub mod sensors;
 pub mod sessions;
+pub mod stats;
 pub mod stores;
 pub mod suggestions;
 pub mod titles;

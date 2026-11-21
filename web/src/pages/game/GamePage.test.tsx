@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { GameDetail } from '../../api/types';
 import en from '../../locales/en.json';
 import { json, mockApi, VIEWER } from '../../test/api';
@@ -137,14 +137,22 @@ describe('Game page', () => {
     await waitFor(() => expect(router.state.location.search).toEqual({ genre: [8] }));
   });
 
-  it('lists copies without a table on a phone', async () => {
-    vi.stubGlobal('matchMedia', (query: string) => ({
-      matches: query.includes('max-width'),
-      media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    }));
-    const copy = { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: 3, condition: 'cib', notes: 'Sealed spare', created_at: '2026-11-01T10:00:00.000Z' };
+  it('lists each copy with its edition, purchase and who added it', async () => {
+    const copy = {
+      id: 21,
+      status: 'owned',
+      format: 'physical',
+      device_id: null,
+      store_id: 3,
+      condition: 'cib',
+      notes: 'Sealed spare',
+      edition: 'Steelbook',
+      purchased_on: '2026-10-05',
+      price: '59.90',
+      currency: 'USD',
+      created_at: '2026-11-01T10:00:00.000Z',
+      created_by: { id: 'a1', name: 'Sam' },
+    };
     mockApi({
       ...SETUP,
       'GET /api/stores': [{ id: 3, name: 'Amazon', notes: null, copy_count: 1 }],
@@ -155,9 +163,12 @@ describe('Game page', () => {
     const item = await screen.findByTestId('copy-21');
     expect(item.tagName).toBe('LI');
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(within(item).getByText(`${en.format.physical} · ${en.condition.cib}`)).toBeInTheDocument();
+    for (const text of [en.format.physical, 'Steelbook', en.condition.cib, 'Sealed spare', '$59.90']) {
+      expect(within(item).getByText(text)).toBeInTheDocument();
+    }
     expect(await within(item).findByText('Amazon')).toBeInTheDocument();
-    expect(within(item).getByText('Sealed spare')).toBeInTheDocument();
+    expect(within(item).getByText(/^Bought /)).toBeInTheDocument();
+    expect(within(item).getByText(/^Added by Sam on /)).toBeInTheDocument();
     expect(within(item).getByRole('button', { name: en.game.editCopy })).toBeInTheDocument();
   });
 
@@ -266,6 +277,36 @@ describe('Game page', () => {
     await waitFor(() => expect(within(dialog).getByRole('combobox', { name: en.game.store })).toHaveValue(''));
     expect(within(dialog).getByRole('combobox', { name: en.game.platform })).toHaveValue('Nintendo Switch');
     expect(within(dialog).getByRole('combobox', { name: en.game.region })).toHaveValue(en.region.jp);
+  });
+
+  it('prices a copy in the currency used last', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, games: 1, owned_copies: 1, last_currency: 'BRL', sensors: 'off' },
+      'GET /api/games/4': GAME,
+      'POST /api/games/4/copies': GAME,
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.game.addCopy }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.region }));
+    fireEvent.click(await screen.findByRole('option', { name: en.region.br, hidden: true }));
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.platform }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Nintendo Switch', hidden: true }));
+    fireEvent.change(within(dialog).getByLabelText(en.game.edition), { target: { value: 'Steelbook' } });
+    fireEvent.change(within(dialog).getByLabelText(en.game.purchasedOn), { target: { value: '2026-11-20' } });
+    fireEvent.change(within(dialog).getByLabelText(en.game.price), { target: { value: '1.299,90' } });
+    expect((within(dialog).getByRole('combobox', { name: en.game.currency }) as HTMLInputElement).value).toMatch(/^BRL /);
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      edition: 'Steelbook',
+      purchased_on: '2026-11-20',
+      price: '1.299,90',
+      currency: 'BRL',
+    });
   });
 
   it('offers to delete the game with its last copy', async () => {

@@ -6,7 +6,10 @@ use axum::http::StatusCode;
 use common::TestApp;
 use serde_json::{Value, json};
 
+/// The columns most rows here use; imports read columns by name.
 const HEADER: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,device,store,condition,notes";
+/// Every column, in export order.
+const COLUMNS: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,edition,device,store,condition,purchased_on,price,currency,notes";
 
 fn issues(preview: &Value, line: u64) -> Vec<(String, String)> {
     let row = preview["rows"]
@@ -100,7 +103,7 @@ async fn template_is_the_header_row() {
     let app = TestApp::new().await;
     let (status, bytes) = app.get("/api/import/template.csv").await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(bytes, format!("\u{feff}{HEADER}\r\n").into_bytes());
+    assert_eq!(bytes, format!("\u{feff}{COLUMNS}\r\n").into_bytes());
 }
 
 #[tokio::test]
@@ -178,20 +181,23 @@ async fn import_then_export_round_trips() {
 
     let exported = export(&app).await;
     let lines: Vec<&str> = exported.trim_start_matches('\u{feff}').lines().collect();
-    assert_eq!(lines[0], HEADER);
+    assert_eq!(lines[0], COLUMNS);
     assert_eq!(lines.len(), 4, "{exported}");
     // Same platform: rows sort by region, so eu comes before na.
     assert!(
-        lines[1].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,eu,Super Mario Odyssey (PAL),,digital,,,,"),
+        lines[1].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,eu,Super Mario Odyssey (PAL),,digital,,,,,,,,"),
         "{}",
         lines[1]
     );
     assert!(
-        lines[2].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,na,,HAC-AAACA,physical,Switch OLED,Amazon,cib,\"Gift, 2017\""),
+        lines[2].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,na,,HAC-AAACA,physical,,Switch OLED,Amazon,cib,,,,\"Gift, 2017\""),
         "{}",
         lines[2]
     );
-    assert_eq!(lines[3], ",,,Zelda: Breath of the Wild,mastered,,,,,,,,,");
+    assert_eq!(
+        lines[3],
+        ",,,Zelda: Breath of the Wild,mastered,,,,,,,,,,,,,"
+    );
 
     // Importing the export again changes nothing.
     let (_, preview) = app.post_csv("/api/import/preview", &exported).await;
@@ -215,7 +221,10 @@ async fn edited_export_updates_copies() {
     )
     .await;
     let exported = export(&app).await;
-    let edited = exported.replace(",physical,,,,", ",physical,,Amazon,sealed,Still wrapped");
+    let edited = exported.replace(
+        ",physical,,,,,,,,",
+        ",physical,,,Amazon,sealed,,,,Still wrapped",
+    );
 
     let (_, result) = app.post_csv("/api/import", &edited).await;
     assert_eq!(result["summary"]["updated_copies"], 1, "{result}");
@@ -442,4 +451,63 @@ async fn concurrent_writes_all_succeed() {
         assert_eq!(status, StatusCode::OK, "{body}");
     }
     assert_eq!(app.scalar("SELECT COUNT(*) FROM games").await, 12);
+}
+
+#[tokio::test]
+async fn purchase_columns_import_and_export() {
+    let app = TestApp::new().await;
+    let csv = format!(
+        "{COLUMNS}\n\
+         ,,,Hades,,PC,ww,,,digital,Deluxe,,Steam,,2024-09-17,\"R$ 1.299,90\",brl,\n\
+         ,,,Tetris,,Switch,eu,,,physical,,,,,,5980,JPY,\n\
+         ,wanted,,Celeste,,Switch,eu,,,physical,Collector's,,,,,59.9,USD,\n"
+    );
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+
+    let exported = export(&app).await;
+    let lines: Vec<&str> = exported.trim_start_matches('\u{feff}').lines().collect();
+    assert!(
+        lines[2].ends_with(",digital,Deluxe,,Steam,,2024-09-17,1299.90,BRL,"),
+        "{}",
+        lines[2]
+    );
+    assert!(
+        lines[3].ends_with(",physical,,,,,,5980,JPY,"),
+        "{}",
+        lines[3]
+    );
+    assert!(
+        lines[1].ends_with(",Collector's,,,,,59.90,USD,"),
+        "{}",
+        lines[1]
+    );
+
+    let (_, preview) = app.post_csv("/api/import/preview", &exported).await;
+    assert_eq!(preview["summary"]["unchanged_copies"], 3, "{preview}");
+
+    let bad = format!(
+        "{COLUMNS}\n\
+         ,,,A,,PC,ww,,,digital,,,,,yesterday,,,\n\
+         ,,,B,,PC,ww,,,digital,,,,,,10,,\n\
+         ,,,C,,PC,ww,,,digital,,,,,,ten,USD,\n\
+         ,,,D,,PC,ww,,,digital,,,,,,10,dollars,\n"
+    );
+    let (_, preview) = app.post_csv("/api/import/preview", &bad).await;
+    assert_eq!(
+        issues(&preview, 2),
+        [("purchased_on".into(), "invalid_value".into())]
+    );
+    assert_eq!(
+        issues(&preview, 3),
+        [("currency".into(), "required".into())]
+    );
+    assert_eq!(
+        issues(&preview, 4),
+        [("price".into(), "invalid_value".into())]
+    );
+    assert_eq!(
+        issues(&preview, 5),
+        [("currency".into(), "invalid_value".into())]
+    );
 }

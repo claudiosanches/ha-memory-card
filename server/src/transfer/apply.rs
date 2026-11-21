@@ -144,8 +144,9 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
             None => {
                 sqlx::query!(
                     "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,
-                                         notes, created_by, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                         notes, edition, purchased_on, price, currency,
+                                         created_by, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     release_id,
                     copy.status,
                     device_id,
@@ -153,6 +154,10 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     store_id,
                     copy.condition,
                     copy.notes,
+                    copy.edition,
+                    copy.purchased_on,
+                    copy.price,
+                    copy.currency,
                     by,
                     by
                 )
@@ -163,7 +168,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                 sqlx::query!(
                     "UPDATE copies
                      SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,
-                         condition = ?, notes = ?, updated_by = ?,
+                         condition = ?, notes = ?, edition = ?, purchased_on = ?, price = ?,
+                         currency = ?, updated_by = ?,
                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                      WHERE id = ?",
                     release_id,
@@ -173,6 +179,10 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     store_id,
                     copy.condition,
                     copy.notes,
+                    copy.edition,
+                    copy.purchased_on,
+                    copy.price,
+                    copy.currency,
                     by,
                     id
                 )

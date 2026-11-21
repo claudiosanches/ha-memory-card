@@ -872,3 +872,75 @@ async fn games_and_copies_name_who_added_and_changed_them() {
     );
     assert_eq!(app.scalar("SELECT COUNT(*) FROM users").await, 2);
 }
+
+#[tokio::test]
+async fn copies_record_edition_purchase_date_and_price() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let game = new_game(&app, "Tetris 99").await;
+    let base = json!({"platform_id": switch, "region": "eu", "format": "physical"});
+    let with = |extra: Value| {
+        let mut body = base.clone();
+        body.as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        body
+    };
+
+    let detail = add_copy(
+        &app,
+        game,
+        with(json!({"edition": " Big Box ", "purchased_on": "2026-11-01", "price": "1.299,90", "currency": "brl"})),
+    )
+    .await;
+    let copy = &detail["releases"][0]["copies"][0];
+    assert_eq!(copy["edition"], "Big Box");
+    assert_eq!(copy["purchased_on"], "2026-11-01");
+    assert_eq!(copy["price"], "1299.90");
+    assert_eq!(copy["currency"], "BRL");
+    let id = copy["id"].as_i64().unwrap();
+    let (_, copies) = app.json("GET", "/api/copies", None).await;
+    assert_eq!(copies[0]["edition"], "Big Box");
+    assert_eq!(copies[0]["price"], "1299.90");
+
+    let (status, detail) = app
+        .json(
+            "PUT",
+            &format!("/api/copies/{id}"),
+            Some(with(json!({"currency": "USD"}))),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let copy = &detail["releases"][0]["copies"][0];
+    assert_eq!(copy["price"], Value::Null);
+    assert_eq!(copy["currency"], Value::Null, "a currency alone is dropped");
+
+    for (extra, code, field) in [
+        (json!({"price": "10"}), "required", "currency"),
+        (
+            json!({"price": "10", "currency": "R$"}),
+            "invalid_currency",
+            "currency",
+        ),
+        (
+            json!({"price": "ten", "currency": "USD"}),
+            "invalid_price",
+            "price",
+        ),
+        (
+            json!({"purchased_on": "01/11/2026"}),
+            "invalid_date",
+            "purchased_on",
+        ),
+    ] {
+        let (status, error) = app
+            .json(
+                "POST",
+                &format!("/api/games/{game}/copies"),
+                Some(with(extra)),
+            )
+            .await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(error, json!({"code": code, "field": field}));
+    }
+}

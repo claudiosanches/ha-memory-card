@@ -23,6 +23,10 @@ pub struct RawRow {
     pub store: Option<String>,
     pub condition: Option<String>,
     pub notes: Option<String>,
+    pub edition: Option<String>,
+    pub purchased_on: Option<String>,
+    pub price: Option<String>,
+    pub currency: Option<String>,
 }
 
 impl RawRow {
@@ -40,6 +44,10 @@ impl RawRow {
             &self.store,
             &self.condition,
             &self.notes,
+            &self.edition,
+            &self.purchased_on,
+            &self.price,
+            &self.currency,
         ]
         .iter()
         .any(|cell| cell.is_some())
@@ -129,6 +137,10 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             store: cell("store"),
             condition: cell("condition"),
             notes: cell("notes"),
+            edition: cell("edition"),
+            purchased_on: cell("purchased_on"),
+            price: cell("price"),
+            currency: cell("currency"),
         };
         if row.game_title.is_none()
             && row.igdb_id.is_none()

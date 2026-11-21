@@ -13,11 +13,11 @@ import {
 } from '@mantine/core';
 import { type UseFormReturnType, useForm } from '@mantine/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call } from '../../api/errors';
-import { queryKeys, useDevices, useGameModes, usePlatforms, useStores } from '../../api/queries';
+import { queryKeys, useDevices, useGameModes, usePlatforms, useStatus, useStores } from '../../api/queries';
 import {
   CONDITIONS,
   type CopyDetail,
@@ -31,6 +31,7 @@ import {
   type ReleaseDetail,
 } from '../../api/types';
 import { FormModal } from '../../components/FormModal';
+import { currencyOptions, localeCurrency } from '../../components/money';
 import { notifySuccess } from '../../components/notify';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 
@@ -83,12 +84,14 @@ type CopyFormProps = {
 };
 
 export function CopyForm({ gameId, resolveGame, copy, release, status, title, onClose }: CopyFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const platforms = usePlatforms();
   const devices = useDevices();
   const stores = useStores();
+  const appStatus = useStatus();
   const saved = useGameSaved();
   const [allDevices, setAllDevices] = useState(false);
+  const currencies = useMemo(() => currencyOptions(i18n.language), [i18n.language]);
   // Remounts the searchable selects after "Save and add another"; they keep their typed text otherwise.
   const [round, setRound] = useState(0);
 
@@ -103,6 +106,10 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
       store_id: copy?.store_id ? String(copy.store_id) : '',
       condition: copy?.condition ?? '',
       notes: copy?.notes ?? '',
+      edition: copy?.edition ?? '',
+      purchased_on: copy?.purchased_on ?? '',
+      price: copy?.price ?? '',
+      currency: copy?.currency ?? appStatus.data?.last_currency ?? localeCurrency(i18n.language),
     },
     validate: {
       platform_id: (value) => (value ? null : t('errors.required')),
@@ -138,8 +145,22 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
         onClose();
         return;
       }
-      const { status, platform_id, region, product_code, format } = form.getValues();
-      form.setValues({ status, platform_id, region, product_code, format, device_id: '', store_id: '', condition: '', notes: '' });
+      const { status, platform_id, region, product_code, format, purchased_on, currency } = form.getValues();
+      form.setValues({
+        status,
+        platform_id,
+        region,
+        product_code,
+        format,
+        purchased_on,
+        currency,
+        device_id: '',
+        store_id: '',
+        condition: '',
+        notes: '',
+        edition: '',
+        price: '',
+      });
       form.resetDirty();
       setRound((value) => value + 1);
     },
@@ -160,6 +181,10 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
         store_id: v.store_id ? Number(v.store_id) : null,
         condition: v.format === 'physical' && v.condition ? (v.condition as CopyInput['condition']) : null,
         notes: textOrNull(v.notes),
+        edition: textOrNull(v.edition),
+        purchased_on: wanted ? null : textOrNull(v.purchased_on),
+        price: textOrNull(v.price),
+        currency: v.price.trim() ? v.currency : null,
       };
       save.mutate({ body, another: addAnother });
     });
@@ -203,6 +228,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
         data={(['physical', 'digital'] as const).map((f) => ({ value: f, label: t(`format.${f}`) }))}
         {...form.getInputProps('format')}
       />
+      <TextInput label={t('game.edition')} placeholder={t('game.editionPlaceholder')} {...form.getInputProps('edition')} />
       {values.status === 'owned' && (
         <>
           <Select
@@ -243,6 +269,24 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
           value={form.values.condition || null}
         />
       )}
+      {values.status === 'owned' && (
+        <TextInput type="date" label={t('game.purchasedOn')} {...form.getInputProps('purchased_on')} />
+      )}
+      <Group grow align="flex-start">
+        <TextInput
+          label={values.status === 'wanted' ? t('game.expectedPrice') : t('game.price')}
+          inputMode="decimal"
+          {...form.getInputProps('price')}
+        />
+        <Select
+          label={t('game.currency')}
+          data={currencies}
+          searchable
+          allowDeselect={false}
+          comboboxProps={{ width: 280, position: 'bottom-end' }}
+          {...form.getInputProps('currency')}
+        />
+      </Group>
       <Textarea label={t('common.notes')} autosize minRows={2} {...form.getInputProps('notes')} />
     </FormModal>
   );

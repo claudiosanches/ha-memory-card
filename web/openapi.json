@@ -2426,6 +2426,34 @@
         }
       }
     },
+    "/api/stats": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/status": {
       "get": {
         "tags": [
@@ -2674,6 +2702,27 @@
   },
   "components": {
     "schemas": {
+      "Amount": {
+        "type": "object",
+        "required": [
+          "currency",
+          "amount",
+          "copies"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Decimal text, such as `59.99`."
+          },
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          }
+        }
+      },
       "Condition": {
         "type": "string",
         "description": "Physical copies only.",
@@ -2716,12 +2765,25 @@
               }
             ]
           },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 4217 code of `price`."
+          },
           "device_id": {
             "type": [
               "integer",
               "null"
             ],
             "format": "int64"
+          },
+          "edition": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "format": {
             "$ref": "#/components/schemas/Format"
@@ -2735,6 +2797,20 @@
               "string",
               "null"
             ]
+          },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text such as `59.99`: paid for an owned copy, expected for a wanted one."
+          },
+          "purchased_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`YYYY-MM-DD`."
           },
           "status": {
             "$ref": "#/components/schemas/CopyStatus"
@@ -2777,12 +2853,25 @@
               }
             ]
           },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 4217 code."
+          },
           "device_id": {
             "type": [
               "integer",
               "null"
             ],
             "format": "int64"
+          },
+          "edition": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "format": {
             "$ref": "#/components/schemas/Format"
@@ -2797,11 +2886,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text such as `59.99`; needs `currency`."
+          },
           "product_code": {
             "type": [
               "string",
               "null"
             ]
+          },
+          "purchased_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`YYYY-MM-DD`."
           },
           "region": {
             "$ref": "#/components/schemas/Region"
@@ -2861,12 +2964,24 @@
             ],
             "description": "The release cover, else the game's. Relative to the covers URL."
           },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "device_id": {
             "type": [
               "integer",
               "null"
             ],
             "format": "int64"
+          },
+          "edition": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "format": {
             "$ref": "#/components/schemas/Format"
@@ -2898,7 +3013,20 @@
               "null"
             ]
           },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text; see `CopyDetail`."
+          },
           "product_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "purchased_on": {
             "type": [
               "string",
               "null"
@@ -3716,6 +3844,27 @@
           "igdb"
         ]
       },
+      "MonthPlay": {
+        "type": "object",
+        "required": [
+          "month",
+          "sessions",
+          "minutes"
+        ],
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "month": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "NewDeviceReport": {
         "type": "object",
         "required": [
@@ -4082,6 +4231,32 @@
           }
         }
       },
+      "PlayedGame": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "sessions",
+          "minutes"
+        ],
+        "properties": {
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "Region": {
         "type": "string",
         "description": "Release region, matching IGDB's release regions. `ww` also covers region-free.",
@@ -4387,6 +4562,120 @@
         },
         "additionalProperties": false
       },
+      "Stats": {
+        "type": "object",
+        "required": [
+          "games",
+          "copies",
+          "physical",
+          "digital",
+          "wishlist",
+          "spent",
+          "unpriced",
+          "wishlist_value",
+          "spent_by_year",
+          "play_statuses",
+          "platforms",
+          "stores",
+          "sessions_by_month",
+          "total_sessions",
+          "total_minutes",
+          "most_played"
+        ],
+        "properties": {
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "digital": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "games": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games with an owned copy."
+          },
+          "most_played": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayedGame"
+            },
+            "description": "By session count, then minutes."
+          },
+          "physical": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformCount"
+            },
+            "description": "In platform list order."
+          },
+          "play_statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCount"
+            },
+            "description": "Owned games per play status, in play status order; `None` is not set."
+          },
+          "sessions_by_month": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthPlay"
+            },
+            "description": "Sessions in the last 12 months, by `YYYY-MM`; months without play are left out."
+          },
+          "spent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "description": "What owned copies cost, per currency, largest first."
+          },
+          "spent_by_year": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/YearAmount"
+            },
+            "description": "By the year of the purchase date; copies without one are left out."
+          },
+          "stores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreCount"
+            },
+            "description": "Largest first; `None` is copies with no store."
+          },
+          "total_minutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total_sessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unpriced": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Owned copies without a price."
+          },
+          "wishlist": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Wanted copies."
+          },
+          "wishlist_value": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "description": "What wanted copies are expected to cost, per currency."
+          }
+        }
+      },
       "Status": {
         "type": "object",
         "required": [
@@ -4410,6 +4699,13 @@
           "igdb_configured": {
             "type": "boolean",
             "description": "IGDB credentials are set and external services are on."
+          },
+          "last_currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Currency of the copy priced last; new prices start with it."
           },
           "owned_copies": {
             "type": "integer",
@@ -4442,6 +4738,24 @@
           "yellow",
           "orange"
         ]
+      },
+      "StatusCount": {
+        "type": "object",
+        "required": [
+          "games"
+        ],
+        "properties": {
+          "games": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "play_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       },
       "StatusGroup": {
         "type": "string",
@@ -4479,6 +4793,25 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "StoreCount": {
+        "type": "object",
+        "required": [
+          "copies"
+        ],
+        "properties": {
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -4693,6 +5026,30 @@
               "null"
             ],
             "description": "Display only."
+          }
+        }
+      },
+      "YearAmount": {
+        "type": "object",
+        "required": [
+          "year",
+          "currency",
+          "amount",
+          "copies"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
           }
         }
       }
