@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { TitleDifference } from '../api/types';
 import en from '../locales/en.json';
-import { mockApi, VIEWER } from '../test/api';
+import { MANAGER, mockApi, VIEWER } from '../test/api';
 import { renderAt } from '../test/render';
 
 const DIFFERENCES: TitleDifference[] = [
@@ -15,7 +15,7 @@ const STATUS = { version: '0.1.0', igdb_configured: true, games: 2, owned_copies
 describe('Settings access', () => {
   it('shows the user ID to add to the managers option', async () => {
     mockApi({
-      'GET /api/me': { user: { id: 'abc123', name: 'sam', display_name: null }, role: 'manager', enforced: false },
+      'GET /api/me': { ...MANAGER, user: { id: 'abc123', name: 'sam', display_name: null } },
       'GET /api/status': STATUS,
       'GET /api/igdb/sync': { running: false, total: 0, done: 0, linked: 0, unmatched: 0, updated: 0, failed: 0 },
       'GET /api/igdb/titles': [],
@@ -24,8 +24,17 @@ describe('Settings access', () => {
 
     expect(await screen.findByTestId('user-id')).toHaveTextContent('abc123');
     expect(screen.getByText('sam')).toBeInTheDocument();
-    expect(screen.getByText(en.settings.accessOpen)).toBeInTheDocument();
+    expect(screen.getByText(en.settings.accessManager)).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: en.igdb.syncButton })).toBeInTheDocument();
+  });
+
+  it('explains how to name the first manager', async () => {
+    mockApi({ 'GET /api/me': { ...VIEWER, managers_configured: false }, 'GET /api/status': STATUS });
+    renderAt('/settings');
+
+    expect(await screen.findByText(en.settings.accessNoManagers)).toBeInTheDocument();
+    expect(screen.getByTestId('no-managers')).toHaveTextContent(en.app.noManagers);
+    expect(screen.queryByRole('link', { name: en.app.openSettings })).not.toBeInTheDocument();
   });
 
   it('keeps IGDB tools away from viewers', async () => {

@@ -5,6 +5,8 @@ DATA_DIR ?= .data
 PORT ?= 8099
 PROXY_PORT ?= 18100
 IMAGE ?= memory-card:dev
+# Home Assistant user ID that the dev proxies send, made a manager by `make run`.
+DEV_USER ?= dev
 
 # Database the sqlx query macros check against while preparing server/.sqlx.
 SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
@@ -12,7 +14,8 @@ SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
 RUN_ENV = MEMORY_CARD_DATA_DIR=$(DATA_DIR) \
 	MEMORY_CARD_TMP_DIR=$(DATA_DIR)/tmp \
 	MEMORY_CARD_LISTEN=127.0.0.1:$(PORT) \
-	MEMORY_CARD_TRUSTED_PEER=127.0.0.1
+	MEMORY_CARD_TRUSTED_PEER=127.0.0.1 \
+	MEMORY_CARD_MANAGERS=$(DEV_USER)
 
 .PHONY: help
 help: ## List targets
@@ -35,11 +38,11 @@ run: web ## Run the server locally (override PORT, DATA_DIR)
 
 .PHONY: web-dev
 web-dev: node_modules ## Vite dev server with /api proxied to the server
-	npm run dev -w web
+	DEV_USER=$(DEV_USER) npm run dev -w web
 
 .PHONY: proxy
 proxy: ## Ingress stand-in at /api/hassio_ingress/e2e-token/ on PROXY_PORT
-	UPSTREAM=http://127.0.0.1:$(PORT) PORT=$(PROXY_PORT) node e2e/ingress-proxy.ts
+	UPSTREAM=http://127.0.0.1:$(PORT) PORT=$(PROXY_PORT) DEFAULT_USER=$(DEV_USER) node e2e/ingress-proxy.ts
 
 .PHONY: test
 test: node_modules ## Rust and web unit tests

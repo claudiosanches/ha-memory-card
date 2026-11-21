@@ -8,7 +8,9 @@
     "tools": "Tools",
     "skipNavigation": "Skip to content",
     "unidentified": "Home Assistant did not say who you are, so Memory Card cannot open. Reload the page from the sidebar.",
-    "managersOnly": "Only managers can use this page."
+    "managersOnly": "Only managers can use this page.",
+    "noManagers": "Memory Card is read-only until the app configuration names a manager.",
+    "openSettings": "Find your user ID in Settings"
   },
   "nav": {
     "library": "Library",
@@ -145,7 +147,7 @@
       "dark": "Dark"
     },
     "access": "Your access",
-    "accessOpen": "Everyone who opens Memory Card can change the collection. To limit that, add the user IDs of the people who manage it to the managers option in the app configuration.",
+    "accessNoManagers": "Nobody can change the collection until a manager is named. Copy your user ID below, add it to managers in the app configuration, then restart the app.",
     "accessManager": "You can change the collection.",
     "accessViewer": "You can browse the collection. Ask a manager to make changes.",
     "accessViewerProgress": "You can browse the collection and track play progress. Ask a manager to make other changes.",
@@ -157,8 +159,7 @@
     },
     "userId": "User ID",
     "copyUserId": "Copy user ID",
-    "copied": "Copied",
-    "noUser": "Home Assistant did not say who you are."
+    "copied": "Copied"
   },
   "errors": {
     "internal": "Something went wrong on the server.",

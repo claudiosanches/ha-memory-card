@@ -7,11 +7,10 @@ use crate::error::ErrorBody;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Me {
-    /// `None` when the Supervisor named no user.
-    pub user: Option<User>,
+    pub user: User,
     pub role: Role,
-    /// False while no managers are configured, when everyone manages.
-    pub enforced: bool,
+    /// False until the app options name a manager; until then nobody can change anything.
+    pub managers_configured: bool,
     /// May change play status and last played.
     pub can_track_progress: bool,
 }
@@ -23,14 +22,14 @@ pub struct Me {
     operation_id = "getMe",
     responses(
         (status = OK, body = Me),
-        (status = UNAUTHORIZED, description = "Managers are configured and the request names no user", body = ErrorBody),
+        (status = UNAUTHORIZED, description = "The request names no Home Assistant user", body = ErrorBody),
     )
 )]
 pub async fn get_me(Extension(access): Extension<Access>) -> Json<Me> {
     Json(Me {
         user: access.user,
         role: access.role,
-        enforced: access.enforced,
+        managers_configured: access.managers_configured,
         can_track_progress: access.can_track_progress,
     })
 }

@@ -30,11 +30,18 @@ export const BUILTIN_STATUSES: PlayStatus[] = [
   builtin('mastered', 'grape', 'finished'),
 ];
 
-/** A viewer once managers are configured; the default user is a manager. */
+/** The default user, who manages the collection. */
+export const MANAGER: Me = {
+  user: { id: 'manager-id', name: 'alex', display_name: 'Alex' },
+  role: 'manager',
+  managers_configured: true,
+  can_track_progress: true,
+};
+
 export const VIEWER: Me = {
   user: { id: 'viewer-id', name: 'sam', display_name: 'Sam' },
   role: 'viewer',
-  enforced: true,
+  managers_configured: true,
   can_track_progress: false,
 };
 
@@ -49,7 +56,7 @@ export const VIEWER: Me = {
 export function mockApi(given: Record<string, unknown>): ApiCall[] {
   const routes: Record<string, unknown> = {
     'GET /api/play-statuses': BUILTIN_STATUSES,
-    'GET /api/me': { user: null, role: 'manager', enforced: false, can_track_progress: true } satisfies Me,
+    'GET /api/me': MANAGER,
     ...given,
   };
   const calls: ApiCall[] = [];

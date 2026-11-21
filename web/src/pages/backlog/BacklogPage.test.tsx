@@ -182,12 +182,8 @@ describe('Backlog page', () => {
     expect(screen.getByTestId('picked')).not.toHaveAttribute('data-rolling');
   });
 
-  it('lets a viewer roll a pick but change no status', async () => {
-    const calls = mockApi({
-      ...SETUP,
-      'GET /api/me': VIEWER,
-      'POST /api/suggestions': { game: detail(GAMES[3]!, 'backlog'), copy_ids: [] },
-    });
+  it('lets a viewer browse but not pick or change a status', async () => {
+    const calls = mockApi({ ...SETUP, 'GET /api/me': VIEWER });
     renderAt('/backlog');
 
     expect(await screen.findByTestId('row-1')).toBeInTheDocument();
@@ -195,11 +191,8 @@ describe('Backlog page', () => {
     expect(within(screen.getByTestId('row-1')).queryByRole('button')).not.toBeInTheDocument();
     expect(within(screen.getByTestId('backlog-3')).queryByRole('button')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: en.backlog.pick }));
-    const picked = await screen.findByTestId('picked');
-    expect(within(picked).getByText('Tunic')).toBeInTheDocument();
-    expect(within(picked).queryByRole('button', { name: en.backlog.start })).not.toBeInTheDocument();
-    expect(calls.filter((c) => c.method === 'PUT')).toEqual([]);
+    expect(screen.queryByRole('button', { name: en.backlog.pick })).not.toBeInTheDocument();
+    expect(calls.filter((c) => c.method !== 'GET')).toEqual([]);
   });
 
   it('shows on hold games ten at a time', async () => {

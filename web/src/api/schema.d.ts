@@ -784,10 +784,10 @@ export interface components {
         Me: {
             /** @description May change play status and last played. */
             can_track_progress: boolean;
-            /** @description False while no managers are configured, when everyone manages. */
-            enforced: boolean;
+            /** @description False until the app options name a manager; until then nobody can change anything. */
+            managers_configured: boolean;
             role: components["schemas"]["Role"];
-            user?: components["schemas"]["User"] | null;
+            user: components["schemas"]["User"];
         };
         MissingDetails: {
             fields: components["schemas"]["MissingField"][];
@@ -2021,7 +2021,7 @@ export interface operations {
                     "application/json": components["schemas"]["Me"];
                 };
             };
-            /** @description Managers are configured and the request names no user */
+            /** @description The request names no Home Assistant user */
             401: {
                 headers: {
                     [name: string]: unknown;

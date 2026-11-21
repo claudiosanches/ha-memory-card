@@ -12,6 +12,7 @@ ingress: true
 ingress_port: 8099
 panel_icon: mdi:gamepad-variant
 panel_title: Memory Card
+panel_admin: false
 backup: cold
 timeout: 20
 options:

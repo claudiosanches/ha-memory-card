@@ -1,4 +1,4 @@
-import { AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
+import { Alert, Anchor, AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
   IconChecklist,
@@ -122,7 +122,19 @@ export function Layout() {
         <div id="main-content" tabIndex={-1} className={classes.content}>
           {/* Pages read the role, so they wait for it. */}
           {me.data ? (
-            <Outlet />
+            <>
+              {!me.data.managers_configured && (
+                <Alert color="yellow" mb="lg" data-testid="no-managers">
+                  {t('app.noManagers')}{' '}
+                  {pathname !== '/settings' && (
+                    <Anchor renderRoot={(props) => <Link to="/settings" {...props} />} inherit>
+                      {t('app.openSettings')}
+                    </Anchor>
+                  )}
+                </Alert>
+              )}
+              <Outlet />
+            </>
           ) : me.isError ? (
             <Text c="red" role="alert">
               {me.error instanceof ApiError && me.error.code === 'identity_required'

@@ -31,15 +31,16 @@ docker run -d --name "$name" -v "$volume:/data" -p 127.0.0.1::8099 \
     -e MEMORY_CARD_TRUSTED_PEER="$gateway" "$image" >/dev/null
 port=$(docker port "$name" 8099/tcp | head -n1 | sed 's/.*://')
 base="http://127.0.0.1:$port"
+user='X-Remote-User-Id: smoke'
 
 for _ in $(seq 1 30); do
-    if curl -fsS "$base/api/status" >/dev/null 2>&1; then
+    if curl -fsS -H "$user" "$base/api/status" >/dev/null 2>&1; then
         break
     fi
     sleep 1
 done
 
-curl -fsS "$base/api/status" | grep -q '"igdb_configured":false' || fail "status endpoint"
+curl -fsS -H "$user" "$base/api/status" | grep -q '"igdb_configured":false' || fail "status endpoint"
 curl -fsS -H 'X-Ingress-Path: /api/hassio_ingress/smoke' "$base/" \
     | grep -q '<base href="/api/hassio_ingress/smoke/">' || fail "index page"
 

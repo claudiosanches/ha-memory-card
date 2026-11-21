@@ -6,7 +6,7 @@ use std::sync::Arc;
 use axum::Router;
 use axum::body::Body;
 use axum::extract::connect_info::MockConnectInfo;
-use axum::http::{Request, StatusCode};
+use axum::http::{HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt;
 use memory_card::config::Config;
 use memory_card::{AppState, db};
@@ -16,6 +16,8 @@ use tempfile::TempDir;
 use tower::ServiceExt;
 
 pub const SUPERVISOR: &str = "172.30.32.2:50000";
+/// The Home Assistant user the helpers send as, a manager unless a test names others.
+pub const MANAGER: &str = "0123456789abcdef0123456789abcdef";
 
 pub struct TestApp {
     pub dir: TempDir,
@@ -33,12 +35,16 @@ impl TestApp {
     pub async fn with_env(vars: &[(&str, &str)]) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let data_dir = dir.path().display().to_string();
-        let config = Config::load(|name| match name {
-            "MEMORY_CARD_DATA_DIR" => Some(data_dir.clone()),
-            _ => vars
+        let config = Config::load(|name| {
+            let var = vars
                 .iter()
                 .find(|(key, _)| *key == name)
-                .map(|(_, value)| (*value).to_owned()),
+                .map(|(_, value)| (*value).to_owned());
+            match name {
+                "MEMORY_CARD_DATA_DIR" => Some(data_dir.clone()),
+                "MEMORY_CARD_MANAGERS" => var.or_else(|| Some(MANAGER.to_owned())),
+                _ => var,
+            }
         })
         .unwrap();
         let pool = db::open(
@@ -67,7 +73,17 @@ impl TestApp {
             .await
     }
 
-    pub async fn request(&self, peer: &str, request: Request<Body>) -> (StatusCode, Vec<u8>) {
+    /// Sends as [`MANAGER`] unless the request names a user.
+    pub async fn request(&self, peer: &str, mut request: Request<Body>) -> (StatusCode, Vec<u8>) {
+        request
+            .headers_mut()
+            .entry("x-remote-user-id")
+            .or_insert(HeaderValue::from_static(MANAGER));
+        self.raw(peer, request).await
+    }
+
+    /// Sends the request as it is, with or without a user.
+    pub async fn raw(&self, peer: &str, request: Request<Body>) -> (StatusCode, Vec<u8>) {
         let response = self.router_from(peer).oneshot(request).await.unwrap();
         let status = response.status();
         let body = response.into_body().collect().await.unwrap().to_bytes();

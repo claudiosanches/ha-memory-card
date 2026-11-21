@@ -29,28 +29,27 @@ uploaded cover. Removing it brings back IGDB's.
 
 ## Managers and viewers
 
-Home Assistant signs you in, so Memory Card has no login of its own. By
-default, everyone who opens it can change the collection.
+Home Assistant signs you in, so Memory Card has no login of its own. Every
+Home Assistant user can open it from the sidebar, administrators or not.
 
-To limit changes to some people:
+Only managers can change the collection. A new install has none, so it
+starts read-only. To name a manager:
 
-1. Open Memory Card as a person who should manage it, go to **Settings** and
-   copy the user ID under **Your access**.
+1. Open Memory Card as that person, go to **Settings** and copy the user ID
+   under **Your access**.
 2. In Home Assistant, open the Memory Card app, go to **Configuration**, add
    the ID to `managers` and save. Add one entry per manager.
 3. Restart the app.
 
-From then on, everyone else is a viewer. Viewers browse the library, game
-pages, the backlog and duplicates, and can roll a random pick. They cannot
-add, edit or delete anything, change play progress, import or export CSV
-files, manage devices, stores, platforms and play statuses, or sync with
-IGDB. Requests that Home Assistant does not tie to a user are refused.
+Everyone else is a viewer. Viewers browse the library, game pages, the
+backlog and duplicates. They cannot add, edit or delete anything, roll a
+random pick, change play progress, import or export CSV files, manage
+devices, stores, platforms and play statuses, or sync with IGDB. Requests
+that Home Assistant does not tie to a user are refused.
 
 To let viewers keep track of what they play, turn on
 `viewers_track_progress`. They can then change play status and last played,
 and start games from the backlog, but nothing else.
-
-To let everyone change the collection again, empty `managers` and restart.
 
 ## Options
 
@@ -59,7 +58,7 @@ To let everyone change the collection again, empty `managers` and restart.
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
-| `managers` | Home Assistant user IDs that can change the collection. Empty (the default) lets everyone change it. |
+| `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
 | `viewers_track_progress` | Lets viewers change play status and last played. Off by default. |
 
 ## Import and export (CSV)

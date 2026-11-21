@@ -26,16 +26,13 @@ const MANAGER_READS: [&str; 4] = [
     "/api/igdb/titles",
 ];
 
-/// Changes anyone may make. A suggestion only records what was rolled.
-const VIEWER_WRITES: [&str; 1] = ["/api/suggestions"];
-
 /// Play progress, open to viewers when the option allows it.
 const PROGRESS_WRITES: [&str; 2] = ["/api/games/{id}/play-status", "/api/games/{id}/last-played"];
 
 /// Who may do what, from the app options.
 #[derive(Debug)]
 pub struct Policy {
-    /// Home Assistant user IDs; empty means everyone manages.
+    /// Home Assistant user IDs; while empty, nobody can change anything.
     pub managers: Vec<String>,
     pub viewers_track_progress: bool,
 }
@@ -61,28 +58,26 @@ pub enum Role {
 /// Added to every API request that passes [`guard`].
 #[derive(Debug, Clone)]
 pub struct Access {
-    pub user: Option<User>,
+    pub user: User,
     pub role: Role,
-    /// False while no managers are configured, when everyone manages.
-    pub enforced: bool,
+    pub managers_configured: bool,
     /// May change play status and last played.
     pub can_track_progress: bool,
 }
 
 /// Resolves the user and role, then rejects requests the role does not allow.
-/// With no managers configured, everyone is a manager and identity is optional.
 pub async fn guard(
     State(policy): State<Arc<Policy>>,
     mut request: Request,
     next: Next,
 ) -> Response {
-    let user = user(request.headers());
-    let enforced = !policy.managers.is_empty();
-    let role = match &user {
-        _ if !enforced => Role::Manager,
-        None => return deny(StatusCode::UNAUTHORIZED, "identity_required"),
-        Some(user) if policy.managers.contains(&user.id) => Role::Manager,
-        Some(_) => Role::Viewer,
+    let Some(user) = user(request.headers()) else {
+        return deny(StatusCode::UNAUTHORIZED, "identity_required");
+    };
+    let role = if policy.managers.contains(&user.id) {
+        Role::Manager
+    } else {
+        Role::Viewer
     };
 
     let path = match request.extensions().get::<MatchedPath>() {
@@ -97,7 +92,7 @@ pub async fn guard(
     request.extensions_mut().insert(Access {
         user,
         role,
-        enforced,
+        managers_configured: !policy.managers.is_empty(),
         can_track_progress: role == Role::Manager || policy.viewers_track_progress,
     });
     next.run(request).await
@@ -106,10 +101,8 @@ pub async fn guard(
 fn required_role(method: &Method, path: &str, viewers_track_progress: bool) -> Role {
     let open = if method == Method::GET || method == Method::HEAD {
         !MANAGER_READS.contains(&path)
-    } else if method == Method::PUT && PROGRESS_WRITES.contains(&path) {
-        viewers_track_progress
     } else {
-        method == Method::POST && VIEWER_WRITES.contains(&path)
+        method == Method::PUT && PROGRESS_WRITES.contains(&path) && viewers_track_progress
     };
     if open { Role::Viewer } else { Role::Manager }
 }
@@ -191,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    fn viewers_read_and_roll_suggestions() {
+    fn viewers_read() {
         assert_eq!(
             required_role(&Method::GET, "/api/games", false),
             Role::Viewer
@@ -200,14 +193,14 @@ mod tests {
             required_role(&Method::HEAD, "/api/games/{id}", false),
             Role::Viewer
         );
-        assert_eq!(
-            required_role(&Method::POST, "/api/suggestions", false),
-            Role::Viewer
-        );
     }
 
     #[test]
     fn managers_change_things_and_use_tools() {
+        assert_eq!(
+            required_role(&Method::POST, "/api/suggestions", true),
+            Role::Manager
+        );
         assert_eq!(
             required_role(&Method::POST, "/api/games", true),
             Role::Manager

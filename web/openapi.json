@@ -1326,7 +1326,7 @@
             }
           },
           "401": {
-            "description": "Managers are configured and the request names no user",
+            "description": "The request names no Home Assistant user",
             "content": {
               "application/json": {
                 "schema": {
@@ -3115,8 +3115,9 @@
       "Me": {
         "type": "object",
         "required": [
+          "user",
           "role",
-          "enforced",
+          "managers_configured",
           "can_track_progress"
         ],
         "properties": {
@@ -3124,23 +3125,15 @@
             "type": "boolean",
             "description": "May change play status and last played."
           },
-          "enforced": {
+          "managers_configured": {
             "type": "boolean",
-            "description": "False while no managers are configured, when everyone manages."
+            "description": "False until the app options name a manager; until then nobody can change anything."
           },
           "role": {
             "$ref": "#/components/schemas/Role"
           },
           "user": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/User",
-                "description": "`None` when the Supervisor named no user."
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/User"
           }
         }
       },

@@ -81,8 +81,8 @@ function Access() {
   const me = useMe().data;
   if (!me) return null;
 
-  const description = !me.enforced
-    ? t('settings.accessOpen')
+  const description = !me.managers_configured
+    ? t('settings.accessNoManagers')
     : me.role === 'manager'
       ? t('settings.accessManager')
       : me.can_track_progress
@@ -91,37 +91,31 @@ function Access() {
   const user = me.user;
   return (
     <ToolSection title={t('settings.access')} description={description}>
-      {user ? (
-        <dl className={classes.status}>
-          <div>
-            <dt>{t('settings.signedInAs')}</dt>
-            <dd>{user.display_name ?? user.name ?? user.id}</dd>
-          </div>
-          <div>
-            <dt>{t('settings.role')}</dt>
-            <dd data-testid="access-role">{t(`settings.roles.${me.role}`)}</dd>
-          </div>
-          <div>
-            <dt>{t('settings.userId')}</dt>
-            <dd className={classes.userId}>
-              <Code data-testid="user-id">{user.id}</Code>
-              <CopyButton value={user.id}>
-                {({ copied, copy }) => (
-                  <Tooltip label={copied ? t('settings.copied') : t('settings.copyUserId')}>
-                    <ActionIcon variant="subtle" aria-label={t('settings.copyUserId')} onClick={copy}>
-                      {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
-                    </ActionIcon>
-                  </Tooltip>
-                )}
-              </CopyButton>
-            </dd>
-          </div>
-        </dl>
-      ) : (
-        <Text size="sm" c="dimmed">
-          {t('settings.noUser')}
-        </Text>
-      )}
+      <dl className={classes.status}>
+        <div>
+          <dt>{t('settings.signedInAs')}</dt>
+          <dd>{user.display_name ?? user.name ?? user.id}</dd>
+        </div>
+        <div>
+          <dt>{t('settings.role')}</dt>
+          <dd data-testid="access-role">{t(`settings.roles.${me.role}`)}</dd>
+        </div>
+        <div>
+          <dt>{t('settings.userId')}</dt>
+          <dd className={classes.userId}>
+            <Code data-testid="user-id">{user.id}</Code>
+            <CopyButton value={user.id}>
+              {({ copied, copy }) => (
+                <Tooltip label={copied ? t('settings.copied') : t('settings.copyUserId')}>
+                  <ActionIcon variant="subtle" aria-label={t('settings.copyUserId')} onClick={copy}>
+                    {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                  </ActionIcon>
+                </Tooltip>
+              )}
+            </CopyButton>
+          </dd>
+        </div>
+      </dl>
     </ToolSection>
   );
 }

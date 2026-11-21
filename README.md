@@ -35,7 +35,13 @@ Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 
-The server reads these variables; `make run` sets the first four.
+The server answers only requests that name a Home Assistant user, so open
+the app through `make proxy` or `make web-dev`. Both sign in as `DEV_USER`
+(`dev` by default), whom `make run` makes a manager. In the proxy, an
+`e2e_user` cookie picks another user; an empty one signs out.
+
+The server reads these variables; `make run` sets the first four and
+`MEMORY_CARD_MANAGERS`.
 
 | Variable | Default | Purpose |
 |---|---|---|

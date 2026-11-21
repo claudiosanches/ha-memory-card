@@ -14,8 +14,8 @@ configuration:
     name: Managers
     description: >-
       Home Assistant user IDs that can change the collection. Everyone else
-      can only browse it. Leave empty to let everyone change it. Each user
-      finds their ID under Settings in Memory Card.
+      can only browse it, and while this is empty nobody can change it. Each
+      user finds their ID under Settings in Memory Card.
   viewers_track_progress:
     name: Viewers track play progress
     description: >-

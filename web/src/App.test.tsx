@@ -48,6 +48,14 @@ describe('App', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
+  it('says the app is read-only until a manager is named', async () => {
+    mockApi({ 'GET /api/me': { ...VIEWER, managers_configured: false }, 'GET /api/games': [] });
+    renderAt('/');
+    expect(await screen.findByTestId('no-managers')).toHaveTextContent(en.app.noManagers);
+    fireEvent.click(screen.getByRole('link', { name: en.app.openSettings }));
+    expect(await screen.findByTestId('user-id')).toHaveTextContent(VIEWER.user.id);
+  });
+
   it('explains a missing Home Assistant identity', async () => {
     mockApi({ 'GET /api/me': json({ code: 'identity_required' }, 401) });
     renderAt('/');

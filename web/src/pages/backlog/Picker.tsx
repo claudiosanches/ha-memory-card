@@ -6,14 +6,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { useCanTrackProgress, useDevices, usePlatforms } from '../../api/queries';
+import { useDevices, usePlatforms } from '../../api/queries';
 import type { Suggestion } from '../../api/types';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
 import classes from './BacklogPage.module.css';
 import { useSetPlayStatus } from './usePlayStatus';
 
-/** Rolls a random backlog game, optionally one a device can play. */
+/** Rolls a random backlog game, optionally one a device can play. Managers only: rolls are shared history. */
 export function Picker() {
   const { t } = useTranslation();
   const devices = useDevices();
@@ -21,7 +21,6 @@ export function Picker() {
   // Kept apart from the mutation, which drops its data while the next roll loads.
   const [picked, setPicked] = useState<{ suggestion: Suggestion; roll: number } | null>(null);
   const setStatus = useSetPlayStatus();
-  const canTrack = useCanTrackProgress();
 
   const pick = useMutation({
     mutationFn: () => call(api.POST('/api/suggestions', { body: device ? { device: [Number(device)] } : {} })),
@@ -83,7 +82,7 @@ export function Picker() {
             suggestion={picked.suggestion}
             rolling={pick.isPending}
             starting={setStatus.isPending}
-            onStart={canTrack ? () => start(picked.suggestion.game.id) : undefined}
+            onStart={() => start(picked.suggestion.game.id)}
           />
         ) : pick.isError ? (
           <Text size="sm" c="dimmed">
@@ -99,7 +98,7 @@ export function Picker() {
   );
 }
 
-type PickedProps = { suggestion: Suggestion; rolling: boolean; starting: boolean; onStart?: () => void };
+type PickedProps = { suggestion: Suggestion; rolling: boolean; starting: boolean; onStart: () => void };
 
 function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
   const { t } = useTranslation();
@@ -131,18 +130,11 @@ function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
             {line}
           </Text>
         ))}
-        {onStart && (
-          <Group className={classes.pickedActions}>
-            <Button
-              leftSection={<IconPlayerPlay size={16} />}
-              onClick={onStart}
-              loading={starting}
-              disabled={rolling}
-            >
-              {t('backlog.start')}
-            </Button>
-          </Group>
-        )}
+        <Group className={classes.pickedActions}>
+          <Button leftSection={<IconPlayerPlay size={16} />} onClick={onStart} loading={starting} disabled={rolling}>
+            {t('backlog.start')}
+          </Button>
+        </Group>
       </div>
     </div>
   );

@@ -2,15 +2,10 @@ mod common;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use common::{SUPERVISOR, TestApp};
+use common::{MANAGER, SUPERVISOR, TestApp};
 use serde_json::{Value, json};
 
-const MANAGER: &str = "0123456789abcdef0123456789abcdef";
 const VIEWER: &str = "fedcba9876543210fedcba9876543210";
-
-async fn managed() -> TestApp {
-    TestApp::with_env(&[("MEMORY_CARD_MANAGERS", MANAGER)]).await
-}
 
 /// Sends a request as `user` (or nobody) and parses the JSON reply, if any.
 async fn send(
@@ -35,7 +30,7 @@ async fn send(
         None => builder.body(Body::empty()),
     }
     .unwrap();
-    let (status, bytes) = app.request(peer, request).await;
+    let (status, bytes) = app.raw(peer, request).await;
     (
         status,
         serde_json::from_slice(&bytes).unwrap_or(Value::Null),
@@ -43,31 +38,30 @@ async fn send(
 }
 
 #[tokio::test]
-async fn everyone_manages_until_managers_are_configured() {
-    let app = TestApp::new().await;
+async fn nobody_manages_until_managers_are_configured() {
+    let app = TestApp::with_env(&[("MEMORY_CARD_MANAGERS", "")]).await;
 
-    let (status, me) = send(&app, SUPERVISOR, "GET", "/api/me", None, None).await;
+    let (status, me) = send(&app, SUPERVISOR, "GET", "/api/me", Some(MANAGER), None).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(
-        me,
-        json!({ "user": null, "role": "manager", "enforced": false, "can_track_progress": true })
-    );
+    assert_eq!(me["role"], "viewer");
+    assert_eq!(me["managers_configured"], false);
 
-    let (status, _) = send(
+    let (status, body) = send(
         &app,
         SUPERVISOR,
         "POST",
         "/api/stores",
-        None,
+        Some(MANAGER),
         Some(json!({ "name": "Amazon" })),
     )
     .await;
-    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert_eq!(body["code"], "manager_required");
 }
 
 #[tokio::test]
 async fn me_names_the_user_and_role() {
-    let app = managed().await;
+    let app = TestApp::new().await;
 
     let (status, me) = send(&app, SUPERVISOR, "GET", "/api/me", Some(MANAGER), None).await;
     assert_eq!(status, StatusCode::OK);
@@ -76,7 +70,7 @@ async fn me_names_the_user_and_role() {
         json!({
             "user": { "id": MANAGER, "name": "sam", "display_name": "Sam" },
             "role": "manager",
-            "enforced": true,
+            "managers_configured": true,
             "can_track_progress": true,
         })
     );
@@ -86,8 +80,8 @@ async fn me_names_the_user_and_role() {
 }
 
 #[tokio::test]
-async fn missing_identity_is_rejected_once_managers_are_configured() {
-    let app = managed().await;
+async fn missing_identity_is_rejected() {
+    let app = TestApp::new().await;
 
     for path in ["/api/games", "/api/me", "/covers/game-1/cover.jpg"] {
         let (status, body) = send(&app, SUPERVISOR, "GET", path, None, None).await;
@@ -112,7 +106,7 @@ async fn missing_identity_is_rejected_once_managers_are_configured() {
 
 #[tokio::test]
 async fn identity_does_not_admit_an_untrusted_peer() {
-    let app = managed().await;
+    let app = TestApp::new().await;
     let (status, _) = send(
         &app,
         "10.0.0.5:1234",
@@ -127,7 +121,7 @@ async fn identity_does_not_admit_an_untrusted_peer() {
 
 #[tokio::test]
 async fn viewers_read_but_change_nothing() {
-    let app = managed().await;
+    let app = TestApp::new().await;
     let release = app.release("Tunic", "switch").await;
     let game: i64 = sqlx::query_scalar("SELECT game_id FROM releases WHERE id = ?")
         .bind(release)
@@ -179,7 +173,7 @@ async fn viewers_read_but_change_nothing() {
 /// Walks every route in the API document, so a new route cannot skip the check.
 #[tokio::test]
 async fn every_route_checks_the_role() {
-    let app = managed().await;
+    let app = TestApp::new().await;
     let manager_reads = [
         "/api/export.csv",
         "/api/import/template.csv",
@@ -202,7 +196,7 @@ async fn every_route_checks_the_role() {
             let body = (method != "GET").then(|| json!({}));
             let viewer_allowed = match method {
                 "GET" => !manager_reads.contains(&path.as_str()),
-                _ => method == "POST" && path == "/api/suggestions",
+                _ => false,
             };
 
             let (status, _) =
@@ -229,11 +223,7 @@ async fn every_route_checks_the_role() {
 
 #[tokio::test]
 async fn viewers_track_progress_when_the_option_allows_it() {
-    let app = TestApp::with_env(&[
-        ("MEMORY_CARD_MANAGERS", MANAGER),
-        ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true"),
-    ])
-    .await;
+    let app = TestApp::with_env(&[("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true")]).await;
     let release = app.release("Tunic", "switch").await;
     let game: i64 = sqlx::query_scalar("SELECT game_id FROM releases WHERE id = ?")
         .bind(release)
