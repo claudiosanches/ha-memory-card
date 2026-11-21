@@ -65,6 +65,18 @@ export function SettingsPage() {
                 )}
               </dd>
             </div>
+            <div>
+              <dt>{t('settings.sensors')}</dt>
+              <dd data-testid="sensors-status">
+                {status.data.sensors === 'connected' ? (
+                  <Badge color="green">{t('settings.sensorsStatus.connected')}</Badge>
+                ) : (
+                  <Text size="sm" c="dimmed">
+                    {t(`settings.sensorsStatus.${status.data.sensors}`)}
+                  </Text>
+                )}
+              </dd>
+            </div>
           </dl>
         )}
       </ToolSection>

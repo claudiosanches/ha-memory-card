@@ -140,6 +140,14 @@
     "igdbConfigured": "Connected",
     "igdbMissing": "Not configured. Add your Twitch client ID and secret in the app configuration to fetch covers and metadata.",
     "igdbOffline": "Off. External services are turned off in the app configuration, so Memory Card does not contact IGDB.",
+    "sensors": "Home Assistant sensors",
+    "sensorsStatus": {
+      "connected": "Connected",
+      "connecting": "Connecting to the MQTT broker.",
+      "disconnected": "Cannot reach the MQTT broker. Retrying.",
+      "no_broker": "No MQTT broker. Install the Mosquitto broker app, then restart Memory Card.",
+      "off": "Off in the app configuration."
+    },
     "loadError": "Could not load status.",
     "appearance": "Appearance",
     "appearanceDescription": "Choose a theme, or follow your system. Saved on this browser.",

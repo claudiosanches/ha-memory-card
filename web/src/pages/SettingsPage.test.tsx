@@ -10,7 +10,14 @@ const DIFFERENCES: TitleDifference[] = [
   { game_id: 8, title: 'de Blob 2', igdb_title: 'De Blob 2', cover_path: null },
 ];
 
-const STATUS = { version: '0.1.0', igdb_configured: true, external_services: true, games: 2, owned_copies: 2 };
+const STATUS = {
+  version: '0.1.0',
+  igdb_configured: true,
+  external_services: true,
+  games: 2,
+  owned_copies: 2,
+  sensors: 'connected',
+};
 
 describe('Settings access', () => {
   it('shows the user ID to add to the managers option', async () => {
@@ -49,10 +56,24 @@ describe('Settings access', () => {
   });
 });
 
+describe('Settings sensors', () => {
+  it('shows whether Home Assistant sensors are published', async () => {
+    mockApi({ 'GET /api/me': VIEWER, 'GET /api/status': STATUS });
+    renderAt('/settings');
+    expect(await screen.findByTestId('sensors-status')).toHaveTextContent(en.settings.sensorsStatus.connected);
+  });
+
+  it('says what to install when there is no broker', async () => {
+    mockApi({ 'GET /api/me': VIEWER, 'GET /api/status': { ...STATUS, sensors: 'no_broker' } });
+    renderAt('/settings');
+    expect(await screen.findByTestId('sensors-status')).toHaveTextContent(en.settings.sensorsStatus.no_broker);
+  });
+});
+
 describe('Settings titles', () => {
   it('renames a game to its IGDB title', async () => {
     const calls = mockApi({
-      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 2, owned_copies: 2 },
+      'GET /api/status': STATUS,
       'GET /api/igdb/sync': { running: false, total: 0, done: 0, linked: 0, unmatched: 0, updated: 0, failed: 0 },
       'GET /api/igdb/titles': DIFFERENCES,
       'POST /api/igdb/titles': [DIFFERENCES[1]],
