@@ -61,6 +61,11 @@ pulls the image with that tag, so the image must exist before `main` changes.
    image and pushes `ghcr.io/claudiosanches/memory-card:X.Y.Z`.
 3. Merge the branch into `main`.
 
+## Credits
+
+- Interface icons from [Tabler Icons](https://tabler.io/icons) (MIT).
+- Game metadata and covers from [IGDB](https://www.igdb.com), when IGDB credentials are set.
+
 ## License
 
 Memory Card is licensed under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE).
