@@ -4,6 +4,7 @@ pub mod duplicates;
 pub mod games;
 pub mod igdb;
 mod input;
+pub mod me;
 pub mod platforms;
 pub mod play_statuses;
 pub mod status;
@@ -27,6 +28,7 @@ struct ApiDoc;
 pub fn router() -> OpenApiRouter<AppState> {
     let api = OpenApiRouter::new()
         .routes(routes!(status::get_status))
+        .routes(routes!(me::get_me))
         .routes(routes!(platforms::list, platforms::create))
         .routes(routes!(platforms::reorder))
         .routes(routes!(platforms::update, platforms::delete))

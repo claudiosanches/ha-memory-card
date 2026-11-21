@@ -26,11 +26,19 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn new() -> Self {
+        Self::with_env(&[]).await
+    }
+
+    /// An app whose config also reads these `MEMORY_CARD_*` variables.
+    pub async fn with_env(vars: &[(&str, &str)]) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let data_dir = dir.path().display().to_string();
         let config = Config::load(|name| match name {
             "MEMORY_CARD_DATA_DIR" => Some(data_dir.clone()),
-            _ => None,
+            _ => vars
+                .iter()
+                .find(|(key, _)| *key == name)
+                .map(|(_, value)| (*value).to_owned()),
         })
         .unwrap();
         let pool = db::open(

@@ -1251,6 +1251,35 @@
         }
       }
     },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "access"
+        ],
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Managers are configured and the request names no user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platforms": {
       "get": {
         "tags": [
@@ -2981,6 +3010,33 @@
           }
         }
       },
+      "Me": {
+        "type": "object",
+        "required": [
+          "role",
+          "enforced"
+        ],
+        "properties": {
+          "enforced": {
+            "type": "boolean",
+            "description": "False while no managers are configured, when everyone manages."
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "user": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User",
+                "description": "`None` when the Supervisor named no user."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
       "NewDeviceReport": {
         "type": "object",
         "required": [
@@ -3412,6 +3468,13 @@
           }
         }
       },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "viewer",
+          "manager"
+        ]
+      },
       "RowAction": {
         "type": "string",
         "enum": [
@@ -3776,6 +3839,33 @@
           },
           "title": {
             "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "The Home Assistant user behind a request.",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display only."
+          },
+          "id": {
+            "type": "string",
+            "description": "Stable ID, used for permissions."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display only."
           }
         }
       }

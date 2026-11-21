@@ -46,6 +46,7 @@ The server reads these variables; `make run` sets the first four.
 | `MEMORY_CARD_LOG_LEVEL` | from `options.json` | Overrides `log_level` |
 | `MEMORY_CARD_IGDB_CLIENT_ID` | from `options.json` | Overrides `igdb_client_id` |
 | `MEMORY_CARD_IGDB_CLIENT_SECRET` | from `options.json` | Overrides `igdb_client_secret` |
+| `MEMORY_CARD_MANAGERS` | from `options.json` | Comma-separated user IDs; overrides `managers` |
 
 ## Releasing
 

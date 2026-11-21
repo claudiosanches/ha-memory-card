@@ -87,6 +87,7 @@ struct Options {
     igdb_client_id: Option<String>,
     igdb_client_secret: Option<String>,
     log_level: Option<LogLevel>,
+    managers: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -97,6 +98,9 @@ pub struct Config {
     pub trusted_peers: Vec<IpAddr>,
     pub log_level: LogLevel,
     pub igdb: Option<IgdbCredentials>,
+    /// Home Assistant user IDs allowed to change the collection. Empty means
+    /// every ingress user may, and identity is not required.
+    pub managers: Vec<String>,
 }
 
 impl Config {
@@ -149,6 +153,15 @@ impl Config {
             _ => None,
         };
 
+        let managers = match env("MEMORY_CARD_MANAGERS") {
+            Some(raw) => raw.split(',').map(str::to_owned).collect(),
+            None => options.managers.unwrap_or_default(),
+        };
+        let managers = managers
+            .into_iter()
+            .filter_map(|id| non_empty(Some(id)))
+            .collect();
+
         Ok(Self {
             data_dir,
             tmp_dir,
@@ -156,6 +169,7 @@ impl Config {
             trusted_peers,
             log_level,
             igdb,
+            managers,
         })
     }
 
@@ -213,6 +227,7 @@ mod tests {
         assert_eq!(config.listen, "0.0.0.0:8099".parse().unwrap());
         assert_eq!(config.log_level, LogLevel::Info);
         assert!(config.igdb.is_none());
+        assert!(config.managers.is_empty());
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
     }
 
@@ -221,12 +236,13 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("options.json"),
-            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning"}"#,
+            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""]}"#,
         )
         .unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
         assert_eq!(config.log_level, LogLevel::Warning);
         assert_eq!(config.log_level.as_directive(), "warn");
+        assert_eq!(config.managers, vec!["abc123"]);
         let igdb = config.igdb.unwrap();
         assert_eq!(igdb.client_id, "id");
         assert!(!format!("{igdb:?}").contains("secret\""));
@@ -237,7 +253,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("options.json"),
-            r#"{"igdb_client_id":"id","igdb_client_secret":"","log_level":"error"}"#,
+            r#"{"igdb_client_id":"id","igdb_client_secret":"","log_level":"error","managers":["abc"]}"#,
         )
         .unwrap();
         let config = load_with(
@@ -246,11 +262,13 @@ mod tests {
                 ("MEMORY_CARD_LOG_LEVEL", "debug"),
                 ("MEMORY_CARD_TRUSTED_PEER", "127.0.0.1, ::1"),
                 ("MEMORY_CARD_LISTEN", "127.0.0.1:18099"),
+                ("MEMORY_CARD_MANAGERS", "one, two,"),
             ],
         )
         .unwrap();
         assert_eq!(config.log_level, LogLevel::Debug);
         assert_eq!(config.trusted_peers.len(), 2);
+        assert_eq!(config.managers, vec!["one", "two"]);
         assert!(config.igdb.is_none(), "empty secret disables IGDB");
     }
 

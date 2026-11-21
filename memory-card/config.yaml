@@ -18,7 +18,10 @@ options:
   igdb_client_id: ""
   igdb_client_secret: ""
   log_level: info
+  managers: []
 schema:
   igdb_client_id: "str?"
   igdb_client_secret: "password?"
   log_level: "list(trace|debug|info|warning|error)"
+  managers:
+    - str
