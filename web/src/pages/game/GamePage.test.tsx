@@ -251,7 +251,7 @@ describe('Game page', () => {
   it('links the game to an IGDB search result', async () => {
     const calls = mockApi({
       ...SETUP,
-      'GET /api/status': { version: '0.1.0', igdb_configured: true, games: 1, owned_copies: 1 },
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 1, owned_copies: 1 },
       'GET /api/games/4': GAME,
       'GET /api/igdb/search': [{ igdb_id: 7, name: 'Metroid Dread', year: 2021, platforms: ['Switch'] }],
       'POST /api/games/4/igdb': { ...GAME, igdb_id: 7, developers: ['MercurySteam'] },

@@ -138,6 +138,7 @@
     "igdb": "IGDB",
     "igdbConfigured": "Connected",
     "igdbMissing": "Not configured. Add your Twitch client ID and secret in the app configuration to fetch covers and metadata.",
+    "igdbOffline": "Off. External services are turned off in the app configuration, so Memory Card does not contact IGDB.",
     "loadError": "Could not load status.",
     "appearance": "Appearance",
     "appearanceDescription": "Choose a theme, or follow your system. Saved on this browser.",

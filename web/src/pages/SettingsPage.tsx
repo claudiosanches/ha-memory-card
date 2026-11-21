@@ -59,7 +59,7 @@ export function SettingsPage() {
                 ) : (
                   <Group>
                     <Text size="sm" c="dimmed" data-testid="igdb-missing">
-                      {t('settings.igdbMissing')}
+                      {status.data.external_services ? t('settings.igdbMissing') : t('settings.igdbOffline')}
                     </Text>
                   </Group>
                 )}

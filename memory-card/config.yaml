@@ -21,6 +21,7 @@ options:
   log_level: info
   managers: []
   viewers_track_progress: false
+  external_services: true
 schema:
   igdb_client_id: "str?"
   igdb_client_secret: "password?"
@@ -28,3 +29,4 @@ schema:
   managers:
     - str
   viewers_track_progress: bool
+  external_services: bool

@@ -946,8 +946,11 @@ export interface components {
             year?: number | null;
         };
         Status: {
+            /** @description False when the app options keep Memory Card offline. */
+            external_services: boolean;
             /** Format: int64 */
             games: number;
+            /** @description IGDB credentials are set and external services are on. */
             igdb_configured: boolean;
             /** Format: int64 */
             owned_copies: number;

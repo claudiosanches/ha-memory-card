@@ -9,7 +9,10 @@ use crate::error::{ApiError, ErrorBody};
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Status {
     pub version: &'static str,
+    /// IGDB credentials are set and external services are on.
     pub igdb_configured: bool,
+    /// False when the app options keep Memory Card offline.
+    pub external_services: bool,
     pub games: i64,
     pub owned_copies: i64,
 }
@@ -36,6 +39,7 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
     Ok(Json(Status {
         version: env!("CARGO_PKG_VERSION"),
         igdb_configured: state.igdb.is_some(),
+        external_services: state.config.external_services,
         games,
         owned_copies,
     }))

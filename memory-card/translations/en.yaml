@@ -16,6 +16,12 @@ configuration:
       Home Assistant user IDs that can change the collection. Everyone else
       can only browse it, and while this is empty nobody can change it. Each
       user finds their ID under Settings in Memory Card.
+  external_services:
+    name: Use external services
+    description: >-
+      Look up games, covers and platforms on IGDB. Turn off to keep Memory
+      Card from contacting the internet; the IGDB credentials are then
+      ignored and games are entered by hand.
   viewers_track_progress:
     name: Viewers track play progress
     description: >-

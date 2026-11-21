@@ -27,6 +27,10 @@ To use your own cover, click the cover of a game or a release on its page and
 upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
 uploaded cover. Removing it brings back IGDB's.
 
+To keep Memory Card from contacting the internet, turn off
+`external_services`. The IGDB credentials are then ignored, and games,
+covers and details are entered by hand.
+
 ## Managers and viewers
 
 Home Assistant signs you in, so Memory Card has no login of its own. Every
@@ -65,6 +69,7 @@ and start games from the backlog, but nothing else.
 |---|---|
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
+| `external_services` | Lets Memory Card contact IGDB. On by default; IGDB also needs the two credentials above. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
 | `viewers_track_progress` | Lets viewers change play status and last played. Off by default. |

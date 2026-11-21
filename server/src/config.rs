@@ -89,6 +89,7 @@ struct Options {
     log_level: Option<LogLevel>,
     managers: Option<Vec<String>>,
     viewers_track_progress: Option<bool>,
+    external_services: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -98,12 +99,15 @@ pub struct Config {
     pub listen: SocketAddr,
     pub trusted_peers: Vec<IpAddr>,
     pub log_level: LogLevel,
+    /// `None` without credentials or with external services off.
     pub igdb: Option<IgdbCredentials>,
-    /// Home Assistant user IDs allowed to change the collection. Empty means
-    /// every ingress user may, and identity is not required.
+    /// Home Assistant user IDs allowed to change the collection. While empty,
+    /// nobody can.
     pub managers: Vec<String>,
     /// Lets viewers change play status and last played.
     pub viewers_track_progress: bool,
+    /// False keeps the app from contacting IGDB or anything else online.
+    pub external_services: bool,
 }
 
 impl Config {
@@ -145,11 +149,17 @@ impl Config {
             })?,
         };
 
+        let external_services = flag(
+            &env,
+            "MEMORY_CARD_EXTERNAL_SERVICES",
+            options.external_services,
+            true,
+        )?;
         let client_id = non_empty(env("MEMORY_CARD_IGDB_CLIENT_ID").or(options.igdb_client_id));
         let client_secret =
             non_empty(env("MEMORY_CARD_IGDB_CLIENT_SECRET").or(options.igdb_client_secret));
         let igdb = match (client_id, client_secret) {
-            (Some(client_id), Some(client_secret)) => Some(IgdbCredentials {
+            (Some(client_id), Some(client_secret)) if external_services => Some(IgdbCredentials {
                 client_id,
                 client_secret,
             }),
@@ -165,19 +175,12 @@ impl Config {
             .filter_map(|id| non_empty(Some(id)))
             .collect();
 
-        let viewers_track_progress = match env("MEMORY_CARD_VIEWERS_TRACK_PROGRESS") {
-            None => options.viewers_track_progress.unwrap_or(false),
-            Some(raw) => match raw.trim().to_ascii_lowercase().as_str() {
-                "true" | "1" => true,
-                "false" | "0" => false,
-                _ => {
-                    return Err(ConfigError::InvalidEnv {
-                        name: "MEMORY_CARD_VIEWERS_TRACK_PROGRESS",
-                        value: raw,
-                    });
-                }
-            },
-        };
+        let viewers_track_progress = flag(
+            &env,
+            "MEMORY_CARD_VIEWERS_TRACK_PROGRESS",
+            options.viewers_track_progress,
+            false,
+        )?;
 
         Ok(Self {
             data_dir,
@@ -188,6 +191,7 @@ impl Config {
             igdb,
             managers,
             viewers_track_progress,
+            external_services,
         })
     }
 
@@ -215,6 +219,23 @@ fn read_options(path: &Path) -> Result<Options, ConfigError> {
             path: path.to_owned(),
             source,
         }),
+    }
+}
+
+/// A boolean option, overridden by `name` (`true`, `false`, `1` or `0`).
+fn flag(
+    env: impl Fn(&str) -> Option<String>,
+    name: &'static str,
+    option: Option<bool>,
+    default: bool,
+) -> Result<bool, ConfigError> {
+    let Some(raw) = env(name) else {
+        return Ok(option.unwrap_or(default));
+    };
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "true" | "1" => Ok(true),
+        "false" | "0" => Ok(false),
+        _ => Err(ConfigError::InvalidEnv { name, value: raw }),
     }
 }
 
@@ -247,6 +268,7 @@ mod tests {
         assert!(config.igdb.is_none());
         assert!(config.managers.is_empty());
         assert!(!config.viewers_track_progress);
+        assert!(config.external_services);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
     }
 
@@ -295,9 +317,27 @@ mod tests {
     }
 
     #[test]
+    fn external_services_off_ignores_igdb_credentials() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("options.json"),
+            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","external_services":false}"#,
+        )
+        .unwrap();
+        let config = load_with(dir.path(), &[]).unwrap();
+        assert!(!config.external_services);
+        assert!(config.igdb.is_none());
+
+        let config = load_with(dir.path(), &[("MEMORY_CARD_EXTERNAL_SERVICES", "true")]).unwrap();
+        assert!(config.igdb.is_some());
+    }
+
+    #[test]
     fn rejects_bad_env() {
         let dir = tempfile::tempdir().unwrap();
         let err = load_with(dir.path(), &[("MEMORY_CARD_TRUSTED_PEER", "nope")]).unwrap_err();
+        assert!(matches!(err, ConfigError::InvalidEnv { .. }));
+        let err = load_with(dir.path(), &[("MEMORY_CARD_EXTERNAL_SERVICES", "maybe")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
     }
 
