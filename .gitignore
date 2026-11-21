@@ -10,6 +10,7 @@ node_modules/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+/TODO.md
 
 # Migrations and their test fixtures are source.
 !/server/migrations/*.sql
