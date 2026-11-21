@@ -47,8 +47,6 @@ function detail(id: number, title: string, igdbId: number | null = null): GameDe
     developers: [],
     publishers: [],
     play_status: null,
-    last_played_at: null,
-    last_played_copy_id: null,
     local_max_players: null,
     online_max_players: null,
     local_coop: null,
@@ -56,6 +54,7 @@ function detail(id: number, title: string, igdbId: number | null = null): GameDe
     game_mode_ids: [],
     genre_ids: [],
     created_at: '2026-11-01T10:00:00.000Z',
+    sessions: [],
     releases: [],
   };
 }

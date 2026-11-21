@@ -36,12 +36,6 @@ pub struct GameInput {
     /// A play status key.
     #[serde(default)]
     pub play_status: Option<String>,
-    /// `YYYY-MM-DD`.
-    #[serde(default)]
-    pub last_played_at: Option<String>,
-    /// Must be a copy of this game.
-    #[serde(default)]
-    pub last_played_copy_id: Option<i64>,
     #[serde(default)]
     pub local_max_players: Option<i64>,
     #[serde(default)]
@@ -108,7 +102,7 @@ pub struct Genre {
     pub name: String,
 }
 
-fn date(value: Option<&str>, field: &'static str) -> ApiResult<Option<String>> {
+pub(super) fn date(value: Option<&str>, field: &'static str) -> ApiResult<Option<String>> {
     let Some(value) = value.map(str::trim).filter(|v| !v.is_empty()) else {
         return Ok(None);
     };
@@ -145,8 +139,6 @@ impl GameInput {
             title: required(&self.title, "title", TITLE_MAX)?,
             summary: optional(self.summary.as_deref(), "summary", SUMMARY_MAX)?,
             play_status: self.play_status.clone(),
-            last_played_at: date(self.last_played_at.as_deref(), "last_played_at")?,
-            last_played_copy_id: self.last_played_copy_id,
             players: players(
                 self.local_max_players,
                 self.online_max_players,
@@ -302,38 +294,6 @@ pub async fn set_play_status(
     ApiJson(input): ApiJson<PlayStatusInput>,
 ) -> ApiResult<Json<GameDetail>> {
     games::set_play_status(&state.db, id, input.play_status.as_deref(), &by).await?;
-    Ok(Json(games::get(&state.db, id).await?))
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-#[serde(deny_unknown_fields)]
-pub struct LastPlayedInput {
-    /// `YYYY-MM-DD`; `null` clears it.
-    #[serde(default)]
-    pub last_played_at: Option<String>,
-    /// Must be a copy of this game; `null` clears it.
-    #[serde(default)]
-    pub last_played_copy_id: Option<i64>,
-}
-
-#[utoipa::path(
-    put, path = "/games/{id}/last-played", tag = "games", operation_id = "setLastPlayed",
-    params(("id" = i64, Path)),
-    request_body = LastPlayedInput,
-    responses(
-        (status = OK, body = GameDetail),
-        (status = NOT_FOUND, body = ErrorBody),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
-    )
-)]
-pub async fn set_last_played(
-    State(state): State<AppState>,
-    Actor(by): Actor,
-    ApiPath(id): ApiPath<i64>,
-    ApiJson(input): ApiJson<LastPlayedInput>,
-) -> ApiResult<Json<GameDetail>> {
-    let at = date(input.last_played_at.as_deref(), "last_played_at")?;
-    games::set_last_played(&state.db, id, at.as_deref(), input.last_played_copy_id, &by).await?;
     Ok(Json(games::get(&state.db, id).await?))
 }
 

@@ -1,0 +1,146 @@
+use serde::Serialize;
+use sqlx::{SqliteConnection, SqlitePool};
+use utoipa::ToSchema;
+
+use super::users::Person;
+use crate::error::{ApiError, ApiResult};
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PlaySession {
+    pub id: i64,
+    /// `YYYY-MM-DD`.
+    pub played_on: String,
+    /// The owned copy played, when known.
+    pub copy_id: Option<i64>,
+    pub minutes: Option<i64>,
+    pub notes: Option<String>,
+    pub created_at: String,
+    pub created_by: Option<Person>,
+}
+
+pub struct SessionFields {
+    pub played_on: String,
+    pub copy_id: Option<i64>,
+    pub minutes: Option<i64>,
+    pub notes: Option<String>,
+}
+
+/// A game's sessions, latest first.
+pub async fn for_game(pool: &SqlitePool, game_id: i64) -> sqlx::Result<Vec<PlaySession>> {
+    let rows = sqlx::query!(
+        r#"SELECT s.id AS "id!", s.played_on, s.copy_id, s.minutes, s.notes, s.created_at,
+                  s.created_by, COALESCE(u.display_name, u.name) AS created_by_name
+           FROM play_sessions s LEFT JOIN users u ON u.id = s.created_by
+           WHERE s.game_id = ?
+           ORDER BY s.played_on DESC, s.id DESC"#,
+        game_id
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| PlaySession {
+            id: row.id,
+            played_on: row.played_on,
+            copy_id: row.copy_id,
+            minutes: row.minutes,
+            notes: row.notes,
+            created_at: row.created_at,
+            created_by: Person::from_columns(row.created_by, row.created_by_name),
+        })
+        .collect())
+}
+
+pub async fn add(
+    pool: &SqlitePool,
+    game_id: i64,
+    fields: &SessionFields,
+    by: &str,
+) -> ApiResult<()> {
+    let mut tx = super::write_tx(pool).await?;
+    let exists: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM games WHERE id = ?) AS "exists!: bool""#,
+        game_id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    if !exists {
+        return Err(ApiError::NotFound);
+    }
+    ensure_game_copy(&mut tx, game_id, fields.copy_id).await?;
+    sqlx::query!(
+        "INSERT INTO play_sessions (game_id, copy_id, played_on, minutes, notes, created_by)
+         VALUES (?, ?, ?, ?, ?, ?)",
+        game_id,
+        fields.copy_id,
+        fields.played_on,
+        fields.minutes,
+        fields.notes,
+        by
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+/// Updates a session and returns its game id.
+pub async fn update(pool: &SqlitePool, id: i64, fields: &SessionFields) -> ApiResult<i64> {
+    let mut tx = super::write_tx(pool).await?;
+    let game_id = session_game(&mut tx, id).await?;
+    ensure_game_copy(&mut tx, game_id, fields.copy_id).await?;
+    sqlx::query!(
+        "UPDATE play_sessions SET copy_id = ?, played_on = ?, minutes = ?, notes = ? WHERE id = ?",
+        fields.copy_id,
+        fields.played_on,
+        fields.minutes,
+        fields.notes,
+        id
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(game_id)
+}
+
+/// Deletes a session and returns its game id.
+pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<i64> {
+    let game_id = sqlx::query_scalar!(
+        "DELETE FROM play_sessions WHERE id = ? RETURNING game_id",
+        id
+    )
+    .fetch_optional(pool)
+    .await?;
+    game_id.ok_or(ApiError::NotFound)
+}
+
+async fn session_game(conn: &mut SqliteConnection, id: i64) -> ApiResult<i64> {
+    sqlx::query_scalar!("SELECT game_id FROM play_sessions WHERE id = ?", id)
+        .fetch_optional(conn)
+        .await?
+        .ok_or(ApiError::NotFound)
+}
+
+/// The copy played must be an owned copy of the game.
+async fn ensure_game_copy(
+    conn: &mut SqliteConnection,
+    game_id: i64,
+    copy_id: Option<i64>,
+) -> ApiResult<()> {
+    let Some(copy_id) = copy_id else {
+        return Ok(());
+    };
+    let belongs: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
+                          WHERE c.id = ? AND r.game_id = ? AND c.status = 'owned') AS "belongs!: bool""#,
+        copy_id,
+        game_id
+    )
+    .fetch_one(conn)
+    .await?;
+    if belongs {
+        Ok(())
+    } else {
+        Err(ApiError::invalid("invalid_copy", "copy_id"))
+    }
+}

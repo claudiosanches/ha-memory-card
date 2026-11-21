@@ -24,6 +24,7 @@ export type Person = Schemas['Person'];
 export type Platform = Schemas['Platform'];
 export type PlatformCategory = Schemas['PlatformCategory'];
 export type PlatformInput = Schemas['PlatformInput'];
+export type PlaySession = Schemas['PlaySession'];
 export type PlayStatus = Schemas['PlayStatus'];
 export type PlayStatusFields = Schemas['PlayStatusFields'];
 export type Region = Schemas['Region'];

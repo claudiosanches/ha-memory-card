@@ -54,6 +54,7 @@ import { usePlayStatusList } from '../../components/playStatuses';
 import { history } from '../../components/history';
 import { formatDate, today } from '../../components/status';
 import { Copies } from './Copies';
+import { defaultCopy, Sessions } from './Sessions';
 import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
 import { CopyForm, GameForm, ReleaseForm, useGameSaved } from './forms';
@@ -155,18 +156,18 @@ function GameView({ game }: { game: GameDetail }) {
     onSuccess: (updated) => saved(updated),
     onError: (error) => notifyError(errorMessage(t, error)),
   });
-  const setLastPlayed = useMutation({
-    mutationFn: (patch: { last_played_at?: string | null; last_played_copy_id?: number | null }) =>
+  const logToday = useMutation({
+    mutationFn: (copy_id: number | null) =>
       call(
-        api.PUT('/api/games/{id}/last-played', {
+        api.POST('/api/games/{id}/sessions', {
           params: { path: { id: game.id } },
-          body: { last_played_at: game.last_played_at, last_played_copy_id: game.last_played_copy_id, ...patch },
+          body: { played_on: today(), copy_id },
         }),
       ),
     onSuccess: (updated) => saved(updated),
     onError: (error) => notifyError(errorMessage(t, error)),
   });
-  const saving = setStatus.isPending || setLastPlayed.isPending;
+  const saving = setStatus.isPending || logToday.isPending;
 
   const removeGame = useMutation({
     mutationFn: () => call(api.DELETE('/api/games/{id}', { params: { path: { id: game.id } } })),
@@ -199,11 +200,6 @@ function GameView({ game }: { game: GameDetail }) {
     onError: (error) => notifyError(errorMessage(t, error)),
   });
 
-  const playedToday = () => {
-    const copyId = game.last_played_copy_id ?? (ownedCopies.length === 1 ? ownedCopies[0]?.copy.id : null) ?? null;
-    setLastPlayed.mutate({ last_played_at: today(), last_played_copy_id: copyId });
-  };
-
   const copyLabel = (copy: CopyDetail, release: ReleaseDetail) =>
     [
       names.platform.get(release.platform_id),
@@ -212,6 +208,9 @@ function GameView({ game }: { game: GameDetail }) {
     ]
       .filter(Boolean)
       .join(', ');
+  const copyNames = new Map(ownedCopies.map(({ copy, release }) => [copy.id, copyLabel(copy, release)]));
+  const lastSession = game.sessions[0];
+  const playedToday = lastSession?.played_on === today();
 
   // The release title only says something when it differs from the game's.
   const regionalTitle = (release: ReleaseDetail) => (release.title === game.title ? null : release.title);
@@ -327,33 +326,23 @@ function GameView({ game }: { game: GameDetail }) {
                   game.play_status ? <Badge size="xs" circle color={statuses.color(game.play_status)} /> : null
                 }
               />
-              <Select
-                label={t('game.lastPlayedCopy')}
-                placeholder={t('common.notSet')}
-                className={classes.copySelect}
-                data={ownedCopies.map(({ copy, release }) => ({ value: String(copy.id), label: copyLabel(copy, release) }))}
-                value={game.last_played_copy_id ? String(game.last_played_copy_id) : null}
-                onChange={(value) => setLastPlayed.mutate({ last_played_copy_id: value ? Number(value) : null })}
-                clearable={canTrack}
-                readOnly={!canTrack}
-                rightSection={canTrack ? undefined : null}
-                disabled={saving || ownedCopies.length === 0}
-              />
               {canTrack && (
                 <Button
                   variant="light"
                   leftSection={<IconCalendarCheck size={16} />}
-                  onClick={playedToday}
+                  onClick={() => logToday.mutate(defaultCopy(game, copyNames))}
                   loading={saving}
+                  disabled={playedToday}
                 >
-                  {t('game.playedToday')}
+                  {playedToday ? t('game.loggedToday') : t('game.playedToday')}
                 </Button>
               )}
             </Group>
             <div className={classes.lastPlayed} data-testid="last-played">
               <Text size="xs" c="dimmed">{t('game.lastPlayed')}</Text>
-              <Text size="sm" fw={600}>{game.last_played_at ? formatDate(game.last_played_at, i18n.language) : t('game.never')}</Text>
+              <Text size="sm" fw={600}>{lastSession ? formatDate(lastSession.played_on, i18n.language) : t('game.never')}</Text>
             </div>
+            <Sessions game={game} copies={copyNames} canTrack={canTrack} />
           </Stack>
         </Card>
 

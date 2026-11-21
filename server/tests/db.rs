@@ -41,6 +41,7 @@ async fn fresh_database_has_schema_and_seed() {
             "games",
             "genres",
             "platforms",
+            "play_sessions",
             "play_statuses",
             "releases",
             "settings",
@@ -91,30 +92,6 @@ async fn names_are_unique_ignoring_case() {
         .execute(&app.pool)
         .await;
     assert!(duplicate.is_err());
-}
-
-#[tokio::test]
-async fn deleting_last_played_copy_keeps_the_game() {
-    let app = TestApp::new().await;
-    for sql in [
-        "INSERT INTO games (id, title, sort_title) VALUES (1, 'Game', 'game')",
-        "INSERT INTO releases (id, game_id, platform_id, region) \
-         VALUES (1, 1, (SELECT id FROM platforms WHERE slug = 'switch'), 'na')",
-        "INSERT INTO copies (id, release_id, format) VALUES (1, 1, 'physical')",
-        "UPDATE games SET play_status = 'playing', last_played_at = '2026-11-20', \
-         last_played_copy_id = 1 WHERE id = 1",
-        "DELETE FROM copies WHERE id = 1",
-    ] {
-        sqlx::query(sql).execute(&app.pool).await.unwrap();
-    }
-
-    let (status, copy): (Option<String>, Option<i64>) =
-        sqlx::query_as("SELECT play_status, last_played_copy_id FROM games WHERE id = 1")
-            .fetch_one(&app.pool)
-            .await
-            .unwrap();
-    assert_eq!(status.as_deref(), Some("playing"));
-    assert_eq!(copy, None);
 }
 
 #[tokio::test]

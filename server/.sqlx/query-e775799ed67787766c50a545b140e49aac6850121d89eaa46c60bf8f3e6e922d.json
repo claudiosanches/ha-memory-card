@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE games\n         SET title = ?, sort_title = ?, summary = ?, play_status = ?,\n             local_max_players = ?, online_max_players = ?,\n             local_coop = ?, online_coop = ?, updated_by = ?,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": []
+  },
+  "hash": "e775799ed67787766c50a545b140e49aac6850121d89eaa46c60bf8f3e6e922d"
+}

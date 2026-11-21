@@ -1,0 +1,13 @@
+import { chromium } from '@playwright/test';
+const base = 'http://127.0.0.1:18300';
+const browser = await chromium.launch();
+const page = await browser.newPage({ extraHTTPHeaders: { 'X-Remote-User-Id': 'shot', 'X-Remote-User-Display-Name': 'Shot' }, viewport: { width: 1280, height: 900 } });
+const game = process.argv[2] ?? '1';
+await page.goto(`${base}/#/games/${game}`);
+await page.getByTestId('sessions').waitFor();
+await page.screenshot({ path: '../target/shot/desktop.png', fullPage: false });
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(300);
+await page.getByTestId('last-played').scrollIntoViewIfNeeded();
+await page.screenshot({ path: '../target/shot/phone.png', fullPage: false });
+await browser.close();

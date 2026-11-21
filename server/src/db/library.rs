@@ -176,7 +176,8 @@ struct SummaryRow {
 /// Builds the library query. Public so tests can inspect its query plan.
 pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     let mut qb = QueryBuilder::new(
-        "SELECT g.id, g.title, g.igdb_id, g.cover_path, g.play_status, g.last_played_at,
+        "SELECT g.id, g.title, g.igdb_id, g.cover_path, g.play_status,
+                (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) AS last_played_at,
                 (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
                  WHERE r.game_id = g.id AND c.status = 'owned') AS owned_copies,
                 (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
@@ -201,9 +202,7 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     qb.push(match filter.sort.unwrap_or_default() {
         LibrarySort::Title => " ORDER BY g.sort_title, g.id",
         LibrarySort::Added => " ORDER BY g.created_at DESC, g.id DESC",
-        LibrarySort::Played => {
-            " ORDER BY g.last_played_at IS NULL, g.last_played_at DESC, g.sort_title"
-        }
+        LibrarySort::Played => " ORDER BY last_played_at DESC NULLS LAST, g.sort_title",
     });
     qb
 }
@@ -369,6 +368,8 @@ pub struct CopyRow {
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
+    /// The game's latest session.
+    pub last_played_at: Option<String>,
 }
 
 /// Copies matching the filters: copy filters apply to each copy, the others to its game.
@@ -377,7 +378,8 @@ pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         "SELECT c.id AS copy_id, g.id AS game_id, g.title,
                 COALESCE(r.cover_path, g.cover_path) AS cover_path, g.play_status,
                 r.id AS release_id, r.platform_id, r.region, r.title AS release_title,
-                r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes
+                r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes,
+                (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) AS last_played_at
          FROM copies c
          JOIN releases r ON r.id = c.release_id
          JOIN games g ON g.id = r.game_id
@@ -390,7 +392,7 @@ pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         LibrarySort::Title => " ORDER BY g.sort_title, g.id, p.sort_order, r.region, c.id",
         LibrarySort::Added => " ORDER BY c.created_at DESC, c.id DESC",
         LibrarySort::Played => {
-            " ORDER BY g.last_played_at IS NULL, g.last_played_at DESC, g.sort_title, g.id,
+            " ORDER BY last_played_at DESC NULLS LAST, g.sort_title, g.id,
                        p.sort_order, c.id"
         }
     });

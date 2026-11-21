@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE play_sessions SET copy_id = ?, played_on = ?, minutes = ?, notes = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "a31f9910f23048e79c934028e1808d2fc25efe8c5333723a867f19f2b63cb2e5"
+}

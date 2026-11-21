@@ -29,7 +29,12 @@ const MANAGER_READS: [&str; 4] = [
 ];
 
 /// Play progress, open to viewers when the option allows it.
-const PROGRESS_WRITES: [&str; 2] = ["/api/games/{id}/play-status", "/api/games/{id}/last-played"];
+const PROGRESS_WRITES: [(Method, &str); 4] = [
+    (Method::PUT, "/api/games/{id}/play-status"),
+    (Method::POST, "/api/games/{id}/sessions"),
+    (Method::PUT, "/api/sessions/{id}"),
+    (Method::DELETE, "/api/sessions/{id}"),
+];
 
 /// Who may do what, from the app options.
 #[derive(Debug)]
@@ -134,7 +139,10 @@ fn required_role(method: &Method, path: &str, viewers_track_progress: bool) -> R
     let open = if is_read(method) {
         !MANAGER_READS.contains(&path)
     } else {
-        method == Method::PUT && PROGRESS_WRITES.contains(&path) && viewers_track_progress
+        viewers_track_progress
+            && PROGRESS_WRITES
+                .iter()
+                .any(|(m, p)| m == method && *p == path)
     };
     if open { Role::Viewer } else { Role::Manager }
 }
@@ -261,9 +269,13 @@ mod tests {
 
     #[test]
     fn progress_follows_the_option() {
-        for path in PROGRESS_WRITES {
-            assert_eq!(required_role(&Method::PUT, path, false), Role::Manager);
-            assert_eq!(required_role(&Method::PUT, path, true), Role::Viewer);
+        for (method, path) in &PROGRESS_WRITES {
+            assert_eq!(required_role(method, path, false), Role::Manager);
+            assert_eq!(required_role(method, path, true), Role::Viewer);
         }
+        assert_eq!(
+            required_role(&Method::DELETE, "/api/games/{id}/sessions", true),
+            Role::Manager
+        );
     }
 }

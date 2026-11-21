@@ -4,6 +4,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
+use super::sessions::{self, PlaySession};
 use super::users::Person;
 use crate::covers::Owner;
 use crate::domain::{Condition, CopyStatus, Format, Region, sort_title};
@@ -55,8 +56,6 @@ pub struct GameDetail {
     pub publishers: Vec<String>,
     /// A play status key.
     pub play_status: Option<String>,
-    pub last_played_at: Option<String>,
-    pub last_played_copy_id: Option<i64>,
     pub local_max_players: Option<i64>,
     pub online_max_players: Option<i64>,
     pub local_coop: Option<bool>,
@@ -69,6 +68,8 @@ pub struct GameDetail {
     pub updated_by: Option<Person>,
     /// In platform list order, then region.
     pub releases: Vec<ReleaseDetail>,
+    /// Latest first; the first is when the game was last played.
+    pub sessions: Vec<PlaySession>,
 }
 
 /// Player counts as stored on games and releases. `None` means unknown.
@@ -84,8 +85,6 @@ pub struct GameFields {
     pub title: String,
     pub summary: Option<String>,
     pub play_status: Option<String>,
-    pub last_played_at: Option<String>,
-    pub last_played_copy_id: Option<i64>,
     pub players: PlayerCounts,
     pub game_mode_ids: Vec<i64>,
 }
@@ -116,7 +115,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                   g.cover_source IS 'upload' AS "cover_uploaded!: bool", g.first_release_date,
                   g.developers AS "developers: Json<Vec<String>>",
                   g.publishers AS "publishers: Json<Vec<String>>",
-                  g.play_status, g.last_played_at, g.last_played_copy_id,
+                  g.play_status,
                   g.local_max_players, g.online_max_players,
                   g.local_coop AS "local_coop: bool", g.online_coop AS "online_coop: bool",
                   (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)
@@ -219,8 +218,6 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         developers: game.developers.0,
         publishers: game.publishers.0,
         play_status: game.play_status,
-        last_played_at: game.last_played_at,
-        last_played_copy_id: game.last_played_copy_id,
         local_max_players: game.local_max_players,
         online_max_players: game.online_max_players,
         local_coop: game.local_coop,
@@ -231,6 +228,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         created_by: Person::from_columns(game.created_by, game.created_by_name),
         updated_by: Person::from_columns(game.updated_by, game.updated_by_name),
         releases,
+        sessions: sessions::for_game(pool, id).await?,
     })
 }
 
@@ -259,15 +257,14 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
     let mut tx = crate::db::write_tx(pool).await?;
     super::play_statuses::ensure_exists(&mut *tx, fields.play_status.as_deref()).await?;
 
-    ensure_game_copy(&mut tx, id, fields.last_played_copy_id).await?;
     let modes = game_mode_ids(&mut tx, &fields.game_mode_ids).await?;
 
     let sort = sort_title(&fields.title);
     let p = &fields.players;
     let result = sqlx::query!(
         "UPDATE games
-         SET title = ?, sort_title = ?, summary = ?, play_status = ?, last_played_at = ?,
-             last_played_copy_id = ?, local_max_players = ?, online_max_players = ?,
+         SET title = ?, sort_title = ?, summary = ?, play_status = ?,
+             local_max_players = ?, online_max_players = ?,
              local_coop = ?, online_coop = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
@@ -275,8 +272,6 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
         sort,
         fields.summary,
         fields.play_status,
-        fields.last_played_at,
-        fields.last_played_copy_id,
         p.local_max_players,
         p.online_max_players,
         p.local_coop,
@@ -321,55 +316,6 @@ pub async fn set_play_status(
     .execute(pool)
     .await?;
     found(result.rows_affected())
-}
-
-pub async fn set_last_played(
-    pool: &SqlitePool,
-    id: i64,
-    at: Option<&str>,
-    copy_id: Option<i64>,
-    by: &str,
-) -> ApiResult<()> {
-    let mut tx = crate::db::write_tx(pool).await?;
-    let result = sqlx::query!(
-        "UPDATE games SET last_played_at = ?, last_played_copy_id = ?, updated_by = ?,
-                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         WHERE id = ?",
-        at,
-        copy_id,
-        by,
-        id
-    )
-    .execute(&mut *tx)
-    .await?;
-    found(result.rows_affected())?;
-    ensure_game_copy(&mut tx, id, copy_id).await?;
-    tx.commit().await?;
-    Ok(())
-}
-
-/// The last played copy must be a copy of the game.
-async fn ensure_game_copy(
-    conn: &mut SqliteConnection,
-    game_id: i64,
-    copy_id: Option<i64>,
-) -> ApiResult<()> {
-    let Some(copy_id) = copy_id else {
-        return Ok(());
-    };
-    let belongs: bool = sqlx::query_scalar!(
-        r#"SELECT EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
-                          WHERE c.id = ? AND r.game_id = ? AND c.status = 'owned') AS "belongs!: bool""#,
-        copy_id,
-        game_id
-    )
-    .fetch_one(conn)
-    .await?;
-    if belongs {
-        Ok(())
-    } else {
-        Err(ApiError::invalid("invalid_copy", "last_played_copy_id"))
-    }
 }
 
 /// Deletes a game with its releases and copies, and returns the release ids.
@@ -460,15 +406,6 @@ pub async fn update_copy(
     )
     .execute(&mut *tx)
     .await?;
-    if fields.status == Some(CopyStatus::Wanted) {
-        // Only owned copies can be the one last played.
-        sqlx::query!(
-            "UPDATE games SET last_played_copy_id = NULL WHERE last_played_copy_id = ?",
-            copy_id
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
     tx.commit().await?;
     Ok(game_id)
 }

@@ -56,7 +56,8 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
             WHERE s.counts_as = 'playing' AND EXISTS (
               SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
                WHERE r.game_id = g.id AND c.status = 'owned')
-            ORDER BY g.last_played_at IS NULL, g.last_played_at DESC, g.sort_title
+            ORDER BY (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) DESC NULLS LAST,
+                     g.sort_title
             LIMIT ?"#,
         PLAYING_LIMIT
     )
@@ -64,13 +65,13 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
     .await?;
 
     let last_played = sqlx::query!(
-        r#"SELECT g.title, g.last_played_at AS "date!", p.name AS "platform?"
-             FROM games g
-             LEFT JOIN copies c ON c.id = g.last_played_copy_id
+        r#"SELECT g.title, s.played_on AS date, p.name AS "platform?"
+             FROM play_sessions s
+             JOIN games g ON g.id = s.game_id
+             LEFT JOIN copies c ON c.id = s.copy_id
              LEFT JOIN releases r ON r.id = c.release_id
              LEFT JOIN platforms p ON p.id = r.platform_id
-            WHERE g.last_played_at IS NOT NULL
-            ORDER BY g.last_played_at DESC, g.updated_at DESC
+            ORDER BY s.played_on DESC, s.id DESC
             LIMIT 1"#
     )
     .fetch_optional(pool)

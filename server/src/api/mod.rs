@@ -8,6 +8,7 @@ pub mod me;
 pub mod missing;
 pub mod platforms;
 pub mod play_statuses;
+pub mod sessions;
 pub mod status;
 pub mod stores;
 pub mod suggestions;
@@ -43,7 +44,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::list, games::create))
         .routes(routes!(games::get, games::update, games::delete))
         .routes(routes!(games::set_play_status))
-        .routes(routes!(games::set_last_played))
+        .routes(routes!(sessions::add))
+        .routes(routes!(sessions::update, sessions::delete))
         .routes(routes!(games::add_copy))
         .routes(routes!(games::list_copies))
         .routes(routes!(games::update_copy, games::delete_copy))

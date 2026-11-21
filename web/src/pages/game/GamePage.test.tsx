@@ -20,8 +20,6 @@ const GAME: GameDetail = {
   developers: [],
   publishers: [],
   play_status: 'backlog',
-  last_played_at: null,
-  last_played_copy_id: null,
   local_max_players: null,
   online_max_players: null,
   local_coop: null,
@@ -29,6 +27,7 @@ const GAME: GameDetail = {
   game_mode_ids: [],
   genre_ids: [],
   created_at: '2026-11-01T10:00:00.000Z',
+  sessions: [],
   releases: [
     {
       id: 9,
@@ -309,14 +308,14 @@ describe('Game page', () => {
     const calls = mockApi({
       ...SETUP,
       'GET /api/games/4': game,
-      'PUT /api/games/4/last-played': (body: unknown) => ({ ...game, ...(body as object) }),
+      'POST /api/games/4/sessions': game,
       'PUT /api/copies/22': GAME,
     });
     renderAt('/games/4');
 
     fireEvent.click(await screen.findByRole('button', { name: en.game.playedToday }));
-    await waitFor(() => expect(calls.some((c) => c.path === '/api/games/4/last-played')).toBe(true));
-    expect((calls.find((c) => c.path === '/api/games/4/last-played')?.body as Record<string, unknown>).last_played_copy_id).toBe(21);
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/games/4/sessions')).toBe(true));
+    expect((calls.find((c) => c.path === '/api/games/4/sessions')?.body as Record<string, unknown>).copy_id).toBe(21);
 
     expect(screen.getAllByRole('button', { name: en.game.gotIt })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: en.game.gotIt }));
@@ -326,20 +325,72 @@ describe('Game page', () => {
     expect(calls.find((c) => c.path === '/api/copies/22')?.body).toMatchObject({ status: 'owned' });
   });
 
-  it('marks the only copy as played today', async () => {
+  it('logs the only copy as played today', async () => {
     const calls = mockApi({
       ...SETUP,
       'GET /api/games/4': GAME,
-      'PUT /api/games/4/last-played': (body: unknown) => ({ ...GAME, ...(body as object) }),
+      'POST /api/games/4/sessions': (body: unknown) => ({
+        ...GAME,
+        sessions: [{ id: 1, ...(body as object), minutes: null, notes: null, created_at: '2026-11-21T10:00:00Z' }],
+      }),
     });
     renderAt('/games/4');
 
     fireEvent.click(await screen.findByRole('button', { name: en.game.playedToday }));
 
-    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    const body = calls.find((c) => c.method === 'PUT')?.body as Record<string, unknown>;
-    expect(body.last_played_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(body.last_played_copy_id).toBe(21);
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    const body = calls.find((c) => c.method === 'POST')?.body as Record<string, unknown>;
+    expect(body.played_on).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(body.copy_id).toBe(21);
+    expect(await screen.findByRole('button', { name: en.game.loggedToday })).toBeDisabled();
+    expect(within(screen.getByTestId('session-1')).getByText(/Nintendo Switch/)).toBeInTheDocument();
+  });
+
+  it('logs and edits a session with minutes and notes', async () => {
+    const session = {
+      id: 5,
+      played_on: '2026-11-02',
+      copy_id: 21,
+      minutes: 90,
+      notes: 'Boss fight',
+      created_at: '2026-11-02T20:00:00Z',
+      created_by: { id: 'a1', name: 'Sam' },
+    };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': { ...GAME, sessions: [session] },
+      'PUT /api/sessions/5': { ...GAME, sessions: [session] },
+      'POST /api/games/4/sessions': { ...GAME, sessions: [session] },
+    });
+    renderAt('/games/4');
+
+    const row = await screen.findByTestId('session-5');
+    expect(within(row).getByText(/90 minutes · Sam/)).toBeInTheDocument();
+    expect(within(row).getByText('Boss fight')).toBeInTheDocument();
+
+    fireEvent.click(within(row).getByRole('button', { name: en.sessions.edit }));
+    let dialog = await screen.findByRole('dialog', { name: en.sessions.edit });
+    fireEvent.change(within(dialog).getByLabelText(en.sessions.minutesLabel), { target: { value: '120' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/sessions/5')).toBe(true));
+    expect(calls.find((c) => c.path === '/api/sessions/5')?.body).toEqual({
+      played_on: '2026-11-02',
+      copy_id: 21,
+      minutes: 120,
+      notes: 'Boss fight',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: en.sessions.add }));
+    dialog = await screen.findByRole('dialog', { name: en.sessions.add });
+    fireEvent.change(within(dialog).getByLabelText(new RegExp(en.sessions.playedOn)), { target: { value: '2026-11-03' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
+      played_on: '2026-11-03',
+      copy_id: 21,
+      minutes: null,
+      notes: null,
+    });
   });
 
   it('lets a viewer track progress when the option allows it', async () => {
@@ -347,12 +398,12 @@ describe('Game page', () => {
       ...SETUP,
       'GET /api/me': { ...VIEWER, can_track_progress: true },
       'GET /api/games/4': GAME,
-      'PUT /api/games/4/last-played': (body: unknown) => ({ ...GAME, ...(body as object) }),
+      'POST /api/games/4/sessions': GAME,
     });
     renderAt('/games/4');
 
     fireEvent.click(await screen.findByRole('button', { name: en.game.playedToday }));
-    await waitFor(() => expect(calls.some((c) => c.path === '/api/games/4/last-played')).toBe(true));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/games/4/sessions')).toBe(true));
     expect(screen.queryByRole('button', { name: en.common.edit })).not.toBeInTheDocument();
   });
 

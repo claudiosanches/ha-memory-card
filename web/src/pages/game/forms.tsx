@@ -56,8 +56,6 @@ export function gameInput(game: GameDetail): GameInput {
     title: game.title,
     summary: game.summary,
     play_status: game.play_status,
-    last_played_at: game.last_played_at,
-    last_played_copy_id: game.last_played_copy_id,
     local_max_players: game.local_max_players,
     online_max_players: game.online_max_players,
     local_coop: game.local_coop,

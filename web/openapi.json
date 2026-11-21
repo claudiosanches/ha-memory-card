@@ -1218,12 +1218,12 @@
         }
       }
     },
-    "/api/games/{id}/last-played": {
+    "/api/games/{id}/play-status": {
       "put": {
         "tags": [
           "games"
         ],
-        "operationId": "setLastPlayed",
+        "operationId": "setPlayStatus",
         "parameters": [
           {
             "name": "id",
@@ -1239,7 +1239,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LastPlayedInput"
+                "$ref": "#/components/schemas/PlayStatusInput"
               }
             }
           },
@@ -1276,12 +1276,12 @@
         }
       }
     },
-    "/api/games/{id}/play-status": {
-      "put": {
+    "/api/games/{id}/sessions": {
+      "post": {
         "tags": [
-          "games"
+          "sessions"
         ],
-        "operationId": "setPlayStatus",
+        "operationId": "addSession",
         "parameters": [
           {
             "name": "id",
@@ -1297,14 +1297,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlayStatusInput"
+                "$ref": "#/components/schemas/SessionInput"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
+            "description": "The game with the new session",
             "content": {
               "application/json": {
                 "schema": {
@@ -2328,6 +2329,103 @@
         }
       }
     },
+    "/api/sessions/{id}": {
+      "put": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "updateSession",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The session's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sessions"
+        ],
+        "operationId": "deleteSession",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The session's game",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/status": {
       "get": {
         "tags": [
@@ -2777,6 +2875,13 @@
             "type": "integer",
             "format": "int64"
           },
+          "last_played_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The game's latest session."
+          },
           "notes": {
             "type": [
               "string",
@@ -3106,7 +3211,8 @@
           "game_mode_ids",
           "genre_ids",
           "created_at",
-          "releases"
+          "releases",
+          "sessions"
         ],
         "properties": {
           "cover_path": {
@@ -3169,19 +3275,6 @@
             ],
             "format": "int64"
           },
-          "last_played_at": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "last_played_copy_id": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64"
-          },
           "local_coop": {
             "type": [
               "boolean",
@@ -3228,6 +3321,13 @@
             },
             "description": "In platform list order, then region."
           },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaySession"
+            },
+            "description": "Latest first; the first is when the game was last played."
+          },
           "summary": {
             "type": [
               "string",
@@ -3262,21 +3362,6 @@
               "type": "integer",
               "format": "int64"
             }
-          },
-          "last_played_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "`YYYY-MM-DD`."
-          },
-          "last_played_copy_id": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64",
-            "description": "Must be a copy of this game."
           },
           "local_coop": {
             "type": [
@@ -3551,27 +3636,6 @@
             "minimum": 0
           }
         }
-      },
-      "LastPlayedInput": {
-        "type": "object",
-        "properties": {
-          "last_played_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "`YYYY-MM-DD`; `null` clears it."
-          },
-          "last_played_copy_id": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64",
-            "description": "Must be a copy of this game; `null` clears it."
-          }
-        },
-        "additionalProperties": false
       },
       "LinkInput": {
         "type": "object",
@@ -3877,6 +3941,58 @@
               "format": "int64"
             },
             "description": "Every platform id, once, in the new order."
+          }
+        }
+      },
+      "PlaySession": {
+        "type": "object",
+        "required": [
+          "id",
+          "played_on",
+          "created_at"
+        ],
+        "properties": {
+          "copy_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The owned copy played, when known."
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "created_by": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "played_on": {
+            "type": "string",
+            "description": "`YYYY-MM-DD`."
           }
         }
       },
@@ -4236,6 +4352,40 @@
           "connected",
           "disconnected"
         ]
+      },
+      "SessionInput": {
+        "type": "object",
+        "required": [
+          "played_on"
+        ],
+        "properties": {
+          "copy_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "An owned copy of the game."
+          },
+          "minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "played_on": {
+            "type": "string",
+            "description": "`YYYY-MM-DD`."
+          }
+        },
+        "additionalProperties": false
       },
       "Status": {
         "type": "object",

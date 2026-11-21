@@ -60,8 +60,8 @@ devices, stores, platforms and play statuses, or sync with IGDB. Requests
 that Home Assistant does not tie to a user are refused.
 
 To let viewers keep track of what they play, turn on
-`viewers_track_progress`. They can then change play status and last played,
-and start games from the backlog, but nothing else.
+`viewers_track_progress`. They can then change play status, log play
+sessions and start games from the backlog, but nothing else.
 
 Memory Card keeps the name of each user who adds or changes a game or a
 copy, and the game page shows who added it and who changed it last.
@@ -76,7 +76,7 @@ copy, and the game page shows who added it and who changed it last.
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
 | `sensors` | Publishes Home Assistant sensors through the MQTT broker. On by default; does nothing without a broker. |
-| `viewers_track_progress` | Lets viewers change play status and last played. Off by default. |
+| `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
 
 ## Wishlist
 
@@ -165,7 +165,7 @@ Settings in Memory Card says whether the sensors are connected.
 | `sensor.memory_card_wishlist` | Copies on the wishlist | |
 | `sensor.memory_card_backlog` | Owned games in a status that counts as backlog | |
 | `sensor.memory_card_playing` | Owned games in a status that counts as playing | `games`: their titles, last played first |
-| `sensor.memory_card_last_played` | Title of the game with the latest last played date | `date`, `platform` |
+| `sensor.memory_card_last_played` | Title of the game with the latest play session | `date`, `platform` of the copy played |
 | `sensor.memory_card_last_added` | Title of the game whose owned copy was added last | `added_at`, `platform` |
 
 The counts keep long-term statistics, so history graphs show how the

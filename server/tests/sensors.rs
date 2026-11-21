@@ -45,12 +45,12 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
     let copy = detail["releases"][0]["copies"][0]["id"].as_i64().unwrap();
     let (status, _) = app
         .json(
-            "PUT",
-            &format!("/api/games/{celeste}/last-played"),
-            Some(json!({"last_played_at": "2026-11-20", "last_played_copy_id": copy})),
+            "POST",
+            &format!("/api/games/{celeste}/sessions"),
+            Some(json!({"played_on": "2026-11-20", "copy_id": copy})),
         )
         .await;
-    assert_eq!(status, StatusCode::OK);
+    assert_eq!(status, StatusCode::CREATED);
 
     let hades = game_id(&app, "Hades").await;
     let switch = app.platform_id("switch").await;

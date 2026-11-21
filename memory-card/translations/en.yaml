@@ -31,5 +31,5 @@ configuration:
   viewers_track_progress:
     name: Viewers track play progress
     description: >-
-      Let users who are not managers change play status and last played.
+      Let users who are not managers change play status and log play sessions.
       Everything else stays read only for them.

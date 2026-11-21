@@ -235,14 +235,22 @@ async fn viewers_track_progress_when_the_option_allows_it() {
     assert_eq!(me["role"], "viewer");
     assert_eq!(me["can_track_progress"], true);
 
-    for (path, body) in [
-        ("play-status", json!({ "play_status": "playing" })),
-        ("last-played", json!({ "last_played_at": "2026-11-21" })),
-    ] {
-        let uri = format!("/api/games/{game}/{path}");
-        let (status, body) = send(&app, SUPERVISOR, "PUT", &uri, Some(VIEWER), Some(body)).await;
-        assert_eq!(status, StatusCode::OK, "{path}: {body}");
-    }
+    let uri = format!("/api/games/{game}/play-status");
+    let playing = json!({ "play_status": "playing" });
+    let (status, body) = send(&app, SUPERVISOR, "PUT", &uri, Some(VIEWER), Some(playing)).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let uri = format!("/api/games/{game}/sessions");
+    let today = json!({ "played_on": "2026-11-21" });
+    let (status, body) = send(&app, SUPERVISOR, "POST", &uri, Some(VIEWER), Some(today)).await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    let session = body["sessions"][0]["id"].as_i64().unwrap();
+    let uri = format!("/api/sessions/{session}");
+    let moved = json!({ "played_on": "2026-11-20" });
+    let (status, body) = send(&app, SUPERVISOR, "PUT", &uri, Some(VIEWER), Some(moved)).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = send(&app, SUPERVISOR, "DELETE", &uri, Some(VIEWER), None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
 
     let (status, _) = send(
         &app,

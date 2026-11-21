@@ -154,26 +154,9 @@ async fn moving_and_deleting_copies() {
 }
 
 #[tokio::test]
-async fn game_status_last_played_and_modes() {
+async fn game_status_players_and_modes() {
     let app = TestApp::new().await;
-    let switch = app.platform_id("switch").await;
     let game = new_game(&app, "Mario Kart 8 Deluxe").await;
-    let other = new_game(&app, "Other").await;
-    let detail = add_copy(
-        &app,
-        game,
-        json!({"platform_id": switch, "region": "ww", "format": "digital"}),
-    )
-    .await;
-    let copy = detail["releases"][0]["copies"][0]["id"].as_i64().unwrap();
-    let other_copy = add_copy(
-        &app,
-        other,
-        json!({"platform_id": switch, "region": "ww", "format": "digital"}),
-    )
-    .await["releases"][0]["copies"][0]["id"]
-        .as_i64()
-        .unwrap();
     let modes: Vec<i64> = sqlx::query_scalar(
         "SELECT id FROM game_modes WHERE slug IN ('multiplayer', 'split-screen')",
     )
@@ -184,8 +167,6 @@ async fn game_status_last_played_and_modes() {
     let body = json!({
         "title": "Mario Kart 8 Deluxe",
         "play_status": "playing",
-        "last_played_at": "2026-11-20",
-        "last_played_copy_id": copy,
         "local_max_players": 4,
         "online_max_players": 12,
         "game_mode_ids": modes,
@@ -195,21 +176,10 @@ async fn game_status_last_played_and_modes() {
         .await;
     assert_eq!(status, StatusCode::OK, "{detail}");
     assert_eq!(detail["play_status"], "playing");
-    assert_eq!(detail["last_played_copy_id"], copy);
     assert_eq!(detail["game_mode_ids"], json!(modes));
     assert_eq!(detail["local_max_players"], 4);
 
     for (patch, code, field) in [
-        (
-            json!({"last_played_copy_id": other_copy}),
-            "invalid_copy",
-            "last_played_copy_id",
-        ),
-        (
-            json!({"last_played_at": "20/11/2026"}),
-            "invalid_date",
-            "last_played_at",
-        ),
         (
             json!({"local_max_players": 0}),
             "out_of_range",
@@ -233,34 +203,120 @@ async fn game_status_last_played_and_modes() {
         assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
         assert_eq!(error, json!({"code": code, "field": field}));
     }
+}
 
-    let path = format!("/api/games/{game}/last-played");
+#[tokio::test]
+async fn sessions_log_play_and_the_latest_is_last_played() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let game = new_game(&app, "Mario Kart 8 Deluxe").await;
+    let other = new_game(&app, "Other").await;
+    let copy = add_copy(
+        &app,
+        game,
+        json!({"platform_id": switch, "region": "ww", "format": "digital"}),
+    )
+    .await["releases"][0]["copies"][0]["id"]
+        .as_i64()
+        .unwrap();
+    let other_copy = add_copy(
+        &app,
+        other,
+        json!({"platform_id": switch, "region": "ww", "format": "digital"}),
+    )
+    .await["releases"][0]["copies"][0]["id"]
+        .as_i64()
+        .unwrap();
+
+    let path = format!("/api/games/{game}/sessions");
     let (status, detail) = app
-        .json("PUT", &path, Some(json!({"last_played_at": "2026-11-21"})))
-        .await;
-    assert_eq!(status, StatusCode::OK, "{detail}");
-    assert_eq!(detail["last_played_at"], "2026-11-21");
-    assert_eq!(detail["last_played_copy_id"], Value::Null);
-    assert_eq!(detail["play_status"], "playing", "other fields stay");
-
-    let (status, error) = app
         .json(
-            "PUT",
+            "POST",
             &path,
-            Some(json!({"last_played_copy_id": other_copy})),
+            Some(json!({"played_on": "2026-11-20", "copy_id": copy, "minutes": 45})),
         )
         .await;
-    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
-    assert_eq!(error["code"], "invalid_copy");
-    let (status, error) = app
-        .json("PUT", &path, Some(json!({"last_played_at": "yesterday"})))
+    assert_eq!(status, StatusCode::CREATED, "{detail}");
+    let (_, detail) = app
+        .json(
+            "POST",
+            &path,
+            Some(json!({"played_on": "2026-11-18", "notes": " Cup run "})),
+        )
         .await;
-    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
-    assert_eq!(error["code"], "invalid_date");
+    let sessions = detail["sessions"].as_array().unwrap();
+    assert_eq!(sessions.len(), 2);
+    assert_eq!(sessions[0]["played_on"], "2026-11-20", "latest first");
+    assert_eq!(sessions[0]["copy_id"], copy);
+    assert_eq!(sessions[0]["minutes"], 45);
+    assert_eq!(sessions[1]["notes"], "Cup run");
+    assert_eq!(sessions[1]["created_by"]["id"], common::MANAGER);
+
+    let (_, games) = app.json("GET", "/api/games?sort=played", None).await;
+    assert_eq!(games[0]["id"], game);
+    assert_eq!(games[0]["last_played_at"], "2026-11-20");
+
+    let older = sessions[1]["id"].as_i64().unwrap();
+    let (status, detail) = app
+        .json(
+            "PUT",
+            &format!("/api/sessions/{older}"),
+            Some(json!({"played_on": "2026-11-21", "copy_id": copy})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["sessions"][0]["id"], older);
+    assert_eq!(detail["sessions"][0]["notes"], Value::Null);
+
+    for (body, code, field) in [
+        (
+            json!({"played_on": "2026-11-21", "copy_id": other_copy}),
+            "invalid_copy",
+            "copy_id",
+        ),
+        (
+            json!({"played_on": "20/11/2026"}),
+            "invalid_date",
+            "played_on",
+        ),
+        (json!({"played_on": " "}), "required", "played_on"),
+        (
+            json!({"played_on": "2026-11-21", "minutes": 0}),
+            "out_of_range",
+            "minutes",
+        ),
+    ] {
+        let (status, error) = app.json("POST", &path, Some(body)).await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(error, json!({"code": code, "field": field}));
+    }
     let (status, _) = app
-        .json("PUT", "/api/games/9999/last-played", Some(json!({})))
+        .json(
+            "POST",
+            "/api/games/9999/sessions",
+            Some(json!({"played_on": "2026-11-21"})),
+        )
         .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let (status, detail) = app
+        .json("DELETE", &format!("/api/sessions/{older}"), None)
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(detail["sessions"].as_array().unwrap().len(), 1);
+    let (status, _) = app
+        .json("DELETE", &format!("/api/sessions/{older}"), None)
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let (_, detail) = app
+        .json("DELETE", &format!("/api/copies/{copy}"), None)
+        .await;
+    assert_eq!(
+        detail["sessions"][0]["copy_id"],
+        Value::Null,
+        "the session outlives its copy"
+    );
 }
 
 #[tokio::test]
@@ -543,14 +599,16 @@ async fn library_game_mode_filter_and_sorting() {
         ["Splatoon"]
     );
 
-    sqlx::query("UPDATE games SET last_played_at = '2026-11-01' WHERE title = 'Astro Bot'")
+    for (title, day) in [("Astro Bot", "2026-11-01"), ("Splatoon", "2026-11-15")] {
+        sqlx::query(
+            "INSERT INTO play_sessions (game_id, played_on) SELECT id, ? FROM games WHERE title = ?",
+        )
+        .bind(day)
+        .bind(title)
         .execute(&app.pool)
         .await
         .unwrap();
-    sqlx::query("UPDATE games SET last_played_at = '2026-11-15' WHERE title = 'Splatoon'")
-        .execute(&app.pool)
-        .await
-        .unwrap();
+    }
     assert_eq!(
         titles(&app, "sort=played").await[..2],
         ["Splatoon", "Astro Bot"]
@@ -713,9 +771,9 @@ async fn wanted_copies_make_a_wishlist() {
 
     let (status, body) = app
         .json(
-            "PUT",
-            &format!("/api/games/{wished}/last-played"),
-            Some(json!({"last_played_at": "2026-11-21", "last_played_copy_id": copy_id})),
+            "POST",
+            &format!("/api/games/{wished}/sessions"),
+            Some(json!({"played_on": "2026-11-21", "copy_id": copy_id})),
         )
         .await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{body}");

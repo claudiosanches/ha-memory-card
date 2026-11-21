@@ -441,9 +441,9 @@
     "deleteMessage_other": "Its {{count}} copies will be deleted too.",
     "playStatus": "Play status",
     "lastPlayed": "Last played",
-    "lastPlayedCopy": "Played copy",
     "never": "Never",
     "playedToday": "Played today",
+    "loggedToday": "Logged today",
     "gameModes": "Game modes",
     "players": "Players",
     "localMax": "Same screen, at most",
@@ -631,5 +631,20 @@
     "addedBy": "Added by {{name}} on {{date}}.",
     "changedBy": "Last changed by {{name}}.",
     "someone": "someone"
+  },
+  "sessions": {
+    "title": "Play history",
+    "add": "Log a session",
+    "edit": "Edit session",
+    "delete": "Delete session",
+    "deleteTitle": "Delete this session?",
+    "none": "No sessions yet.",
+    "playedOn": "Played on",
+    "copy": "Copy played",
+    "minutesLabel": "Minutes played",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "showAll": "Show all {{count}}",
+    "showFewer": "Show fewer"
   }
 }

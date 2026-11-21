@@ -204,22 +204,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/games/{id}/last-played": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["setLastPlayed"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/games/{id}/play-status": {
         parameters: {
             query?: never;
@@ -230,6 +214,22 @@ export interface paths {
         get?: never;
         put: operations["setPlayStatus"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/games/{id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addSession"];
         delete?: never;
         options?: never;
         head?: never;
@@ -508,6 +508,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateSession"];
+        post?: never;
+        delete: operations["deleteSession"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/status": {
         parameters: {
             query?: never;
@@ -622,6 +638,8 @@ export interface components {
             format: components["schemas"]["Format"];
             /** Format: int64 */
             game_id: number;
+            /** @description The game's latest session. */
+            last_played_at?: string | null;
             notes?: string | null;
             /** Format: int64 */
             platform_id: number;
@@ -723,9 +741,6 @@ export interface components {
             id: number;
             /** Format: int64 */
             igdb_id?: number | null;
-            last_played_at?: string | null;
-            /** Format: int64 */
-            last_played_copy_id?: number | null;
             local_coop?: boolean | null;
             /** Format: int64 */
             local_max_players?: number | null;
@@ -737,19 +752,14 @@ export interface components {
             publishers: string[];
             /** @description In platform list order, then region. */
             releases: components["schemas"]["ReleaseDetail"][];
+            /** @description Latest first; the first is when the game was last played. */
+            sessions: components["schemas"]["PlaySession"][];
             summary?: string | null;
             title: string;
             updated_by?: components["schemas"]["Person"] | null;
         };
         GameInput: {
             game_mode_ids?: number[];
-            /** @description `YYYY-MM-DD`. */
-            last_played_at?: string | null;
-            /**
-             * Format: int64
-             * @description Must be a copy of this game.
-             */
-            last_played_copy_id?: number | null;
             local_coop?: boolean | null;
             /** Format: int64 */
             local_max_players?: number | null;
@@ -822,15 +832,6 @@ export interface components {
             updated_games: number;
             updated_releases: number;
             warning_rows: number;
-        };
-        LastPlayedInput: {
-            /** @description `YYYY-MM-DD`; `null` clears it. */
-            last_played_at?: string | null;
-            /**
-             * Format: int64
-             * @description Must be a copy of this game; `null` clears it.
-             */
-            last_played_copy_id?: number | null;
         };
         LinkInput: {
             /** Format: int64 */
@@ -933,6 +934,22 @@ export interface components {
             /** @description Every platform id, once, in the new order. */
             ids: number[];
         };
+        PlaySession: {
+            /**
+             * Format: int64
+             * @description The owned copy played, when known.
+             */
+            copy_id?: number | null;
+            created_at: string;
+            created_by?: components["schemas"]["Person"] | null;
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            minutes?: number | null;
+            notes?: string | null;
+            /** @description `YYYY-MM-DD`. */
+            played_on: string;
+        };
         PlayStatus: {
             builtin: boolean;
             color: components["schemas"]["StatusColor"];
@@ -1029,6 +1046,18 @@ export interface components {
         };
         /** @enum {string} */
         SensorsStatus: "off" | "no_broker" | "connecting" | "connected" | "disconnected";
+        SessionInput: {
+            /**
+             * Format: int64
+             * @description An owned copy of the game.
+             */
+            copy_id?: number | null;
+            /** Format: int64 */
+            minutes?: number | null;
+            notes?: string | null;
+            /** @description `YYYY-MM-DD`. */
+            played_on: string;
+        };
         Status: {
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
@@ -1858,7 +1887,7 @@ export interface operations {
             };
         };
     };
-    setLastPlayed: {
+    setPlayStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -1869,7 +1898,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LastPlayedInput"];
+                "application/json": components["schemas"]["PlayStatusInput"];
             };
         };
         responses: {
@@ -1899,7 +1928,7 @@ export interface operations {
             };
         };
     };
-    setPlayStatus: {
+    addSession: {
         parameters: {
             query?: never;
             header?: never;
@@ -1910,11 +1939,12 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PlayStatusInput"];
+                "application/json": components["schemas"]["SessionInput"];
             };
         };
         responses: {
-            200: {
+            /** @description The game with the new session */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2735,6 +2765,78 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description The release's game; a linked game gets its IGDB cover back */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionInput"];
+            };
+        };
+        responses: {
+            /** @description The session's game */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The session's game */
             200: {
                 headers: {
                     [name: string]: unknown;
