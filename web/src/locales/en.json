@@ -444,6 +444,7 @@
     "pause": "Pause",
     "resume": "Resume",
     "drop": "Drop",
+    "showMore": "Show {{count}} more ({{left}} left)",
     "lastPlayed": "played {{date}}",
     "empty": "Nothing in the backlog.",
     "cleared": "Backlog cleared. Nice work.",

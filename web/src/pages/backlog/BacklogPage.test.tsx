@@ -123,6 +123,20 @@ describe('Backlog page', () => {
     await waitFor(() => expect(screen.queryByTestId('picked')).toBeNull());
   });
 
+  it('shows on hold games ten at a time', async () => {
+    const paused = Array.from({ length: 23 }, (_, i) => game(100 + i, `Paused ${i}`, 'paused'));
+    mockApi({ ...SETUP, 'GET /api/games': [...GAMES, ...paused] });
+    renderAt('/backlog');
+
+    expect(await screen.findByTestId('row-100')).toBeInTheDocument();
+    expect(screen.queryByTestId('row-109')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show 10 more (14 left)' }));
+    expect(screen.getByTestId('row-109')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show 4 more (4 left)' }));
+    expect(screen.getByTestId('row-122')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /more/ })).toBeNull();
+  });
+
   it('says when nothing in the backlog matches', async () => {
     mockApi({ ...SETUP, 'POST /api/suggestions': json({ code: 'no_candidates' }, 404) });
     renderAt('/backlog');

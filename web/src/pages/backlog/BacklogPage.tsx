@@ -92,21 +92,13 @@ export function BacklogPage() {
 
       {groups.playing.length > 0 && (
         <Section title={t('backlog.playing')} count={groups.playing.length}>
-          <ul className={classes.rows}>
-            {groups.playing.map((game) => (
-              <GameRow key={game.id} game={game} platformNames={platformNames} actions={PLAYING_ACTIONS} />
-            ))}
-          </ul>
+          <RowList games={groups.playing} platformNames={platformNames} actions={PLAYING_ACTIONS} />
         </Section>
       )}
 
       {groups.paused.length > 0 && (
         <Section title={t('backlog.paused')} count={groups.paused.length}>
-          <ul className={classes.rows}>
-            {groups.paused.map((game) => (
-              <GameRow key={game.id} game={game} platformNames={platformNames} actions={PAUSED_ACTIONS} />
-            ))}
-          </ul>
+          <RowList games={groups.paused} platformNames={platformNames} actions={PAUSED_ACTIONS} />
         </Section>
       )}
 
@@ -162,6 +154,37 @@ const PAUSED_ACTIONS: Action[] = [
 
 function platformList(game: GameSummary, names: Map<number, string>) {
   return game.platforms.map((p) => names.get(p.platform_id)).filter(Boolean);
+}
+
+const ROWS_PER_PAGE = 10;
+
+/** Shows rows in pages, so a long list does not push the backlog off the screen. */
+function RowList({
+  games,
+  platformNames,
+  actions,
+}: {
+  games: GameSummary[];
+  platformNames: Map<number, string>;
+  actions: Action[];
+}) {
+  const { t } = useTranslation();
+  const [limit, setLimit] = useState(ROWS_PER_PAGE);
+  const hidden = games.length - limit;
+  return (
+    <>
+      <ul className={classes.rows}>
+        {games.slice(0, limit).map((game) => (
+          <GameRow key={game.id} game={game} platformNames={platformNames} actions={actions} />
+        ))}
+      </ul>
+      {hidden > 0 && (
+        <Button variant="subtle" onClick={() => setLimit(limit + ROWS_PER_PAGE)} className={classes.more}>
+          {t('backlog.showMore', { count: Math.min(hidden, ROWS_PER_PAGE), left: hidden })}
+        </Button>
+      )}
+    </>
+  );
 }
 
 function GameRow({
