@@ -20,7 +20,7 @@ use crate::AppState;
 #[derive(OpenApi)]
 #[openapi(info(
     title = "Memory Card",
-    license(name = "GPL-3.0-only", identifier = "GPL-3.0-only")
+    license(name = "GPL-3.0-or-later", identifier = "GPL-3.0-or-later")
 ))]
 struct ApiDoc;
 
