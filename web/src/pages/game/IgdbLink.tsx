@@ -84,13 +84,13 @@ export function IgdbHits({ results, disabled, onPick, badge, selectedId }: HitsP
           data-testid={`igdb-hit-${hit.igdb_id}`}
         >
           <Group justify="space-between" wrap="nowrap">
-            <Stack gap={2}>
+            <Stack gap={2} miw={0}>
               <Text fw={600}>{hit.name}</Text>
               <Text size="xs" c="dimmed">
                 {t('igdb.hitDetails', { year: hit.year ?? '?', platforms: hit.platforms.join(', ') })}
               </Text>
             </Stack>
-            {badge?.(hit)}
+            <div style={{ flexShrink: 0 }}>{badge?.(hit)}</div>
           </Group>
         </Card>
       ))}

@@ -4,6 +4,7 @@ import {
   Button,
   Group,
   Loader,
+  ScrollArea,
   Select,
   Stack,
   Text,
@@ -339,27 +340,31 @@ function AddGameModal({ onClose }: { onClose: () => void }) {
         </Button>
       )}
       {searched && (
-        <Stack gap="xs" data-testid="igdb-results">
-          <IgdbHits
-            results={results}
-            disabled={create.isPending}
-            onPick={pick}
-            selectedId={picked?.igdb_id ?? null}
-            badge={(hit) =>
-              hit.game_id != null ? (
-                <Badge variant="light" color="gray">{t('igdb.inCollection')}</Badge>
-              ) : hit.igdb_id === picked?.igdb_id ? (
-                <Badge variant="light">{t('igdb.selected')}</Badge>
-              ) : null
-            }
-          />
-        </Stack>
+        <ScrollArea.Autosize mah={320} type="auto" offsetScrollbars>
+          <Stack gap="xs" data-testid="igdb-results">
+            <IgdbHits
+              results={results}
+              disabled={create.isPending}
+              onPick={pick}
+              selectedId={picked?.igdb_id ?? null}
+              badge={(hit) =>
+                hit.game_id != null ? (
+                  <Badge variant="light" color="gray">{t('igdb.inCollection')}</Badge>
+                ) : hit.igdb_id === picked?.igdb_id ? (
+                  <Badge variant="light">{t('igdb.selected')}</Badge>
+                ) : null
+              }
+            />
+          </Stack>
+        </ScrollArea.Autosize>
       )}
       <Select
         label={t('game.playStatus')}
         data={statuses.options}
         clearable
         {...form.getInputProps('play_status')}
+        // An empty string is not "no value" to Select, which would offer to clear it.
+        value={form.values.play_status || null}
       />
     </FormModal>
   );
