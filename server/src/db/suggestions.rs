@@ -5,7 +5,7 @@ use sqlx::{QueryBuilder, SqlitePool};
 use utoipa::ToSchema;
 
 use super::games::{self, GameDetail};
-use super::library::{self, DeviceMatch, LibraryFilter, Ownership};
+use super::library::{self, DeviceMatch, LibraryFilter, Ownership, StatusFilter};
 use crate::domain::PlayStatus;
 use crate::error::{ApiError, ApiResult};
 
@@ -43,9 +43,13 @@ pub struct Suggestion {
 pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<Suggestion> {
     let filter = LibraryFilter {
         play_status: if filter.play_status.is_empty() {
-            vec![PlayStatus::Backlog]
+            vec![StatusFilter::Set(PlayStatus::Backlog)]
         } else {
-            filter.play_status
+            filter
+                .play_status
+                .into_iter()
+                .map(StatusFilter::Set)
+                .collect()
         },
         platform: filter.platform,
         device: filter.device,

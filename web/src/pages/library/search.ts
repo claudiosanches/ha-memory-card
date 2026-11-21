@@ -3,10 +3,13 @@ import {
   type Format,
   type LibraryQuery,
   PLAY_STATUSES,
-  type PlayStatus,
   REGIONS,
   type Region,
 } from '../../api/types';
+
+/** Play status filter values; `none` matches games without a status. */
+export const STATUS_FILTERS = [...PLAY_STATUSES, 'none'] as const;
+export type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 /** Library filters as kept in the URL. Absent means "no filter". */
 export type LibrarySearch = {
@@ -17,7 +20,7 @@ export type LibrarySearch = {
   genre?: number[];
   game_mode?: number[];
   region?: Region[];
-  play_status?: PlayStatus[];
+  play_status?: StatusFilter[];
   format?: Format;
   min_local_players?: number;
   ownership?: 'any';
@@ -49,7 +52,7 @@ export function validateLibrarySearch(search: Record<string, unknown>): LibraryS
   }
   const region = oneOf(REGIONS, search.region);
   if (region) result.region = region;
-  const playStatus = oneOf(PLAY_STATUSES, search.play_status);
+  const playStatus = oneOf(STATUS_FILTERS, search.play_status);
   if (playStatus) result.play_status = playStatus;
   if (FORMATS.includes(search.format as Format)) result.format = search.format as Format;
   const players = Number(search.min_local_players);

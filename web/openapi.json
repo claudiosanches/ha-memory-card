@@ -414,7 +414,7 @@
           {
             "name": "play_status",
             "in": "query",
-            "description": "Play statuses.",
+            "description": "Play statuses, plus `none` for games without one.",
             "required": false,
             "schema": {
               "type": "string"

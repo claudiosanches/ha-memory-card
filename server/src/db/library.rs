@@ -66,10 +66,10 @@ pub struct LibraryFilter {
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
     pub game_mode: Vec<i64>,
-    /// Play statuses.
+    /// Play statuses, plus `none` for games without one.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
-    pub play_status: Vec<PlayStatus>,
+    pub play_status: Vec<StatusFilter>,
     pub format: Option<Format>,
     /// Local (same screen) players, release value first, then the game's.
     pub min_local_players: Option<i64>,
@@ -80,6 +80,25 @@ pub struct LibraryFilter {
     pub igdb: Option<IgdbLink>,
     #[param(inline)]
     pub sort: Option<LibrarySort>,
+}
+
+/// A play status, or `none` for games without one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StatusFilter {
+    Set(PlayStatus),
+    Unset,
+}
+
+impl<'de> Deserialize<'de> for StatusFilter {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = String::deserialize(deserializer)?;
+        if raw == "none" {
+            return Ok(Self::Unset);
+        }
+        serde_json::from_value(serde_json::Value::String(raw))
+            .map(Self::Set)
+            .map_err(serde::de::Error::custom)
+    }
 }
 
 fn comma_list<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
@@ -197,7 +216,7 @@ pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, devic
         push_in(qb, "gm.game_mode_id", &filter.game_mode);
         qb.push(")");
     }
-    push_in(qb, "g.play_status", &filter.play_status);
+    push_play_status(qb, &filter.play_status);
     match filter.igdb {
         Some(IgdbLink::Linked) => qb.push(" AND g.igdb_id IS NOT NULL"),
         Some(IgdbLink::Unlinked) => qb.push(" AND g.igdb_id IS NULL"),
@@ -243,6 +262,29 @@ pub fn push_copy_filters(
     if let Some(players) = filter.min_local_players.filter(|n| *n > 1) {
         qb.push(" AND COALESCE(r.local_max_players, g.local_max_players) >= ")
             .push_bind(players);
+    }
+}
+
+fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &[StatusFilter]) {
+    let statuses: Vec<PlayStatus> = filter
+        .iter()
+        .filter_map(|s| match s {
+            StatusFilter::Set(status) => Some(*status),
+            StatusFilter::Unset => None,
+        })
+        .collect();
+    let unset = filter.contains(&StatusFilter::Unset);
+    match (statuses.is_empty(), unset) {
+        (true, false) => {}
+        (true, true) => {
+            qb.push(" AND g.play_status IS NULL");
+        }
+        (false, false) => push_in(qb, "g.play_status", &statuses),
+        (false, true) => {
+            qb.push(" AND (g.play_status IS NULL OR g.play_status IN ");
+            push_list(qb, &statuses);
+            qb.push(")");
+        }
     }
 }
 
@@ -299,8 +341,14 @@ mod tests {
         .unwrap();
         assert_eq!(filter.platform, [1, 2]);
         assert_eq!(filter.region, [Region::Eu, Region::Jp]);
-        assert_eq!(filter.play_status, [PlayStatus::Backlog]);
+        assert_eq!(filter.play_status, [StatusFilter::Set(PlayStatus::Backlog)]);
         assert_eq!(filter.format, Some(Format::Digital));
         assert!(serde_urlencoded::from_str::<LibraryFilter>("region=mars").is_err());
+        let filter: LibraryFilter = serde_urlencoded::from_str("play_status=none,paused").unwrap();
+        assert_eq!(
+            filter.play_status,
+            [StatusFilter::Unset, StatusFilter::Set(PlayStatus::Paused)]
+        );
+        assert!(serde_urlencoded::from_str::<LibraryFilter>("play_status=nope").is_err());
     }
 }

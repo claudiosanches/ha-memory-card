@@ -389,6 +389,16 @@ async fn library_filters_combine_on_one_copy() {
         ["Astro Bot", "Splatoon", "Zelda: Tears of the Kingdom"]
     );
 
+    sqlx::query("UPDATE games SET play_status = NULL WHERE title = 'Splatoon'")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(titles(&app, "play_status=none").await, ["Splatoon"]);
+    assert_eq!(
+        titles(&app, "play_status=none,completed").await,
+        ["The Last of Us Part II", "Splatoon"]
+    );
+
     // Same copy: Mario Kart's Switch copy is digital, its Wii U copy physical.
     assert_eq!(
         titles(&app, &format!("platform={switch}&format=physical")).await,
@@ -500,6 +510,7 @@ async fn library_queries_use_indexes() {
         "genre=1",
         "game_mode=1",
         "play_status=backlog",
+        "play_status=none",
         "min_local_players=2",
         "platform=1&format=physical&store=1",
     ];

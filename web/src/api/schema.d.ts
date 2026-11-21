@@ -1168,7 +1168,7 @@ export interface operations {
                 genre?: string;
                 /** @description Game mode ids. */
                 game_mode?: string;
-                /** @description Play statuses. */
+                /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
