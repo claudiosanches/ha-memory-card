@@ -983,6 +983,14 @@ export interface components {
             /** @description Every platform id, once, in the new order. */
             ids: number[];
         };
+        PlatformTotal: {
+            /** Format: int64 */
+            copies: number;
+            /** Format: int64 */
+            games: number;
+            /** Format: int64 */
+            platform_id: number;
+        };
         PlaySession: {
             /**
              * Format: int64
@@ -1131,7 +1139,7 @@ export interface components {
             /** Format: int64 */
             physical: number;
             /** @description In platform list order. */
-            platforms: components["schemas"]["PlatformCount"][];
+            platforms: components["schemas"]["PlatformTotal"][];
             /** @description Owned games per play status, in play status order; `None` is not set. */
             play_statuses: components["schemas"]["StatusCount"][];
             /** @description Sessions in the last 12 months, by `YYYY-MM`; months without play are left out. */

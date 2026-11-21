@@ -11,6 +11,7 @@ import { queryKeys, useCanManage, useCopies, useGame, useGames, usePlatforms, us
 import type { CopyRow } from '../api/types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Cover } from '../components/Cover';
+import { formatMoney } from '../components/money';
 import { FormModal } from '../components/FormModal';
 import { PageHeader } from '../components/PageHeader';
 import { notifyError, notifySuccess } from '../components/notify';
@@ -31,7 +32,7 @@ type Dialog =
 const WISHLIST = { ownership: 'wanted', sort: 'added' } as const;
 
 export function WishlistPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const canManage = useCanManage();
   const copies = useCopies(WISHLIST);
   const platforms = usePlatforms();
@@ -78,6 +79,7 @@ export function WishlistPage() {
               platformName.get(row.platform_id),
               t(`region.${row.region}`),
               t(`format.${row.format}`),
+              row.edition,
               row.condition ? t(`condition.${row.condition}`) : null,
             ].filter(Boolean);
             const store = row.store_id ? storeName.get(row.store_id) : null;
@@ -91,9 +93,14 @@ export function WishlistPage() {
                     {row.title}
                   </Link>
                   <Text size="sm">{details.join(t('common.separator'))}</Text>
-                  {store && (
+                  {(store || row.price) && (
                     <Text size="xs" c="dimmed">
-                      {t('wishlist.store', { store })}
+                      {[
+                        store && t('wishlist.store', { store }),
+                        row.price && row.currency && formatMoney(row.price, row.currency, i18n.language),
+                      ]
+                        .filter(Boolean)
+                        .join(t('common.separator'))}
                     </Text>
                   )}
                   {row.notes && (

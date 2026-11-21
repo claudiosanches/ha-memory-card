@@ -4093,6 +4093,28 @@
           }
         }
       },
+      "PlatformTotal": {
+        "type": "object",
+        "required": [
+          "platform_id",
+          "games",
+          "copies"
+        ],
+        "properties": {
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "games": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "platform_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PlaySession": {
         "type": "object",
         "required": [
@@ -4610,7 +4632,7 @@
           "platforms": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PlatformCount"
+              "$ref": "#/components/schemas/PlatformTotal"
             },
             "description": "In platform list order."
           },

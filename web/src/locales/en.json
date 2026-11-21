@@ -17,6 +17,7 @@
     "backlog": "Backlog",
     "duplicates": "Duplicates",
     "wishlist": "Wishlist",
+    "stats": "Stats",
     "setup": "Missing details",
     "import": "Import and export",
     "manage": "Manage",
@@ -164,7 +165,11 @@
     "appearance": "Appearance",
     "colorSchemeDescription": "Choose light or dark, or follow your system setting. Your choice is saved in this browser.",
     "theme": "Theme",
-    "themes": { "default": "Default", "retro": "Retro", "internet-2000s": "2000's Internet" },
+    "themes": {
+      "default": "Default",
+      "retro": "Retro",
+      "internet-2000s": "2000's Internet"
+    },
     "schemes": {
       "auto": "System",
       "light": "Light",
@@ -265,7 +270,7 @@
     "columnsText": "Column names are not case sensitive and can be in any order. Only game_title is required in every row. Files saved with ; as separator work too.",
     "columns": {
       "copy_id": "Filled in by the export. Keep it to update that copy; leave it empty to add a new one.",
-      "status": "owned. Empty means owned.",
+      "status": "owned or wanted. Empty means owned.",
       "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
       "game_title": "Required.",
       "play_status": "backlog, playing, paused, completed, dropped, mastered.",
@@ -274,9 +279,13 @@
       "release_title": "Title on this release, when it differs from the game title.",
       "product_code": "Serial or product code printed on the box.",
       "format": "physical or digital.",
+      "edition": "Free text, such as Collector's Edition or Steelbook.",
       "device": "Device name, as on the Manage screen. Unknown names are created.",
       "store": "Store name. Unknown names are created.",
       "condition": "Physical copies only: sealed, cib, no_manual, loose.",
+      "purchased_on": "Date bought, as YYYY-MM-DD.",
+      "price": "Price paid, or expected for a wanted copy. 59.99, 59,99 and 1.299,90 all work. Needs currency.",
+      "currency": "Three-letter code, such as USD, EUR or BRL.",
       "notes": "Free text."
     }
   },
@@ -667,5 +676,35 @@
     "minutes_other": "{{count}} minutes",
     "showAll": "Show all {{count}}",
     "showFewer": "Show fewer"
+  },
+  "stats": {
+    "intro": "Totals for what you own, what you paid and what you played.",
+    "empty": "Add games to see stats.",
+    "games": "Games",
+    "copies": "Copies",
+    "formats": "{{physical}} physical, {{digital}} digital",
+    "value": "Collection value",
+    "noPrices": "No prices yet",
+    "unpriced_one": "{{count}} copy without a price",
+    "unpriced_other": "{{count}} copies without a price",
+    "wishlist": "Wishlist",
+    "expected": "{{amount}} expected",
+    "played": "Time played",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "sessions_one": "{{count}} session",
+    "sessions_other": "{{count}} sessions",
+    "byPlatform": "Copies by platform",
+    "byStatus": "Games by play status",
+    "spentByYear": "Spent by year",
+    "byStore": "Copies by store",
+    "noStore": "No store",
+    "activity": "Play sessions, last 12 months",
+    "noSessions": "No play sessions yet. Log one from a game's page.",
+    "mostPlayed": "Most played",
+    "copiesCount_one": "{{count}} copy",
+    "copiesCount_other": "{{count}} copies",
+    "gamesCount_one": "{{count}} game",
+    "gamesCount_other": "{{count}} games"
   }
 }

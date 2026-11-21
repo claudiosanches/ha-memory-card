@@ -17,6 +17,7 @@ import { validateLibrarySearch } from './pages/library/search';
 import { MANAGE_TABS, ManagePage, type ManageTab } from './pages/manage/ManagePage';
 import { SETTINGS_TABS, SettingsPage, type SettingsTab } from './pages/SettingsPage';
 import { SetupPage } from './pages/setup/SetupPage';
+import { StatsPage } from './pages/stats/StatsPage';
 
 const rootRoute = createRootRoute({ component: Layout });
 
@@ -31,6 +32,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/wishlist', component: WishlistPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: '/setup',

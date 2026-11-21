@@ -42,9 +42,13 @@ const COLUMNS = [
   'release_title',
   'product_code',
   'format',
+  'edition',
   'device',
   'store',
   'condition',
+  'purchased_on',
+  'price',
+  'currency',
   'notes',
 ] as const;
 

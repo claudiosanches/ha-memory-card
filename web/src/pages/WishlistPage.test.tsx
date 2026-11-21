@@ -39,6 +39,9 @@ const WISH: CopyRow = {
   store_id: 3,
   condition: null,
   notes: 'Limited Run',
+  edition: 'Collector\'s',
+  price: '59.90',
+  currency: 'USD',
 };
 
 function detail(id: number, title: string, copies: number): GameDetail {
@@ -123,7 +126,8 @@ describe('Wishlist', () => {
 
     const item = await screen.findByTestId('wish-31');
     expect(within(item).getByRole('link', { name: 'Hades II' })).toBeInTheDocument();
-    await waitFor(() => expect(item).toHaveTextContent('Buy at Amazon'));
+    await waitFor(() => expect(item).toHaveTextContent('Buy at Amazon · $59.90'));
+    expect(item).toHaveTextContent("Physical · Collector's");
     expect(item).toHaveTextContent('Limited Run');
     expect(calls.find((c) => c.path === '/api/copies')?.query.get('ownership')).toBe('wanted');
 

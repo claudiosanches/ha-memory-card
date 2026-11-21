@@ -18,6 +18,7 @@ export const queryKeys = {
   igdbTitles: ['igdb-titles'],
   duplicates: ['duplicates'],
   missing: ['missing-details'],
+  stats: ['stats'],
 } as const;
 
 /** Who is signed in and their role. Options only change on restart. */

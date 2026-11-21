@@ -131,9 +131,13 @@ After an import, games without an IGDB link can be linked with
 | `release_title` | Title on this release, when it differs |
 | `product_code` | Serial or product code |
 | `format` | `physical` or `digital` |
+| `edition` | Free text, such as `Collector's Edition` |
 | `device` | Device name |
 | `store` | Store name |
 | `condition` | Physical only: `sealed`, `cib`, `no_manual`, `loose` |
+| `purchased_on` | Date bought, `YYYY-MM-DD` |
+| `price` | Price paid, or expected for a wanted copy. `59.99`, `59,99` and `1.299,90` all work; the export writes `1299.90`. Needs `currency`. |
+| `currency` | Three-letter ISO 4217 code, such as `USD`, `EUR` or `BRL` |
 | `notes` | Free text |
 
 ## Play statuses

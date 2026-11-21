@@ -29,7 +29,7 @@ pub struct Stats {
     /// Owned games per play status, in play status order; `None` is not set.
     pub play_statuses: Vec<StatusCount>,
     /// In platform list order.
-    pub platforms: Vec<PlatformCount>,
+    pub platforms: Vec<PlatformTotal>,
     /// Largest first; `None` is copies with no store.
     pub stores: Vec<StoreCount>,
     /// Sessions in the last 12 months, by `YYYY-MM`; months without play are left out.
@@ -63,7 +63,7 @@ pub struct StatusCount {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct PlatformCount {
+pub struct PlatformTotal {
     pub platform_id: i64,
     pub games: i64,
     pub copies: i64,
@@ -165,7 +165,7 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
     .await?;
 
     let platforms = sqlx::query_as!(
-        PlatformCount,
+        PlatformTotal,
         r#"SELECT r.platform_id AS "platform_id!", COUNT(DISTINCT r.game_id) AS "games!: i64",
                   COUNT(*) AS "copies!: i64"
            FROM copies c JOIN releases r ON r.id = c.release_id

@@ -31,6 +31,7 @@ export type Region = Schemas['Region'];
 export type ReleaseDetail = Schemas['ReleaseDetail'];
 export type ReleaseInput = Schemas['ReleaseInput'];
 export type Store = Schemas['Store'];
+export type Stats = Schemas['Stats'];
 export type StatusColor = Schemas['StatusColor'];
 export type StatusGroup = Schemas['StatusGroup'];
 export type StoreInput = Schemas['StoreInput'];
