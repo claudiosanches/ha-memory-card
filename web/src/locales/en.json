@@ -210,7 +210,7 @@
       "status": "owned. Empty means owned.",
       "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
       "game_title": "Required.",
-      "play_status": "backlog, playing, paused, completed, dropped, mastered (100%).",
+      "play_status": "backlog, playing, paused, completed, dropped, mastered.",
       "platform": "Platform name, abbreviation or slug, as on the Manage screen. Unknown names are created.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",
       "release_title": "Title on this release, when it differs from the game title.",
@@ -271,7 +271,7 @@
     "paused": "Paused",
     "completed": "Completed",
     "dropped": "Dropped",
-    "mastered": "Mastered (100%)"
+    "mastered": "Mastered"
   },
   "library": {
     "search": "Search titles",
