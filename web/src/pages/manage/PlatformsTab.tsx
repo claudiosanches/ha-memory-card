@@ -64,6 +64,9 @@ export function PlatformsTab() {
   const platforms = usePlatforms();
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Platform | null>(null);
+  // The order just dropped, shown until the server's list replaces `base`.
+  // Query cache updates render a tick late, which would make the row jump back first.
+  const [dropped, setDropped] = useState<{ ids: number[]; base: Platform[] } | null>(null);
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: queryKeys.platforms });
   const sensors = useSensors(
@@ -102,7 +105,11 @@ export function PlatformsTab() {
   if (platforms.isPending) return <Loader size="sm" />;
   if (platforms.isError) return <Text c="red">{errorMessage(t, platforms.error)}</Text>;
 
-  const active = platforms.data.filter((p) => p.active);
+  const serverActive = platforms.data.filter((p) => p.active);
+  const active =
+    dropped?.base === platforms.data
+      ? dropped.ids.flatMap((id) => serverActive.find((p) => p.id === id) ?? [])
+      : serverActive;
   const inactive = platforms.data.filter((p) => !p.active);
 
   const all = platforms.data;
@@ -112,11 +119,7 @@ export function PlatformsTab() {
   const onDragEnd = ({ active: dragged, over }: DragEndEvent) => {
     if (!over || dragged.id === over.id) return;
     const ids = reorderedIds(active, inactive, position(dragged.id) - 1, position(over.id) - 1);
-    // Show the new order at once; the server answers with the same list.
-    queryClient.setQueryData(
-      queryKeys.platforms,
-      ids.map((id) => all.find((p) => p.id === id)),
-    );
+    setDropped({ ids, base: platforms.data });
     reorder.mutate(ids);
   };
 
