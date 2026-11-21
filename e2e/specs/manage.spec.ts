@@ -5,7 +5,7 @@ import { PREFIX } from '../constants.ts';
 // Desktop and mobile run in parallel against one server, so names carry the project.
 async function openTab(page: Page, tab: 'devices' | 'stores' | 'platforms') {
   await page.goto(`${PREFIX}/#/manage?tab=${tab}`);
-  await expect(page.getByRole('tab', { name: en.manage.tabs[tab], selected: true })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: en.manage.tabs[tab] })).toBeVisible();
 }
 
 test('stores: add, rename, delete', async ({ page }, testInfo) => {

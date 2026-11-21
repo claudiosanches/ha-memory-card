@@ -20,6 +20,11 @@
 @media (max-width: 62em) { .content { padding: 24px; } }
 @media (max-width: 48em) { .content { padding: 24px 16px; } }
 
+@media (width < 48em) {
+  html:has(.navbar[data-opened]) { overflow: hidden; }
+  .navbar { overflow-y: auto; overscroll-behavior-y: contain; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .main { background-image: var(--mc-still-background-image, var(--mc-background-image)); }
   .navbar { background-image: var(--mc-still-nav-image, var(--mc-nav-image, none)); }

@@ -86,6 +86,8 @@ export function Layout() {
               hiddenFrom="sm"
               size="sm"
               aria-label={t('app.toggleNavigation')}
+              aria-expanded={opened}
+              aria-controls="app-navigation"
             />
             <span className={classes.logo}><IconDeviceSdCard size={25} stroke={1.7} /></span>
             <Text className={classes.brand}>{t('app.title')}</Text>
@@ -94,7 +96,7 @@ export function Layout() {
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar className={classes.navbar} p="md" data-rail={rail || undefined}>
+      <AppShell.Navbar id="app-navigation" data-opened={opened || undefined} className={classes.navbar} p="md" data-rail={rail || undefined}>
         <AppShell.Section grow>
           {me.data && (
             <>
