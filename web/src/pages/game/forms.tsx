@@ -228,7 +228,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, title, on
       )}
       <Select
         key={`store-${round}`}
-        label={t('game.store')}
+        label={values.status === 'wanted' ? t('game.buyAt') : t('game.store')}
         placeholder={t('game.noStore')}
         data={(stores.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))}
         clearable

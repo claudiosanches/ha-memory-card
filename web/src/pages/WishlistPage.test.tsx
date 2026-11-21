@@ -120,7 +120,7 @@ describe('Wishlist', () => {
 
     const item = await screen.findByTestId('wish-31');
     expect(within(item).getByRole('link', { name: 'Hades II' })).toBeInTheDocument();
-    await waitFor(() => expect(item).toHaveTextContent('At Amazon'));
+    await waitFor(() => expect(item).toHaveTextContent('Buy at Amazon'));
     expect(item).toHaveTextContent('Limited Run');
     expect(calls.find((c) => c.path === '/api/copies')?.query.get('ownership')).toBe('wanted');
 
@@ -147,6 +147,7 @@ describe('Wishlist', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Add Silksong to your wishlist' });
     expect(calls.some((c) => c.method === 'POST')).toBe(false);
     expect(within(dialog).queryByRole('combobox', { name: en.game.device })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('combobox', { name: en.game.buyAt })).toBeInTheDocument();
     await chooseCopy(dialog);
     fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
 

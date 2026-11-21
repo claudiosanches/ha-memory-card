@@ -92,7 +92,7 @@ export function Copies({ copies, devices, stores, onEdit, onDelete, onGotIt }: P
         <Table.Tr>
           <Table.Th>{t('game.format')}</Table.Th>
           <Table.Th>{t('game.device')}</Table.Th>
-          <Table.Th>{t('game.store')}</Table.Th>
+          <Table.Th>{copies.every((copy) => copy.status === 'wanted') ? t('game.buyAt') : t('game.store')}</Table.Th>
           <Table.Th>{t('game.condition')}</Table.Th>
           <Table.Th>{t('common.notes')}</Table.Th>
           {editable && <Table.Th aria-label={t('common.actions')} />}

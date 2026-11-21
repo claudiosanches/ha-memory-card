@@ -8,10 +8,15 @@ import type { CopyRow, Platform } from '../../api/types';
 import { Cover } from '../../components/Cover';
 import classes from './CopiesView.module.css';
 
-type Props = { copies: CopyRow[]; platformsById: Map<number, Platform> };
+type Props = {
+  copies: CopyRow[];
+  platformsById: Map<number, Platform>;
+  /** The copies are on the wishlist, so their store is where to buy them. */
+  wanted?: boolean;
+};
 
 /** One row per copy, with its platform, region and where it lives. */
-export function CopiesView({ copies, platformsById }: Props) {
+export function CopiesView({ copies, platformsById, wanted = false }: Props) {
   const { t } = useTranslation();
   const phone = useMediaQuery('(max-width: 48em)');
   const devices = useDevices();
@@ -94,7 +99,7 @@ export function CopiesView({ copies, platformsById }: Props) {
             <Table.Th>{t('game.format')}</Table.Th>
             <Table.Th>{t('game.condition')}</Table.Th>
             <Table.Th>{t('game.device')}</Table.Th>
-            <Table.Th>{t('game.store')}</Table.Th>
+            <Table.Th>{wanted ? t('game.buyAt') : t('game.store')}</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>

@@ -96,7 +96,7 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
           clearable
         />
         <MultiSelect
-          label={t('library.filter.store')}
+          label={search.ownership === 'wanted' ? t('library.filter.buyAt') : t('library.filter.store')}
           data={(stores.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))}
           value={fromIds(search.store)}
           onChange={(values) => onChange({ store: toIds(values) })}

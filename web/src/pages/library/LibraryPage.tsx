@@ -190,7 +190,7 @@ export function LibraryPage() {
           {filtered && <Button variant="default" onClick={clearFilters}>{t('library.clearFilters')}</Button>}
         </Stack>
       ) : showCopies ? (
-        <CopiesView copies={copies.data ?? []} platformsById={platformsById} />
+        <CopiesView copies={copies.data ?? []} platformsById={platformsById} wanted={search.ownership === 'wanted'} />
       ) : (
         <div className={view === 'list' ? classes.list : classes.grid}>
           {(games.data ?? []).map((game) => (

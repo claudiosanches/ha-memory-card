@@ -82,7 +82,7 @@ then the copy. A copy can also go on the wishlist from a game's page:
 choose **On my wishlist** when adding it.
 
 When you get one, **Got it** moves it into your collection and lets you
-fill in the device, store and condition. Wishlist copies do not count as
+fill in the device, Bought at and condition. Wishlist copies do not count as
 owned anywhere else: the library, backlog, duplicates and Missing details
 only look at copies you own. **Show > Wishlist** in the library filters
 lists the games on it.
