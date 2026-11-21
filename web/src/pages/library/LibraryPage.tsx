@@ -197,17 +197,12 @@ function GameCard({ game, platformsById }: { game: GameSummary; platformsById: M
               </span>
             );
           })}
-        </Group>
-        <div className={classes.gameFooter}>
-          <Text className={classes.copies}>
-            {game.owned_copies ? t('library.copies', { count: game.owned_copies }) : t('library.noCopies')}
-          </Text>
           {game.play_status && (
             <Badge size="sm" color={STATUS_COLORS[game.play_status]} variant="light" tt="none" className={classes.status}>
               {t(`playStatus.${game.play_status}`)}
             </Badge>
           )}
-        </div>
+        </Group>
       </div>
     </Link>
   );

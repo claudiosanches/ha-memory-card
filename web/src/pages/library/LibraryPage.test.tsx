@@ -39,7 +39,7 @@ describe('Library', () => {
     const card = await screen.findByTestId('game-Mario Kart 8 Deluxe');
     expect(within(card).getByText(en.playStatus.playing)).toBeInTheDocument();
     await waitFor(() => expect(within(card).getByText('Switch ×2')).toBeInTheDocument());
-    expect(within(card).getByText('2 copies')).toBeInTheDocument();
+    expect(within(card).queryByText('2 copies')).not.toBeInTheDocument();
   });
 
   it('sends the filters from the URL to the API', async () => {

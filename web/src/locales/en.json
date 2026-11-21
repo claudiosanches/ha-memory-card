@@ -243,9 +243,6 @@
     "noMatch": "No games match these filters.",
     "count_one": "{{count}} game",
     "count_other": "{{count}} games",
-    "copies_one": "{{count}} copy",
-    "copies_other": "{{count}} copies",
-    "noCopies": "No copies",
     "filter": {
       "platform": "Platform",
       "device": "Device",

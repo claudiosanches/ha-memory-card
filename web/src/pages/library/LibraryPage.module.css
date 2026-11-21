@@ -19,12 +19,10 @@
 .gameTitle { font-size: 0.9375rem; font-weight: 600; line-height: 1.45; min-height: 2.9em; overflow-wrap: anywhere; }
 .gamePlatforms { min-height: 22px; }
 .platformLabel { display: inline-block; font-size: 0.75rem; line-height: 1.5; font-weight: 550; padding: 2px 7px; border-radius: 4px; background: var(--mc-surface); border: 1px solid var(--mc-border); color: var(--mc-muted); }
-.gameFooter { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; margin-top: auto; }
-.copies { font-size: 0.8125rem; color: var(--mc-muted); }
 .status { font-size: 0.75rem; }
 .empty { padding: 64px 24px; display: grid; place-items: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: 12px; }
 .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; }
-.list .gameCard { flex-direction: row; align-items: center; gap: 16px; padding: 12px; background: var(--mc-surface); border: 1px solid var(--mc-border); }
+.list .gameCard { flex-direction: row; align-items: flex-start; gap: 16px; padding: 12px; background: var(--mc-surface); border: 1px solid var(--mc-border); }
 .list .artwork { width: 66px; flex-shrink: 0; }
 .list .gameInfo { padding: 0; }
 .list .gameTitle { min-height: 0; }
