@@ -26,7 +26,8 @@ const GAME_FIELDS: &str = "name,summary,first_release_date,platforms,genres.name
     multiplayer_modes.onlinemax,multiplayer_modes.onlinecoopmax,\
     multiplayer_modes.offlinecoop,multiplayer_modes.onlinecoop,\
     release_dates.platform,release_dates.date,release_dates.release_region,\
-    game_localizations.name,game_localizations.region,game_localizations.cover.image_id";
+    game_localizations.name,game_localizations.region,game_localizations.cover.image_id,\
+    version_parent,remasters,remakes,ports";
 
 pub struct Endpoints {
     pub token_url: String,
@@ -84,6 +85,34 @@ pub struct GameData {
     pub release_dates: Vec<ReleaseDate>,
     #[serde(default)]
     pub game_localizations: Vec<Localization>,
+    /// The main game when this one is an edition or other version of it.
+    pub version_parent: Option<i64>,
+    #[serde(default)]
+    pub remasters: Vec<i64>,
+    #[serde(default)]
+    pub remakes: Vec<i64>,
+    #[serde(default)]
+    pub ports: Vec<i64>,
+}
+
+impl GameData {
+    /// Rows for `game_links`: (IGDB id, kind).
+    pub fn links(&self) -> Vec<(i64, &'static str)> {
+        let mut links: Vec<(i64, &'static str)> = self
+            .version_parent
+            .map(|parent| (parent, "version_of"))
+            .into_iter()
+            .collect();
+        for (ids, kind) in [
+            (&self.remasters, "remaster"),
+            (&self.remakes, "remake"),
+            (&self.ports, "port"),
+        ] {
+            links.extend(ids.iter().map(|id| (*id, kind)));
+        }
+        links.retain(|(id, _)| *id != self.id);
+        links
+    }
 }
 
 #[derive(Debug, Deserialize)]

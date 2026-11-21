@@ -96,6 +96,19 @@ pub async fn apply(
     .await
     .map_err(|err| ApiError::unique(err, "igdb_linked"))?;
 
+    sqlx::query("DELETE FROM game_links WHERE game_id = ?")
+        .bind(game_id)
+        .execute(&mut *tx)
+        .await?;
+    for (igdb_id, kind) in data.links() {
+        sqlx::query("INSERT OR IGNORE INTO game_links (game_id, igdb_id, kind) VALUES (?, ?, ?)")
+            .bind(game_id)
+            .bind(igdb_id)
+            .bind(kind)
+            .execute(&mut *tx)
+            .await?;
+    }
+
     sqlx::query("DELETE FROM game_genres WHERE game_id = ?")
         .bind(game_id)
         .execute(&mut *tx)

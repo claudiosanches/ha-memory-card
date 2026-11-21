@@ -33,7 +33,9 @@ fn odyssey() -> Value {
         "game_localizations": [
             {"name": "スーパーマリオ オデッセイ", "region": 3, "cover": {"image_id": "co5wrq"}},
             {"region": 4, "cover": {"image_id": "co1mxf"}}
-        ]
+        ],
+        "version_parent": 40,
+        "ports": [41, 1]
     })
 }
 
@@ -456,4 +458,58 @@ async fn igdb_lists_what_a_bundle_holds() {
     assert_eq!(hits[0]["game_id"], bundle, "already in the collection");
     assert_eq!(hits[1]["name"], "Super Mario 64");
     assert_eq!(hits[1]["year"], 1996);
+}
+
+#[tokio::test]
+async fn linked_games_name_their_other_versions() {
+    let app = with_igdb().await;
+    let mut ids = Vec::new();
+    for title in ["Odyssey", "Odyssey Deluxe", "Odyssey Switch 2", "Unrelated"] {
+        let (_, game) = app
+            .json("POST", "/api/games", Some(json!({"title": title})))
+            .await;
+        ids.push(game["id"].as_i64().unwrap());
+    }
+    for (id, igdb) in [(ids[1], 40), (ids[2], 41)] {
+        sqlx::query("UPDATE games SET igdb_id = ? WHERE id = ?")
+            .bind(igdb)
+            .bind(id)
+            .execute(&app.pool)
+            .await
+            .unwrap();
+    }
+    app.json(
+        "POST",
+        &format!("/api/games/{}/igdb", ids[0]),
+        Some(json!({"igdb_id": 1})),
+    )
+    .await;
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM game_links").await,
+        2,
+        "a link to itself is dropped"
+    );
+
+    let (_, odyssey) = app
+        .json("GET", &format!("/api/games/{}", ids[0]), None)
+        .await;
+    assert_eq!(
+        odyssey["versions"],
+        json!([
+            {"game_id": ids[1], "title": "Odyssey Deluxe", "cover_path": null, "relation": "main_version"},
+            {"game_id": ids[2], "title": "Odyssey Switch 2", "cover_path": null, "relation": "port"},
+        ])
+    );
+    let (_, port) = app
+        .json("GET", &format!("/api/games/{}", ids[2]), None)
+        .await;
+    assert_eq!(port["versions"][0]["relation"], "original");
+    let (_, parent) = app
+        .json("GET", &format!("/api/games/{}", ids[1]), None)
+        .await;
+    assert_eq!(parent["versions"][0]["relation"], "edition");
+    let (_, unrelated) = app
+        .json("GET", &format!("/api/games/{}", ids[3]), None)
+        .await;
+    assert_eq!(unrelated["versions"], json!([]));
 }

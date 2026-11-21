@@ -475,6 +475,7 @@
     "loggedToday": "Logged today",
     "gameModes": "Game modes",
     "players": "Players",
+    "otherVersions": "Other versions",
     "localMax": "Same screen, at most",
     "onlineMax": "Online, at most",
     "localCoop": "Same-screen co-op",
@@ -725,5 +726,13 @@
     "partOf": "Came in",
     "remove": "Remove from bundle",
     "removeTitle": "Remove this game from the bundle?"
+  },
+  "versionRelation": {
+    "remaster": "remaster",
+    "remake": "remake",
+    "port": "port",
+    "original": "original",
+    "main_version": "main version",
+    "edition": "edition"
   }
 }

@@ -25,6 +25,7 @@ function detail(id: number, title: string): GameDetail {
     genre_ids: [],
     created_at: '2026-11-01T10:00:00.000Z',
     sessions: [],
+    versions: [],
     releases: [
       {
         id: 9,

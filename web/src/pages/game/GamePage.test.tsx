@@ -28,6 +28,7 @@ const GAME: GameDetail = {
   genre_ids: [],
   created_at: '2026-11-01T10:00:00.000Z',
   sessions: [],
+  versions: [],
   releases: [
     {
       id: 9,
@@ -116,6 +117,18 @@ describe('Game page', () => {
     for (const name of [en.common.edit, en.game.delete, en.game.addCopy, en.game.playedToday, en.cover.changeGame]) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
+  });
+
+  it('links other versions of the game', async () => {
+    mockApi({
+      ...SETUP,
+      'GET /api/games/4': { ...GAME, versions: [{ game_id: 9, title: 'Metroid Prime Remastered', cover_path: null, relation: 'remaster' }] },
+    });
+    renderAt('/games/4');
+
+    const versions = await screen.findByTestId('versions');
+    expect(within(versions).getByRole('link', { name: 'Metroid Prime Remastered' })).toBeInTheDocument();
+    expect(versions).toHaveTextContent('(remaster)');
   });
 
   it('opens the library filtered by a game mode or genre', async () => {

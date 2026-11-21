@@ -91,6 +91,74 @@ pub struct GameDetail {
     pub releases: Vec<ReleaseDetail>,
     /// Latest first; the first is when the game was last played.
     pub sessions: Vec<PlaySession>,
+    /// Games in the collection that IGDB names as another version of this one, by title.
+    pub versions: Vec<GameVersion>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GameVersion {
+    pub game_id: i64,
+    pub title: String,
+    pub cover_path: Option<String>,
+    /// What that game is to this one.
+    pub relation: VersionRelation,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VersionRelation {
+    Remaster,
+    Remake,
+    Port,
+    /// This game is a remaster, remake or port of it.
+    Original,
+    /// This game is an edition or other version of it.
+    MainVersion,
+    /// It is an edition or other version of this game.
+    Edition,
+}
+
+impl VersionRelation {
+    /// `outgoing` when this game's own IGDB data names the other one.
+    fn from_link(kind: &str, outgoing: bool) -> Self {
+        match (kind, outgoing) {
+            ("remaster", true) => Self::Remaster,
+            ("remake", true) => Self::Remake,
+            ("port", true) => Self::Port,
+            ("version_of", true) => Self::MainVersion,
+            ("version_of", false) => Self::Edition,
+            _ => Self::Original,
+        }
+    }
+}
+
+async fn versions(pool: &SqlitePool, id: i64) -> sqlx::Result<Vec<GameVersion>> {
+    let rows = sqlx::query!(
+        r#"SELECT h.id AS "id!", h.title, h.cover_path, l.kind, 1 AS "outgoing!: bool", h.sort_title
+           FROM game_links l JOIN games h ON h.igdb_id = l.igdb_id
+           WHERE l.game_id = ?1 AND h.id != ?1
+           UNION ALL
+           SELECT h.id, h.title, h.cover_path, l.kind, 0, h.sort_title
+           FROM games g JOIN game_links l ON l.igdb_id = g.igdb_id JOIN games h ON h.id = l.game_id
+           WHERE g.id = ?1 AND h.id != ?1
+           ORDER BY 6, 1"#,
+        id
+    )
+    .fetch_all(pool)
+    .await?;
+    let mut versions: Vec<GameVersion> = Vec::with_capacity(rows.len());
+    for row in rows {
+        if versions.iter().any(|v| v.game_id == row.id) {
+            continue;
+        }
+        versions.push(GameVersion {
+            game_id: row.id,
+            title: row.title,
+            cover_path: row.cover_path,
+            relation: VersionRelation::from_link(&row.kind, row.outgoing),
+        });
+    }
+    Ok(versions)
 }
 
 /// Player counts as stored on games and releases. `None` means unknown.
@@ -305,6 +373,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         updated_by: Person::from_columns(game.updated_by, game.updated_by_name),
         releases,
         sessions: sessions::for_game(pool, id).await?,
+        versions: versions(pool, id).await?,
     })
 }
 

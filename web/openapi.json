@@ -3536,7 +3536,8 @@
           "genre_ids",
           "created_at",
           "releases",
-          "sessions"
+          "sessions",
+          "versions"
         ],
         "properties": {
           "cover_path": {
@@ -3671,6 +3672,13 @@
                 "type": "null"
               }
             ]
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameVersion"
+            },
+            "description": "Games in the collection that IGDB names as another version of this one, by title."
           }
         }
       },
@@ -3808,6 +3816,33 @@
           "wanted_copies": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "GameVersion": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "relation"
+        ],
+        "properties": {
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "relation": {
+            "$ref": "#/components/schemas/VersionRelation",
+            "description": "What that game is to this one."
+          },
+          "title": {
+            "type": "string"
           }
         }
       },
@@ -5258,6 +5293,17 @@
             "description": "Display only."
           }
         }
+      },
+      "VersionRelation": {
+        "type": "string",
+        "enum": [
+          "remaster",
+          "remake",
+          "port",
+          "original",
+          "main_version",
+          "edition"
+        ]
       },
       "YearAmount": {
         "type": "object",

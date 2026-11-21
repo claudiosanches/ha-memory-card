@@ -49,6 +49,7 @@ function detail(summary: GameSummary, play_status: string | null): GameDetail {
     genre_ids: [],
     created_at: '2026-11-01T10:00:00.000Z',
     sessions: [],
+    versions: [],
     releases: [],
   };
 }

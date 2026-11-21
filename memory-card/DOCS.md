@@ -23,6 +23,12 @@ covers and metadata, give it access to the IGDB API.
 Releases for Japan, Korea and Europe get their regional cover when IGDB has
 one. **Settings > Sync with IGDB** refreshes every linked game.
 
+When IGDB says two linked games in your collection are versions of each
+other, such as a game and its remaster, remake, port or another edition,
+each game page lists the other under **Other versions**. They stay separate
+games with their own copies and progress. Run a sync to fill this in for
+games linked before this was added.
+
 To use your own cover, click the cover of a game or a release on its page and
 upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
 uploaded cover. Removing it brings back IGDB's.

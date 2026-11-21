@@ -388,6 +388,27 @@ function GameView({ game }: { game: GameDetail }) {
             <Text size="sm">
               <strong>{t('game.players')}:</strong> {singlePlayerOnly ? t('game.singlePlayer') : describePlayers(t, game)}
             </Text>
+            {game.versions.length > 0 && (
+              <Text size="sm" data-testid="versions">
+                <strong>{t('game.otherVersions')}:</strong>{' '}
+                {game.versions.map((version, i) => (
+                  <span key={version.game_id}>
+                    {i > 0 && ', '}
+                    <Anchor
+                      inherit
+                      renderRoot={(props) => (
+                        <Link to="/games/$gameId" params={{ gameId: String(version.game_id) }} {...props} />
+                      )}
+                    >
+                      {version.title}
+                    </Anchor>{' '}
+                    <Text span c="dimmed" inherit>
+                      ({t(`versionRelation.${version.relation}`)})
+                    </Text>
+                  </span>
+                ))}
+              </Text>
+            )}
             {game.summary?.trim() && (
               <Text size="sm" className={classes.summaryText}>
                 <strong>{t('game.summary')}:</strong> {game.summary}

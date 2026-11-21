@@ -1,0 +1,81 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT h.id AS \"id!\", h.title, h.cover_path, l.kind, 1 AS \"outgoing!: bool\", h.sort_title\n           FROM game_links l JOIN games h ON h.igdb_id = l.igdb_id\n           WHERE l.game_id = ?1 AND h.id != ?1\n           UNION ALL\n           SELECT h.id, h.title, h.cover_path, l.kind, 0, h.sort_title\n           FROM games g JOIN game_links l ON l.igdb_id = g.igdb_id JOIN games h ON h.id = l.game_id\n           WHERE g.id = ?1 AND h.id != ?1\n           ORDER BY 6, 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "cover_path",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "cover_path"
+          }
+        }
+      },
+      {
+        "name": "kind",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "game_links",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "name": "outgoing!: bool",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "sort_title",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "sort_title"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "428d8969853abd2912d817b9f39690192599d555e7b6dc44c30bc97b54c36539"
+}

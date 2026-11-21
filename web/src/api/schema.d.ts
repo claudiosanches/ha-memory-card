@@ -851,6 +851,8 @@ export interface components {
             summary?: string | null;
             title: string;
             updated_by?: components["schemas"]["Person"] | null;
+            /** @description Games in the collection that IGDB names as another version of this one, by title. */
+            versions: components["schemas"]["GameVersion"][];
         };
         GameInput: {
             game_mode_ids?: number[];
@@ -887,6 +889,14 @@ export interface components {
             title: string;
             /** Format: int64 */
             wanted_copies: number;
+        };
+        GameVersion: {
+            cover_path?: string | null;
+            /** Format: int64 */
+            game_id: number;
+            /** @description What that game is to this one. */
+            relation: components["schemas"]["VersionRelation"];
+            title: string;
         };
         Genre: {
             /** Format: int64 */
@@ -1342,6 +1352,8 @@ export interface components {
             /** @description Display only. */
             name?: string | null;
         };
+        /** @enum {string} */
+        VersionRelation: "remaster" | "remake" | "port" | "original" | "main_version" | "edition";
         YearAmount: {
             amount: string;
             /** Format: int64 */
