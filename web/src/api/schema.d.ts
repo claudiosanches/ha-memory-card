@@ -601,6 +601,11 @@ export interface components {
             abbreviation?: string | null;
             active: boolean;
             category?: components["schemas"]["PlatformCategory"] | null;
+            /**
+             * @description Added by hand or by an import rather than shipped with the app. Only
+             *     these can be deleted.
+             */
+            custom: boolean;
             /** Format: int64 */
             device_count: number;
             family?: string | null;

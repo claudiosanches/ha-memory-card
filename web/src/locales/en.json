@@ -159,7 +159,8 @@
     "igdb_failed": "IGDB could not be reached. Try again in a moment.",
     "igdb_linked": "Another game is already linked to this IGDB game.",
     "igdb_not_found": "IGDB has no game with this id.",
-    "sync_running": "A sync is already running."
+    "sync_running": "A sync is already running.",
+    "platform_builtin": "Platforms that come with the app cannot be deleted. Remove it from your platforms instead."
   },
   "import": {
     "exportTitle": "Export",

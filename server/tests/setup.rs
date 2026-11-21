@@ -353,6 +353,7 @@ async fn platform_create_update_delete() {
     assert_eq!(status, StatusCode::CREATED, "{created}");
     assert_eq!(created["slug"], "homebrew-console");
     assert_eq!(created["igdb_platform_id"], Value::Null);
+    assert_eq!(created["custom"], true);
     assert_eq!(
         created["sort_order"], 60,
         "appended after the last active platform (50)"
@@ -404,6 +405,26 @@ async fn platform_in_use_cannot_be_deleted() {
         assert_eq!(status, StatusCode::CONFLICT);
         assert_eq!(body["code"], "platform_in_use");
     }
+}
+
+#[tokio::test]
+async fn shipped_platforms_cannot_be_deleted() {
+    let app = TestApp::new().await;
+    for slug in ["ps3", "tic-80"] {
+        let id = app.platform_id(slug).await;
+        let (status, body) = app
+            .json("DELETE", &format!("/api/platforms/{id}"), None)
+            .await;
+        assert_eq!(status, StatusCode::CONFLICT, "{slug}");
+        assert_eq!(body["code"], "platform_builtin");
+    }
+    let (_, list) = app.json("GET", "/api/platforms", None).await;
+    assert!(
+        list.as_array()
+            .unwrap()
+            .iter()
+            .all(|p| p["custom"] == false)
+    );
 }
 
 #[tokio::test]

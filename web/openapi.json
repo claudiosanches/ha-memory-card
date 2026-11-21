@@ -2429,6 +2429,7 @@
           "slug",
           "active",
           "sort_order",
+          "custom",
           "game_count",
           "device_count"
         ],
@@ -2452,6 +2453,10 @@
                 "type": "null"
               }
             ]
+          },
+          "custom": {
+            "type": "boolean",
+            "description": "Added by hand or by an import rather than shipped with the app. Only\nthese can be deleted."
           },
           "device_count": {
             "type": "integer",

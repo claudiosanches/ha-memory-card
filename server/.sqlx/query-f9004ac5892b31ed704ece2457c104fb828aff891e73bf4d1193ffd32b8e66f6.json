@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  p.category AS \"category: PlatformCategory\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\"\n           FROM platforms p\n           WHERE p.id = ?",
+  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  p.category AS \"category: PlatformCategory\", p.custom AS \"custom: bool\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\"\n           FROM platforms p\n           WHERE p.id = ?",
   "describe": {
     "columns": [
       {
@@ -114,14 +114,25 @@
         }
       },
       {
-        "name": "game_count!: i64",
+        "name": "custom: bool",
         "ordinal": 10,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "custom"
+          }
+        }
+      },
+      {
+        "name": "game_count!: i64",
+        "ordinal": 11,
         "type_info": "Integer",
         "origin": "Expression"
       },
       {
         "name": "device_count!: i64",
-        "ordinal": 11,
+        "ordinal": 12,
         "type_info": "Integer",
         "origin": "Expression"
       }
@@ -141,8 +152,9 @@
       false,
       true,
       false,
+      false,
       false
     ]
   },
-  "hash": "6d457136d596c761e24cf4dd0dd998b5d7872fbd3e199887d05537564c39ee9a"
+  "hash": "f9004ac5892b31ed704ece2457c104fb828aff891e73bf4d1193ffd32b8e66f6"
 }

@@ -22,8 +22,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan) -> sqlx::Result<()>
         let slug = unique_slug(&slugify(name), &taken);
         taken.push(slug.clone());
         let id = sqlx::query_scalar!(
-            r#"INSERT INTO platforms (name, slug, active, sort_order)
-               VALUES (?, ?, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
+            r#"INSERT INTO platforms (name, slug, active, custom, sort_order)
+               VALUES (?, ?, 1, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
                RETURNING id AS "id!""#,
             name,
             slug

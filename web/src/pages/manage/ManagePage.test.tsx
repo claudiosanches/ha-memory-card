@@ -15,6 +15,7 @@ function platform(id: number, name: string, extra: Partial<Platform> = {}): Plat
     family: null,
     generation: null,
     igdb_platform_id: null,
+    custom: false,
     active: true,
     sort_order: id * 10,
     game_count: 0,
@@ -26,7 +27,7 @@ function platform(id: number, name: string, extra: Partial<Platform> = {}): Plat
 const PLATFORMS = [
   platform(1, 'Wii U', { abbreviation: 'Wii U', device_count: 1 }),
   platform(2, 'Wii', { abbreviation: 'Wii', device_count: 1 }),
-  platform(3, 'Nintendo 3DS', { abbreviation: '3DS' }),
+  platform(3, 'Nintendo 3DS', { abbreviation: '3DS', custom: true }),
 ];
 
 const WII_U: Device = {

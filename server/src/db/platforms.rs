@@ -30,6 +30,9 @@ pub struct Platform {
     pub sort_order: i64,
     /// `None` for platforms added by hand without one.
     pub category: Option<PlatformCategory>,
+    /// Added by hand or by an import rather than shipped with the app. Only
+    /// these can be deleted.
+    pub custom: bool,
     /// Games with a release on this platform.
     pub game_count: i64,
     pub device_count: i64,
@@ -47,7 +50,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Platform>> {
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
-                  p.category AS "category: PlatformCategory",
+                  p.category AS "category: PlatformCategory", p.custom AS "custom: bool",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
@@ -62,7 +65,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
-                  p.category AS "category: PlatformCategory",
+                  p.category AS "category: PlatformCategory", p.custom AS "custom: bool",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
@@ -88,8 +91,8 @@ pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64
     let slug = unique_slug(&base, &taken);
 
     let id = sqlx::query_scalar!(
-        r#"INSERT INTO platforms (name, abbreviation, slug, category, active, sort_order)
-           VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active))
+        r#"INSERT INTO platforms (name, abbreviation, slug, category, active, custom, sort_order)
+           VALUES (?, ?, ?, ?, ?, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active))
            RETURNING id AS "id!""#,
         fields.name,
         fields.abbreviation,
@@ -168,11 +171,21 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
     if in_use {
         return Err(ApiError::Conflict("platform_in_use"));
     }
+    let custom: Option<bool> = sqlx::query_scalar!(
+        r#"SELECT custom AS "custom: bool" FROM platforms WHERE id = ?"#,
+        id
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
+    match custom {
+        None => return Err(ApiError::NotFound),
+        Some(false) => return Err(ApiError::Conflict("platform_builtin")),
+        Some(true) => {}
+    }
 
-    let result = sqlx::query!("DELETE FROM platforms WHERE id = ?", id)
+    sqlx::query!("DELETE FROM platforms WHERE id = ?", id)
         .execute(&mut *tx)
         .await?;
-    found(result.rows_affected())?;
     tx.commit().await?;
     Ok(())
 }

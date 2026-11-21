@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO platforms (name, abbreviation, slug, category, active, sort_order)\n           VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active))\n           RETURNING id AS \"id!\"",
+  "query": "INSERT INTO platforms (name, slug, active, custom, sort_order)\n               VALUES (?, ?, 1, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))\n               RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 5
+      "Right": 2
     },
     "nullable": [
       false
     ]
   },
-  "hash": "3fd53793230e2bd372fef1da3815c2580c26aef174888a99184a4ae832b3ceab"
+  "hash": "1ac1509473111e24d1e55de6dd32ccdc7accc1460069028b5d35cd5e33c74643"
 }

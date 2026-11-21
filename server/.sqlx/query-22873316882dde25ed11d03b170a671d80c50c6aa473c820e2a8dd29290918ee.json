@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT custom AS \"custom: bool\" FROM platforms WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "custom: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "custom"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "22873316882dde25ed11d03b170a671d80c50c6aa473c820e2a8dd29290918ee"
+}

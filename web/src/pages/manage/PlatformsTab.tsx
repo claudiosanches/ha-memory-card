@@ -45,9 +45,9 @@ function inUse(platform: Platform) {
   return platform.game_count > 0 || platform.device_count > 0;
 }
 
-/** Only platforms added by hand can go; IGDB's catalog stays complete. */
+/** Only platforms added by hand or by an import can go; the catalog stays complete. */
 function deletable(platform: Platform) {
-  return platform.igdb_platform_id == null && !inUse(platform);
+  return platform.custom && !inUse(platform);
 }
 
 /** Every platform id in the new order after moving one of the active ones. */
@@ -339,7 +339,7 @@ function Catalog({ platforms, busy, onAdd, actions }: CatalogProps) {
                 <li key={platform.id} className={classes.row} data-testid={`platform-${platform.slug}`}>
                   <PlatformName platform={platform} />
                   <Group gap={4} wrap="nowrap" className={classes.actions}>
-                    {platform.igdb_platform_id == null && actions(platform)}
+                    {platform.custom && actions(platform)}
                     {inUse(platform) && (
                       <Badge size="xs" variant="light" color="yellow" tt="none">
                         {t('platforms.hiddenInUse')}

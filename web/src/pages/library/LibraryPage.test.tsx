@@ -13,6 +13,7 @@ const SWITCH: Platform = {
   family: null,
   generation: null,
   igdb_platform_id: 130,
+  custom: false,
   active: true,
   sort_order: 10,
   game_count: 1,
