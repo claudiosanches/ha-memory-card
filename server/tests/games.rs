@@ -456,6 +456,51 @@ async fn library_filters_combine_on_one_copy() {
 }
 
 #[tokio::test]
+async fn copies_view_filters_each_copy() {
+    let app = library_app().await;
+    let wii_u = ids(&app, "SELECT id FROM platforms WHERE slug = 'wii-u'").await;
+    let rows = |query: String| {
+        let app = &app;
+        async move {
+            let (status, list) = app.json("GET", &format!("/api/copies?{query}"), None).await;
+            assert_eq!(status, StatusCode::OK, "{query}: {list}");
+            list.as_array()
+                .unwrap()
+                .iter()
+                .map(|c| {
+                    format!(
+                        "{} {}",
+                        c["title"].as_str().unwrap(),
+                        c["region"].as_str().unwrap()
+                    )
+                })
+                .collect::<Vec<_>>()
+        }
+    };
+
+    assert_eq!(rows(String::new()).await.len(), 5);
+    assert_eq!(
+        rows(format!("platform={wii_u}&format=physical")).await,
+        ["Mario Kart 8 Deluxe eu", "Splatoon jp"]
+    );
+    assert_eq!(
+        rows("play_status=backlog".into()).await,
+        ["Astro Bot eu", "Splatoon jp"]
+    );
+
+    sqlx::query(
+        "UPDATE releases SET cover_path = 'release-1/cover.jpg'
+         WHERE game_id = (SELECT id FROM games WHERE title = 'Splatoon')",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    let (_, list) = app.json("GET", "/api/copies?region=jp", None).await;
+    assert_eq!(list[0]["cover_path"], "release-1/cover.jpg");
+    assert_eq!(list[0]["status"], "owned");
+}
+
+#[tokio::test]
 async fn local_players_use_the_release_then_the_game() {
     let app = library_app().await;
     let wii_u = ids(&app, "SELECT id FROM platforms WHERE slug = 'wii-u'").await;

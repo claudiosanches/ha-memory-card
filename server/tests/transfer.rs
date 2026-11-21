@@ -35,6 +35,53 @@ async fn export(app: &TestApp) -> String {
 }
 
 #[tokio::test]
+async fn export_follows_the_library_filters() {
+    let app = TestApp::new().await;
+    let csv = format!(
+        "{HEADER}\n\
+         ,,,Mario Kart 8 Deluxe,playing,Switch,eu,,,digital,,,,\n\
+         ,,,Mario Kart 8 Deluxe,playing,Wii U,eu,,,physical,,,,\n\
+         ,,,Zelda: Tears of the Kingdom,paused,,,,,,,,,\n"
+    );
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let lines = |body: Vec<u8>| {
+        String::from_utf8(body)
+            .unwrap()
+            .lines()
+            .skip(1)
+            .map(|line| line.split(',').take(6).collect::<Vec<_>>().join(","))
+            .collect::<Vec<_>>()
+    };
+
+    let (status, body) = app.get("/api/export.csv").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(lines(body).len(), 3, "the plain URL exports everything");
+
+    let (_, body) = app.get("/api/export.csv?format=physical").await;
+    let rows = lines(body);
+    assert_eq!(rows.len(), 1, "{rows:?}");
+    assert!(
+        rows[0].ends_with("Mario Kart 8 Deluxe,playing,Wii U"),
+        "{rows:?}"
+    );
+
+    let (_, body) = app.get("/api/export.csv?play_status=paused").await;
+    assert_eq!(lines(body), [",,,Zelda: Tears of the Kingdom,paused,"]);
+
+    let (_, body) = app
+        .get("/api/export.csv?ownership=owned&play_status=paused")
+        .await;
+    assert!(
+        lines(body).is_empty(),
+        "owned copies only leaves out games without copies"
+    );
+
+    let (status, _) = app.get("/api/export.csv?region=mars").await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+}
+
+#[tokio::test]
 async fn template_is_the_header_row() {
     let app = TestApp::new().await;
     let (status, bytes) = app.get("/api/import/template.csv").await;

@@ -80,6 +80,18 @@ export function activeFilterCount(search: LibrarySearch): number {
   );
 }
 
+/**
+ * The CSV export of what the library shows. The export defaults to every
+ * copy, so ownership is always sent; sorting does not apply to it.
+ */
+export function exportHref(search: LibrarySearch): string {
+  const params = new URLSearchParams({ ownership: 'owned' });
+  for (const [key, value] of Object.entries(toApiQuery(search))) {
+    if (key !== 'sort') params.set(key, String(value));
+  }
+  return `api/export.csv?${params}`;
+}
+
 export function toApiQuery(search: LibrarySearch): LibraryQuery {
   const query: LibraryQuery = {};
   if (search.q) query.q = search.q;

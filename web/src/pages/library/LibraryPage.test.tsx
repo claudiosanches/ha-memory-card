@@ -1,8 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { GameDetail, GameSummary, Platform } from '../../api/types';
 import en from '../../locales/en.json';
-import { mockApi } from '../../test/api';
+import { mockApi, VIEWER } from '../../test/api';
 import { renderAt } from '../../test/render';
 
 const SWITCH: Platform = {
@@ -124,6 +124,57 @@ describe('Adding a game', () => {
 });
 
 describe('Library', () => {
+  afterEach(() => localStorage.clear());
+
+  it('lists copies in a table that follows the filters', async () => {
+    const calls = mockApi({
+      'GET /api/games': GAMES,
+      'GET /api/platforms': [SWITCH],
+      'GET /api/stores': [{ id: 3, name: 'Amazon', notes: null, copy_count: 1 }],
+      'GET /api/copies': [
+        {
+          copy_id: 21,
+          game_id: 4,
+          title: 'Mario Kart 8 Deluxe',
+          cover_path: null,
+          play_status: 'playing',
+          release_id: 9,
+          platform_id: 1,
+          region: 'eu',
+          release_title: null,
+          product_code: null,
+          status: 'owned',
+          format: 'physical',
+          device_id: null,
+          store_id: 3,
+          condition: 'cib',
+          notes: null,
+        },
+      ],
+    });
+    renderAt('/?platform=%5B1%5D');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.library.copiesView }));
+    const row = await screen.findByTestId('copy-row-21');
+    expect(within(row).getByRole('link', { name: 'Mario Kart 8 Deluxe' })).toBeInTheDocument();
+    expect(row).toHaveTextContent(en.region.eu);
+    await waitFor(() => expect(row).toHaveTextContent('Amazon'));
+    expect(screen.getByTestId('library-count')).toHaveTextContent('1 copy');
+    expect(calls.find((c) => c.path === '/api/copies')?.query.get('platform')).toBe('1');
+    expect(localStorage.getItem('memory-card-library-view')).toBe('"copies"');
+    expect(screen.getByRole('link', { name: en.library.export })).toHaveAttribute(
+      'href',
+      'api/export.csv?ownership=owned&platform=1',
+    );
+  });
+
+  it('leaves the export out for viewers', async () => {
+    mockApi({ 'GET /api/me': VIEWER, 'GET /api/games': GAMES, 'GET /api/platforms': [SWITCH] });
+    renderAt('/');
+    expect(await screen.findByTestId('game-Mario Kart 8 Deluxe')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: en.library.export })).not.toBeInTheDocument();
+  });
+
   it('shows games with status and platform badges', async () => {
     mockApi({ 'GET /api/games': GAMES, 'GET /api/platforms': [SWITCH] });
     renderAt('/');

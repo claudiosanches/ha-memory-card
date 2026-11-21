@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeFilterCount, toApiQuery, validateLibrarySearch } from './search';
+import { activeFilterCount, exportHref, toApiQuery, validateLibrarySearch } from './search';
 
 describe('library search', () => {
   it('keeps valid values and drops the rest', () => {
@@ -35,5 +35,15 @@ describe('library search', () => {
     expect(activeFilterCount({ igdb: 'unlinked' })).toBe(1);
     expect(toApiQuery({ igdb: 'unlinked' })).toEqual({ igdb: 'unlinked' });
     expect(validateLibrarySearch({ igdb: 'maybe' })).toEqual({});
+  });
+});
+
+describe('exportHref', () => {
+  it('exports what the library shows, owned copies unless it shows all games', () => {
+    expect(exportHref({})).toBe('api/export.csv?ownership=owned');
+    expect(exportHref({ platform: [1, 2], format: 'digital', sort: 'added', q: 'mario kart' })).toBe(
+      'api/export.csv?ownership=owned&q=mario+kart&platform=1%2C2&format=digital',
+    );
+    expect(exportHref({ ownership: 'any' })).toBe('api/export.csv?ownership=any');
   });
 });

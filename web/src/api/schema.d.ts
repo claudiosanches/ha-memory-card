@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/copies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCopies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/copies/{id}": {
         parameters: {
             query?: never;
@@ -75,6 +91,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Takes the library filters, except that ownership defaults to `any`, so
+         *     the plain URL exports the whole collection.
+         */
         get: operations["exportCsv"];
         put?: never;
         post?: never;
@@ -586,6 +606,32 @@ export interface components {
             /** Format: int64 */
             store_id?: number | null;
         };
+        /** @description One copy in the copies view, with its release and game. */
+        CopyRow: {
+            condition?: components["schemas"]["Condition"] | null;
+            /** Format: int64 */
+            copy_id: number;
+            /** @description The release cover, else the game's. Relative to the covers URL. */
+            cover_path?: string | null;
+            /** Format: int64 */
+            device_id?: number | null;
+            format: components["schemas"]["Format"];
+            /** Format: int64 */
+            game_id: number;
+            notes?: string | null;
+            /** Format: int64 */
+            platform_id: number;
+            play_status?: string | null;
+            product_code?: string | null;
+            region: components["schemas"]["Region"];
+            /** Format: int64 */
+            release_id: number;
+            release_title?: string | null;
+            status: components["schemas"]["CopyStatus"];
+            /** Format: int64 */
+            store_id?: number | null;
+            title: string;
+        };
         /** @enum {string} */
         CopyStatus: "owned" | "wanted";
         Device: {
@@ -1059,6 +1105,59 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listCopies: {
+        parameters: {
+            query?: {
+                /** @description Text in the title. */
+                q?: string;
+                /** @description Platform ids. */
+                platform?: string;
+                /** @description Device ids. */
+                device?: string;
+                /** @description Store ids. */
+                store?: string;
+                /** @description Region codes. */
+                region?: string;
+                /** @description Genre ids. */
+                genre?: string;
+                /** @description Game mode ids. */
+                game_mode?: string;
+                /** @description Play statuses, plus `none` for games without one. */
+                play_status?: string;
+                format?: components["schemas"]["Format"];
+                /** @description Local (same screen) players, release value first, then the game's. */
+                min_local_players?: number;
+                ownership?: "owned" | "any";
+                /** @description Whether the game is linked to IGDB. */
+                igdb?: "linked" | "unlinked";
+                sort?: "title" | "added" | "played";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Copies matching the library filters */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopyRow"][];
+                };
+            };
+            /** @description `invalid_filter` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     updateCopy: {
         parameters: {
             query?: never;
@@ -1292,20 +1391,53 @@ export interface operations {
     };
     exportCsv: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Text in the title. */
+                q?: string;
+                /** @description Platform ids. */
+                platform?: string;
+                /** @description Device ids. */
+                device?: string;
+                /** @description Store ids. */
+                store?: string;
+                /** @description Region codes. */
+                region?: string;
+                /** @description Genre ids. */
+                genre?: string;
+                /** @description Game mode ids. */
+                game_mode?: string;
+                /** @description Play statuses, plus `none` for games without one. */
+                play_status?: string;
+                format?: components["schemas"]["Format"];
+                /** @description Local (same screen) players, release value first, then the game's. */
+                min_local_players?: number;
+                ownership?: "owned" | "any";
+                /** @description Whether the game is linked to IGDB. */
+                igdb?: "linked" | "unlinked";
+                sort?: "title" | "added" | "played";
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description One row per copy, plus games without copies */
+            /** @description One row per copy; without copy filters, also one per game without copies */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+            /** @description `invalid_filter` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

@@ -10,7 +10,7 @@ use super::input::{NOTES_MAX, optional, required};
 use crate::AppState;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, CopyFields, GameDetail, GameFields, PlayerCounts, ReleaseFields};
-use crate::db::library::{self, GameSummary, LibraryFilter};
+use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
 use crate::domain::{Condition, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 
@@ -204,6 +204,25 @@ pub async fn list(
         field: None,
     })?;
     Ok(Json(library::list(&state.db, &filter).await?))
+}
+
+#[utoipa::path(
+    get, path = "/copies", tag = "games", operation_id = "listCopies",
+    params(LibraryFilter),
+    responses(
+        (status = OK, description = "Copies matching the library filters", body = Vec<CopyRow>),
+        (status = UNPROCESSABLE_ENTITY, description = "`invalid_filter`", body = ErrorBody),
+    )
+)]
+pub async fn list_copies(
+    State(state): State<AppState>,
+    filter: Result<Query<LibraryFilter>, axum::extract::rejection::QueryRejection>,
+) -> ApiResult<Json<Vec<CopyRow>>> {
+    let Query(filter) = filter.map_err(|_| ApiError::Invalid {
+        code: "invalid_filter",
+        field: None,
+    })?;
+    Ok(Json(library::list_copies(&state.db, &filter).await?))
 }
 
 #[utoipa::path(

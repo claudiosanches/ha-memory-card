@@ -45,6 +45,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::set_play_status))
         .routes(routes!(games::set_last_played))
         .routes(routes!(games::add_copy))
+        .routes(routes!(games::list_copies))
         .routes(routes!(games::update_copy, games::delete_copy))
         .routes(routes!(games::update_release, games::delete_release))
         .routes(routes!(covers::upload_game, covers::remove_game))

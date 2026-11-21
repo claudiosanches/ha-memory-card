@@ -61,11 +61,22 @@ export function usePlayStatuses() {
   return useQuery({ queryKey: queryKeys.playStatuses, queryFn: () => call(api.GET('/api/play-statuses')) });
 }
 
-export function useGames(query: LibraryQuery) {
+export function useGames(query: LibraryQuery, enabled = true) {
   return useQuery({
     queryKey: [...queryKeys.games, query],
     queryFn: () => call(api.GET('/api/games', { params: { query } })),
     placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+/** Copies matching the library filters. Kept under the games key so game changes refresh it. */
+export function useCopies(query: LibraryQuery, enabled = true) {
+  return useQuery({
+    queryKey: [...queryKeys.games, 'copies', query],
+    queryFn: () => call(api.GET('/api/copies', { params: { query } })),
+    placeholderData: keepPreviousData,
+    enabled,
   });
 }
 

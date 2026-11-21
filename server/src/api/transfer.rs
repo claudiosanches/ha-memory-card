@@ -1,6 +1,7 @@
 use axum::Json;
 use axum::body::Bytes;
-use axum::extract::State;
+use axum::extract::rejection::QueryRejection;
+use axum::extract::{Query, State};
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
@@ -10,6 +11,7 @@ use utoipa::ToSchema;
 
 use crate::AppState;
 use crate::db::devices::DeviceKind;
+use crate::db::library::{LibraryFilter, Ownership};
 use crate::error::{ApiError, ApiResult, ErrorBody};
 use crate::transfer::parse::{FileIssue, parse};
 use crate::transfer::plan::{Plan, Ref, RowAction, RowReport, plan};
@@ -134,15 +136,31 @@ fn csv_download(name: &str, body: Vec<u8>) -> Response {
         .into_response()
 }
 
+/// Takes the library filters, except that ownership defaults to `any`, so
+/// the plain URL exports the whole collection.
 #[utoipa::path(
     get, path = "/export.csv", tag = "transfer", operation_id = "exportCsv",
-    responses((status = OK, description = "One row per copy, plus games without copies", content_type = "text/csv", body = String))
+    params(LibraryFilter),
+    responses(
+        (status = OK, description = "One row per copy; without copy filters, also one per game without copies", content_type = "text/csv", body = String),
+        (status = UNPROCESSABLE_ENTITY, description = "`invalid_filter`", body = ErrorBody),
+    )
 )]
-pub async fn export_csv(State(state): State<AppState>) -> ApiResult<Response> {
-    let body = export::export(&state.db).await.map_err(|err| match err {
-        export::ExportError::Database(err) => ApiError::Database(err),
-        other => ApiError::Internal(other.to_string()),
+pub async fn export_csv(
+    State(state): State<AppState>,
+    filter: Result<Query<LibraryFilter>, QueryRejection>,
+) -> ApiResult<Response> {
+    let Query(mut filter) = filter.map_err(|_| ApiError::Invalid {
+        code: "invalid_filter",
+        field: None,
     })?;
+    filter.ownership.get_or_insert(Ownership::Any);
+    let body = export::export(&state.db, &filter)
+        .await
+        .map_err(|err| match err {
+            export::ExportError::Database(err) => ApiError::Database(err),
+            other => ApiError::Internal(other.to_string()),
+        })?;
     Ok(csv_download("export", body))
 }
 

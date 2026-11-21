@@ -10,6 +10,169 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/copies": {
+      "get": {
+        "tags": [
+          "games"
+        ],
+        "operationId": "listCopies",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Text in the title.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "description": "Platform ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "device",
+            "in": "query",
+            "description": "Device ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "store",
+            "in": "query",
+            "description": "Store ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "description": "Region codes.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "description": "Genre ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "game_mode",
+            "in": "query",
+            "description": "Game mode ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "play_status",
+            "in": "query",
+            "description": "Play statuses, plus `none` for games without one.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Format"
+            }
+          },
+          {
+            "name": "min_local_players",
+            "in": "query",
+            "description": "Local (same screen) players, release value first, then the game's.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "ownership",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "owned",
+                "any"
+              ]
+            }
+          },
+          {
+            "name": "igdb",
+            "in": "query",
+            "description": "Whether the game is linked to IGDB.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "linked",
+                "unlinked"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "title",
+                "added",
+                "played"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Copies matching the library filters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CopyRow"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_filter`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/copies/{id}": {
       "put": {
         "tags": [
@@ -304,14 +467,155 @@
         "tags": [
           "transfer"
         ],
+        "summary": "Takes the library filters, except that ownership defaults to `any`, so\nthe plain URL exports the whole collection.",
         "operationId": "exportCsv",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Text in the title.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "description": "Platform ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "device",
+            "in": "query",
+            "description": "Device ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "store",
+            "in": "query",
+            "description": "Store ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "description": "Region codes.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "description": "Genre ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "game_mode",
+            "in": "query",
+            "description": "Game mode ids.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "play_status",
+            "in": "query",
+            "description": "Play statuses, plus `none` for games without one.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Format"
+            }
+          },
+          {
+            "name": "min_local_players",
+            "in": "query",
+            "description": "Local (same screen) players, release value first, then the game's.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "ownership",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "owned",
+                "any"
+              ]
+            }
+          },
+          {
+            "name": "igdb",
+            "in": "query",
+            "description": "Whether the game is linked to IGDB.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "linked",
+                "unlinked"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "title",
+                "added",
+                "played"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "One row per copy, plus games without copies",
+            "description": "One row per copy; without copy filters, also one per game without copies",
             "content": {
               "text/csv": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_filter`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -2383,6 +2687,105 @@
               "null"
             ],
             "format": "int64"
+          }
+        }
+      },
+      "CopyRow": {
+        "type": "object",
+        "description": "One copy in the copies view, with its release and game.",
+        "required": [
+          "copy_id",
+          "game_id",
+          "title",
+          "release_id",
+          "platform_id",
+          "region",
+          "status",
+          "format"
+        ],
+        "properties": {
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "copy_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The release cover, else the game's. Relative to the covers URL."
+          },
+          "device_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "format": {
+            "$ref": "#/components/schemas/Format"
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "play_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "product_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          },
+          "release_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "release_title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CopyStatus"
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
           }
         }
       },

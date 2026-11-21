@@ -9,7 +9,7 @@ use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 use utoipa::{IntoParams, ToSchema};
 
 use super::play_statuses;
-use crate::domain::{Format, Region};
+use crate::domain::{Condition, CopyStatus, Format, Region};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -194,17 +194,20 @@ pub enum DeviceMatch {
     Playable,
 }
 
-/// Conditions on games `g` after a `WHERE`.
-pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, device: DeviceMatch) {
-    let owned = filter.ownership.unwrap_or_default() == Ownership::Owned;
-    let copy_filters = !filter.platform.is_empty()
+/// Whether any filter applies to copies rather than games.
+pub fn has_copy_filters(filter: &LibraryFilter) -> bool {
+    filter.ownership.unwrap_or_default() == Ownership::Owned
+        || !filter.platform.is_empty()
         || !filter.device.is_empty()
         || !filter.store.is_empty()
         || !filter.region.is_empty()
         || filter.format.is_some()
-        || filter.min_local_players.is_some_and(|n| n > 1);
+        || filter.min_local_players.is_some_and(|n| n > 1)
+}
 
-    if owned || copy_filters {
+/// Conditions on games `g` after a `WHERE`.
+pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, device: DeviceMatch) {
+    if has_copy_filters(filter) {
         qb.push(
             " AND EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
                WHERE r.game_id = g.id",
@@ -212,7 +215,11 @@ pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, devic
         push_copy_filters(qb, filter, device);
         qb.push(")");
     }
+    push_game_filters(qb, filter);
+}
 
+/// Conditions on games `g` that do not look at copies.
+pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
     if !filter.genre.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_genres gg WHERE gg.game_id = g.id");
         push_in(qb, "gg.genre_id", &filter.genre);
@@ -317,6 +324,58 @@ where
         list.push_bind(value.clone());
     }
     list.push_unseparated(")");
+}
+
+/// One copy in the copies view, with its release and game.
+#[derive(Debug, Serialize, ToSchema, sqlx::FromRow)]
+pub struct CopyRow {
+    pub copy_id: i64,
+    pub game_id: i64,
+    pub title: String,
+    /// The release cover, else the game's. Relative to the covers URL.
+    pub cover_path: Option<String>,
+    pub play_status: Option<String>,
+    pub release_id: i64,
+    pub platform_id: i64,
+    pub region: Region,
+    pub release_title: Option<String>,
+    pub product_code: Option<String>,
+    pub status: CopyStatus,
+    pub format: Format,
+    pub device_id: Option<i64>,
+    pub store_id: Option<i64>,
+    pub condition: Option<Condition>,
+    pub notes: Option<String>,
+}
+
+/// Copies matching the filters: copy filters apply to each copy, the others to its game.
+pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
+    let mut qb = QueryBuilder::new(
+        "SELECT c.id AS copy_id, g.id AS game_id, g.title,
+                COALESCE(r.cover_path, g.cover_path) AS cover_path, g.play_status,
+                r.id AS release_id, r.platform_id, r.region, r.title AS release_title,
+                r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes
+         FROM copies c
+         JOIN releases r ON r.id = c.release_id
+         JOIN games g ON g.id = r.game_id
+         JOIN platforms p ON p.id = r.platform_id
+         WHERE 1 = 1",
+    );
+    push_copy_filters(&mut qb, filter, DeviceMatch::Assigned);
+    push_game_filters(&mut qb, filter);
+    qb.push(match filter.sort.unwrap_or_default() {
+        LibrarySort::Title => " ORDER BY g.sort_title, g.id, p.sort_order, r.region, c.id",
+        LibrarySort::Added => " ORDER BY c.created_at DESC, c.id DESC",
+        LibrarySort::Played => {
+            " ORDER BY g.last_played_at IS NULL, g.last_played_at DESC, g.sort_title, g.id,
+                       p.sort_order, c.id"
+        }
+    });
+    qb
+}
+
+pub async fn list_copies(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec<CopyRow>> {
+    copies_query(filter).build_query_as().fetch_all(pool).await
 }
 
 pub async fn list(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec<GameSummary>> {

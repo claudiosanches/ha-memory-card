@@ -365,6 +365,11 @@
     "noMatch": "No games match these filters.",
     "count_one": "{{count}} game",
     "count_other": "{{count}} games",
+    "copyCount_one": "{{count}} copy",
+    "copyCount_other": "{{count}} copies",
+    "noCopiesMatch": "No copies match these filters.",
+    "export": "Export CSV",
+    "exportHint": "Download the copies that match the current filters as a CSV file.",
     "filter": {
       "platform": "Platform",
       "device": "Device",
@@ -393,6 +398,7 @@
     "description": "All your games, in one place.",
     "gridView": "Cover grid",
     "listView": "Compact list",
+    "copiesView": "Copies table",
     "view": "Library view",
     "allPlatforms": "All platforms",
     "emptyTitle": "Your collection starts here",
@@ -400,6 +406,7 @@
     "clearSearch": "Clear search"
   },
   "cover": {
+    "label": "Cover",
     "changeGame": "Change the game cover",
     "changeRelease": "Change this release's cover",
     "upload": "Upload a cover",

@@ -17,6 +17,7 @@ export type GameDetail = Schemas['GameDetail'];
 export type GameInput = Schemas['GameInput'];
 export type GameMode = Schemas['GameMode'];
 export type GameSummary = Schemas['GameSummary'];
+export type CopyRow = Schemas['CopyRow'];
 export type Genre = Schemas['Genre'];
 export type Platform = Schemas['Platform'];
 export type PlatformCategory = Schemas['PlatformCategory'];

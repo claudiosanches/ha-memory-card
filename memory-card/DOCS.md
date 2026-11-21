@@ -78,7 +78,11 @@ and start games from the backlog, but nothing else.
 
 **Import and export** in the sidebar downloads your collection as a CSV file
 and imports one back. Start from **Download blank template** to enter a
-collection in a spreadsheet.
+collection in a spreadsheet. **Export CSV** on the Library page downloads
+only the copies that match its filters.
+
+After an import, games without an IGDB link can be linked with
+**Settings > Sync with IGDB**, which matches them by exact title.
 
 - One row per copy you own. A row with only `game_title` (and optionally
   `igdb_id` and `play_status`) adds a game with no copies.

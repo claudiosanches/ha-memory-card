@@ -12,14 +12,24 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDebouncedCallback, useDisclosure, useLocalStorage } from '@mantine/hooks';
-import { IconAdjustments, IconDeviceGamepad2, IconLayoutGrid, IconList, IconPlus, IconSearch, IconX } from '@tabler/icons-react';
+import {
+  IconAdjustments,
+  IconDeviceGamepad2,
+  IconDownload,
+  IconLayoutGrid,
+  IconList,
+  IconPlus,
+  IconSearch,
+  IconTable,
+  IconX,
+} from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { queryKeys, useCanManage, useGames, usePlatforms, useStatus } from '../../api/queries';
+import { queryKeys, useCanManage, useCopies, useGames, usePlatforms, useStatus } from '../../api/queries';
 import type { GameSummary, Platform } from '../../api/types';
 import { FilterBar, FilterButton } from '../../components/FilterBar';
 import { PageHeader } from '../../components/PageHeader';
@@ -30,10 +40,13 @@ import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { notifyError } from '../../components/notify';
 import { IgdbHits, type IgdbHit, useIgdbSearch } from '../game/IgdbLink';
 import { FiltersDrawer } from './FiltersDrawer';
-import { activeFilterCount, type LibrarySearch, toApiQuery } from './search';
+import { CopiesView } from './CopiesView';
+import { activeFilterCount, exportHref, type LibrarySearch, toApiQuery } from './search';
 import classes from './LibraryPage.module.css';
 
 const route = getRouteApi('/');
+
+type LibraryView = 'grid' | 'list' | 'copies';
 
 export function LibraryPage() {
   const { t } = useTranslation();
@@ -42,10 +55,14 @@ export function LibraryPage() {
   const canManage = useCanManage();
   const [filtersOpen, filters] = useDisclosure();
   const [adding, setAdding] = useState(false);
-  const [view, setView] = useLocalStorage<'grid' | 'list'>({ key: 'memory-card-library-view', defaultValue: 'grid' });
+  const [view, setView] = useLocalStorage<LibraryView>({ key: 'memory-card-library-view', defaultValue: 'grid' });
   const [text, setText] = useState(search.q ?? '');
 
-  const games = useGames(toApiQuery(search));
+  const query = toApiQuery(search);
+  const showCopies = view === 'copies';
+  const games = useGames(query, !showCopies);
+  const copies = useCopies(query, showCopies);
+  const shown = showCopies ? copies : games;
   const platforms = usePlatforms();
   const platformsById = useMemo(
     () => new Map((platforms.data ?? []).map((p) => [p.id, p])),
@@ -70,13 +87,29 @@ export function LibraryPage() {
       <PageHeader
         title={t('nav.library')}
         description={t('library.description')}
-        count={games.data && t('library.count', { count: games.data.length })}
+        count={
+          showCopies
+            ? copies.data && t('library.copyCount', { count: copies.data.length })
+            : games.data && t('library.count', { count: games.data.length })
+        }
         countTestId="library-count"
       >
         {canManage && (
-          <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
-            {t('library.addGame')}
-          </Button>
+          <Group gap="sm">
+            <Button
+              component="a"
+              href={exportHref(search)}
+              download
+              variant="default"
+              leftSection={<IconDownload size={18} />}
+              title={t('library.exportHint')}
+            >
+              {t('library.export')}
+            </Button>
+            <Button leftSection={<IconPlus size={18} />} onClick={() => setAdding(true)}>
+              {t('library.addGame')}
+            </Button>
+          </Group>
         )}
       </PageHeader>
 
@@ -125,6 +158,9 @@ export function LibraryPage() {
             <ActionIcon size={34} variant={view === 'list' ? 'light' : 'subtle'} color={view === 'list' ? undefined : 'gray'} aria-label={t('library.listView')} title={t('library.listView')} aria-pressed={view === 'list'} onClick={() => setView('list')}>
               <IconList size={20} />
             </ActionIcon>
+            <ActionIcon size={34} variant={showCopies ? 'light' : 'subtle'} color={showCopies ? undefined : 'gray'} aria-label={t('library.copiesView')} title={t('library.copiesView')} aria-pressed={showCopies} onClick={() => setView('copies')}>
+              <IconTable size={19} />
+            </ActionIcon>
           </Group>
         </div>
         {collectionPlatforms.length > 0 && (
@@ -141,20 +177,22 @@ export function LibraryPage() {
         )}
       </div>
 
-      {games.isPending ? (
+      {shown.isPending ? (
         <div className={classes.empty}><Loader size="sm" /></div>
-      ) : games.isError ? (
-        <Text c="red" role="alert">{errorMessage(t, games.error)}</Text>
-      ) : games.data.length === 0 ? (
+      ) : shown.isError ? (
+        <Text c="red" role="alert">{errorMessage(t, shown.error)}</Text>
+      ) : shown.data.length === 0 ? (
         <Stack align="center" className={classes.empty}>
           <IconDeviceGamepad2 size={48} stroke={1.2} />
           <Title order={3}>{filtered ? t('library.noMatchTitle') : t('library.emptyTitle')}</Title>
-          <Text c="dimmed" ta="center">{filtered ? t('library.noMatch') : t('library.empty')}</Text>
+          <Text c="dimmed" ta="center">{!filtered ? t('library.empty') : showCopies ? t('library.noCopiesMatch') : t('library.noMatch')}</Text>
           {filtered && <Button variant="default" onClick={clearFilters}>{t('library.clearFilters')}</Button>}
         </Stack>
+      ) : showCopies ? (
+        <CopiesView copies={copies.data ?? []} platformsById={platformsById} />
       ) : (
         <div className={view === 'list' ? classes.list : classes.grid}>
-          {games.data.map((game) => (
+          {(games.data ?? []).map((game) => (
             <GameCard key={game.id} game={game} platformsById={platformsById} />
           ))}
         </div>
