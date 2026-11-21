@@ -35,6 +35,10 @@ pub struct Platform {
     pub custom: bool,
     /// Games with a release on this platform.
     pub game_count: i64,
+    /// Games with an owned copy on this platform.
+    pub owned_game_count: i64,
+    /// Games with a wishlist copy on this platform.
+    pub wanted_game_count: i64,
     pub device_count: i64,
 }
 
@@ -52,6 +56,10 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Platform>> {
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
                   p.category AS "category: PlatformCategory", p.custom AS "custom: bool",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
+                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id
+                    WHERE r.platform_id = p.id AND c.status = 'owned') AS "owned_game_count!: i64",
+                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id
+                    WHERE r.platform_id = p.id AND c.status = 'wanted') AS "wanted_game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
            ORDER BY p.sort_order, p.name COLLATE NOCASE"#
@@ -67,6 +75,10 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
                   p.family, p.generation, p.active AS "active: bool", p.sort_order,
                   p.category AS "category: PlatformCategory", p.custom AS "custom: bool",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS "game_count!: i64",
+                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id
+                    WHERE r.platform_id = p.id AND c.status = 'owned') AS "owned_game_count!: i64",
+                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id
+                    WHERE r.platform_id = p.id AND c.status = 'wanted') AS "wanted_game_count!: i64",
                   (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64"
            FROM platforms p
            WHERE p.id = ?"#,

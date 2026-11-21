@@ -17,6 +17,8 @@ const SWITCH = {
   active: true,
   sort_order: 10,
   game_count: 1,
+  owned_game_count: 1,
+  wanted_game_count: 0,
   device_count: 0,
 };
 

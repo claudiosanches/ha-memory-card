@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  p.category AS \"category: PlatformCategory\", p.custom AS \"custom: bool\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\"\n           FROM platforms p\n           ORDER BY p.sort_order, p.name COLLATE NOCASE",
+  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  p.category AS \"category: PlatformCategory\", p.custom AS \"custom: bool\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id\n                    WHERE r.platform_id = p.id AND c.status = 'owned') AS \"owned_game_count!: i64\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id\n                    WHERE r.platform_id = p.id AND c.status = 'wanted') AS \"wanted_game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\"\n           FROM platforms p\n           ORDER BY p.sort_order, p.name COLLATE NOCASE",
   "describe": {
     "columns": [
       {
@@ -131,8 +131,20 @@
         "origin": "Expression"
       },
       {
-        "name": "device_count!: i64",
+        "name": "owned_game_count!: i64",
         "ordinal": 12,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "wanted_game_count!: i64",
+        "ordinal": 13,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "device_count!: i64",
+        "ordinal": 14,
         "type_info": "Integer",
         "origin": "Expression"
       }
@@ -153,8 +165,10 @@
       true,
       false,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "3a1502d2bf4bae6b4eb5b06409546cffac3a48f8a250a5fd0738ec21979bab4a"
+  "hash": "5c4659f3955b0012de31867455661c25d445eb39a9cb873de477f36c89e0015e"
 }

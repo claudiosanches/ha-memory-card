@@ -81,7 +81,10 @@ export function LibraryPage() {
     setText('');
     void navigate({ to: '/', search: { sort: search.sort, ownership: search.ownership }, replace: true });
   };
-  const collectionPlatforms = (platforms.data ?? []).filter((p) => p.game_count > 0 || search.platform?.includes(p.id));
+  // Only platforms with games under the current Show filter, so no chip leads to an empty list.
+  const gamesOn = (p: Platform) =>
+    search.ownership === 'wanted' ? p.wanted_game_count : search.ownership === 'any' ? p.game_count : p.owned_game_count;
+  const collectionPlatforms = (platforms.data ?? []).filter((p) => gamesOn(p) > 0 || search.platform?.includes(p.id));
 
   return (
     <Stack gap={24}>

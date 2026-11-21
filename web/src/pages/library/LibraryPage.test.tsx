@@ -17,6 +17,8 @@ const SWITCH: Platform = {
   active: true,
   sort_order: 10,
   game_count: 1,
+  owned_game_count: 1,
+  wanted_game_count: 0,
   device_count: 0,
 };
 
@@ -194,6 +196,24 @@ describe('Library', () => {
     expect(screen.getByRole('button', { name: 'Filters (2)' })).toBeInTheDocument();
     const query = calls.find((c) => c.path === '/api/games')?.query;
     expect(Object.fromEntries(query ?? [])).toEqual({ platform: '1', play_status: 'backlog', ownership: 'any' });
+  });
+
+  it('offers platform chips only for platforms with games under the Show filter', async () => {
+    const SWITCH_2: Platform = { ...SWITCH, id: 2, name: 'Nintendo Switch 2', abbreviation: 'Switch 2', owned_game_count: 0, wanted_game_count: 1 };
+    mockApi({ 'GET /api/games': GAMES, 'GET /api/platforms': [SWITCH, SWITCH_2] });
+    renderAt('/');
+
+    expect(await screen.findByRole('button', { name: 'Switch' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch 2' })).not.toBeInTheDocument();
+  });
+
+  it('offers the wishlist platforms when showing the wishlist', async () => {
+    const SWITCH_2: Platform = { ...SWITCH, id: 2, name: 'Nintendo Switch 2', abbreviation: 'Switch 2', owned_game_count: 0, wanted_game_count: 1 };
+    mockApi({ 'GET /api/games': [], 'GET /api/platforms': [SWITCH, SWITCH_2] });
+    renderAt('/?ownership=wanted');
+
+    expect(await screen.findByRole('button', { name: 'Switch 2' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch' })).not.toBeInTheDocument();
   });
 
   it('explains an empty collection', async () => {

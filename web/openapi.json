@@ -3653,6 +3653,8 @@
           "sort_order",
           "custom",
           "game_count",
+          "owned_game_count",
+          "wanted_game_count",
           "device_count"
         ],
         "properties": {
@@ -3716,12 +3718,22 @@
           "name": {
             "type": "string"
           },
+          "owned_game_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games with an owned copy on this platform."
+          },
           "slug": {
             "type": "string"
           },
           "sort_order": {
             "type": "integer",
             "format": "int64"
+          },
+          "wanted_game_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games with a wishlist copy on this platform."
           }
         }
       },
@@ -4173,7 +4185,8 @@
           },
           "games": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Games with at least one owned copy."
           },
           "igdb_configured": {
             "type": "boolean",

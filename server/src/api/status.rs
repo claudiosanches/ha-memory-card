@@ -14,6 +14,7 @@ pub struct Status {
     pub igdb_configured: bool,
     /// False when the app options keep Memory Card offline.
     pub external_services: bool,
+    /// Games with at least one owned copy.
     pub games: i64,
     pub owned_copies: i64,
     /// Whether Home Assistant sensors are being published.
@@ -31,9 +32,12 @@ pub struct Status {
     )
 )]
 pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, ApiError> {
-    let games: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM games")
-        .fetch_one(&state.db)
-        .await?;
+    let games: i64 = sqlx::query_scalar(
+        "SELECT COUNT(DISTINCT r.game_id) FROM releases r
+           JOIN copies c ON c.release_id = r.id WHERE c.status = 'owned'",
+    )
+    .fetch_one(&state.db)
+    .await?;
     let owned_copies: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM copies WHERE status = 'owned'")
             .fetch_one(&state.db)

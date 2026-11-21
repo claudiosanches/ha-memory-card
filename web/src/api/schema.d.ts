@@ -888,9 +888,19 @@ export interface components {
             /** Format: int64 */
             igdb_platform_id?: number | null;
             name: string;
+            /**
+             * Format: int64
+             * @description Games with an owned copy on this platform.
+             */
+            owned_game_count: number;
             slug: string;
             /** Format: int64 */
             sort_order: number;
+            /**
+             * Format: int64
+             * @description Games with a wishlist copy on this platform.
+             */
+            wanted_game_count: number;
         };
         /** @enum {string} */
         PlatformCategory: "console" | "handheld" | "computer" | "mobile" | "arcade" | "other";
@@ -1009,7 +1019,10 @@ export interface components {
         Status: {
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Games with at least one owned copy.
+             */
             games: number;
             /** @description IGDB credentials are set and external services are on. */
             igdb_configured: boolean;

@@ -35,8 +35,8 @@ describe('Duplicates', () => {
     mockApi({
       'GET /api/duplicates': GROUPS,
       'GET /api/platforms': [
-        { id: 1, name: 'Nintendo Switch', slug: 'switch', active: true, sort_order: 1, game_count: 2, device_count: 0 },
-        { id: 2, name: 'PlayStation 4', slug: 'ps4', active: true, sort_order: 2, game_count: 1, device_count: 0 },
+        { id: 1, name: 'Nintendo Switch', slug: 'switch', active: true, sort_order: 1, game_count: 2, owned_game_count: 2, wanted_game_count: 0, device_count: 0 },
+        { id: 2, name: 'PlayStation 4', slug: 'ps4', active: true, sort_order: 2, game_count: 1, owned_game_count: 1, wanted_game_count: 0, device_count: 0 },
       ],
       'GET /api/devices': [],
       'GET /api/stores': [{ id: 5, name: 'Nintendo eShop', notes: null, copy_count: 1 }],

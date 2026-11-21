@@ -19,6 +19,8 @@ function platform(id: number, name: string, extra: Partial<Platform> = {}): Plat
     active: true,
     sort_order: id * 10,
     game_count: 0,
+    owned_game_count: 0,
+    wanted_game_count: 0,
     device_count: 0,
     ...extra,
   };
