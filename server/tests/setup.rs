@@ -322,8 +322,8 @@ async fn platform_list_is_in_sort_order_with_usage() {
     let (status, list) = app.json("GET", "/api/platforms", None).await;
     assert_eq!(status, StatusCode::OK);
     let list = list.as_array().unwrap();
-    // 25 curated platforms plus the rest of IGDB's catalog, inactive.
-    assert_eq!(list.len(), 214);
+    // 25 curated platforms, the rest of IGDB's catalog and two fantasy consoles.
+    assert_eq!(list.len(), 216);
     assert_eq!(list.iter().filter(|p| p["active"] == true).count(), 7);
     assert_eq!(list[0]["slug"], "pc");
     assert_eq!(list[0]["category"], "computer");
@@ -332,6 +332,8 @@ async fn platform_list_is_in_sort_order_with_usage() {
     let dreamcast = list.iter().find(|p| p["igdb_platform_id"] == 23).unwrap();
     assert_eq!(dreamcast["category"], "console");
     assert_eq!(dreamcast["active"], false);
+    let tic80 = list.iter().find(|p| p["slug"] == "tic-80").unwrap();
+    assert_eq!(tic80["category"], "other");
     assert_eq!(list[0]["igdb_platform_id"], 6);
     let switch = list.iter().find(|p| p["slug"] == "switch").unwrap();
     assert_eq!(switch["game_count"], 1);
