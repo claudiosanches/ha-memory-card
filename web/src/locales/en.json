@@ -14,6 +14,7 @@
     "library": "Library",
     "backlog": "Backlog",
     "duplicates": "Duplicates",
+    "setup": "Fill in details",
     "import": "Import and export",
     "manage": "Manage",
     "settings": "Settings"
@@ -542,5 +543,33 @@
       "cross_device": "Different devices",
       "physical_digital": "Physical and digital"
     }
+  },
+  "setup": {
+    "intro": "Go through games that lack details, one at a time. Fill in what you know or skip to the next game.",
+    "lookFor": "Look for",
+    "fields": {
+      "play_status": "Play status",
+      "cover": "Cover",
+      "game_modes": "Game modes",
+      "players": "Player counts",
+      "copies": "Copies",
+      "device": "Device",
+      "store": "Store",
+      "condition": "Condition",
+      "igdb": "IGDB link"
+    },
+    "start_one": "Go through {{count}} game",
+    "start_other": "Go through {{count}} games",
+    "nothing": "Every game has these details.",
+    "position": "Game {{index}} of {{total}}",
+    "missing": "Missing",
+    "complete": "Nothing left to fill in for this game.",
+    "coverHint": "Select the cover to upload one.",
+    "copiesHint": "This game has no copies yet.",
+    "skip": "Skip",
+    "saveNext": "Save and next",
+    "stop": "Stop",
+    "done": "You went through every game on the list.",
+    "again": "Back to the start"
   }
 }

@@ -15,6 +15,7 @@ import { LibraryPage } from './pages/library/LibraryPage';
 import { validateLibrarySearch } from './pages/library/search';
 import { MANAGE_TABS, ManagePage, type ManageTab } from './pages/manage/ManagePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { SetupPage } from './pages/setup/SetupPage';
 
 const rootRoute = createRootRoute({ component: Layout });
 
@@ -28,6 +29,15 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/games/$gameId', component: GamePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/setup',
+    component: () => (
+      <ManagerOnly>
+        <SetupPage />
+      </ManagerOnly>
+    ),
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: '/import',

@@ -17,6 +17,7 @@ export const queryKeys = {
   igdbSync: ['igdb-sync'],
   igdbTitles: ['igdb-titles'],
   duplicates: ['duplicates'],
+  missing: ['missing-details'],
 } as const;
 
 /** Who is signed in and their role. Options only change on restart. */
@@ -103,4 +104,8 @@ export function useTitleDifferences() {
 
 export function useDuplicates() {
   return useQuery({ queryKey: queryKeys.duplicates, queryFn: () => call(api.GET('/api/duplicates')) });
+}
+
+export function useMissingDetails() {
+  return useQuery({ queryKey: queryKeys.missing, queryFn: () => call(api.GET('/api/missing-details')) });
 }

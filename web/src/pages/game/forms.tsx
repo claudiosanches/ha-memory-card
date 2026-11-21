@@ -43,6 +43,7 @@ export function useGameSaved() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.devices });
     void queryClient.invalidateQueries({ queryKey: queryKeys.stores });
     void queryClient.invalidateQueries({ queryKey: queryKeys.platforms });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.missing });
     notifySuccess(message);
   };
 }
@@ -63,10 +64,10 @@ export function gameInput(game: GameDetail): GameInput {
   };
 }
 
-const numberOrNull = (value: string | number) => (value === '' ? null : Number(value));
+export const numberOrNull = (value: string | number) => (value === '' ? null : Number(value));
 const textOrNull = (value: string) => (value.trim() ? value : null);
 /** Checkbox state for an optional boolean: unknown and false look the same, so keep null unless checked. */
-const checkedOrNull = (value: boolean, before?: boolean | null) => (value ? true : before === false ? false : null);
+export const checkedOrNull = (value: boolean, before?: boolean | null) => (value ? true : before === false ? false : null);
 
 type CopyFormProps = {
   gameId: number;
@@ -202,7 +203,7 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
 
 type InputProps = ReturnType<UseFormReturnType<Record<string, unknown>>['getInputProps']>;
 
-function PlayerFields(props: { localMax: InputProps; onlineMax: InputProps; localCoop: InputProps; onlineCoop: InputProps }) {
+export function PlayerFields(props: { localMax: InputProps; onlineMax: InputProps; localCoop: InputProps; onlineCoop: InputProps }) {
   const { t } = useTranslation();
   return (
     <>

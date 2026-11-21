@@ -1,6 +1,7 @@
 import { ActionIcon, AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
+  IconChecklist,
   IconCopy,
   IconStack2,
   IconDeviceGamepad2,
@@ -19,7 +20,7 @@ import { useMe } from '../api/queries';
 import { ThemePicker } from './ThemePicker';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'backlog' | 'duplicates' | 'import' | 'manage' | 'settings';
+type NavKey = 'library' | 'backlog' | 'duplicates' | 'setup' | 'import' | 'manage' | 'settings';
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
@@ -29,6 +30,7 @@ const COLLECTION: NavItem[] = [
 ];
 
 const TOOLS: NavItem[] = [
+  { key: 'setup', to: '/setup', icon: IconChecklist, manager: true },
   { key: 'import', to: '/import', icon: IconFileImport, manager: true },
   { key: 'manage', to: '/manage', icon: IconDeviceGamepad2, manager: true },
   { key: 'settings', to: '/settings', icon: IconSettings },

@@ -344,6 +344,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/missing-details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMissingDetails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platforms": {
         parameters: {
             query?: never;
@@ -773,6 +789,17 @@ export interface components {
             role: components["schemas"]["Role"];
             user?: components["schemas"]["User"] | null;
         };
+        MissingDetails: {
+            fields: components["schemas"]["MissingField"][];
+            /** Format: int64 */
+            game_id: number;
+            title: string;
+        };
+        /**
+         * @description A detail a game can lack. Copy details count when any owned copy lacks them.
+         * @enum {string}
+         */
+        MissingField: "play_status" | "cover" | "game_modes" | "players" | "copies" | "device" | "store" | "condition" | "igdb";
         NewDeviceReport: {
             kind: components["schemas"]["DeviceKind"];
             name: string;
@@ -2001,6 +2028,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    listMissingDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Games lacking at least one detail, in title order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissingDetails"][];
                 };
             };
         };

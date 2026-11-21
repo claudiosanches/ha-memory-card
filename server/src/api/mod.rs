@@ -5,6 +5,7 @@ pub mod games;
 pub mod igdb;
 mod input;
 pub mod me;
+pub mod missing;
 pub mod platforms;
 pub mod play_statuses;
 pub mod status;
@@ -51,6 +52,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(games::game_modes))
         .routes(routes!(games::genres))
         .routes(routes!(duplicates::list))
+        .routes(routes!(missing::list))
         .routes(routes!(suggestions::suggest))
         .routes(routes!(igdb::search))
         .routes(routes!(igdb::link))

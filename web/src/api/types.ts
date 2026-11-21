@@ -33,6 +33,8 @@ export type StoreInput = Schemas['StoreInput'];
 export type Suggestion = Schemas['Suggestion'];
 export type SuggestionFilter = Schemas['SuggestionFilter'];
 export type Me = Schemas['Me'];
+export type MissingDetails = Schemas['MissingDetails'];
+export type MissingField = Schemas['MissingField'];
 export type Role = Schemas['Role'];
 export type LibraryQuery = NonNullable<operations['listGames']['parameters']['query']>;
 

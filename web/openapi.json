@@ -1338,6 +1338,29 @@
         }
       }
     },
+    "/api/missing-details": {
+      "get": {
+        "tags": [
+          "games"
+        ],
+        "operationId": "listMissingDetails",
+        "responses": {
+          "200": {
+            "description": "Games lacking at least one detail, in title order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MissingDetails"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platforms": {
       "get": {
         "tags": [
@@ -3120,6 +3143,44 @@
             ]
           }
         }
+      },
+      "MissingDetails": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "fields"
+        ],
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingField"
+            }
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "MissingField": {
+        "type": "string",
+        "description": "A detail a game can lack. Copy details count when any owned copy lacks them.",
+        "enum": [
+          "play_status",
+          "cover",
+          "game_modes",
+          "players",
+          "copies",
+          "device",
+          "store",
+          "condition",
+          "igdb"
+        ]
       },
       "NewDeviceReport": {
         "type": "object",
