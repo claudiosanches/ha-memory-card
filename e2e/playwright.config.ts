@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
-import { APP_PORT, PREFIX, PROXY_ORIGIN, PROXY_PORT } from './constants.ts';
+import { APP_PORT, MANAGER_ID, PREFIX, PROXY_ORIGIN, PROXY_PORT } from './constants.ts';
 
 // Fresh /data for every run.
 const dataDir = mkdtempSync(join(tmpdir(), 'memory-card-e2e-'));
@@ -31,6 +31,7 @@ export default defineConfig({
         MEMORY_CARD_LISTEN: `127.0.0.1:${APP_PORT}`,
         MEMORY_CARD_TRUSTED_PEER: '127.0.0.1',
         MEMORY_CARD_LOG_LEVEL: 'warning',
+        MEMORY_CARD_MANAGERS: MANAGER_ID,
       },
       reuseExistingServer: false,
     },
@@ -41,6 +42,7 @@ export default defineConfig({
         INGRESS_PREFIX: PREFIX,
         UPSTREAM: `http://127.0.0.1:${APP_PORT}`,
         PORT: String(PROXY_PORT),
+        DEFAULT_USER: MANAGER_ID,
       },
       reuseExistingServer: false,
     },
