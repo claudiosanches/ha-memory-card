@@ -4684,9 +4684,16 @@
           "external_services",
           "games",
           "owned_copies",
+          "wishlist_items",
+          "duplicate_games",
           "sensors"
         ],
         "properties": {
+          "duplicate_games": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games with at least two owned copies."
+          },
           "external_services": {
             "type": "boolean",
             "description": "False when the app options keep Memory Card offline."
@@ -4717,6 +4724,11 @@
           },
           "version": {
             "type": "string"
+          },
+          "wishlist_items": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Individual wanted copies."
           }
         }
       },

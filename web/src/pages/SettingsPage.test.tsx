@@ -32,6 +32,7 @@ describe('Settings access', () => {
     expect(await screen.findByTestId('user-id')).toHaveTextContent('abc123');
     expect(screen.getByText('sam')).toBeInTheDocument();
     expect(screen.getByText(en.settings.accessManager)).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('tab', { name: en.settings.igdb }));
     expect(await screen.findByRole('button', { name: en.igdb.syncButton })).toBeInTheDocument();
   });
 
@@ -51,6 +52,7 @@ describe('Settings access', () => {
     expect(await screen.findByTestId('status-version')).toBeInTheDocument();
     expect(screen.getByTestId('access-role')).toHaveTextContent(en.settings.roles.viewer);
     expect(screen.getByText(en.settings.accessViewer)).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: en.settings.igdb })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: en.igdb.syncButton })).not.toBeInTheDocument();
     expect(calls.some((c) => c.path.startsWith('/api/igdb'))).toBe(false);
   });
@@ -78,7 +80,7 @@ describe('Settings titles', () => {
       'GET /api/igdb/titles': DIFFERENCES,
       'POST /api/igdb/titles': [DIFFERENCES[1]],
     });
-    renderAt('/settings');
+    renderAt('/settings?tab=igdb');
 
     const row = await screen.findByTestId('title-3');
     expect(within(row).getByText("IGDB: Bomberman '93")).toBeInTheDocument();

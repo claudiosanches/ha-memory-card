@@ -17,6 +17,10 @@ pub struct Status {
     /// Games with at least one owned copy.
     pub games: i64,
     pub owned_copies: i64,
+    /// Individual wanted copies.
+    pub wishlist_items: i64,
+    /// Games with at least two owned copies.
+    pub duplicate_games: i64,
     /// Currency of the copy priced last; new prices start with it.
     pub last_currency: Option<String>,
     /// Whether Home Assistant sensors are being published.
@@ -34,16 +38,20 @@ pub struct Status {
     )
 )]
 pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, ApiError> {
-    let games: i64 = sqlx::query_scalar(
-        "SELECT COUNT(DISTINCT r.game_id) FROM releases r
-           JOIN copies c ON c.release_id = r.id WHERE c.status = 'owned'",
-    )
-    .fetch_one(&state.db)
-    .await?;
-    let owned_copies: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM copies WHERE status = 'owned'")
-            .fetch_one(&state.db)
-            .await?;
+    let (games, owned_copies, wishlist_items, duplicate_games): (i64, i64, i64, i64) =
+        sqlx::query_as(
+            "WITH per_game AS (
+                SELECT COUNT(*) FILTER (WHERE c.status = 'owned') AS owned,
+                       COUNT(*) FILTER (WHERE c.status = 'wanted') AS wanted
+                FROM copies c JOIN releases r ON r.id = c.release_id
+                GROUP BY r.game_id
+             )
+             SELECT COUNT(*) FILTER (WHERE owned > 0), COALESCE(SUM(owned), 0),
+                    COALESCE(SUM(wanted), 0), COUNT(*) FILTER (WHERE owned > 1)
+             FROM per_game",
+        )
+        .fetch_one(&state.db)
+        .await?;
 
     let last_currency: Option<String> = sqlx::query_scalar(
         "SELECT currency FROM copies WHERE currency IS NOT NULL
@@ -58,6 +66,8 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
         external_services: state.config.external_services,
         games,
         owned_copies,
+        wishlist_items,
+        duplicate_games,
         last_currency,
         sensors: *state.sensors.lock().expect("sensors status lock"),
     }))

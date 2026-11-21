@@ -1160,6 +1160,11 @@ export interface components {
             wishlist_value: components["schemas"]["Amount"][];
         };
         Status: {
+            /**
+             * Format: int64
+             * @description Games with at least two owned copies.
+             */
+            duplicate_games: number;
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
             /**
@@ -1176,6 +1181,11 @@ export interface components {
             /** @description Whether Home Assistant sensors are being published. */
             sensors: components["schemas"]["SensorsStatus"];
             version: string;
+            /**
+             * Format: int64
+             * @description Individual wanted copies.
+             */
+            wishlist_items: number;
         };
         /**
          * @description Mantine palette names.

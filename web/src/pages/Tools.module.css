@@ -1,3 +1,8 @@
+.integrations { margin: 0; }
+.integrations > div { display: grid; grid-template-columns: minmax(9rem, 25%) 1fr; gap: 8px; align-items: baseline; padding-block: 12px; }
+.integrations > div + div { border-top: 1px solid var(--mc-border); }
+.integrations dt { font-weight: 600; }
+.integrations dd { margin: 0; }
 .status { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 12px; }
 .status > div { min-width: 0; padding: 12px; border-radius: 8px; background: var(--mc-background); }
 .status dt { color: var(--mc-muted); font-size: .8125rem; }
@@ -7,10 +12,7 @@
 .titleRow { padding-block: 12px; border-top: 1px solid var(--mc-border); overflow-wrap: anywhere; }
 
 @media (max-width: 36em) {
-  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-  .tabs::before { display: none; }
-  .tabs > button { min-height: 44px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 8px; }
-  .tabs > button[data-active] { background: var(--mantine-primary-color-light); border-color: var(--mantine-primary-color-filled); }
+  .integrations > div { grid-template-columns: 1fr; }
   .downloads { display: grid; }
   .downloads > a, .titleActions > button { min-height: 44px; }
   .titleActions { width: 100%; }

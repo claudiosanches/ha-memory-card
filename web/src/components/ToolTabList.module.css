@@ -1,0 +1,6 @@
+@media (max-width: 36em) {
+  .tabs { display: grid; grid-template-columns: repeat(var(--tab-columns), minmax(0, 1fr)); gap: 4px; }
+  .tabs::before { display: none; }
+  .tabs > button { min-height: 44px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 8px; }
+  .tabs > button[data-active] { background: var(--mantine-primary-color-light); border-color: var(--mantine-primary-color-filled); }
+}

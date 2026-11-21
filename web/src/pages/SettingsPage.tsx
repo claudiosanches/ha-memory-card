@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Anchor,
   Alert,
   Badge,
   Button,
@@ -9,11 +10,14 @@ import {
   Loader,
   Progress,
   Stack,
+  Tabs,
   Text,
   Tooltip,
 } from '@mantine/core';
 import { IconCheck, IconCopy, IconRefresh } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getRouteApi } from '@tanstack/react-router';
+import { ToolTabList } from '../components/ToolTabList';
 import { useEffect, useRef } from 'react';
 import { ToolSection } from '../components/ToolSection';
 import { PageHeader } from '../components/PageHeader';
@@ -26,20 +30,57 @@ import { Cover } from '../components/Cover';
 import { notifyError, notifySuccess } from '../components/notify';
 import { ThemePicker } from '../components/ThemePicker';
 
+export const SETTINGS_TABS = ['status', 'igdb', 'appearance'] as const;
+export type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+const route = getRouteApi('/settings');
+
 export function SettingsPage() {
   const { t } = useTranslation();
   const status = useStatus();
   const canManage = useCanManage();
+  const showIgdb = canManage && status.data?.igdb_configured;
+  const { tab = 'status' } = route.useSearch();
+  const navigate = route.useNavigate();
+  const visibleTabs = SETTINGS_TABS.filter((key) => key !== 'igdb' || showIgdb);
 
   return (
     <Stack gap={24}>
       <PageHeader title={t('nav.settings')} description={t('settings.intro')} />
-      <ToolSection
-        title={t('settings.appearance')}
-        description={t('settings.appearanceDescription')}
-        action={<ThemePicker />}
-      />
-      <ToolSection title={t('settings.status')}>
+      <Tabs
+        value={visibleTabs.includes(tab) ? tab : 'status'}
+        onChange={(value) => void navigate({ to: '/settings', search: { tab: (value ?? 'status') as SettingsTab } })}
+      >
+        <ToolTabList label={t('nav.settings')} tabs={visibleTabs.map((key) => ({ value: key, label: t(`settings.${key}`) }))} />
+        <Tabs.Panel value="status">
+          <Status />
+        </Tabs.Panel>
+        {showIgdb && (
+          <Tabs.Panel value="igdb">
+            <Stack gap={24}>
+              <IgdbSync />
+              <IgdbTitles />
+            </Stack>
+          </Tabs.Panel>
+        )}
+        <Tabs.Panel value="appearance">
+          <ToolSection
+            title={t('settings.colorScheme')}
+            description={t('settings.appearanceDescription')}
+            action={<ThemePicker />}
+          />
+        </Tabs.Panel>
+      </Tabs>
+    </Stack>
+  );
+}
+
+function Status() {
+  const { t } = useTranslation();
+  const status = useStatus();
+  return (
+    <Stack gap={24}>
+      <ToolSection title={t('settings.collection')}>
         {status.isPending && <Loader size="sm" />}
         {status.isError && (
           <Alert color="red" data-testid="status-error">
@@ -48,9 +89,16 @@ export function SettingsPage() {
         )}
         {status.data && (
           <dl className={classes.status}>
-            <div><dt>{t('settings.version')}</dt><dd data-testid="status-version">{status.data.version}</dd></div>
             <div><dt>{t('settings.games')}</dt><dd>{status.data.games}</dd></div>
             <div><dt>{t('settings.ownedCopies')}</dt><dd>{status.data.owned_copies}</dd></div>
+            <div><dt>{t('settings.wishlistItems')}</dt><dd>{status.data.wishlist_items}</dd></div>
+            <div><dt>{t('settings.duplicateGames')}</dt><dd>{status.data.duplicate_games}</dd></div>
+          </dl>
+        )}
+      </ToolSection>
+      {status.data && (
+        <ToolSection title={t('settings.integrations')}>
+          <dl className={classes.integrations}>
             <div>
               <dt>{t('settings.igdb')}</dt>
               <dd>
@@ -78,11 +126,31 @@ export function SettingsPage() {
               </dd>
             </div>
           </dl>
-        )}
-      </ToolSection>
+        </ToolSection>
+      )}
       <Access />
-      {canManage && status.data?.igdb_configured && <IgdbSync />}
-      {canManage && status.data?.igdb_configured && <IgdbTitles />}
+      <ToolSection title={t('settings.about')}>
+        <dl className={classes.integrations}>
+          {status.data && (
+            <div>
+              <dt>{t('settings.version')}</dt>
+              <dd data-testid="status-version">{status.data.version}</dd>
+            </div>
+          )}
+          <div>
+            <dt>{t('settings.license')}</dt>
+            <dd>{t('settings.gpl')}</dd>
+          </div>
+          <div>
+            <dt>{t('settings.author')}</dt>
+            <dd>{t('settings.authorName')}</dd>
+          </div>
+          <div>
+            <dt>{t('settings.donations')}</dt>
+            <dd><Anchor href="https://github.com/sponsors/claudiosanches" target="_blank" rel="noreferrer">{t('settings.githubSponsors')}</Anchor></dd>
+          </div>
+        </dl>
+      </ToolSection>
     </Stack>
   );
 }

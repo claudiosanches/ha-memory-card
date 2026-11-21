@@ -15,7 +15,7 @@ import { GamePage } from './pages/game/GamePage';
 import { LibraryPage } from './pages/library/LibraryPage';
 import { validateLibrarySearch } from './pages/library/search';
 import { MANAGE_TABS, ManagePage, type ManageTab } from './pages/manage/ManagePage';
-import { SettingsPage } from './pages/SettingsPage';
+import { SETTINGS_TABS, SettingsPage, type SettingsTab } from './pages/SettingsPage';
 import { SetupPage } from './pages/setup/SetupPage';
 
 const rootRoute = createRootRoute({ component: Layout });
@@ -60,7 +60,13 @@ const routeTree = rootRoute.addChildren([
     validateSearch: (search: Record<string, unknown>): { tab?: ManageTab } =>
       MANAGE_TABS.includes(search.tab as ManageTab) ? { tab: search.tab as ManageTab } : {},
   }),
-  createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsPage }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/settings',
+    component: SettingsPage,
+    validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } =>
+      SETTINGS_TABS.includes(search.tab as SettingsTab) ? { tab: search.tab as SettingsTab } : {},
+  }),
 ]);
 
 /** Hash history: the server never sees client routes, so deep links survive a reload under ingress. */

@@ -23,6 +23,11 @@ async fn groups_games_with_two_or_more_owned_copies() {
 
     let (status, groups) = app.json("GET", "/api/duplicates", None).await;
     assert_eq!(status, StatusCode::OK, "{groups}");
+    let (_, overview) = app.json("GET", "/api/status", None).await;
+    assert_eq!(
+        overview["duplicate_games"],
+        groups.as_array().unwrap().len()
+    );
     let summary: Vec<(String, Value, usize)> = groups
         .as_array()
         .unwrap()
@@ -72,4 +77,7 @@ async fn wanted_copies_do_not_count() {
         .unwrap();
     let (_, groups) = app.json("GET", "/api/duplicates", None).await;
     assert_eq!(groups, json!([]));
+    let (_, overview) = app.json("GET", "/api/status", None).await;
+    assert_eq!(overview["duplicate_games"], 0);
+    assert_eq!(overview["wishlist_items"], 1);
 }
