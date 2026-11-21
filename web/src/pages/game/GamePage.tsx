@@ -50,12 +50,11 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { formatDate, STATUS_COLORS, today } from '../../components/status';
 import { CoverPicker } from './CoverPicker';
+import { describePlayers, effectiveCounts, hasPlayerData } from './players';
 import { CopyForm, GameForm, gameInput, ReleaseForm, useGameSaved } from './forms';
 import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
 
 const route = getRouteApi('/games/$gameId');
-
-type PlayerCounts = Pick<GameDetail, 'local_max_players' | 'online_max_players' | 'local_coop' | 'online_coop'>;
 
 type Dialog =
   | { kind: 'editGame' }
@@ -190,10 +189,6 @@ function GameView({ game }: { game: GameDetail }) {
   // The release title only says something when it differs from the game's.
   const regionalTitle = (release: ReleaseDetail) => (release.title === game.title ? null : release.title);
 
-  const playerCount = (max?: number | null, coop?: boolean | null) => {
-    const value = max ?? t('game.playersUnknown');
-    return coop ? t('game.withCoop', { value }) : String(value);
-  };
   // IGDB has no multiplayer data for single player games, only the mode.
   const singlePlayerOnly =
     game.local_max_players == null &&
@@ -202,11 +197,6 @@ function GameView({ game }: { game: GameDetail }) {
     !game.online_coop &&
     game.game_mode_ids.length > 0 &&
     game.game_mode_ids.every((id) => gameModes.data?.find((mode) => mode.id === id)?.slug === 'single-player');
-  const players = (counts: PlayerCounts) =>
-    t('game.playersSummary', {
-      local: playerCount(counts.local_max_players, counts.local_coop),
-      online: playerCount(counts.online_max_players, counts.online_coop),
-    });
 
   return (
     <Stack>
@@ -338,7 +328,7 @@ function GameView({ game }: { game: GameDetail }) {
             </Group>
           )}
           <Text size="sm">
-            {t('game.players')}: {singlePlayerOnly ? t('game.singlePlayer') : players(game)}
+            {t('game.players')}: {singlePlayerOnly ? t('game.singlePlayer') : describePlayers(t, game)}
           </Text>
           {game.summary && (
             <Text size="sm" c="dimmed">
@@ -381,12 +371,9 @@ function GameView({ game }: { game: GameDetail }) {
                       {[regionalTitle(release), release.product_code].filter(Boolean).join(', ')}
                     </Text>
                   )}
-                  {(release.local_max_players ||
-                    release.online_max_players ||
-                    release.local_coop ||
-                    release.online_coop) && (
+                  {hasPlayerData(release) && (
                     <Text size="xs" c="dimmed">
-                      {t('game.players')}: {players(release)}
+                      {t('game.players')}: {describePlayers(t, effectiveCounts(release, game))}
                     </Text>
                   )}
                 </Stack>
