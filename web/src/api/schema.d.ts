@@ -538,6 +538,11 @@ export interface components {
         LinkInput: {
             /** Format: int64 */
             igdb_id: number;
+            /**
+             * @description Replace title, summary, game modes, player counts and release titles
+             *     and dates with IGDB's where IGDB has them. Otherwise only empty ones are filled.
+             */
+            overwrite?: boolean;
         };
         NewDeviceReport: {
             kind: components["schemas"]["DeviceKind"];
@@ -967,6 +972,8 @@ export interface operations {
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
                 ownership?: "owned" | "any";
+                /** @description Whether the game is linked to IGDB. */
+                igdb?: "linked" | "unlinked";
                 sort?: "title" | "added" | "played";
             };
             header?: never;

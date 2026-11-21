@@ -428,6 +428,19 @@
             }
           },
           {
+            "name": "igdb",
+            "in": "query",
+            "description": "Whether the game is linked to IGDB.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "linked",
+                "unlinked"
+              ]
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "required": false,
@@ -2222,6 +2235,10 @@
           "igdb_id": {
             "type": "integer",
             "format": "int64"
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Replace title, summary, game modes, player counts and release titles\nand dates with IGDB's where IGDB has them. Otherwise only empty ones are filled."
           }
         }
       },

@@ -350,6 +350,19 @@ async fn library_lists_owned_games_by_default() {
 }
 
 #[tokio::test]
+async fn library_filters_by_igdb_link() {
+    let app = library_app().await;
+    sqlx::query("UPDATE games SET igdb_id = 7 WHERE title = 'Splatoon'")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(titles(&app, "igdb=linked").await, ["Splatoon"]);
+    let unlinked = titles(&app, "igdb=unlinked").await;
+    assert!(!unlinked.is_empty());
+    assert!(!unlinked.contains(&"Splatoon".to_owned()));
+}
+
+#[tokio::test]
 async fn library_filters_combine_on_one_copy() {
     let app = library_app().await;
     let ps4 = ids(&app, "SELECT id FROM platforms WHERE slug = 'ps4'").await;

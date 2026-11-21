@@ -20,6 +20,13 @@ pub enum Ownership {
     Any,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IgdbLink {
+    Linked,
+    Unlinked,
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LibrarySort {
@@ -68,6 +75,9 @@ pub struct LibraryFilter {
     pub min_local_players: Option<i64>,
     #[param(inline)]
     pub ownership: Option<Ownership>,
+    /// Whether the game is linked to IGDB.
+    #[param(inline)]
+    pub igdb: Option<IgdbLink>,
     #[param(inline)]
     pub sort: Option<LibrarySort>,
 }
@@ -178,6 +188,11 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         qb.push(")");
     }
     push_in(&mut qb, "g.play_status", &filter.play_status);
+    match filter.igdb {
+        Some(IgdbLink::Linked) => qb.push(" AND g.igdb_id IS NOT NULL"),
+        Some(IgdbLink::Unlinked) => qb.push(" AND g.igdb_id IS NULL"),
+        None => &mut qb,
+    };
 
     if let Some(text) = filter.q.as_deref().map(str::trim).filter(|t| !t.is_empty()) {
         qb.push(" AND instr(lower(g.title), lower(")

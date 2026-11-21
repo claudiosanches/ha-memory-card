@@ -50,6 +50,10 @@ pub async fn search(
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct LinkInput {
     pub igdb_id: i64,
+    /// Replace title, summary, game modes, player counts and release titles
+    /// and dates with IGDB's where IGDB has them. Otherwise only empty ones are filled.
+    #[serde(default)]
+    pub overwrite: bool,
 }
 
 /// Links the game to an IGDB game and fills its metadata. Posting the current
@@ -80,7 +84,15 @@ pub async fn link(
         .into_iter()
         .next()
         .ok_or(ApiError::invalid("igdb_not_found", "igdb_id"))?;
-    store::apply(&state.db, &state.config.covers_dir(), &igdb, id, &data).await?;
+    store::apply(
+        &state.db,
+        &state.config.covers_dir(),
+        &igdb,
+        id,
+        &data,
+        input.overwrite,
+    )
+    .await?;
     Ok(Json(games::get(&state.db, id).await?))
 }
 

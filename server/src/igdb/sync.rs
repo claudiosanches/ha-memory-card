@@ -110,7 +110,15 @@ async fn run(state: &AppState, igdb: &Arc<Igdb>) -> sqlx::Result<()> {
         for (game_id, igdb_id) in chunk {
             let result = match found.iter().find(|g| g.id == *igdb_id) {
                 Some(data) => {
-                    store::apply(&state.db, &state.config.covers_dir(), igdb, *game_id, data).await
+                    store::apply(
+                        &state.db,
+                        &state.config.covers_dir(),
+                        igdb,
+                        *game_id,
+                        data,
+                        false,
+                    )
+                    .await
                 }
                 None => Err(ApiError::NotFound),
             };
@@ -143,7 +151,16 @@ async fn match_title(state: &AppState, igdb: &Igdb, game_id: i64, title: &str) -
     let Some(data) = choose(candidates, &platforms) else {
         return Ok(false);
     };
-    match store::apply(&state.db, &state.config.covers_dir(), igdb, game_id, &data).await {
+    match store::apply(
+        &state.db,
+        &state.config.covers_dir(),
+        igdb,
+        game_id,
+        &data,
+        false,
+    )
+    .await
+    {
         Ok(()) => Ok(true),
         Err(ApiError::Conflict(_)) => Ok(false),
         Err(err) => Err(err),

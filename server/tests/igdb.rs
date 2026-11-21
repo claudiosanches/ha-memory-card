@@ -25,7 +25,12 @@ fn odyssey() -> Value {
             {"company": {"name": "Nintendo"}, "developer": false, "publisher": true}
         ],
         "cover": {"image_id": "co1mxf"},
-        "multiplayer_modes": [{"platform": 130, "offlinecoopmax": 2, "offlinecoop": true}]
+        "multiplayer_modes": [{"platform": 130, "offlinecoopmax": 2, "offlinecoop": true}],
+        "release_dates": [
+            {"platform": 130, "date": 1509062400, "release_region": 8},
+            {"platform": 130, "date": 1666656000, "release_region": 10}
+        ],
+        "game_localizations": [{"name": "スーパーマリオ オデッセイ", "region": 3}]
     })
 }
 
@@ -118,6 +123,17 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
         .execute(&app.pool)
         .await
         .unwrap();
+    for region in ["jp", "br"] {
+        sqlx::query(
+            "INSERT INTO releases (game_id, platform_id, region)
+             SELECT game_id, platform_id, ? FROM releases WHERE id = ?",
+        )
+        .bind(region)
+        .bind(release)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    }
 
     let (status, detail) = app
         .json(
@@ -140,6 +156,20 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
     assert_eq!(app.scalar("SELECT COUNT(*) FROM genres").await, 1);
     assert_eq!(detail["releases"][0]["local_max_players"], 2);
     assert_eq!(detail["releases"][0]["local_coop"], true);
+    let release = |region: &str| {
+        detail["releases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["region"] == region)
+            .unwrap()
+            .clone()
+    };
+    // No North America date, so the worldwide one; Brazil has its own.
+    assert_eq!(release("na")["release_date"], "2017-10-27");
+    assert_eq!(release("br")["release_date"], "2022-10-25");
+    assert_eq!(release("na")["title"], Value::Null);
+    assert_eq!(release("jp")["title"], "スーパーマリオ オデッセイ");
 
     let cover = format!("game-{game}/co1mxf.jpg");
     assert_eq!(detail["cover_path"], cover.as_str());
@@ -203,6 +233,48 @@ async fn sync_links_exact_titles_and_skips_ambiguous_ones() {
             "SELECT COUNT(*) FROM games WHERE igdb_id = 1 AND title = 'super mario odyssey'"
         )
         .await,
+        1
+    );
+}
+
+#[tokio::test]
+async fn overwrite_replaces_hand_edits_where_igdb_has_values() {
+    let app = with_igdb().await;
+    let release = app.release("Odyssey", "switch").await;
+    sqlx::query(
+        "UPDATE releases SET release_date = '2000-01-01', local_max_players = 3 WHERE id = ?",
+    )
+    .bind(release)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "UPDATE games SET summary = 'Mine.', local_max_players = 8
+         WHERE id = (SELECT game_id FROM releases WHERE id = ?)",
+    )
+    .bind(release)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    let game = app.scalar("SELECT id FROM games").await;
+
+    let (status, detail) = app
+        .json(
+            "POST",
+            &format!("/api/games/{game}/igdb"),
+            Some(json!({"igdb_id": 1, "overwrite": true})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{detail}");
+    assert_eq!(detail["title"], "Super Mario Odyssey");
+    assert_eq!(detail["summary"], "Cappy.");
+    // IGDB has no game-level player count, so the hand-edited one stays.
+    assert_eq!(detail["local_max_players"], 8);
+    assert_eq!(detail["releases"][0]["release_date"], "2017-10-27");
+    assert_eq!(detail["releases"][0]["local_max_players"], 2);
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM games WHERE sort_title = 'super mario odyssey'")
+            .await,
         1
     );
 }
