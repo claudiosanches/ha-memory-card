@@ -217,14 +217,26 @@ function DeviceForm({
         save.mutate({ ...values, platform_ids: values.platform_ids.map(Number) }),
       )}
     >
-      <TextInput label={t('common.name')} required data-autofocus {...form.getInputProps('name')} />
+      <TextInput
+        label={t('common.name')}
+        description={t('devices.nameDescription')}
+        placeholder={t('devices.namePlaceholder')}
+        required
+        data-autofocus
+        {...form.getInputProps('name')}
+      />
       <Select
         label={t('devices.kind')}
         allowDeselect={false}
         data={DEVICE_KINDS.map((kind) => ({ value: kind, label: t(`deviceKind.${kind}`) }))}
         {...form.getInputProps('kind')}
       />
-      <TextInput label={t('devices.model')} placeholder={t('devices.modelPlaceholder')} {...form.getInputProps('model')} />
+      <TextInput
+        label={t('devices.model')}
+        description={t('devices.modelDescription')}
+        placeholder={t('devices.modelPlaceholder')}
+        {...form.getInputProps('model')}
+      />
       <MultiSelect
         label={t('devices.platforms')}
         description={t('devices.platformsDescription')}
