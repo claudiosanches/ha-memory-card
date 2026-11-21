@@ -92,7 +92,7 @@ describe('Game page', () => {
     expect(within(card).getByText(`${en.game.players}: Unknown on the same screen, Unknown (co-op) online`)).toBeInTheDocument();
   });
 
-  it('says single player when that is the only mode and counts are unknown', async () => {
+  it('shows one player when single player is the only mode and counts are unknown', async () => {
     const modes = [
       { id: 1, name: 'Single player', slug: 'single-player' },
       { id: 2, name: 'Multiplayer', slug: 'multiplayer' },
