@@ -1,4 +1,5 @@
 import {
+  Button,
   Checkbox,
   Group,
   MultiSelect,
@@ -83,6 +84,8 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
   const stores = useStores();
   const saved = useGameSaved();
   const [allDevices, setAllDevices] = useState(false);
+  // Remounts the searchable selects after "Save and add another"; they keep their typed text otherwise.
+  const [round, setRound] = useState(0);
 
   const form = useForm({
     initialValues: {
@@ -116,36 +119,55 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
     )
     .map((d) => ({ value: String(d.id), label: d.name }));
 
+  // "Save and add another" keeps the form open for the same release.
   const save = useMutation({
-    mutationFn: (body: CopyInput) =>
+    mutationFn: ({ body }: { body: CopyInput; another: boolean }) =>
       copy
         ? call(api.PUT('/api/copies/{id}', { params: { path: { id: copy.id } }, body }))
         : call(api.POST('/api/games/{id}/copies', { params: { path: { id: gameId } }, body })),
-    onSuccess: (game) => {
+    onSuccess: (game, { another }) => {
       saved(game);
-      onClose();
+      if (!another) {
+        onClose();
+        return;
+      }
+      const { platform_id, region, product_code, format } = form.getValues();
+      form.setValues({ platform_id, region, product_code, format, device_id: '', store_id: '', condition: '', notes: '' });
+      form.resetDirty();
+      setRound((value) => value + 1);
     },
     onError: onApiError,
   });
+
+  const submit = (addAnother: boolean) =>
+    form.onSubmit((v) => {
+      const body: CopyInput = {
+        platform_id: Number(v.platform_id),
+        region: v.region as Region,
+        product_code: textOrNull(v.product_code),
+        format: v.format,
+        device_id: v.device_id ? Number(v.device_id) : null,
+        store_id: v.store_id ? Number(v.store_id) : null,
+        condition: v.format === 'physical' && v.condition ? (v.condition as CopyInput['condition']) : null,
+        notes: textOrNull(v.notes),
+      };
+      save.mutate({ body, another: addAnother });
+    });
 
   return (
     <FormModal
       opened
       title={copy ? t('game.editCopy') : t('game.addCopy')}
-      saving={save.isPending}
+      saving={save.isPending && !save.variables.another}
       onClose={onClose}
-      onSubmit={form.onSubmit((v) =>
-        save.mutate({
-          platform_id: Number(v.platform_id),
-          region: v.region as Region,
-          product_code: textOrNull(v.product_code),
-          format: v.format,
-          device_id: v.device_id ? Number(v.device_id) : null,
-          store_id: v.store_id ? Number(v.store_id) : null,
-          condition: v.format === 'physical' && v.condition ? (v.condition as CopyInput['condition']) : null,
-          notes: textOrNull(v.notes),
-        }),
-      )}
+      onSubmit={submit(false)}
+      extraAction={
+        !copy && (
+          <Button variant="light" loading={save.isPending && save.variables.another} onClick={() => submit(true)()}>
+            {t('game.saveAnother')}
+          </Button>
+        )
+      }
     >
       <Select
         label={t('game.platform')}
@@ -167,6 +189,7 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
         {...form.getInputProps('format')}
       />
       <Select
+        key={`device-${round}`}
         label={t('game.device')}
         placeholder={t('game.noDevice')}
         data={deviceOptions}
@@ -181,6 +204,7 @@ export function CopyForm({ gameId, copy, release, onClose }: CopyFormProps) {
         onChange={(event) => setAllDevices(event.currentTarget.checked)}
       />
       <Select
+        key={`store-${round}`}
         label={t('game.store')}
         placeholder={t('game.noStore')}
         data={(stores.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))}

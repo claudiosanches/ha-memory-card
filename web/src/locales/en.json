@@ -445,6 +445,7 @@
     "manageRelease": "Manage release",
     "addCopyHere": "Add a copy of this release",
     "editCopy": "Edit copy",
+    "saveAnother": "Save and add another",
     "deleteCopy": "Delete copy?",
     "editRelease": "Edit release",
     "deleteRelease": "Delete release?",

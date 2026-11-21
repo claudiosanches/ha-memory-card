@@ -218,6 +218,32 @@ describe('Game page', () => {
     expect(calls.find((c) => c.method === 'PUT')?.body).toBe('png bytes');
   });
 
+  it('keeps the release after saving a copy and adding another', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/stores': [{ id: 3, name: 'Amazon', notes: null, copy_count: 0 }],
+      'GET /api/games/4': GAME,
+      'POST /api/games/4/copies': GAME,
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.game.addCopy }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.region }));
+    fireEvent.click(await screen.findByRole('option', { name: en.region.jp, hidden: true }));
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.platform }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Nintendo Switch', hidden: true }));
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.store }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Amazon', hidden: true }));
+    fireEvent.click(within(dialog).getByRole('button', { name: en.game.saveAnother }));
+
+    await waitFor(() => expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1));
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ platform_id: 1, region: 'jp', store_id: 3 });
+    await waitFor(() => expect(within(dialog).getByRole('combobox', { name: en.game.store })).toHaveValue(''));
+    expect(within(dialog).getByRole('combobox', { name: en.game.platform })).toHaveValue('Nintendo Switch');
+    expect(within(dialog).getByRole('combobox', { name: en.game.region })).toHaveValue(en.region.jp);
+  });
+
   it('marks the only copy as played today', async () => {
     const calls = mockApi({
       ...SETUP,
