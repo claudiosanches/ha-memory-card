@@ -15,10 +15,11 @@ import {
   IconLayoutSidebarLeftExpand,
 } from '@tabler/icons-react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import type { ComponentType } from 'react';
+import { type ComponentType, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, errorMessage } from '../api/errors';
-import { useMe } from '../api/queries';
+import { useMe, useStatus } from '../api/queries';
+import { followHomeAssistant } from '../i18n';
 import { ColorSchemePicker } from './ColorSchemePicker';
 import classes from './Layout.module.css';
 
@@ -46,6 +47,11 @@ export function Layout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const me = useMe();
   const canManage = me.data?.role === 'manager';
+  const status = useStatus();
+  const homeAssistantLanguage = status.data?.home_assistant_language;
+  useEffect(() => {
+    if (homeAssistantLanguage !== undefined) followHomeAssistant(homeAssistantLanguage);
+  }, [homeAssistantLanguage]);
   const [collapsed, setCollapsed] = useLocalStorage({ key: 'memory-card-sidebar-collapsed', defaultValue: false });
   // Phones open the full menu from the burger, so only wider screens get the icon rail.
   const wide = useMediaQuery('(min-width: 48em)');

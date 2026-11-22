@@ -167,7 +167,7 @@
     "appearance": "Apariencia",
     "colorSchemeDescription": "Elige claro u oscuro, o sigue la configuración del sistema. Tu elección se guarda en este navegador.",
     "language": "Idioma",
-    "languageDescription": "Se guarda en este navegador. Automático sigue el idioma del navegador.",
+    "languageDescription": "Se guarda en este navegador. Automático sigue el idioma de Home Assistant, o el del navegador si la app no tiene el de Home Assistant.",
     "languageAuto": "Automático ({{language}})",
     "theme": "Tema",
     "themes": {

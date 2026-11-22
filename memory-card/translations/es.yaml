@@ -41,3 +41,9 @@ configuration:
       Qué hace la lectura de la etiqueta NFC de una copia cuando su juego está
       completado, abandonado o al 100%. "playing" vuelve a poner el juego en
       jugando; "keep" conserva su estado y solo registra la sesión.
+  currency:
+    name: Moneda predeterminada
+    description: >-
+      Código de tres letras, como EUR o MXN, con el que empiezan los precios
+      nuevos. Vacío usa la moneda de la última copia con precio y después la
+      de Home Assistant.

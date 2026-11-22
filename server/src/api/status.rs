@@ -15,8 +15,11 @@ pub struct Status {
     pub igdb_configured: bool,
     /// False when the app options keep Memory Card offline.
     pub external_services: bool,
-    /// Currency of the copy priced last; new prices start with it.
-    pub last_currency: Option<String>,
+    /// Where new prices start: the `currency` option, else the currency of
+    /// the copy priced last, else Home Assistant's.
+    pub default_currency: Option<String>,
+    /// Home Assistant's language, for browsers where nobody picked one.
+    pub home_assistant_language: Option<String>,
     /// Whether Home Assistant sensors are being published.
     pub sensors: SensorsStatus,
     /// Whether Memory Card hears Home Assistant tag scans.
@@ -41,11 +44,20 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
     .fetch_optional(&state.db)
     .await?;
 
+    let regional = crate::regional::get(&state).await.unwrap_or_default();
+    let default_currency = state
+        .config
+        .currency
+        .clone()
+        .or(last_currency)
+        .or(regional.currency);
+
     Ok(Json(Status {
         version: env!("CARGO_PKG_VERSION"),
         igdb_configured: state.igdb.is_some(),
         external_services: state.config.external_services,
-        last_currency,
+        default_currency,
+        home_assistant_language: regional.language,
         sensors: *state.sensors.lock().expect("sensors status lock"),
         tags: *state.tag_status.lock().expect("tag status lock"),
     }))

@@ -1501,12 +1501,17 @@ export interface components {
             wishlist_value: components["schemas"]["Amount"][];
         };
         Status: {
+            /**
+             * @description Where new prices start: the `currency` option, else the currency of
+             *     the copy priced last, else Home Assistant's.
+             */
+            default_currency?: string | null;
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
+            /** @description Home Assistant's language, for browsers where nobody picked one. */
+            home_assistant_language?: string | null;
             /** @description IGDB credentials are set and external services are on. */
             igdb_configured: boolean;
-            /** @description Currency of the copy priced last; new prices start with it. */
-            last_currency?: string | null;
             /** @description Whether Home Assistant sensors are being published. */
             sensors: components["schemas"]["SensorsStatus"];
             /** @description Whether Memory Card hears Home Assistant tag scans. */

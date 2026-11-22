@@ -38,3 +38,4 @@ schema:
   external_services: bool
   sensors: bool
   tag_scan_finished: "list(playing|keep)"
+  currency: "match(^[A-Za-z]{3}$)?"

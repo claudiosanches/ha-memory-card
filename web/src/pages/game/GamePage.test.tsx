@@ -348,7 +348,7 @@ describe('Game page', () => {
   it('prices a copy in the currency used last', async () => {
     const calls = mockApi({
       ...SETUP,
-      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, last_currency: 'BRL', sensors: 'off' },
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, default_currency: 'BRL', sensors: 'off' },
       'GET /api/games/4': GAME,
       'POST /api/games/4/copies': GAME,
     });

@@ -80,10 +80,14 @@ copy, and the game page shows who added it and who changed it last.
 
 ## Language
 
-Memory Card follows your browser's language and comes in English, Spanish
-and Brazilian Portuguese. To pick one, go to **Settings > Appearance >
+Memory Card comes in English, Spanish and Brazilian Portuguese. It follows
+Home Assistant's language, or your browser's when Home Assistant uses one
+the app does not have. To pick one, go to **Settings > Appearance >
 Language**; the choice is saved in that browser. The app's options in Home
 Assistant are translated too.
+
+New prices start in the `currency` option when it is set, else in the
+currency of the copy priced last, else in Home Assistant's currency.
 
 ## Options
 
@@ -97,6 +101,7 @@ Assistant are translated too.
 | `sensors` | Publishes Home Assistant sensors through the MQTT broker. On by default; does nothing without a broker. |
 | `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
+| `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
 
 ## Wishlist
 

@@ -41,3 +41,9 @@ configuration:
       O que a leitura da tag NFC de uma cópia faz quando o jogo está zerado,
       abandonado ou em 100%. "playing" volta o jogo para jogando; "keep"
       mantém o status e só registra a sessão.
+  currency:
+    name: Moeda padrão
+    description: >-
+      Código de três letras, como BRL ou EUR, com que os preços novos
+      começam. Vazio usa a moeda da última cópia com preço e depois a do
+      Home Assistant.

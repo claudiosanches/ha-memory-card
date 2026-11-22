@@ -167,7 +167,7 @@
     "appearance": "Appearance",
     "colorSchemeDescription": "Choose light or dark, or follow your system setting. Your choice is saved in this browser.",
     "language": "Language",
-    "languageDescription": "Saved in this browser. Automatic follows the browser's language.",
+    "languageDescription": "Saved in this browser. Automatic follows Home Assistant's language, or the browser's when the app does not have Home Assistant's.",
     "languageAuto": "Automatic ({{language}})",
     "theme": "Theme",
     "themes": {

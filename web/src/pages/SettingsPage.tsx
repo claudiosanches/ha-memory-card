@@ -24,7 +24,7 @@ import { ToolSection } from '../components/ToolSection';
 import { PageHeader } from '../components/PageHeader';
 import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
-import { browserLanguage, chooseLanguage, type Language, LANGUAGE_NAMES, LANGUAGES, savedLanguage } from '../i18n';
+import { automaticLanguage, chooseLanguage, type Language, LANGUAGE_NAMES, LANGUAGES, savedLanguage } from '../i18n';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
 import { queryKeys, useCanManage, useIgdbSync, useMe, useStatus, useTitleDifferences } from '../api/queries';
@@ -112,7 +112,7 @@ function LanguagePicker() {
         chooseLanguage(next);
       }}
       data={[
-        { value: 'auto', label: t('settings.languageAuto', { language: LANGUAGE_NAMES[browserLanguage()] }) },
+        { value: 'auto', label: t('settings.languageAuto', { language: LANGUAGE_NAMES[automaticLanguage()] }) },
         ...LANGUAGES.map((language) => ({ value: language, label: LANGUAGE_NAMES[language] })),
       ]}
     />

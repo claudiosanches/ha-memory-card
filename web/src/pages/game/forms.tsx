@@ -112,10 +112,10 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
       edition: copy?.edition ?? '',
       purchased_on: copy?.purchased_on ?? '',
       price: copy?.price ?? '',
-      currency: copy?.currency ?? appStatus.data?.last_currency ?? localeCurrency(i18n.language),
+      currency: copy?.currency ?? appStatus.data?.default_currency ?? localeCurrency(i18n.language),
       estimated_value: copy?.estimated_value ?? '',
       estimated_currency:
-        copy?.estimated_currency ?? copy?.currency ?? appStatus.data?.last_currency ?? localeCurrency(i18n.language),
+        copy?.estimated_currency ?? copy?.currency ?? appStatus.data?.default_currency ?? localeCurrency(i18n.language),
       barcode: copy?.barcode ?? scanned?.barcode ?? '',
     },
     validate: {

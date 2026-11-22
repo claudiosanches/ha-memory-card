@@ -40,3 +40,9 @@ configuration:
       What scanning a copy's NFC tag does when its game is completed, dropped
       or mastered. "playing" sets the game back to playing; "keep" keeps its
       status and only logs the session.
+  currency:
+    name: Default currency
+    description: >-
+      Three-letter code, such as EUR or BRL, that new prices start with.
+      Empty uses the currency of the copy priced last, then Home Assistant's
+      currency.

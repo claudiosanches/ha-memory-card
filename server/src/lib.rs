@@ -14,6 +14,7 @@ pub mod ingress;
 pub mod logging;
 pub mod money;
 pub mod origin;
+pub mod regional;
 pub mod sensors;
 pub mod shutdown;
 pub mod slug;
@@ -54,6 +55,7 @@ pub struct AppState {
     pub tag_link: Arc<Mutex<Option<PendingLink>>>,
     /// For Home Assistant, the Supervisor and the barcode database.
     pub http: reqwest::Client,
+    pub regional: Arc<tokio::sync::Mutex<regional::Cache>>,
 }
 
 impl AppState {
@@ -74,6 +76,7 @@ impl AppState {
             tag_status: Arc::new(Mutex::new(tags)),
             tag_link: Arc::default(),
             http: http::shared(),
+            regional: Arc::default(),
         }
     }
 }

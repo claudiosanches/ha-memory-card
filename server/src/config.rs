@@ -145,6 +145,7 @@ struct Options {
     external_services: Option<bool>,
     sensors: Option<bool>,
     tag_scan_finished: Option<FinishedScan>,
+    currency: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -166,6 +167,8 @@ pub struct Config {
     /// Publishes Home Assistant sensors through the MQTT broker.
     pub sensors: bool,
     pub tag_scan_finished: FinishedScan,
+    /// ISO 4217 code new prices start with, ahead of Home Assistant's.
+    pub currency: Option<String>,
     /// Broker named by `MEMORY_CARD_MQTT_*`, used instead of asking the Supervisor.
     pub mqtt: Option<MqttBroker>,
     pub supervisor_url: String,
@@ -323,8 +326,19 @@ impl Config {
             })?,
         };
 
+        let currency = match env("MEMORY_CARD_CURRENCY").map(|raw| ("MEMORY_CARD_CURRENCY", raw)) {
+            Some(found) => Some(found),
+            None => options.currency.map(|raw| ("currency", raw)),
+        }
+        .filter(|(_, raw)| !raw.trim().is_empty())
+        .map(|(name, raw)| {
+            crate::money::currency(&raw).ok_or(ConfigError::InvalidEnv { name, value: raw })
+        })
+        .transpose()?;
+
         Ok(Self {
             home_assistant,
+            currency,
             data_dir,
             tmp_dir,
             listen,
@@ -443,6 +457,22 @@ mod tests {
         assert_eq!(config.tag_scan_finished, FinishedScan::Playing);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
         assert_eq!(config.tmp_dir, dir.path().join("tmp"));
+        assert_eq!(config.currency, None);
+    }
+
+    #[test]
+    fn currency_comes_from_the_option_or_the_environment() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("options.json"), r#"{"currency":" brl "}"#).unwrap();
+        assert_eq!(
+            load_with(dir.path(), &[]).unwrap().currency.as_deref(),
+            Some("BRL")
+        );
+        let env = load_with(dir.path(), &[("MEMORY_CARD_CURRENCY", "eur")]).unwrap();
+        assert_eq!(env.currency.as_deref(), Some("EUR"));
+        assert!(load_with(dir.path(), &[("MEMORY_CARD_CURRENCY", "euro")]).is_err());
+        std::fs::write(dir.path().join("options.json"), r#"{"currency":""}"#).unwrap();
+        assert_eq!(load_with(dir.path(), &[]).unwrap().currency, None);
     }
 
     #[test]
