@@ -4,7 +4,9 @@
 # gets /dev/kvm and nothing else.
 # Usage: scripts/ha-demo.sh up|stop|destroy|logs
 # HA_HTTPS=1 serves HTTPS with a certificate from a test CA. HA_LAN=1 opens
-# the port to the network instead of this machine only.
+# the port to the network instead of this machine only. HA_DUCKDNS=<name>
+# does both as <name>.duckdns.org, with a Let's Encrypt certificate, the
+# DuckDNS token read from .data/duckdns-token.
 set -eu
 cd "$(dirname "$0")/.."
 
@@ -17,6 +19,21 @@ os_sha256=756ec485b1b153099ca53e88a5eebd63a801d56b791afe5c6d63ef94a35dc02d
 os_file=target/haos-image/haos_ova-$os_version.qcow2.xz
 state=target/haos
 apps=$state/local
+# Outside the VM's state, so a rebuilt VM reuses the certificate.
+certs=target/haos-cert
+token_file=.data/duckdns-token
+duckdns=
+if [ -n "${HA_DUCKDNS:-}" ]; then
+    case $HA_DUCKDNS in
+    *[!a-z0-9-]* | *.*)
+        echo "HA_DUCKDNS takes the name before .duckdns.org" >&2
+        exit 1
+        ;;
+    esac
+    duckdns=$HA_DUCKDNS.duckdns.org
+    HA_HTTPS=1
+    HA_LAN=1
+fi
 
 labelled() {
     [ "$(docker "$1" inspect -f "{{index .${2}Labels \"$label\"}}" "$3" 2>/dev/null)" = 1 ]
@@ -73,22 +90,56 @@ issue_certificate() {
     docker exec "$name" cat tls/ca.pem >"$state/ca.pem"
 }
 
-answering_scheme() {
-    for scheme in http https; do
-        if with_ca curl -fsS -o /dev/null "$scheme://127.0.0.1:$port/" 2>/dev/null; then
-            echo "$scheme"
-            return
-        fi
-    done
-    return 1
+# Points the DuckDNS name at this machine, renews its certificate when it is
+# due and puts it in Home Assistant's ssl folder. Prints whether it changed.
+# The token never reaches a command line.
+duckdns_certificate() {
+    if [ ! -s "$token_file" ]; then
+        echo "Put the DuckDNS token in $token_file" >&2
+        exit 1
+    fi
+    answer=$(printf 'url = "https://www.duckdns.org/update?domains=%s&token=%s&ip=%s"\n' \
+        "$HA_DUCKDNS" "$(cat "$token_file")" "$(lan_ip)" | curl -fsS -K -)
+    if [ "$answer" != OK ]; then
+        echo "DuckDNS refused the update. Check the name and $token_file." >&2
+        exit 1
+    fi
+    mkdir -p "$certs"
+    [ -f "$certs/config" ] || printf 'BASEDIR=/certs\nKEY_ALGO=prime256v1\n' >"$certs/config"
+    if ! log=$(DUCKDNS_TOKEN=$(cat "$token_file") docker run --rm --user "$(id -u):$(id -g)" \
+        --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp \
+        -e DUCKDNS_TOKEN -v "$PWD/$certs:/certs" --entrypoint sh "$image" -c '
+            dehydrated --config /certs/config --register --accept-terms &&
+                dehydrated --config /certs/config --cron --challenge dns-01 \
+                    --hook /usr/local/bin/duckdns-hook.sh --domain "$0"' "$duckdns" 2>&1); then
+        echo "$log" >&2
+        echo "Let's Encrypt did not issue the certificate" >&2
+        exit 1
+    fi
+    live=$certs/certs/$duckdns
+    sum=$(sha256sum <"$live/fullchain.pem")
+    if [ "$(cat "$state/certificate" 2>/dev/null)" = "$sum" ]; then
+        echo same
+        return
+    fi
+    vm_ssh "cat >/mnt/data/supervisor/ssl/memory-card-demo.pem" <"$live/fullchain.pem"
+    vm_ssh "cat >/mnt/data/supervisor/ssl/memory-card-demo.key" <"$live/privkey.pem"
+    echo "$sum" >"$state/certificate"
+    echo changed
 }
 
-# Runs a command trusting the test CA, once there is one.
-with_ca() {
-    if [ -f "$state/ca.pem" ]; then
-        NODE_EXTRA_CA_CERTS=$state/ca.pem CURL_CA_BUNDLE=$state/ca.pem "$@"
+# Where Home Assistant answers now: plainly, with the test CA, or with the
+# DuckDNS certificate. Nothing while it installs or restarts.
+current_url() {
+    if curl -fsS -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null; then
+        echo "http://127.0.0.1:$port"
+    elif [ -f "$state/ca.pem" ] &&
+        curl -fsS -o /dev/null --cacert "$state/ca.pem" "https://127.0.0.1:$port/" 2>/dev/null; then
+        echo "https://127.0.0.1:$port"
+    elif [ -n "$duckdns" ] && curl -fsS -o /dev/null "https://$duckdns:$port/" 2>/dev/null; then
+        echo "https://$duckdns:$port"
     else
-        "$@"
+        return 1
     fi
 }
 
@@ -194,14 +245,21 @@ up() {
         tar -xf -'
 
     certificate=
-    if [ -n "${HA_HTTPS:-}" ]; then
+    if [ -n "$duckdns" ]; then
+        certificate=$(duckdns_certificate)
+        HA_URL=https://$duckdns:$port
+    elif [ -n "${HA_HTTPS:-}" ]; then
         certificate=$(issue_certificate)
+        HA_URL=https://127.0.0.1:$port
+    else
+        HA_URL=http://127.0.0.1:$port
     fi
+    HA_NEW_CERTIFICATE=
+    [ "$certificate" != changed ] || HA_NEW_CERTIFICATE=1
+    export HA_URL HA_NEW_CERTIFICATE
 
-    # Whichever way Home Assistant answers now. While it installs or
-    # restarts it answers neither way.
     tries=0
-    until scheme=$(answering_scheme); do
+    until current=$(current_url); do
         tries=$((tries + 1))
         if [ "$tries" -gt 600 ]; then
             echo "Home Assistant did not answer" >&2
@@ -209,13 +267,15 @@ up() {
         fi
         sleep 3
     done
-    HA_HTTPS=${HA_HTTPS:-} HA_NEW_CERTIFICATE=$([ "$certificate" != changed ] || echo 1) \
-        with_ca node scripts/ha-demo.mjs "$scheme://127.0.0.1:$port" "$state/demo.json"
+    # The test CA, when there is one, is trusted alongside the usual ones.
+    if [ -f "$state/ca.pem" ]; then
+        NODE_EXTRA_CA_CERTS=$state/ca.pem node scripts/ha-demo.mjs "$current" "$state/demo.json"
+    else
+        node scripts/ha-demo.mjs "$current" "$state/demo.json"
+    fi
 
-    if [ -n "${HA_LAN:-}" ]; then
-        scheme=http
-        [ -z "${HA_HTTPS:-}" ] || scheme=https
-        echo "On the network it is at $scheme://$(lan_ip):$port"
+    if [ -n "${HA_LAN:-}" ] && [ -z "$duckdns" ]; then
+        echo "On the network it is at ${HA_URL%%://*}://$(lan_ip):$port"
     fi
 }
 

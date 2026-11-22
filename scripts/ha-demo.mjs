@@ -356,12 +356,12 @@ async function dashboard(ha) {
 const CERTIFICATE = { ssl_certificate: '/ssl/memory-card-demo.pem', ssl_key: '/ssl/memory-card-demo.key' };
 
 /**
- * Serves HTTPS when HA_HTTPS is set and HTTP otherwise, through Home
- * Assistant's HTTP settings, and returns the URL it then answers on.
+ * Makes Home Assistant answer at HA_URL, serving HTTPS when that is an
+ * https URL, through its HTTP settings. Returns that URL.
  */
 async function httpSettings(ha, token) {
-  const https = Boolean(process.env.HA_HTTPS);
-  const url = base.replace(/^https?/, https ? 'https' : 'http');
+  const url = process.env.HA_URL ?? base;
+  const https = url.startsWith('https:');
   const { stable, pending } = await ha.call('http/config');
   const settings = { ...stable };
   for (const key of ['created_at', 'error', 'error_message', ...Object.keys(CERTIFICATE)]) delete settings[key];

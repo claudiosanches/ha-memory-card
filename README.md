@@ -106,6 +106,21 @@ over HTTP, the barcode scanner takes a photo. Over HTTPS it uses the live
 camera once the phone trusts the certificate: install `ca.pem` on it as a CA
 certificate, and remove it when you are done testing.
 
+`HA_DUCKDNS=<name> make ha-up` serves it at `https://<name>.duckdns.org:7123`
+with a Let's Encrypt certificate that phones and the Companion app trust as
+they are. It implies HTTPS and network access, and points the name at this
+machine's address on your network. Create the name on duckdns.org, then save
+its token where the script reads it (in zsh; bash takes
+`read -rsp 'DuckDNS token: ' token`):
+
+```sh
+(umask 077 && read -rs "token?DuckDNS token: " && print -r -- "$token" > .data/duckdns-token)
+```
+
+The certificate is kept in `target/haos-cert`, so rebuilding the VM does not
+ask Let's Encrypt for another one, and it renews when it has less than 30 days
+left. Your router has to let a public name resolve to a private address.
+
 To scan an NFC tag without one, fire a `tag_scanned` event with
 `{"tag_id": "any-id"}` under **Developer tools > Events**. The scan counts as
 the user who fires it.
