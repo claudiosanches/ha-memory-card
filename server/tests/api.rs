@@ -63,7 +63,10 @@ async fn responses_carry_security_headers() {
         let headers = response.headers();
         assert_eq!(headers["x-content-type-options"], "nosniff", "{path}");
         assert_eq!(headers["referrer-policy"], "no-referrer", "{path}");
-        assert!(headers.contains_key("permissions-policy"), "{path}");
+        assert_eq!(
+            headers["permissions-policy"], "camera=(self), geolocation=(), microphone=()",
+            "{path}"
+        );
         csp.push(
             headers
                 .get("content-security-policy")

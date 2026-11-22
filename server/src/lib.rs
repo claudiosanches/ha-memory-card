@@ -119,9 +119,10 @@ pub fn app(state: AppState) -> Router {
             header::REFERRER_POLICY,
             HeaderValue::from_static("no-referrer"),
         ))
+        // The barcode scanner reads the camera; nothing else may.
         .layer(SetResponseHeaderLayer::if_not_present(
             HeaderName::from_static("permissions-policy"),
-            HeaderValue::from_static("camera=(), geolocation=(), microphone=()"),
+            HeaderValue::from_static("camera=(self), geolocation=(), microphone=()"),
         ))
         .layer(TraceLayer::new_for_http())
         .with_state(state)

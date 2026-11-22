@@ -119,9 +119,11 @@ lists the games on it.
 
 ## Barcodes
 
-**Scan barcode** on the Library and Wishlist pages takes a photo of the
-barcode on a box. Memory Card reads it in the browser and first checks your
-copies, so in a shop you can see whether you already own a game. When no
+**Scan barcode** on the Library and Wishlist pages reads the barcode on a
+box. When you open Home Assistant over HTTPS, it reads the code live from the
+camera. Over plain HTTP, browsers keep the camera from web pages, so it takes
+a photo instead. Memory Card reads the code in the browser and first checks
+your copies, so in a shop you can see whether you already own a game. When no
 copy has the code, it asks [UPCitemdb](https://www.upcitemdb.com) for the
 product name, then lets you pick the game and add the copy with the barcode,
 platform and region filled in. UPCitemdb allows 100 lookups a day without an

@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GameDetail, Platform } from '../api/types';
 import en from '../locales/en.json';
 import { mockApi } from '../test/api';
@@ -8,6 +8,7 @@ import { renderAt } from '../test/render';
 vi.mock('./barcode', async (original) => ({
   ...(await original<typeof import('./barcode')>()),
   decodeBarcode: vi.fn(async () => '4902370536485'),
+  decodeVideoFrame: vi.fn(async () => '4902370536485'),
 }));
 
 const SWITCH: Platform = {
@@ -96,5 +97,50 @@ describe('Scanning a barcode', () => {
     const owned = await screen.findByTestId('scan-owned');
     expect(within(owned).getByRole('link', { name: 'Super Mario Odyssey' })).toBeInTheDocument();
     expect(owned).toHaveTextContent(`Nintendo Switch · ${en.region.jp}`);
+  });
+});
+
+describe('Scanning with the camera', () => {
+  const OWNED = {
+    barcode: '4902370536485',
+    copies: [{ copy_id: 3, game_id: 9, title: 'Super Mario Odyssey', platform_id: 1, region: 'jp', status: 'owned' }],
+    product: null,
+    lookup: 'in_collection',
+  };
+
+  function withCamera(getUserMedia: () => Promise<MediaStream>) {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: vi.fn(getUserMedia) }, configurable: true });
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  }
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'isSecureContext');
+    Reflect.deleteProperty(navigator, 'mediaDevices');
+    vi.restoreAllMocks();
+  });
+
+  it('reads the code from the camera and lets the camera go', async () => {
+    const stop = vi.fn();
+    withCamera(async () => ({ getTracks: () => [{ stop }] }) as unknown as MediaStream);
+    mockApi({ 'GET /api/games': [], 'GET /api/platforms': [SWITCH], 'GET /api/barcodes/4902370536485': OWNED });
+    renderAt('/');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.scan.button }));
+    expect(await screen.findByTestId('scan-owned')).toBeInTheDocument();
+    expect(stop).toHaveBeenCalled();
+  });
+
+  it('offers a photo or the digits when the camera is refused', async () => {
+    withCamera(async () => {
+      throw new DOMException('denied', 'NotAllowedError');
+    });
+    mockApi({ 'GET /api/games': [], 'GET /api/platforms': [SWITCH] });
+    renderAt('/');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.scan.button }));
+    expect(await screen.findByText(en.scan.noCamera)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: en.scan.photo })).toBeInTheDocument();
+    expect(screen.getByLabelText(en.scan.code)).toBeInTheDocument();
   });
 });

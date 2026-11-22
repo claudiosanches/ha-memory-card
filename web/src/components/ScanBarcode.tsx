@@ -1,7 +1,7 @@
 import { Alert, Anchor, Badge, Button, Group, Loader, Modal, Stack, Text, TextInput } from '@mantine/core';
 import { IconBarcode } from '@tabler/icons-react';
 import { Link } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
@@ -9,8 +9,10 @@ import { useCanManage, usePlatforms } from '../api/queries';
 import type { BarcodeLookup, CopyStatus } from '../api/types';
 import { CopyForm } from '../pages/game/forms';
 import { createGame, PickGameModal, type Target } from './PickGame';
+import classes from './ScanBarcode.module.css';
 
 type Step =
+  | { kind: 'live' }
   | { kind: 'reading' }
   | { kind: 'code'; code: string; error?: string }
   | { kind: 'result'; lookup: BarcodeLookup }
@@ -18,7 +20,13 @@ type Step =
   | { kind: 'copy'; lookup: BarcodeLookup; target: Target }
   | null;
 
-/** Scans a box's barcode from a photo, says whether you own it, and adds the copy when you do not. */
+/** The camera needs a secure context: HTTPS, or the machine itself. */
+const cameraAvailable = () => window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+
+/**
+ * Scans a box's barcode with the camera, or from a photo where the camera is
+ * not available, says whether you own it, and adds the copy when you do not.
+ */
 export function ScanBarcodeButton({ status }: { status: CopyStatus }) {
   const { t } = useTranslation();
   const input = useRef<HTMLInputElement>(null);
@@ -53,7 +61,11 @@ export function ScanBarcodeButton({ status }: { status: CopyStatus }) {
 
   return (
     <>
-      <Button variant="default" leftSection={<IconBarcode size={16} />} onClick={() => input.current?.click()}>
+      <Button
+        variant="default"
+        leftSection={<IconBarcode size={16} />}
+        onClick={() => (cameraAvailable() ? setStep({ kind: 'live' }) : input.current?.click())}
+      >
         {t('scan.button')}
       </Button>
       <input
@@ -71,13 +83,32 @@ export function ScanBarcodeButton({ status }: { status: CopyStatus }) {
       />
       {step && step.kind !== 'pick' && step.kind !== 'copy' && (
         <Modal opened onClose={close} title={t('scan.title')} centered>
-          {step.kind === 'reading' ? (
+          {step.kind === 'live' ? (
+            <LiveScan
+              onCode={(code) => {
+                setStep({ kind: 'reading' });
+                void lookUp(code);
+              }}
+              onPhoto={() => {
+                close();
+                input.current?.click();
+              }}
+              onType={() => setStep({ kind: 'code', code: '' })}
+              onUnavailable={() => setStep({ kind: 'code', code: '', error: t('scan.noCamera') })}
+            />
+          ) : step.kind === 'reading' ? (
             <Group gap="sm">
               <Loader size="sm" />
               <Text size="sm">{t('scan.reading')}</Text>
             </Group>
           ) : step.kind === 'code' ? (
-            <CodeEntry step={step} busy={busy} onSubmit={lookUp} onRetry={() => input.current?.click()} />
+            <CodeEntry
+              step={step}
+              busy={busy}
+              retry={step.error === t('scan.notFound') ? t('scan.again') : t('scan.photo')}
+              onSubmit={lookUp}
+              onRetry={() => input.current?.click()}
+            />
           ) : (
             <Result
               lookup={step.lookup}
@@ -101,14 +132,84 @@ export function ScanBarcodeButton({ status }: { status: CopyStatus }) {
   );
 }
 
+/** The camera's picture, read for a barcode until one turns up. */
+function LiveScan({
+  onCode,
+  onPhoto,
+  onType,
+  onUnavailable,
+}: {
+  onCode: (code: string) => void;
+  onPhoto: () => void;
+  onType: () => void;
+  onUnavailable: () => void;
+}) {
+  const { t } = useTranslation();
+  const video = useRef<HTMLVideoElement>(null);
+  const found = useEffectEvent(onCode);
+  const unavailable = useEffectEvent(onUnavailable);
+
+  useEffect(() => {
+    let stopped = false;
+    let stream: MediaStream | undefined;
+    let timer: number | undefined;
+    void (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } },
+          audio: false,
+        });
+        const element = video.current;
+        if (stopped || !element) return;
+        element.srcObject = stream;
+        await element.play();
+        const { decodeVideoFrame } = await import('./barcode');
+        const scan = async () => {
+          const code = await decodeVideoFrame(element).catch(() => null);
+          if (stopped) return;
+          if (code) found(code);
+          else timer = window.setTimeout(() => void scan(), 150);
+        };
+        await scan();
+      } catch {
+        if (!stopped) unavailable();
+      }
+    })();
+    return () => {
+      stopped = true;
+      window.clearTimeout(timer);
+      for (const track of stream?.getTracks() ?? []) track.stop();
+    };
+  }, []);
+
+  return (
+    <Stack>
+      <video ref={video} className={classes.video} muted playsInline data-testid="scan-video" />
+      <Text size="sm" c="dimmed">
+        {t('scan.aim')}
+      </Text>
+      <Group justify="flex-end">
+        <Button variant="default" onClick={onType}>
+          {t('scan.type')}
+        </Button>
+        <Button variant="default" onClick={onPhoto}>
+          {t('scan.photo')}
+        </Button>
+      </Group>
+    </Stack>
+  );
+}
+
 function CodeEntry({
   step,
   busy,
+  retry,
   onSubmit,
   onRetry,
 }: {
   step: { code: string; error?: string };
   busy: boolean;
+  retry: string;
   onSubmit: (code: string) => void;
   onRetry: () => void;
 }) {
@@ -132,7 +233,7 @@ function CodeEntry({
         />
         <Group justify="flex-end">
           <Button variant="default" onClick={onRetry}>
-            {t('scan.again')}
+            {retry}
           </Button>
           <Button type="submit" loading={busy}>
             {t('scan.lookUp')}

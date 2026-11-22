@@ -11,9 +11,28 @@ prepareZXingModule({
 
 /** The first UPC or EAN found in a photo, or null. */
 export async function decodeBarcode(image: Blob): Promise<string | null> {
+  return decode(image, true);
+}
+
+let frame: HTMLCanvasElement | undefined;
+
+/** The UPC or EAN in the camera's current frame, or null. Quick, since it runs several times a second. */
+export async function decodeVideoFrame(video: HTMLVideoElement): Promise<string | null> {
+  if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !video.videoWidth) return null;
+  const scale = Math.min(1, 1280 / video.videoWidth);
+  frame ??= document.createElement('canvas');
+  frame.width = Math.round(video.videoWidth * scale);
+  frame.height = Math.round(video.videoHeight * scale);
+  const context = frame.getContext('2d', { willReadFrequently: true });
+  if (!context) return null;
+  context.drawImage(video, 0, 0, frame.width, frame.height);
+  return decode(context.getImageData(0, 0, frame.width, frame.height), false);
+}
+
+async function decode(image: Blob | ImageData, tryHarder: boolean): Promise<string | null> {
   const results = await readBarcodes(image, {
     formats: ['EAN13', 'EAN8', 'UPCA', 'UPCE'],
-    tryHarder: true,
+    tryHarder,
     maxNumberOfSymbols: 1,
   });
   return results.find((result) => result.isValid)?.text ?? null;
