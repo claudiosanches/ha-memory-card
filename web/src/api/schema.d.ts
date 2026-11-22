@@ -783,6 +783,11 @@ export interface components {
          * @enum {string}
          */
         Condition: "sealed" | "cib" | "no_manual" | "loose";
+        ConditionCount: {
+            condition?: components["schemas"]["Condition"] | null;
+            /** Format: int64 */
+            copies: number;
+        };
         ContentInput: {
             /** Format: int64 */
             game_id: number;
@@ -908,6 +913,13 @@ export interface components {
         CopyTag: {
             created_at: string;
             tag_id: string;
+        };
+        DayPlay: {
+            day: string;
+            /** Format: int64 */
+            minutes: number;
+            /** Format: int64 */
+            sessions: number;
         };
         Device: {
             active: boolean;
@@ -1165,13 +1177,6 @@ export interface components {
          * @enum {string}
          */
         MissingField: "play_status" | "cover" | "game_modes" | "players" | "copies" | "device" | "store" | "condition" | "igdb";
-        MonthPlay: {
-            /** Format: int64 */
-            minutes: number;
-            month: string;
-            /** Format: int64 */
-            sessions: number;
-        };
         NewDeviceReport: {
             kind: components["schemas"]["DeviceKind"];
             name: string;
@@ -1181,6 +1186,11 @@ export interface components {
             /** @description A play status key. */
             play_status?: string | null;
             title: string;
+        };
+        PeriodCount: {
+            /** Format: int64 */
+            copies: number;
+            period: string;
         };
         /** @description Who added or last changed something. */
         Person: {
@@ -1249,7 +1259,11 @@ export interface components {
             /** Format: int64 */
             copies: number;
             /** Format: int64 */
+            digital: number;
+            /** Format: int64 */
             games: number;
+            /** Format: int64 */
+            physical: number;
             /** Format: int64 */
             platform_id: number;
         };
@@ -1316,6 +1330,11 @@ export interface components {
          * @enum {string}
          */
         Region: "na" | "eu" | "au" | "nz" | "jp" | "cn" | "asia" | "kr" | "br" | "ww";
+        RegionCount: {
+            /** Format: int64 */
+            copies: number;
+            region: components["schemas"]["Region"];
+        };
         ReleaseDetail: {
             copies: components["schemas"]["CopyDetail"][];
             /** @description This release's own cover, relative to the covers URL. The game's cover applies when null. */
@@ -1395,6 +1414,15 @@ export interface components {
             played_on: string;
         };
         Stats: {
+            /**
+             * @description Copies added in the last 12 months, by `YYYY-MM` of the purchase date
+             *     or, without one, the day the copy was added. Empty months are left out.
+             */
+            added_by_month: components["schemas"]["PeriodCount"][];
+            /** @description The same, by `YYYY`, for every year. */
+            added_by_year: components["schemas"]["PeriodCount"][];
+            /** @description Physical copies only, largest first; `None` is not set. */
+            conditions: components["schemas"]["ConditionCount"][];
             /** Format: int64 */
             copies: number;
             /** Format: int64 */
@@ -1408,14 +1436,18 @@ export interface components {
             games: number;
             /** @description By session count, then minutes. */
             most_played: components["schemas"]["PlayedGame"][];
+            /** @description The copies worth the most, up to five per currency, largest first. */
+            most_valuable: components["schemas"]["ValuableCopy"][];
             /** Format: int64 */
             physical: number;
             /** @description In platform list order. */
             platforms: components["schemas"]["PlatformTotal"][];
+            /** @description Play in the last 53 weeks, by `YYYY-MM-DD`; days without play are left out. */
+            play_days: components["schemas"]["DayPlay"][];
             /** @description Owned games per play status, in play status order; `None` is not set. */
             play_statuses: components["schemas"]["StatusCount"][];
-            /** @description Sessions in the last 12 months, by `YYYY-MM`; months without play are left out. */
-            sessions_by_month: components["schemas"]["MonthPlay"][];
+            /** @description Largest first. */
+            regions: components["schemas"]["RegionCount"][];
             /** @description What owned copies cost, per currency, largest first. */
             spent: components["schemas"]["Amount"][];
             /** @description By the year of the purchase date; copies without one are left out. */
@@ -1436,6 +1468,11 @@ export interface components {
              * @description Owned copies without an estimated value.
              */
             unvalued: number;
+            /**
+             * @description Copies priced and valued in the same currency: what they cost against
+             *     what they are worth now.
+             */
+            value_change: components["schemas"]["ValueChange"][];
             /**
              * Format: int64
              * @description Wanted copies.
@@ -1557,6 +1594,28 @@ export interface components {
             id: string;
             /** @description Display only. */
             name?: string | null;
+        };
+        ValuableCopy: {
+            /** Format: int64 */
+            copy_id: number;
+            currency: string;
+            estimated: string;
+            /** Format: int64 */
+            game_id: number;
+            /** @description What it cost, when priced in the same currency. */
+            paid?: string | null;
+            /** Format: int64 */
+            platform_id: number;
+            title: string;
+        };
+        ValueChange: {
+            /** @description Estimated minus paid; negative when the copies are worth less. */
+            change: string;
+            /** Format: int64 */
+            copies: number;
+            currency: string;
+            estimated: string;
+            paid: string;
         };
         /** @enum {string} */
         VersionRelation: "remaster" | "remake" | "port" | "original" | "main_version" | "edition";

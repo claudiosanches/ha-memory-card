@@ -1,0 +1,93 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT copy_id AS \"copy_id!\", game_id AS \"game_id!\", title AS \"title!\",\n                  platform_id AS \"platform_id!\", currency AS \"currency!\",\n                  estimated AS \"estimated!: i64\", paid AS \"paid?: i64\"\n           FROM (\n               SELECT c.id AS copy_id, g.id AS game_id, g.title, r.platform_id,\n                      c.estimated_currency AS currency, c.estimated_value AS estimated,\n                      CASE WHEN c.currency = c.estimated_currency THEN c.price END AS paid,\n                      ROW_NUMBER() OVER (PARTITION BY c.estimated_currency\n                                         ORDER BY c.estimated_value DESC, g.sort_title) AS rank\n               FROM copies c\n               JOIN releases r ON r.id = c.release_id\n               JOIN games g ON g.id = r.game_id\n               WHERE c.status = 'owned' AND c.estimated_value IS NOT NULL\n                 AND c.estimated_currency IS NOT NULL\n           )\n           WHERE rank <= ?\n           ORDER BY currency, rank",
+  "describe": {
+    "columns": [
+      {
+        "name": "copy_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "game_id!",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title!",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "platform_id!",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "platform_id"
+          }
+        }
+      },
+      {
+        "name": "currency!",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "estimated_currency"
+          }
+        }
+      },
+      {
+        "name": "estimated!: i64",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "estimated_value"
+          }
+        }
+      },
+      {
+        "name": "paid?: i64",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "0773f510d43d88a6f74fa6d48f4c4f84f934dd41a48d45f19925c2b40cc0b101"
+}

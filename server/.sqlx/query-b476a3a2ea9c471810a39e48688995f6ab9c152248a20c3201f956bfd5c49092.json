@@ -1,0 +1,28 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT substr(COALESCE(purchased_on, created_at), 1, 4) AS \"period!: String\",\n                  COUNT(*) AS \"copies!: i64\"\n           FROM copies\n           WHERE status = 'owned' AND bundle_id IS NULL\n           GROUP BY 1 ORDER BY 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "period!: String",
+        "ordinal": 0,
+        "type_info": "Null",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "b476a3a2ea9c471810a39e48688995f6ab9c152248a20c3201f956bfd5c49092"
+}

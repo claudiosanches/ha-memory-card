@@ -5,10 +5,13 @@ use serde::Serialize;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
+use crate::domain::{Condition, Region};
 use crate::money;
 
 /// Played games listed under most played.
 const MOST_PLAYED: i64 = 10;
+/// Copies listed under most valuable, per currency.
+const MOST_VALUABLE: i64 = 5;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Stats {
@@ -37,8 +40,22 @@ pub struct Stats {
     pub platforms: Vec<PlatformTotal>,
     /// Largest first; `None` is copies with no store.
     pub stores: Vec<StoreCount>,
-    /// Sessions in the last 12 months, by `YYYY-MM`; months without play are left out.
-    pub sessions_by_month: Vec<MonthPlay>,
+    /// Largest first.
+    pub regions: Vec<RegionCount>,
+    /// Physical copies only, largest first; `None` is not set.
+    pub conditions: Vec<ConditionCount>,
+    /// Copies added in the last 12 months, by `YYYY-MM` of the purchase date
+    /// or, without one, the day the copy was added. Empty months are left out.
+    pub added_by_month: Vec<PeriodCount>,
+    /// The same, by `YYYY`, for every year.
+    pub added_by_year: Vec<PeriodCount>,
+    /// Copies priced and valued in the same currency: what they cost against
+    /// what they are worth now.
+    pub value_change: Vec<ValueChange>,
+    /// The copies worth the most, up to five per currency, largest first.
+    pub most_valuable: Vec<ValuableCopy>,
+    /// Play in the last 53 weeks, by `YYYY-MM-DD`; days without play are left out.
+    pub play_days: Vec<DayPlay>,
     pub total_sessions: i64,
     pub total_minutes: i64,
     /// By session count, then minutes.
@@ -72,6 +89,8 @@ pub struct PlatformTotal {
     pub platform_id: i64,
     pub games: i64,
     pub copies: i64,
+    pub physical: i64,
+    pub digital: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -81,8 +100,48 @@ pub struct StoreCount {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct MonthPlay {
-    pub month: String,
+pub struct RegionCount {
+    pub region: Region,
+    pub copies: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ConditionCount {
+    pub condition: Option<Condition>,
+    pub copies: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PeriodCount {
+    pub period: String,
+    pub copies: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ValueChange {
+    pub currency: String,
+    pub paid: String,
+    pub estimated: String,
+    /// Estimated minus paid; negative when the copies are worth less.
+    pub change: String,
+    pub copies: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ValuableCopy {
+    pub copy_id: i64,
+    pub game_id: i64,
+    pub title: String,
+    pub platform_id: i64,
+    pub currency: String,
+    pub estimated: String,
+    /// What it cost, when priced in the same currency.
+    pub paid: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DayPlay {
+    pub day: String,
     pub sessions: i64,
     pub minutes: i64,
 }
@@ -188,7 +247,9 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
     let platforms = sqlx::query_as!(
         PlatformTotal,
         r#"SELECT r.platform_id AS "platform_id!", COUNT(DISTINCT r.game_id) AS "games!: i64",
-                  COUNT(*) AS "copies!: i64"
+                  COUNT(*) AS "copies!: i64",
+                  COUNT(*) FILTER (WHERE c.format = 'physical') AS "physical!: i64",
+                  COUNT(*) FILTER (WHERE c.format = 'digital') AS "digital!: i64"
            FROM copies c JOIN releases r ON r.id = c.release_id
            JOIN platforms p ON p.id = r.platform_id
            WHERE c.status = 'owned' AND c.bundle_id IS NULL
@@ -208,13 +269,113 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
     .fetch_all(pool)
     .await?;
 
-    let sessions_by_month = sqlx::query_as!(
-        MonthPlay,
-        r#"SELECT substr(played_on, 1, 7) AS "month!: String", COUNT(*) AS "sessions!: i64",
+    let regions = sqlx::query_as!(
+        RegionCount,
+        r#"SELECT r.region AS "region!: Region", COUNT(*) AS "copies!: i64"
+           FROM copies c JOIN releases r ON r.id = c.release_id
+           WHERE c.status = 'owned' AND c.bundle_id IS NULL
+           GROUP BY r.region
+           ORDER BY COUNT(*) DESC, r.region"#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let conditions = sqlx::query_as!(
+        ConditionCount,
+        r#"SELECT condition AS "condition?: Condition", COUNT(*) AS "copies!: i64"
+           FROM copies
+           WHERE status = 'owned' AND format = 'physical' AND bundle_id IS NULL
+           GROUP BY condition
+           ORDER BY COUNT(*) DESC, condition IS NULL, condition"#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let added_by_month = sqlx::query_as!(
+        PeriodCount,
+        r#"SELECT substr(COALESCE(purchased_on, created_at), 1, 7) AS "period!: String",
+                  COUNT(*) AS "copies!: i64"
+           FROM copies
+           WHERE status = 'owned' AND bundle_id IS NULL
+             AND COALESCE(purchased_on, created_at) >= date('now', 'start of month', '-11 months')
+           GROUP BY 1 ORDER BY 1"#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let added_by_year = sqlx::query_as!(
+        PeriodCount,
+        r#"SELECT substr(COALESCE(purchased_on, created_at), 1, 4) AS "period!: String",
+                  COUNT(*) AS "copies!: i64"
+           FROM copies
+           WHERE status = 'owned' AND bundle_id IS NULL
+           GROUP BY 1 ORDER BY 1"#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let value_change = sqlx::query!(
+        r#"SELECT currency AS "currency!", SUM(price) AS "paid!: i64",
+                  SUM(estimated_value) AS "estimated!: i64", COUNT(*) AS "copies!: i64"
+           FROM copies
+           WHERE status = 'owned' AND price IS NOT NULL AND estimated_value IS NOT NULL
+             AND currency = estimated_currency
+           GROUP BY currency
+           ORDER BY COUNT(*) DESC, currency"#
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|row| ValueChange {
+        paid: money::format(row.paid, &row.currency),
+        estimated: money::format(row.estimated, &row.currency),
+        change: money::format(row.estimated - row.paid, &row.currency),
+        currency: row.currency,
+        copies: row.copies,
+    })
+    .collect();
+
+    let most_valuable = sqlx::query!(
+        r#"SELECT copy_id AS "copy_id!", game_id AS "game_id!", title AS "title!",
+                  platform_id AS "platform_id!", currency AS "currency!",
+                  estimated AS "estimated!: i64", paid AS "paid?: i64"
+           FROM (
+               SELECT c.id AS copy_id, g.id AS game_id, g.title, r.platform_id,
+                      c.estimated_currency AS currency, c.estimated_value AS estimated,
+                      CASE WHEN c.currency = c.estimated_currency THEN c.price END AS paid,
+                      ROW_NUMBER() OVER (PARTITION BY c.estimated_currency
+                                         ORDER BY c.estimated_value DESC, g.sort_title) AS rank
+               FROM copies c
+               JOIN releases r ON r.id = c.release_id
+               JOIN games g ON g.id = r.game_id
+               WHERE c.status = 'owned' AND c.estimated_value IS NOT NULL
+                 AND c.estimated_currency IS NOT NULL
+           )
+           WHERE rank <= ?
+           ORDER BY currency, rank"#,
+        MOST_VALUABLE
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|row| ValuableCopy {
+        estimated: money::format(row.estimated, &row.currency),
+        paid: row.paid.map(|minor| money::format(minor, &row.currency)),
+        copy_id: row.copy_id,
+        game_id: row.game_id,
+        title: row.title,
+        platform_id: row.platform_id,
+        currency: row.currency,
+    })
+    .collect();
+
+    let play_days = sqlx::query_as!(
+        DayPlay,
+        r#"SELECT played_on AS "day!: String", COUNT(*) AS "sessions!: i64",
                   COALESCE(SUM(minutes), 0) AS "minutes!: i64"
            FROM play_sessions
-           WHERE played_on >= date('now', 'start of month', '-11 months')
-           GROUP BY 1 ORDER BY 1"#
+           WHERE played_on >= date('now', '-371 days')
+           GROUP BY played_on ORDER BY played_on"#
     )
     .fetch_all(pool)
     .await?;
@@ -254,7 +415,13 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
         play_statuses,
         platforms,
         stores,
-        sessions_by_month,
+        regions,
+        conditions,
+        added_by_month,
+        added_by_year,
+        value_change,
+        most_valuable,
+        play_days,
         total_sessions: play.sessions,
         total_minutes: play.minutes,
         most_played,

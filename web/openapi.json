@@ -3295,6 +3295,28 @@
           "loose"
         ]
       },
+      "ConditionCount": {
+        "type": "object",
+        "required": [
+          "copies"
+        ],
+        "properties": {
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "ContentInput": {
         "type": "object",
         "required": [
@@ -3788,6 +3810,27 @@
           },
           "tag_id": {
             "type": "string"
+          }
+        }
+      },
+      "DayPlay": {
+        "type": "object",
+        "required": [
+          "day",
+          "sessions",
+          "minutes"
+        ],
+        "properties": {
+          "day": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -4738,27 +4781,6 @@
           "igdb"
         ]
       },
-      "MonthPlay": {
-        "type": "object",
-        "required": [
-          "month",
-          "sessions",
-          "minutes"
-        ],
-        "properties": {
-          "minutes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "month": {
-            "type": "string"
-          },
-          "sessions": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "NewDeviceReport": {
         "type": "object",
         "required": [
@@ -4795,6 +4817,22 @@
             "description": "A play status key."
           },
           "title": {
+            "type": "string"
+          }
+        }
+      },
+      "PeriodCount": {
+        "type": "object",
+        "required": [
+          "period",
+          "copies"
+        ],
+        "properties": {
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "period": {
             "type": "string"
           }
         }
@@ -4992,14 +5030,24 @@
         "required": [
           "platform_id",
           "games",
-          "copies"
+          "copies",
+          "physical",
+          "digital"
         ],
         "properties": {
           "copies": {
             "type": "integer",
             "format": "int64"
           },
+          "digital": {
+            "type": "integer",
+            "format": "int64"
+          },
           "games": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "physical": {
             "type": "integer",
             "format": "int64"
           },
@@ -5206,6 +5254,22 @@
           "br",
           "ww"
         ]
+      },
+      "RegionCount": {
+        "type": "object",
+        "required": [
+          "region",
+          "copies"
+        ],
+        "properties": {
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          }
+        }
       },
       "ReleaseDetail": {
         "type": "object",
@@ -5513,12 +5577,39 @@
           "play_statuses",
           "platforms",
           "stores",
-          "sessions_by_month",
+          "regions",
+          "conditions",
+          "added_by_month",
+          "added_by_year",
+          "value_change",
+          "most_valuable",
+          "play_days",
           "total_sessions",
           "total_minutes",
           "most_played"
         ],
         "properties": {
+          "added_by_month": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PeriodCount"
+            },
+            "description": "Copies added in the last 12 months, by `YYYY-MM` of the purchase date\nor, without one, the day the copy was added. Empty months are left out."
+          },
+          "added_by_year": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PeriodCount"
+            },
+            "description": "The same, by `YYYY`, for every year."
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionCount"
+            },
+            "description": "Physical copies only, largest first; `None` is not set."
+          },
           "copies": {
             "type": "integer",
             "format": "int64"
@@ -5546,6 +5637,13 @@
             },
             "description": "By session count, then minutes."
           },
+          "most_valuable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValuableCopy"
+            },
+            "description": "The copies worth the most, up to five per currency, largest first."
+          },
           "physical": {
             "type": "integer",
             "format": "int64"
@@ -5557,6 +5655,13 @@
             },
             "description": "In platform list order."
           },
+          "play_days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayPlay"
+            },
+            "description": "Play in the last 53 weeks, by `YYYY-MM-DD`; days without play are left out."
+          },
           "play_statuses": {
             "type": "array",
             "items": {
@@ -5564,12 +5669,12 @@
             },
             "description": "Owned games per play status, in play status order; `None` is not set."
           },
-          "sessions_by_month": {
+          "regions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MonthPlay"
+              "$ref": "#/components/schemas/RegionCount"
             },
-            "description": "Sessions in the last 12 months, by `YYYY-MM`; months without play are left out."
+            "description": "Largest first."
           },
           "spent": {
             "type": "array",
@@ -5609,6 +5714,13 @@
             "type": "integer",
             "format": "int64",
             "description": "Owned copies without an estimated value."
+          },
+          "value_change": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueChange"
+            },
+            "description": "Copies priced and valued in the same currency: what they cost against\nwhat they are worth now."
           },
           "wishlist": {
             "type": "integer",
@@ -5989,6 +6101,76 @@
               "null"
             ],
             "description": "Display only."
+          }
+        }
+      },
+      "ValuableCopy": {
+        "type": "object",
+        "required": [
+          "copy_id",
+          "game_id",
+          "title",
+          "platform_id",
+          "currency",
+          "estimated"
+        ],
+        "properties": {
+          "copy_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "estimated": {
+            "type": "string"
+          },
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paid": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it cost, when priced in the same currency."
+          },
+          "platform_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "ValueChange": {
+        "type": "object",
+        "required": [
+          "currency",
+          "paid",
+          "estimated",
+          "change",
+          "copies"
+        ],
+        "properties": {
+          "change": {
+            "type": "string",
+            "description": "Estimated minus paid; negative when the copies are worth less."
+          },
+          "copies": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "estimated": {
+            "type": "string"
+          },
+          "paid": {
+            "type": "string"
           }
         }
       },

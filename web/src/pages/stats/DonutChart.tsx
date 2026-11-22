@@ -1,9 +1,12 @@
 import { Text, Tooltip } from '@mantine/core';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { LibrarySearch } from '../library/search';
 import classes from './DonutChart.module.css';
+import { Legend, shareFormat } from './Legend';
 
-export type Slice = { key: string; label: string; value: number };
+export type Slice = { key: string; label: string; value: number; search?: LibrarySearch };
 
 /** Past this many parts the smallest fold into one "Other" slice. */
 const MAX_SLICES = 6;
@@ -48,10 +51,11 @@ export function DonutChart({
   empty: string;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [active, setActive] = useState<string | null>(null);
 
   const sorted = slices.filter((s) => s.value > 0).sort((a, b) => b.value - a.value);
-  const parts =
+  const parts: Slice[] =
     sorted.length > MAX_SLICES
       ? [
           ...sorted.slice(0, MAX_SLICES - 1),
@@ -65,14 +69,32 @@ export function DonutChart({
   const total = parts.reduce((sum, s) => sum + s.value, 0);
   if (total === 0) return <Text size="sm" c="dimmed">{empty}</Text>;
 
-  const percent = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
-  const share = (value: number) => (value / total < 0.005 ? `<${percent.format(0.01)}` : percent.format(value / total));
+  const share = shareFormat(locale, total);
   const color = (key: string, index: number) => `var(--series-${key === 'other' ? 'other' : index + 1})`;
   const shown = parts.reduce<(Slice & { start: number; end: number; color: string })[]>((list, part, index) => {
     const start = list.at(-1)?.end ?? 0;
     return [...list, { ...part, start, end: start + (part.value / total) * 2 * Math.PI, color: color(part.key, index) }];
   }, []);
   const current = shown.find((s) => s.key === active);
+  const open = (slice: Slice) => {
+    if (slice.search) void navigate({ to: '/', search: slice.search });
+  };
+
+  const legend = (
+    <Legend
+      rows={shown.map((s) => ({
+        key: s.key,
+        label: s.label,
+        color: s.color,
+        figure: `${figure(s.value)}${t('common.separator')}${share(s.value)}`,
+        search: s.search,
+      }))}
+      active={active}
+      onActive={setActive}
+    />
+  );
+  // A ring with one part says nothing its legend row does not.
+  if (shown.length === 1) return legend;
 
   return (
     <div className={classes.chart}>
@@ -87,48 +109,21 @@ export function DonutChart({
           data-active={current ? '' : undefined}
           onMouseLeave={() => setActive(null)}
         >
-          {shown.length === 1 ? (
-            <circle
+          {shown.map((s) => (
+            <path
+              key={s.key}
               className={classes.slice}
-              r={(1 + INNER) / 2}
-              fill="none"
-              stroke={shown[0]!.color}
-              strokeWidth={1 - INNER}
-              onMouseEnter={() => setActive(shown[0]!.key)}
+              d={arc(s.start, s.end)}
+              style={{ fill: s.color }}
+              data-active={s.key === active ? '' : undefined}
+              data-link={s.search ? '' : undefined}
+              onMouseEnter={() => setActive(s.key)}
+              onClick={() => open(s)}
             />
-          ) : (
-            shown.map((s) => (
-              <path
-                key={s.key}
-                className={classes.slice}
-                d={arc(s.start, s.end)}
-                style={{ fill: s.color }}
-                data-active={s.key === active ? '' : undefined}
-                onMouseEnter={() => setActive(s.key)}
-              />
-            ))
-          )}
+          ))}
         </svg>
       </Tooltip.Floating>
-      <ul className={classes.legend}>
-        {shown.map((s) => (
-          <li
-            key={s.key}
-            className={classes.row}
-            data-active={s.key === active ? '' : undefined}
-            onMouseEnter={() => setActive(s.key)}
-            onMouseLeave={() => setActive(null)}
-          >
-            <span className={classes.swatch} style={{ background: s.color }} aria-hidden />
-            <span className={classes.label}>{s.label}</span>
-            <span className={classes.figure}>
-              {figure(s.value)}
-              {t('common.separator')}
-              {share(s.value)}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div className={classes.legend}>{legend}</div>
     </div>
   );
 }

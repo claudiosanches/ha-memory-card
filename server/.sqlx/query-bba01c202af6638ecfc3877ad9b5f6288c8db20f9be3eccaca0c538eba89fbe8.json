@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT condition AS \"condition?: Condition\", COUNT(*) AS \"copies!: i64\"\n           FROM copies\n           WHERE status = 'owned' AND format = 'physical' AND bundle_id IS NULL\n           GROUP BY condition\n           ORDER BY COUNT(*) DESC, condition IS NULL, condition",
+  "describe": {
+    "columns": [
+      {
+        "name": "condition?: Condition",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "condition"
+          }
+        }
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "bba01c202af6638ecfc3877ad9b5f6288c8db20f9be3eccaca0c538eba89fbe8"
+}

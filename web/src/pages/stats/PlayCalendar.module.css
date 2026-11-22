@@ -1,0 +1,16 @@
+.calendar { display: grid; gap: 12px; min-width: 0; }
+.scroller { overflow-x: auto; padding-bottom: 4px; }
+.grid { display: grid; grid-template-columns: auto repeat(53, 12px); grid-auto-rows: 12px; gap: 3px; width: max-content; }
+.month { font-size: .6875rem; line-height: 12px; color: var(--mc-muted); white-space: nowrap; overflow: visible; }
+.weekday { padding-right: 6px; font-size: .6875rem; line-height: 12px; color: var(--mc-muted); }
+.cell { display: block; width: 12px; height: 12px; border-radius: 3px; background: color-mix(in srgb, var(--mc-border) 50%, transparent); }
+.cell[data-level='1'] { background: var(--mantine-primary-color-3); }
+.cell[data-level='2'] { background: var(--mantine-primary-color-5); }
+.cell[data-level='3'] { background: var(--mantine-primary-color-7); }
+.cell[data-level='4'] { background: var(--mantine-primary-color-9); }
+.scale { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: .75rem; color: var(--mc-muted); }
+
+:global([data-mantine-color-scheme='dark']) .cell[data-level='1'] { background: var(--mantine-primary-color-7); }
+:global([data-mantine-color-scheme='dark']) .cell[data-level='2'] { background: var(--mantine-primary-color-5); }
+:global([data-mantine-color-scheme='dark']) .cell[data-level='3'] { background: var(--mantine-primary-color-3); }
+:global([data-mantine-color-scheme='dark']) .cell[data-level='4'] { background: var(--mantine-primary-color-1); }

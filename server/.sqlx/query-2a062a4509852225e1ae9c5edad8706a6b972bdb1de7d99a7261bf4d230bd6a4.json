@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT r.region AS \"region!: Region\", COUNT(*) AS \"copies!: i64\"\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           WHERE c.status = 'owned' AND c.bundle_id IS NULL\n           GROUP BY r.region\n           ORDER BY COUNT(*) DESC, r.region",
+  "describe": {
+    "columns": [
+      {
+        "name": "region!: Region",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "region"
+          }
+        }
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "2a062a4509852225e1ae9c5edad8706a6b972bdb1de7d99a7261bf4d230bd6a4"
+}
