@@ -52,6 +52,8 @@ pub struct AppState {
     pub tag_status: Arc<Mutex<TagsStatus>>,
     /// The copy waiting for the next tag scan.
     pub tag_link: Arc<Mutex<Option<PendingLink>>>,
+    /// For Home Assistant, the Supervisor and the barcode database.
+    pub http: reqwest::Client,
 }
 
 impl AppState {
@@ -71,6 +73,7 @@ impl AppState {
             sensors: Arc::new(Mutex::new(sensors)),
             tag_status: Arc::new(Mutex::new(tags)),
             tag_link: Arc::default(),
+            http: http::shared(),
         }
     }
 }

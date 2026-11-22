@@ -46,7 +46,7 @@ The server reads these variables; `make run` sets the first four and
 | Variable | Default | Purpose |
 |---|---|---|
 | `MEMORY_CARD_DATA_DIR` | `/data` | Database, covers, `options.json` |
-| `MEMORY_CARD_TMP_DIR` | `/tmp/memory-card` | Temporary files, cleared at startup |
+| `MEMORY_CARD_TMP_DIR` | `tmp` in the data dir | Temporary files, cleared at startup |
 | `MEMORY_CARD_LISTEN` | `0.0.0.0:8099` | Listen address |
 | `MEMORY_CARD_TRUSTED_PEER` | `172.30.32.2` | Comma-separated peers allowed to connect |
 | `MEMORY_CARD_LOG_LEVEL` | from `options.json` | Overrides `log_level` |

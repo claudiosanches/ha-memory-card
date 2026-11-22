@@ -45,7 +45,7 @@ struct SelfInfo {
 }
 
 /// `Ok(None)` outside Home Assistant, or when no broker app provides MQTT.
-pub async fn find(config: &Config) -> Result<Option<Broker>, BrokerError> {
+pub async fn find(config: &Config, http: &reqwest::Client) -> Result<Option<Broker>, BrokerError> {
     if let Some(mqtt) = &config.mqtt {
         return Ok(Some(Broker {
             mqtt: mqtt.clone(),
@@ -55,9 +55,9 @@ pub async fn find(config: &Config) -> Result<Option<Broker>, BrokerError> {
     let Some(token) = &config.supervisor_token else {
         return Ok(None);
     };
-    let http = crate::http::client(TIMEOUT);
     let get = |path: &str| {
         http.get(format!("{}{path}", config.supervisor_url))
+            .timeout(TIMEOUT)
             .bearer_auth(token.expose())
     };
 

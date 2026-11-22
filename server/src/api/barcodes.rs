@@ -78,7 +78,7 @@ pub async fn look_up(
     } else if !state.config.external_services {
         (None, LookupOutcome::Offline)
     } else {
-        match barcodes::lookup(&state.config.barcode_url, &barcode).await {
+        match barcodes::lookup(&state.http, &state.config.barcode_url, &barcode).await {
             Ok(Some(product)) => (Some(product), LookupOutcome::Found),
             Ok(None) => (None, LookupOutcome::NotFound),
             Err(err) => {

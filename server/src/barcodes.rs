@@ -36,10 +36,15 @@ struct Item {
 }
 
 /// `None` when the database does not know the code.
-pub async fn lookup(url: &str, code: &str) -> Result<Option<Product>, LookupError> {
+pub async fn lookup(
+    http: &reqwest::Client,
+    url: &str,
+    code: &str,
+) -> Result<Option<Product>, LookupError> {
     // `code` is digits only, so it needs no escaping.
-    let response = crate::http::client(Duration::from_secs(10))
+    let response = http
         .get(format!("{url}?upc={code}"))
+        .timeout(Duration::from_secs(10))
         .send()
         .await?;
     match response.status() {

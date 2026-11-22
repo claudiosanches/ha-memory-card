@@ -159,7 +159,7 @@ async fn find_with(mqtt: (StatusCode, Value)) -> Option<broker::Broker> {
         ("MEMORY_CARD_SUPERVISOR_URL", &base),
     ])
     .await;
-    broker::find(&app.config).await.unwrap()
+    broker::find(&app.config, &app.state.http).await.unwrap()
 }
 
 #[tokio::test]
@@ -190,13 +190,41 @@ async fn the_supervisor_names_the_broker() {
 #[tokio::test]
 async fn outside_home_assistant_there_is_no_broker_to_ask() {
     let app = TestApp::new().await;
-    assert!(broker::find(&app.config).await.unwrap().is_none());
+    assert!(
+        broker::find(&app.config, &app.state.http)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let app = TestApp::with_env(&[("MEMORY_CARD_MQTT_HOST", "localhost")]).await;
-    let found = broker::find(&app.config).await.unwrap().unwrap();
+    let found = broker::find(&app.config, &app.state.http)
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(
         (found.mqtt.host.as_str(), found.mqtt.port),
         ("localhost", 1883)
     );
     assert!(found.ingress_slug.is_none());
+}
+
+#[tokio::test]
+async fn supervisor_redirects_are_not_followed() {
+    let stub = Router::new().route(
+        "/services/mqtt",
+        get(|| async { axum::response::Redirect::temporary("http://elsewhere.invalid/steal") }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+    let app = TestApp::with_env(&[
+        ("SUPERVISOR_TOKEN", "token-1"),
+        ("MEMORY_CARD_SUPERVISOR_URL", &base),
+    ])
+    .await;
+    let err = broker::find(&app.config, &app.state.http)
+        .await
+        .unwrap_err();
+    assert!(err.to_string().contains("307"), "{err}");
 }

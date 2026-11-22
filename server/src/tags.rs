@@ -261,8 +261,10 @@ async fn local_date(state: &AppState) -> String {
     let Some(api) = &state.config.home_assistant else {
         return utc;
     };
-    let response = crate::http::client(Duration::from_secs(5))
+    let response = state
+        .http
         .post(format!("{}/template", api.rest))
+        .timeout(Duration::from_secs(5))
         .bearer_auth(api.token.expose())
         .json(&json!({"template": "{{ now().date() }}"}))
         .send()

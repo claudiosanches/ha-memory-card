@@ -9,7 +9,6 @@ use serde::Deserialize;
 pub const SUPERVISOR_IP: IpAddr = IpAddr::V4(Ipv4Addr::new(172, 30, 32, 2));
 
 const DEFAULT_DATA_DIR: &str = "/data";
-const DEFAULT_TMP_DIR: &str = "/tmp/memory-card";
 const DEFAULT_LISTEN: &str = "0.0.0.0:8099";
 const DEFAULT_SUPERVISOR_URL: &str = "http://supervisor";
 const DEFAULT_BARCODE_URL: &str = "https://api.upcitemdb.com/prod/trial/lookup";
@@ -225,7 +224,10 @@ impl Config {
     pub fn load(env: impl Fn(&str) -> Option<String>) -> Result<Self, ConfigError> {
         let data_dir =
             PathBuf::from(env("MEMORY_CARD_DATA_DIR").unwrap_or(DEFAULT_DATA_DIR.into()));
-        let tmp_dir = PathBuf::from(env("MEMORY_CARD_TMP_DIR").unwrap_or(DEFAULT_TMP_DIR.into()));
+        // Inside the data dir rather than a shared /tmp, where another user
+        // could plant the path that startup clears.
+        let tmp_dir =
+            env("MEMORY_CARD_TMP_DIR").map_or_else(|| data_dir.join("tmp"), PathBuf::from);
         let options = read_options(&data_dir.join("options.json"))?;
 
         let listen_raw = env("MEMORY_CARD_LISTEN").unwrap_or(DEFAULT_LISTEN.into());
@@ -440,6 +442,7 @@ mod tests {
         assert!(config.external_services);
         assert_eq!(config.tag_scan_finished, FinishedScan::Playing);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
+        assert_eq!(config.tmp_dir, dir.path().join("tmp"));
     }
 
     #[test]

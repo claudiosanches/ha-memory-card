@@ -112,7 +112,7 @@ async fn run(state: AppState, stop: Arc<Notify>) {
     let broker = loop {
         tokio::select! {
             () = stop.notified() => return,
-            found = broker::find(&state.config) => match found {
+            found = broker::find(&state.config, &state.http) => match found {
                 Ok(found) => break found,
                 Err(err) => {
                     tracing::warn!(error = %err, "cannot look up the MQTT broker");
