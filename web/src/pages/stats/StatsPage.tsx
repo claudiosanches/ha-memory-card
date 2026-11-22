@@ -2,7 +2,7 @@ import { Badge, Card, Loader, SegmentedControl, Stack, Text, Title, Tooltip } fr
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { TFunction } from 'i18next';
-import { Children, type ReactNode, useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
@@ -46,7 +46,7 @@ export function StatsPage() {
   const stats = useStats();
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader title={t('nav.stats')} description={t('stats.intro')} />
       {stats.isPending ? (
         <Loader size="sm" />
@@ -80,7 +80,7 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
   const [estimated] = stats.estimated;
 
   return (
-    <Stack gap={32}>
+    <Stack gap="section">
       <dl className={classes.tiles}>
         <StatTile label={t('stats.games')} value={number(stats.games)} to="/" />
         <StatTile
@@ -89,35 +89,15 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
           detail={t('stats.formats', { physical: number(stats.physical), digital: number(stats.digital) })}
         />
         <StatTile
-          label={t('stats.value')}
-          value={spent ? money(spent.amount, spent.currency) : t('stats.noPrices')}
-          empty={!spent}
-          detail={amounts(stats.spent, stats.unpriced > 0 ? t('stats.unpriced', { count: stats.unpriced }) : null)}
-          testId="stats-value"
-        />
-        <StatTile
-          label={t('stats.estimated')}
-          value={estimated ? money(estimated.amount, estimated.currency) : t('stats.noEstimates')}
-          empty={!estimated}
-          detail={amounts(stats.estimated, stats.unvalued > 0 ? t('stats.unvalued', { count: stats.unvalued }) : null)}
-          testId="stats-estimated"
-        />
-        <StatTile
           label={t('stats.wishlist')}
           value={number(stats.wishlist)}
           to="/wishlist"
           detail={stats.wishlist_value.map((v) => t('stats.expected', { amount: money(v.amount, v.currency) })).join(t('common.separator'))}
         />
-        <StatTile
-          label={t('stats.played')}
-          value={stats.total_sessions ? playTime(stats.total_minutes, t) : t('stats.noPlay')}
-          empty={!stats.total_sessions}
-          detail={stats.total_sessions ? t('stats.sessions', { count: stats.total_sessions }) : undefined}
-        />
       </dl>
 
       <Group title={t('stats.groupPlay')}>
-        <Masonry>
+        <div className={classes.grid}>
           <Panel title={t('stats.progress')}>
             <Progress stats={stats} locale={locale} />
           </Panel>
@@ -158,18 +138,12 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
               />
             </Panel>
           )}
-        </Masonry>
-        <Panel title={t('stats.activity')}>
-          {stats.total_sessions === 0 ? (
-            <Text size="sm" c="dimmed">{t('stats.noSessions')}</Text>
-          ) : (
-            <PlayCalendar stats={stats} locale={locale} playTime={playTime} />
-          )}
-        </Panel>
+        </div>
+        <PlayActivity stats={stats} locale={locale} />
       </Group>
 
       <Group title={t('stats.groupCollection')}>
-        <Masonry>
+        <div className={classes.grid}>
           <Panel title={t('stats.byPlatform')}>
             <DonutChart
               slices={stats.platforms.map((row) => ({
@@ -183,6 +157,26 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
               empty={t('stats.noOwned')}
             />
           </Panel>
+
+          {stats.physical > 0 && stats.digital > 0 && (
+            <Panel title={t('stats.formatByPlatform')}>
+              <SplitBars
+                parts={[
+                  { key: 'physical', label: t('format.physical'), color: 'var(--mc-chart-physical)' },
+                  { key: 'digital', label: t('format.digital'), color: 'var(--mc-chart-digital)' },
+                ]}
+                rows={[...stats.platforms]
+                  .sort((a, b) => b.copies - a.copies)
+                  .map((row) => ({
+                    key: String(row.platform_id),
+                    label: platformName.get(row.platform_id) ?? '',
+                    search: { platform: [row.platform_id] },
+                    values: [row.physical, row.digital],
+                    figure: t('stats.formats', { physical: number(row.physical), digital: number(row.digital) }),
+                  }))}
+              />
+            </Panel>
+          )}
 
           <Panel title={t('stats.byStore')}>
             <DonutChart
@@ -227,35 +221,31 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
             </Panel>
           )}
 
-          {stats.physical > 0 && stats.digital > 0 && (
-            <Panel title={t('stats.formatByPlatform')}>
-              <SplitBars
-                parts={[
-                  { key: 'physical', label: t('format.physical'), color: 'var(--mc-chart-physical)' },
-                  { key: 'digital', label: t('format.digital'), color: 'var(--mc-chart-digital)' },
-                ]}
-                rows={[...stats.platforms]
-                  .sort((a, b) => b.copies - a.copies)
-                  .map((row) => ({
-                    key: String(row.platform_id),
-                    label: platformName.get(row.platform_id) ?? '',
-                    search: { platform: [row.platform_id] },
-                    values: [row.physical, row.digital],
-                    figure: t('stats.formats', { physical: number(row.physical), digital: number(row.digital) }),
-                  }))}
-              />
-            </Panel>
-          )}
-
           <Panel title={t('stats.added')}>
             <Added stats={stats} locale={locale} />
           </Panel>
-        </Masonry>
+        </div>
       </Group>
 
-      {(stats.spent_by_year.length > 0 || stats.most_valuable.length > 0) && (
-        <Group title={t('stats.groupMoney')}>
-          <Masonry>
+      <Group title={t('stats.groupMoney')}>
+        <dl className={classes.tiles}>
+          <StatTile
+            label={t('stats.value')}
+            value={spent ? money(spent.amount, spent.currency) : t('stats.noPrices')}
+            empty={!spent}
+            detail={amounts(stats.spent, stats.unpriced > 0 ? t('stats.unpriced', { count: stats.unpriced }) : null)}
+            testId="stats-value"
+          />
+          <StatTile
+            label={t('stats.estimated')}
+            value={estimated ? money(estimated.amount, estimated.currency) : t('stats.noEstimates')}
+            empty={!estimated}
+            detail={amounts(stats.estimated, stats.unvalued > 0 ? t('stats.unvalued', { count: stats.unvalued }) : null)}
+            testId="stats-estimated"
+          />
+        </dl>
+        {(stats.spent_by_year.length > 0 || stats.most_valuable.length > 0) && (
+          <div className={classes.grid}>
             {stats.spent_by_year.length > 0 && (
               <Panel title={t('stats.spentByYear')}>
                 <SpentByYear stats={stats} money={money} />
@@ -267,10 +257,45 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
                 <Value stats={stats} money={money} locale={locale} platformName={platformName} />
               </Panel>
             )}
-          </Masonry>
-        </Group>
-      )}
+          </div>
+        )}
+      </Group>
     </Stack>
+  );
+}
+
+function PlayActivity({ stats, locale }: { stats: Stats; locale: string }) {
+  const { t } = useTranslation();
+  const id = useId();
+  const today = new Date();
+  const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const monthDays = stats.play_days.filter(({ day }) => day.startsWith(month));
+  const minutes = monthDays.reduce((sum, day) => sum + day.minutes, 0);
+  const sessions = monthDays.reduce((sum, day) => sum + day.sessions, 0);
+
+  return (
+    <section aria-labelledby={id} className={classes.group}>
+      <Title order={3} size="h4" id={id}>{t('stats.activity')}</Title>
+      <dl className={classes.tiles}>
+        <StatTile
+          label={t('stats.lifetimePlay')}
+          value={playTime(stats.total_minutes, t)}
+          detail={stats.total_sessions > 0 ? t('stats.thisMonth', { value: playTime(minutes, t) }) : undefined}
+        />
+        <StatTile
+          label={t('stats.lifetimeSessions')}
+          value={stats.total_sessions.toLocaleString(locale)}
+          detail={stats.total_sessions > 0 ? t('stats.thisMonth', { value: t('stats.sessions', { count: sessions }) }) : undefined}
+        />
+      </dl>
+      {stats.total_sessions > 0 ? (
+        <Card withBorder className={classes.panel}>
+          <PlayCalendar stats={stats} locale={locale} playTime={playTime} />
+        </Card>
+      ) : (
+        <Text size="sm" c="dimmed">{t('stats.noSessions')}</Text>
+      )}
+    </section>
   );
 }
 
@@ -317,19 +342,6 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
       </Title>
       {children}
     </section>
-  );
-}
-
-/** Panels flowing down two columns where there is room. */
-function Masonry({ children }: { children: ReactNode }) {
-  return (
-    <div className={classes.grid}>
-      {Children.toArray(children).map((child, index) => (
-        <div key={index} className={classes.slot}>
-          {child}
-        </div>
-      ))}
-    </div>
   );
 }
 

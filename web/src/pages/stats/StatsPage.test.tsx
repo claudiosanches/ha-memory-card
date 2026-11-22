@@ -193,6 +193,7 @@ describe('Stats page', () => {
       'GET /api/stats': {
         ...STATS,
         spent: [],
+        spent_by_year: [],
         estimated: [],
         value_change: [],
         most_valuable: [],
@@ -206,8 +207,11 @@ describe('Stats page', () => {
     });
     renderAt('/stats');
 
-    expect(await screen.findByText(en.stats.noPlay)).toBeInTheDocument();
-    expect(screen.getByText(en.stats.noPrices)).toBeInTheDocument();
+    const paid = await screen.findByTestId('stats-value');
+    expect(paid).toHaveTextContent(en.stats.noPrices);
+    expect(paid).toHaveTextContent('4 copies without a price');
+    expect(screen.getByTestId('stats-estimated')).toHaveTextContent('6 copies without an estimate');
+    expect(within(section(en.stats.activity)).getByText('0 minutes')).toBeInTheDocument();
     expect(screen.getByText(en.stats.noSessions)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: en.stats.valueTitle })).not.toBeInTheDocument();
   });

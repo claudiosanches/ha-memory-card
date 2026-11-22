@@ -19,7 +19,7 @@ export function ManagePage() {
   const navigate = route.useNavigate();
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader title={t('nav.manage')} description={t('manage.intro')} />
       <Tabs
         value={tab}

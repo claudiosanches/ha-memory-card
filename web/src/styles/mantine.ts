@@ -3,6 +3,7 @@ import { createTheme, defaultVariantColorsResolver } from '@mantine/core';
 export const sharedTheme = createTheme({
   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   headings: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: '650' },
+  spacing: { compact: '0.375rem', card: '1rem', section: '1.5rem' },
   defaultRadius: 'md',
   cursorType: 'pointer',
   variantColorResolver: (input) => {

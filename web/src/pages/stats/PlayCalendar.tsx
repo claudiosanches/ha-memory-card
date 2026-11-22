@@ -107,7 +107,7 @@ export function PlayCalendar({
 
   return (
     <div className={classes.calendar}>
-      <Text size="sm" c="dimmed">{summary}</Text>
+      <Text size="sm" c="dimmed">{t('stats.lastYear')}{t('common.separator')}{summary}</Text>
       <div className={classes.scroller} ref={scroller}>
         <Tooltip.Floating label={active ? describe(active) : ''} disabled={!active}>
           <div className={classes.grid} role="img" aria-label={summary} onMouseLeave={() => setActive(null)}>

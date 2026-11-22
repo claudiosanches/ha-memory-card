@@ -20,7 +20,7 @@ export function DuplicatesPage() {
   const counts = new Map(DUPLICATE_LABELS.map((l) => [l, all.filter((g) => g.labels.includes(l)).length]));
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader
         title={t('nav.duplicates')}
         description={t('duplicates.intro')}

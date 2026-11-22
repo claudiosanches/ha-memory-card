@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { ToolSection } from '../components/ToolSection';
-import { PageHeader } from '../components/PageHeader';
+import { CardPage } from '../components/CardPage';
 import { withColumns } from './importColumns';
 import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
@@ -95,8 +95,7 @@ export function ImportPage() {
   };
 
   return (
-    <Stack gap={24}>
-      <PageHeader title={t('nav.import')} description={t('import.intro')} />
+    <CardPage title={t('nav.import')} description={t('import.intro')}>
 
       <ToolSection title={t('import.exportTitle')} description={t('import.exportText')}>
         <Group className={classes.downloads}>
@@ -168,7 +167,7 @@ export function ImportPage() {
       </ToolSection>
 
       <ColumnHelp />
-    </Stack>
+    </CardPage>
   );
 }
 

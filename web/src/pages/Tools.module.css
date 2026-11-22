@@ -3,7 +3,7 @@
 .integrations > div + div { border-top: 1px solid var(--mc-border); }
 .integrations dt { font-weight: 600; }
 .integrations dd { margin: 0; }
-.status { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 12px; }
+.status { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--mantine-spacing-card); }
 .status > div { min-width: 0; padding: 12px; border-radius: 8px; background: var(--mc-background); }
 .status dt { color: var(--mc-muted); font-size: .8125rem; }
 .status dd { margin: 4px 0 0; font-weight: 600; }
@@ -16,7 +16,7 @@
   .downloads { display: grid; }
   .downloads > a, .titleActions > button { min-height: 44px; }
   .titleActions { width: 100%; }
-  .status { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .status { grid-template-columns: minmax(0, 1fr); }
   .status > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
   .status dd { margin: 0; }
   .issues, .issues tbody { display: block; }

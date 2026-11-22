@@ -229,88 +229,88 @@ function GameView({ game }: { game: GameDetail }) {
     game.game_mode_ids.every((id) => gameModes.data?.find((mode) => mode.id === id)?.slug === 'single-player');
 
   return (
-    <Stack className={classes.page}>
+    <Stack gap="section" className={classes.page}>
       <BackLink />
-      <section className={classes.hero}>
-        <Group className={classes.identity} align="flex-start" wrap="nowrap">
-          <CoverPicker
-            target={{ kind: 'game', id: game.id }}
-            path={game.cover_path}
-            uploaded={game.cover_uploaded}
-            title={game.title}
-            width={phone ? 92 : 160}
-            readOnly={!canManage}
-          />
-          <Stack className={classes.identityText} gap={4}>
-            <Title order={1} className={classes.gameTitle}>{game.title}</Title>
-            <Group gap={6}>
-              {wishlistOnly && (
-                <Badge size="xs" variant="light" color="pink" w="fit-content">
-                  {t('game.onWishlist')}
-                </Badge>
+      <Stack gap="card">
+        <section className={classes.hero}>
+          <Group className={classes.identity} align="flex-start" wrap="nowrap">
+            <CoverPicker
+              target={{ kind: 'game', id: game.id }}
+              path={game.cover_path}
+              uploaded={game.cover_uploaded}
+              title={game.title}
+              width={phone ? 92 : 160}
+              readOnly={!canManage}
+            />
+            <Stack className={classes.identityText} gap={4}>
+              <Title order={1} className={classes.gameTitle}>{game.title}</Title>
+              <Group gap={6}>
+                {wishlistOnly && (
+                  <Badge size="xs" variant="light" color="pink" w="fit-content">
+                    {t('game.onWishlist')}
+                  </Badge>
+                )}
+                {game.igdb_id && (
+                  <Badge size="xs" variant="light" w="fit-content">
+                    {t('game.igdbLinked')}
+                  </Badge>
+                )}
+              </Group>
+              {game.first_release_date && (
+                <Text size="sm" c="dimmed">
+                  {t('game.firstRelease')}: {formatDate(game.first_release_date, i18n.language)}
+                </Text>
               )}
-              {game.igdb_id && (
-                <Badge size="xs" variant="light" w="fit-content">
-                  {t('game.igdbLinked')}
-                </Badge>
+              {game.developers.length > 0 && (
+                <Text size="sm" c="dimmed">
+                  {t('game.developers')}: {game.developers.join(', ')}
+                </Text>
               )}
-            </Group>
-            {game.first_release_date && (
-              <Text size="sm" c="dimmed">
-                {t('game.firstRelease')}: {formatDate(game.first_release_date, i18n.language)}
+              {game.publishers.length > 0 && (
+                <Text size="sm" c="dimmed">
+                  {t('game.publishers')}: {game.publishers.join(', ')}
+                </Text>
+              )}
+              <Text size="xs" c="dimmed" data-testid="game-history">
+                {history(game, t, i18n.language)}
               </Text>
-            )}
-            {game.developers.length > 0 && (
-              <Text size="sm" c="dimmed">
-                {t('game.developers')}: {game.developers.join(', ')}
-              </Text>
-            )}
-            {game.publishers.length > 0 && (
-              <Text size="sm" c="dimmed">
-                {t('game.publishers')}: {game.publishers.join(', ')}
-              </Text>
-            )}
-            <Text size="xs" c="dimmed" data-testid="game-history">
-              {history(game, t, i18n.language)}
-            </Text>
-          </Stack>
-        </Group>
-        {canManage && (
-          <Group className={classes.gameActions} gap="xs">
-            {status.data?.igdb_configured && game.igdb_id && (
-              <Button
-                variant="default"
-                leftSection={<IconRefresh size={16} />}
-                loading={refresh.isPending}
-                onClick={() => game.igdb_id && refresh.mutate({ igdbId: game.igdb_id, overwrite: false })}
-              >
-                {t('igdb.refresh')}
-              </Button>
-            )}
-            {status.data?.igdb_configured && (
-              <Button variant="default" leftSection={<IconLink size={16} />} onClick={() => setDialog({ kind: 'linkIgdb' })}>
-                {game.igdb_id ? t('igdb.relink') : t('igdb.link')}
-              </Button>
-            )}
-            <Group className={classes.manageActions} gap="xs" wrap="nowrap">
-              <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
-                {t('common.edit')}
-              </Button>
-              <ActionIcon
-                variant="subtle"
-                color="red"
-                size="lg"
-                aria-label={t('game.delete')}
-                onClick={() => setDialog({ kind: 'deleteGame' })}
-              >
-                <IconTrash size={18} />
-              </ActionIcon>
-            </Group>
+            </Stack>
           </Group>
-        )}
-      </section>
+          {canManage && (
+            <Group className={classes.gameActions} gap="xs">
+              {status.data?.igdb_configured && game.igdb_id && (
+                <Button
+                  variant="default"
+                  leftSection={<IconRefresh size={16} />}
+                  loading={refresh.isPending}
+                  onClick={() => game.igdb_id && refresh.mutate({ igdbId: game.igdb_id, overwrite: false })}
+                >
+                  {t('igdb.refresh')}
+                </Button>
+              )}
+              {status.data?.igdb_configured && (
+                <Button variant="default" leftSection={<IconLink size={16} />} onClick={() => setDialog({ kind: 'linkIgdb' })}>
+                  {game.igdb_id ? t('igdb.relink') : t('igdb.link')}
+                </Button>
+              )}
+              <Group className={classes.manageActions} gap="xs" wrap="nowrap">
+                <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editGame' })}>
+                  {t('common.edit')}
+                </Button>
+                <ActionIcon
+                  variant="subtle"
+                  color="red"
+                  size="lg"
+                  aria-label={t('game.delete')}
+                  onClick={() => setDialog({ kind: 'deleteGame' })}
+                >
+                  <IconTrash size={18} />
+                </ActionIcon>
+              </Group>
+            </Group>
+          )}
+        </section>
 
-      <div className={classes.overview}>
         <Card withBorder className={classes.metadata}>
           <Stack gap="sm">
             <Title order={4}>{t('game.progressTitle')}</Title>
@@ -426,117 +426,119 @@ function GameView({ game }: { game: GameDetail }) {
             )}
           </Stack>
         </Card>
-      </div>
+      </Stack>
 
-      <Group className={classes.releasesHeading} justify="space-between">
-        <SectionHeading title={t('game.releasesTitle')} description={canManage ? t('game.releasesDescription') : undefined} />
-        {canManage && (
-          <Button leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy' })}>
-            {t('game.addCopy')}
-          </Button>
-        )}
-      </Group>
+      <Stack gap="card">
+        <Group className={classes.releasesHeading} justify="space-between">
+          <SectionHeading title={t('game.releasesTitle')} description={canManage ? t('game.releasesDescription') : undefined} />
+          {canManage && (
+            <Button leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy' })}>
+              {t('game.addCopy')}
+            </Button>
+          )}
+        </Group>
 
-      {game.releases.length === 0 && <Text c="dimmed">{t('game.noReleases')}</Text>}
+        {game.releases.length === 0 && <Text c="dimmed">{t('game.noReleases')}</Text>}
 
-      {game.releases.map((release) => (
-        <Card key={release.id} withBorder className={classes.release} data-testid={`release-${release.id}`}>
-          <Stack gap="xs">
-            <Group className={classes.releaseHeader} justify="space-between" wrap="nowrap" align="flex-start">
-              <Group className={classes.releaseIdentity} gap="sm" wrap="nowrap" align="flex-start">
-                <CoverPicker
-                  target={{ kind: 'release', id: release.id }}
-                  path={release.cover_path ?? game.cover_path}
-                  uploaded={release.cover_uploaded}
-                  title={release.title ?? game.title}
-                  width={48}
-                  readOnly={!canManage}
-                />
-                <Stack gap={0}>
-                  <Text fw={600}>
-                    {t('game.releaseHeading', {
-                      platform: names.platform.get(release.platform_id) ?? '',
-                      region: t(`region.${release.region}`),
-                    })}
-                  </Text>
-                  {(regionalTitle(release) || release.product_code) && (
-                    <Text size="sm" c="dimmed">
-                      {[regionalTitle(release), release.product_code].filter(Boolean).join(', ')}
+        {game.releases.map((release) => (
+          <Card key={release.id} withBorder className={classes.release} data-testid={`release-${release.id}`}>
+            <Stack gap="xs">
+              <Group className={classes.releaseHeader} justify="space-between" wrap="nowrap" align="flex-start">
+                <Group className={classes.releaseIdentity} gap="sm" wrap="nowrap" align="flex-start">
+                  <CoverPicker
+                    target={{ kind: 'release', id: release.id }}
+                    path={release.cover_path ?? game.cover_path}
+                    uploaded={release.cover_uploaded}
+                    title={release.title ?? game.title}
+                    width={48}
+                    readOnly={!canManage}
+                  />
+                  <Stack gap={0}>
+                    <Text fw={600}>
+                      {t('game.releaseHeading', {
+                        platform: names.platform.get(release.platform_id) ?? '',
+                        region: t(`region.${release.region}`),
+                      })}
                     </Text>
-                  )}
-                  {hasPlayerData(release) && (
-                    <Text size="xs" c="dimmed">
-                      {t('game.players')}: {describePlayers(t, effectiveCounts(release, game))}
-                    </Text>
-                  )}
-                </Stack>
-              </Group>
-              {!canManage ? null : phone ? (
-                <Menu position="bottom-end">
-                  <Menu.Target>
-                    <Button variant="default" size="xs" className={classes.releaseMenuButton} rightSection={<IconChevronDown size={14} />}>
-                      {t('game.manageRelease')}
-                    </Button>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy', release })}>
-                      {t('game.addCopyHere')}
-                    </Menu.Item>
-                    <Menu.Item leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editRelease', release })}>
-                      {t('game.editRelease')}
-                    </Menu.Item>
-                    <Menu.Item color="red" leftSection={<IconTrash size={16} />} onClick={() => setDialog({ kind: 'deleteRelease', release })}>
-                      {t('game.deleteRelease')}
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              ) : (
-                <Group className={classes.releaseActions} gap={4} wrap="nowrap">
-                  <Tooltip label={t('game.addCopyHere')}>
+                    {(regionalTitle(release) || release.product_code) && (
+                      <Text size="sm" c="dimmed">
+                        {[regionalTitle(release), release.product_code].filter(Boolean).join(', ')}
+                      </Text>
+                    )}
+                    {hasPlayerData(release) && (
+                      <Text size="xs" c="dimmed">
+                        {t('game.players')}: {describePlayers(t, effectiveCounts(release, game))}
+                      </Text>
+                    )}
+                  </Stack>
+                </Group>
+                {!canManage ? null : phone ? (
+                  <Menu position="bottom-end">
+                    <Menu.Target>
+                      <Button variant="default" size="xs" className={classes.releaseMenuButton} rightSection={<IconChevronDown size={14} />}>
+                        {t('game.manageRelease')}
+                      </Button>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      <Menu.Item leftSection={<IconPlus size={16} />} onClick={() => setDialog({ kind: 'addCopy', release })}>
+                        {t('game.addCopyHere')}
+                      </Menu.Item>
+                      <Menu.Item leftSection={<IconPencil size={16} />} onClick={() => setDialog({ kind: 'editRelease', release })}>
+                        {t('game.editRelease')}
+                      </Menu.Item>
+                      <Menu.Item color="red" leftSection={<IconTrash size={16} />} onClick={() => setDialog({ kind: 'deleteRelease', release })}>
+                        {t('game.deleteRelease')}
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                ) : (
+                  <Group className={classes.releaseActions} gap={4} wrap="nowrap">
+                    <Tooltip label={t('game.addCopyHere')}>
+                      <ActionIcon
+                        variant="subtle"
+                        aria-label={t('game.addCopyHere')}
+                        onClick={() => setDialog({ kind: 'addCopy', release })}
+                      >
+                        <IconPlus size={16} />
+                      </ActionIcon>
+                    </Tooltip>
                     <ActionIcon
                       variant="subtle"
-                      aria-label={t('game.addCopyHere')}
-                      onClick={() => setDialog({ kind: 'addCopy', release })}
+                      aria-label={t('game.editRelease')}
+                      onClick={() => setDialog({ kind: 'editRelease', release })}
                     >
-                      <IconPlus size={16} />
+                      <IconPencil size={16} />
                     </ActionIcon>
-                  </Tooltip>
-                  <ActionIcon
-                    variant="subtle"
-                    aria-label={t('game.editRelease')}
-                    onClick={() => setDialog({ kind: 'editRelease', release })}
-                  >
-                    <IconPencil size={16} />
-                  </ActionIcon>
-                  <ActionIcon
-                    variant="subtle"
-                    color="red"
-                    aria-label={t('game.deleteRelease')}
-                    onClick={() => setDialog({ kind: 'deleteRelease', release })}
-                  >
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </Group>
-              )}
-            </Group>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      aria-label={t('game.deleteRelease')}
+                      onClick={() => setDialog({ kind: 'deleteRelease', release })}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </Group>
+                )}
+              </Group>
 
-            {release.copies.length > 0 && (
-              <Copies
-                copies={release.copies}
-                devices={names.device}
-                stores={names.store}
-                onEdit={canManage ? (copy) => setDialog({ kind: 'editCopy', copy, release }) : undefined}
-                onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}
-                onGotIt={canManage ? (copy) => setDialog({ kind: 'gotIt', copy, release }) : undefined}
-                onAddContents={canManage ? (copy) => setDialog({ kind: 'contents', copy }) : undefined}
-                onLinkTag={
-                  canManage && status.data?.tags === 'connected' ? (copy) => setDialog({ kind: 'linkTag', copy }) : undefined
-                }
-              />
-            )}
-          </Stack>
-        </Card>
-      ))}
+              {release.copies.length > 0 && (
+                <Copies
+                  copies={release.copies}
+                  devices={names.device}
+                  stores={names.store}
+                  onEdit={canManage ? (copy) => setDialog({ kind: 'editCopy', copy, release }) : undefined}
+                  onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}
+                  onGotIt={canManage ? (copy) => setDialog({ kind: 'gotIt', copy, release }) : undefined}
+                  onAddContents={canManage ? (copy) => setDialog({ kind: 'contents', copy }) : undefined}
+                  onLinkTag={
+                    canManage && status.data?.tags === 'connected' ? (copy) => setDialog({ kind: 'linkTag', copy }) : undefined
+                  }
+                />
+              )}
+            </Stack>
+          </Card>
+        ))}
+      </Stack>
 
       {dialog?.kind === 'editGame' && <GameForm game={game} onClose={close} />}
       {dialog?.kind === 'linkIgdb' && <IgdbLinkModal game={game} onClose={close} />}

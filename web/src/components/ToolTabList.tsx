@@ -12,7 +12,7 @@ export function ToolTabList({ label, tabs }: Props) {
     <>
       <Select
         hiddenFrom="xs"
-        mb="lg"
+        mb="section"
         size="md"
         aria-label={label}
         styles={{
@@ -24,7 +24,7 @@ export function ToolTabList({ label, tabs }: Props) {
         onChange={onChange}
         allowDeselect={false}
       />
-      <Tabs.List visibleFrom="xs" aria-label={label} mb="lg">
+      <Tabs.List visibleFrom="xs" aria-label={label} mb="section">
         {tabs.map((tab) => (
           <Tabs.Tab key={tab.value} value={tab.value}>{tab.label}</Tabs.Tab>
         ))}

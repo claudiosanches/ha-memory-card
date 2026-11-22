@@ -1,6 +1,6 @@
-.page { display: flex; flex-direction: column; gap: 24px; }
+.page { display: flex; flex-direction: column; gap: var(--mantine-spacing-section); }
 .progress { flex: 0 1 300px; display: flex; flex-direction: column; gap: 8px; width: min(320px, 100%); }
-.section { display: flex; flex-direction: column; gap: 14px; }
+.section { display: flex; flex-direction: column; gap: var(--mantine-spacing-card); }
 .sectionTitle { font-size: 1.125rem; letter-spacing: -0.02em; }
 
 .unsorted { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border: 1px solid var(--mc-border); border-radius: 12px; background: var(--mc-surface); color: var(--mantine-primary-color-light-color); }
@@ -19,7 +19,7 @@
 .pickSlot { width: 96px; aspect-ratio: 3 / 4; display: grid; place-items: center; border: 1px dashed var(--mc-border); border-radius: 8px; color: var(--mc-muted); }
 .rolling { animation: spin 500ms linear infinite; }
 
-.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--mantine-spacing-card); }
 .more { align-self: flex-start; }
 .customStatus { align-self: flex-start; }
 .row { display: flex; align-items: center; gap: 16px; padding: 10px 14px 10px 10px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 10px; }
@@ -29,7 +29,7 @@
 .rowActions { flex-shrink: 0; }
 .gameTitle { overflow-wrap: anywhere; line-height: 1.35; }
 
-.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 24px 18px; }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--mantine-spacing-card); }
 .card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cardLink { display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; border-radius: 9px; flex: 1; }
 .artwork { border-radius: 9px; overflow: hidden; box-shadow: var(--mc-cover-shadow); transition: transform 180ms ease, box-shadow 180ms ease; margin-bottom: 4px; }
@@ -60,6 +60,6 @@
   .row { flex-direction: column; align-items: stretch; gap: 10px; }
   .rowActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rowActions > button { min-height: 44px; }
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

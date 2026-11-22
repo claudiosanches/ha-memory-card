@@ -88,7 +88,7 @@ export function LibraryPage() {
   const collectionPlatforms = (platforms.data ?? []).filter((p) => gamesOn(p) > 0 || search.platform?.includes(p.id));
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader
         title={t('nav.library')}
         description={t('library.description')}

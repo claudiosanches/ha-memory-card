@@ -140,7 +140,7 @@ export function PlatformsTab() {
   );
 
   return (
-    <Stack gap="xl">
+    <Stack gap="section">
       <section className={classes.section}>
         <ManageToolbar addLabel={t('platforms.add')} onAdd={() => setEditing({})}>
           <SectionHeading

@@ -8,7 +8,7 @@ import { call, errorMessage } from '../api/errors';
 import { queryKeys } from '../api/queries';
 import type { MatchGroup } from '../api/types';
 import { notifyError } from '../components/notify';
-import { PageHeader } from '../components/PageHeader';
+import { CardPage } from '../components/CardPage';
 
 /** Scores at or above this are picked for you; you still confirm. */
 const CONFIDENT = 80;
@@ -34,8 +34,7 @@ export function IgdbMatchesPage() {
   const loading = pages.isFetching;
 
   return (
-    <Stack gap={24}>
-      <PageHeader title={t('matches.title')} description={t('matches.intro')} />
+    <CardPage title={t('matches.title')} description={t('matches.intro')}>
       {pages.isError && <Text c="red">{errorMessage(t, pages.error)}</Text>}
       {groups.map((group) => (
         <MatchCard key={group.game_id} group={group} onDone={() => done(group.game_id)} />
@@ -54,7 +53,7 @@ export function IgdbMatchesPage() {
       {!loading && !pages.hasNextPage && groups.length === 0 && !pages.isError && (
         <Text c="dimmed">{t('matches.none')}</Text>
       )}
-    </Stack>
+    </CardPage>
   );
 }
 

@@ -49,7 +49,7 @@ export function SettingsPage() {
   const visibleTabs = SETTINGS_TABS.filter((key) => key !== 'igdb' || showIgdb);
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader title={t('nav.settings')} description={t('settings.intro')} />
       <Tabs
         value={visibleTabs.includes(tab) ? tab : 'status'}
@@ -61,14 +61,14 @@ export function SettingsPage() {
         </Tabs.Panel>
         {showIgdb && (
           <Tabs.Panel value="igdb">
-            <Stack gap={24}>
+            <Stack gap="card">
               <IgdbSync />
               <IgdbTitles />
             </Stack>
           </Tabs.Panel>
         )}
         <Tabs.Panel value="appearance">
-          <Stack gap={24}>
+          <Stack gap="card">
             <ToolSection
               title={t('settings.theme')}
               action={
@@ -123,7 +123,7 @@ function Status() {
   const { t } = useTranslation();
   const status = useStatus();
   return (
-    <Stack gap={24}>
+    <Stack gap="card">
       {status.isPending && <Loader size="sm" />}
       {status.isError && (
         <Alert color="red" data-testid="status-error">

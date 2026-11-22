@@ -42,7 +42,7 @@ export function WishlistPage() {
   const storeName = useMemo(() => new Map((stores.data ?? []).map((s) => [s.id, s.name])), [stores.data]);
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader
         title={t('nav.wishlist')}
         description={t('wishlist.description')}

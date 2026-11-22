@@ -70,7 +70,7 @@ export function SetupPage() {
     const id = run.ids[run.index];
     if (id === undefined) {
       return (
-        <Stack gap={24}>
+        <Stack gap="section">
           <PageHeader title={t('nav.setup')} description={t('setup.intro')} />
           <Text>{t('setup.done')}</Text>
           <Button w="fit-content" onClick={() => setRun(null)}>
@@ -93,7 +93,7 @@ export function SetupPage() {
   }
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader title={t('nav.setup')} description={t('setup.intro')} />
       <Card withBorder radius="md">
         <Stack gap="md">
@@ -255,7 +255,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   };
 
   return (
-    <Stack gap={24}>
+    <Stack gap="section">
       <PageHeader title={t('nav.setup')} description={t('setup.position', { index: index + 1, total })} />
       <Progress value={(index / total) * 100} aria-hidden />
 
