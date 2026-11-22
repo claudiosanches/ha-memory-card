@@ -35,6 +35,7 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
 | `make ha-up` | Local Home Assistant with the app from this tree, see below |
+| `make seed` | Fills an empty collection in `make run` with test data |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 
 The server answers only requests that name a Home Assistant user, so open
@@ -84,6 +85,12 @@ minutes. It also:
 - installs Mosquitto and the MQTT integration, for the sensors.
 - copies the IGDB credentials from `.data/options.json`, if set, again on
   every run when they change.
+- the first time, fills the collection with test data (`scripts/seed.mjs`):
+  about 40 games on 13 platforms with devices, stores, prices in four
+  currencies, play sessions, custom play statuses, a bundle and a wishlist,
+  linked on IGDB when the credentials are set. A few titles have no exact
+  match there, which leaves something for **Review close matches**.
+- adds a **Games** dashboard with the app's sensors.
 
 Open http://127.0.0.1:7123 (`HA_PORT` changes the port). Run `make ha-up`
 again after a change to update the app; its data stays. `make ha-logs`

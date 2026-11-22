@@ -1,11 +1,13 @@
 // Sets up the Home Assistant that scripts/ha-demo.sh runs: finishes
 // onboarding, adds a non-admin user, installs Mosquitto and the MQTT
-// integration, and installs or updates the app from the staged folder.
+// integration, installs or updates the app from the staged folder, and the
+// first time fills it with test data and adds a dashboard for its sensors.
 // Logins and a token are kept in the state file.
 // Usage: node scripts/ha-demo.mjs <url> <state file>
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { seed } from './seed.mjs';
 
 const [base, stateFile] = process.argv.slice(2);
 if (!base || !stateFile) {
@@ -237,6 +239,120 @@ async function app(ha, state, igdb) {
   else if (igdbChanged) await ha.supervisor('post', `/addons/${APP}/restart`, undefined, 300);
 }
 
+/** Calls the app's API through ingress, as the owner. */
+async function ingress(ha) {
+  const { ingress_entry: entry } = await ha.supervisor('get', `/addons/${APP}/info`);
+  const { session } = await ha.call('supervisor/ingress/session', { slug: APP });
+  const api = async (method, url, body, type = 'application/json') => {
+    const headers = { cookie: `ingress_session=${session}` };
+    if (body !== undefined) headers['content-type'] = type;
+    const response = await fetch(`${base}${entry}${url}`, {
+      method,
+      headers,
+      body: body === undefined || typeof body === 'string' ? body : JSON.stringify(body),
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`${method} ${url}: ${response.status} ${text}`);
+    return text ? JSON.parse(text) : null;
+  };
+  for (let tries = 0; ; tries++) {
+    try {
+      await api('GET', '/api/status');
+      return api;
+    } catch (error) {
+      if (tries > 60) throw error;
+      await sleep(1000);
+    }
+  }
+}
+
+const DASHBOARD = 'memory-card-games';
+
+/** A dashboard with every Memory Card entity, once its sensors exist. */
+async function dashboard(ha) {
+  const dashboards = await ha.call('lovelace/dashboards/list');
+  if (dashboards.some((d) => d.url_path === DASHBOARD)) return;
+  for (let tries = 0; ; tries++) {
+    const states = await ha.call('get_states');
+    if (states.some((s) => s.entity_id === 'button.memory_card_roll_pick')) break;
+    if (tries > 30) {
+      console.warn('The Memory Card sensors did not appear, so no dashboard was added');
+      return;
+    }
+    await sleep(2000);
+  }
+  await ha.call('lovelace/dashboards/create', {
+    url_path: DASHBOARD,
+    title: 'Games',
+    icon: 'mdi:gamepad-variant-outline',
+    show_in_sidebar: true,
+    require_admin: false,
+    mode: 'storage',
+  });
+  const tile = (entity, name, wide = false) => ({ type: 'tile', entity, name, ...(wide && { grid_options: { columns: 12 } }) });
+  const roll = { action: 'perform-action', perform_action: 'button.press', target: { entity_id: 'button.memory_card_roll_pick' } };
+  await ha.call('lovelace/config/save', {
+    url_path: DASHBOARD,
+    config: {
+      views: [
+        {
+          title: 'Games',
+          path: 'games',
+          type: 'sections',
+          max_columns: 3,
+          sections: [
+            {
+              type: 'grid',
+              cards: [
+                { type: 'heading', heading: 'Collection' },
+                tile('sensor.memory_card_games', 'Games'),
+                tile('sensor.memory_card_copies', 'Copies'),
+                tile('sensor.memory_card_backlog', 'Backlog'),
+                tile('sensor.memory_card_wishlist', 'Wishlist'),
+                tile('sensor.memory_card_last_added', 'Last added', true),
+              ],
+            },
+            {
+              type: 'grid',
+              cards: [
+                { type: 'heading', heading: 'Playing' },
+                tile('sensor.memory_card_last_played', 'Last played', true),
+                {
+                  type: 'markdown',
+                  content:
+                    "{% for game in state_attr('sensor.memory_card_playing', 'games') or [] %}- {{ game }}\n{% else %}Nothing right now.{% endfor %}",
+                  grid_options: { columns: 12 },
+                },
+              ],
+            },
+            {
+              type: 'grid',
+              cards: [
+                { type: 'heading', heading: 'Pick for me' },
+                tile('sensor.memory_card_pick', 'Current pick', true),
+                { ...tile('button.memory_card_roll_pick', 'Roll a pick', true), hide_state: true, tap_action: roll, icon_tap_action: roll },
+              ],
+            },
+            {
+              type: 'grid',
+              column_span: 3,
+              cards: [
+                { type: 'heading', heading: 'Over time' },
+                {
+                  type: 'history-graph',
+                  hours_to_show: 168,
+                  entities: ['sensor.memory_card_games', 'sensor.memory_card_copies', 'sensor.memory_card_backlog', 'sensor.memory_card_wishlist'],
+                  grid_options: { columns: 'full' },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  });
+}
+
 /** Home Assistant answers before the Supervisor takes app operations. */
 async function waitForSupervisor(ha) {
   for (let tries = 0; ; tries++) {
@@ -274,12 +390,22 @@ async function main() {
     }
     await mosquitto(ha, state.token);
     await app(ha, state, igdb);
+    if (!state.seeded) {
+      await seed(await ingress(ha));
+      state.seeded = true;
+      await saveState(state);
+    }
+    if (!state.dashboard) {
+      await dashboard(ha);
+      state.dashboard = true;
+      await saveState(state);
+    }
   } finally {
     ha.close();
   }
 
   console.log(`
-Home Assistant is at ${base}
+Home Assistant is at ${base}, with the app's sensors at ${base}/${DASHBOARD}
   owner / ${state.owner.password}   administrator, made a Memory Card manager at install
   viewer / ${state.viewer.password}   regular user
 These logins are kept in ${stateFile}.`);
