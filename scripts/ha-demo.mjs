@@ -219,11 +219,14 @@ async function app(ha, state, igdb) {
       state.configured = false;
     }
   }
-  if (!state.configured) {
+  // Managers are set once; IGDB follows .data/options.json.
+  const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
+  const igdbChanged = Object.entries(igdb).some(([key, value]) => options[key] !== value);
+  if (!state.configured || igdbChanged) {
     // The Supervisor replaces all options at once.
-    const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
+    const managers = state.configured ? {} : { managers: [state.owner.id] };
     await ha.supervisor('post', `/addons/${APP}/options`, {
-      options: { ...options, managers: [state.owner.id], ...igdb },
+      options: { ...options, ...managers, ...igdb },
       ingress_panel: true,
     });
     state.configured = true;
@@ -231,6 +234,7 @@ async function app(ha, state, igdb) {
   }
   const info = await ha.supervisor('get', `/addons/${APP}/info`);
   if (info.state !== 'started') await ha.supervisor('post', `/addons/${APP}/start`, undefined, 300);
+  else if (igdbChanged) await ha.supervisor('post', `/addons/${APP}/restart`, undefined, 300);
 }
 
 /** Home Assistant answers before the Supervisor takes app operations. */

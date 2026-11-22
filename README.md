@@ -82,7 +82,8 @@ minutes. It also:
   manager, and adds a `viewer` regular user. Their passwords are printed and
   kept in `target/haos/demo.json`.
 - installs Mosquitto and the MQTT integration, for the sensors.
-- copies the IGDB credentials from `.data/options.json`, if set.
+- copies the IGDB credentials from `.data/options.json`, if set, again on
+  every run when they change.
 
 Open http://127.0.0.1:7123 (`HA_PORT` changes the port). Run `make ha-up`
 again after a change to update the app; its data stays. `make ha-logs`
