@@ -113,6 +113,9 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
       purchased_on: copy?.purchased_on ?? '',
       price: copy?.price ?? '',
       currency: copy?.currency ?? appStatus.data?.last_currency ?? localeCurrency(i18n.language),
+      estimated_value: copy?.estimated_value ?? '',
+      estimated_currency:
+        copy?.estimated_currency ?? copy?.currency ?? appStatus.data?.last_currency ?? localeCurrency(i18n.language),
       barcode: copy?.barcode ?? scanned?.barcode ?? '',
     },
     validate: {
@@ -149,7 +152,8 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         onClose();
         return;
       }
-      const { status, platform_id, region, product_code, format, purchased_on, currency } = form.getValues();
+      const { status, platform_id, region, product_code, format, purchased_on, currency, estimated_currency } =
+        form.getValues();
       form.setValues({
         status,
         platform_id,
@@ -158,6 +162,8 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         format,
         purchased_on,
         currency,
+        estimated_currency,
+        estimated_value: '',
         device_id: '',
         store_id: '',
         condition: '',
@@ -190,6 +196,8 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         purchased_on: wanted ? null : textOrNull(v.purchased_on),
         price: textOrNull(v.price),
         currency: v.price.trim() ? v.currency : null,
+        estimated_value: wanted ? null : textOrNull(v.estimated_value),
+        estimated_currency: !wanted && v.estimated_value.trim() ? v.estimated_currency : null,
         barcode: v.format === 'physical' ? textOrNull(v.barcode) : null,
       };
       save.mutate({ body, another: addAnother });
@@ -293,6 +301,25 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
           {...form.getInputProps('currency')}
         />
       </Group>
+      {values.status === 'owned' && (
+        <Group grow align="flex-start">
+          <TextInput
+            label={t('game.estimatedValue')}
+            description={t('game.estimatedValueHint')}
+            inputMode="decimal"
+            {...form.getInputProps('estimated_value')}
+          />
+          <Select
+            label={t('game.currency')}
+            aria-label={t('game.estimatedCurrency')}
+            data={currencies}
+            searchable
+            allowDeselect={false}
+            comboboxProps={{ width: 280, position: 'bottom-end' }}
+            {...form.getInputProps('estimated_currency')}
+          />
+        </Group>
+      )}
       {values.format === 'physical' && (
         <TextInput label={t('game.barcode')} inputMode="numeric" {...form.getInputProps('barcode')} />
       )}

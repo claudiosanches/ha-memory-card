@@ -8,7 +8,7 @@ pub mod plan;
 pub mod snapshot;
 
 /// Column order for export and the blank template.
-pub const COLUMNS: [&str; 19] = [
+pub const COLUMNS: [&str; 21] = [
     "copy_id",
     "status",
     "igdb_id",
@@ -26,6 +26,8 @@ pub const COLUMNS: [&str; 19] = [
     "purchased_on",
     "price",
     "currency",
+    "estimated_value",
+    "estimated_currency",
     "barcode",
     "notes",
 ];

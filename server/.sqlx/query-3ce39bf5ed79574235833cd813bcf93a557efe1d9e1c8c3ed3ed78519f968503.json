@@ -1,0 +1,40 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT estimated_currency AS \"currency!\", SUM(estimated_value) AS \"minor!: i64\",\n                  COUNT(*) AS \"copies!: i64\"\n           FROM copies\n           WHERE status = 'owned' AND estimated_value IS NOT NULL\n             AND estimated_currency IS NOT NULL\n           GROUP BY estimated_currency\n           ORDER BY COUNT(*) DESC, estimated_currency",
+  "describe": {
+    "columns": [
+      {
+        "name": "currency!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "estimated_currency"
+          }
+        }
+      },
+      {
+        "name": "minor!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "3ce39bf5ed79574235833cd813bcf93a557efe1d9e1c8c3ed3ed78519f968503"
+}

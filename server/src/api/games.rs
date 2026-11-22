@@ -86,6 +86,12 @@ pub struct CopyInput {
     /// ISO 4217 code.
     #[serde(default)]
     pub currency: Option<String>,
+    /// Decimal text: what an owned copy would sell for now; needs `estimated_currency`.
+    #[serde(default)]
+    pub estimated_value: Option<String>,
+    /// ISO 4217 code.
+    #[serde(default)]
+    pub estimated_currency: Option<String>,
     /// UPC or EAN; spaces and hyphens are ignored.
     #[serde(default)]
     pub barcode: Option<String>,
@@ -152,19 +158,24 @@ fn names(values: &[String]) -> ApiResult<Vec<String>> {
     Ok(names)
 }
 
-/// A price needs a currency; a currency alone is dropped.
-fn price(amount: Option<&str>, currency: Option<&str>) -> ApiResult<Option<Price>> {
+/// An amount needs a currency; a currency alone is dropped. `fields` names
+/// the amount and currency fields in errors.
+fn price(
+    amount: Option<&str>,
+    currency: Option<&str>,
+    fields: (&'static str, &'static str),
+) -> ApiResult<Option<Price>> {
     let Some(amount) = amount.map(str::trim).filter(|a| !a.is_empty()) else {
         return Ok(None);
     };
     let currency = match currency.map(str::trim).filter(|c| !c.is_empty()) {
-        None => return Err(ApiError::invalid("required", "currency")),
+        None => return Err(ApiError::invalid("required", fields.1)),
         Some(code) => {
-            money::currency(code).ok_or(ApiError::invalid("invalid_currency", "currency"))?
+            money::currency(code).ok_or(ApiError::invalid("invalid_currency", fields.1))?
         }
     };
     let minor =
-        money::parse(amount, &currency).ok_or(ApiError::invalid("invalid_price", "price"))?;
+        money::parse(amount, &currency).ok_or(ApiError::invalid("invalid_price", fields.0))?;
     Ok(Some(Price { minor, currency }))
 }
 
@@ -225,7 +236,16 @@ impl CopyInput {
             notes: optional(self.notes.as_deref(), "notes", NOTES_MAX)?,
             edition: optional(self.edition.as_deref(), "edition", NAME_MAX)?,
             purchased_on: date(self.purchased_on.as_deref(), "purchased_on")?,
-            price: price(self.price.as_deref(), self.currency.as_deref())?,
+            price: price(
+                self.price.as_deref(),
+                self.currency.as_deref(),
+                ("price", "currency"),
+            )?,
+            estimated_value: price(
+                self.estimated_value.as_deref(),
+                self.estimated_currency.as_deref(),
+                ("estimated_value", "estimated_currency"),
+            )?,
             barcode: match self
                 .barcode
                 .as_deref()

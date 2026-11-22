@@ -7,7 +7,7 @@ use super::{COLUMNS, MAX_ROWS, UTF8_BOM};
 use crate::domain::loose;
 
 /// Header names other spreadsheets use, compared loosely, for each column.
-const ALIASES: [(&str, &[&str]); 16] = [
+const ALIASES: [(&str, &[&str]); 17] = [
     ("game_title", &["title", "name", "game", "gamename"]),
     ("igdb_id", &["igdb"]),
     ("platform", &["system", "console", "platformname"]),
@@ -38,6 +38,10 @@ const ALIASES: [(&str, &[&str]); 16] = [
         ],
     ),
     ("price", &["paid", "cost", "pricepaid", "amount"]),
+    (
+        "estimated_value",
+        &["value", "marketvalue", "currentvalue", "worth", "estimate"],
+    ),
     ("barcode", &["upc", "ean", "gtin"]),
     ("edition", &["variant"]),
 ];
@@ -113,6 +117,8 @@ pub struct RawRow {
     pub purchased_on: Option<String>,
     pub price: Option<String>,
     pub currency: Option<String>,
+    pub estimated_value: Option<String>,
+    pub estimated_currency: Option<String>,
     pub barcode: Option<String>,
 }
 
@@ -135,6 +141,8 @@ impl RawRow {
             &self.purchased_on,
             &self.price,
             &self.currency,
+            &self.estimated_value,
+            &self.estimated_currency,
             &self.barcode,
         ]
         .iter()
@@ -229,6 +237,8 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             purchased_on: cell("purchased_on"),
             price: cell("price"),
             currency: cell("currency"),
+            estimated_value: cell("estimated_value"),
+            estimated_currency: cell("estimated_currency"),
             barcode: cell("barcode"),
         };
         if row.game_title.is_none()
@@ -279,12 +289,15 @@ mod tests {
 
     #[test]
     fn reads_other_spreadsheets_headers() {
-        let rows = parse(b"Name,System,UPC,Price Paid,Comments\nZelda,Wii,045496590024,10,Gift\n")
-            .unwrap();
+        let rows = parse(
+            b"Name,System,UPC,Price Paid,Market Value,Comments\nZelda,Wii,045496590024,10,25,Gift\n",
+        )
+        .unwrap();
         assert_eq!(rows[0].game_title.as_deref(), Some("Zelda"));
         assert_eq!(rows[0].platform.as_deref(), Some("Wii"));
         assert_eq!(rows[0].barcode.as_deref(), Some("045496590024"));
         assert_eq!(rows[0].price.as_deref(), Some("10"));
+        assert_eq!(rows[0].estimated_value.as_deref(), Some("25"));
         assert_eq!(rows[0].notes.as_deref(), Some("Gift"));
 
         let (headers, delimiter) = headers(b"Title;Game;Rating\nx;y;z\n").unwrap();

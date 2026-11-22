@@ -145,8 +145,9 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                 sqlx::query!(
                     "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,
                                          notes, edition, purchased_on, price, currency,
-                                         barcode, created_by, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                         estimated_value, estimated_currency, barcode,
+                                         created_by, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     release_id,
                     copy.status,
                     device_id,
@@ -158,6 +159,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     copy.purchased_on,
                     copy.price,
                     copy.currency,
+                    copy.estimated_value,
+                    copy.estimated_currency,
                     copy.barcode,
                     by,
                     by
@@ -170,7 +173,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     "UPDATE copies
                      SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,
                          condition = ?, notes = ?, edition = ?, purchased_on = ?, price = ?,
-                         currency = ?, barcode = ?, updated_by = ?,
+                         currency = ?, estimated_value = ?, estimated_currency = ?,
+                         barcode = ?, updated_by = ?,
                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                      WHERE id = ?",
                     release_id,
@@ -184,6 +188,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     copy.purchased_on,
                     copy.price,
                     copy.currency,
+                    copy.estimated_value,
+                    copy.estimated_currency,
                     copy.barcode,
                     by,
                     id

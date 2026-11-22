@@ -25,6 +25,10 @@ pub struct Stats {
     pub unpriced: i64,
     /// What wanted copies are expected to cost, per currency.
     pub wishlist_value: Vec<Amount>,
+    /// What owned copies would sell for now, per currency, largest first.
+    pub estimated: Vec<Amount>,
+    /// Owned copies without an estimated value.
+    pub unvalued: i64,
     /// By the year of the purchase date; copies without one are left out.
     pub spent_by_year: Vec<YearAmount>,
     /// Owned games per play status, in play status order; `None` is not set.
@@ -108,7 +112,9 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
              COUNT(*) FILTER (WHERE status = 'owned' AND format = 'physical') AS "physical!: i64",
              COUNT(*) FILTER (WHERE status = 'owned' AND format = 'digital') AS "digital!: i64",
              COUNT(*) FILTER (WHERE status = 'wanted') AS "wishlist!: i64",
-             COUNT(*) FILTER (WHERE status = 'owned' AND price IS NULL) AS "unpriced!: i64"
+             COUNT(*) FILTER (WHERE status = 'owned' AND price IS NULL) AS "unpriced!: i64",
+             COUNT(*) FILTER (WHERE status = 'owned' AND estimated_value IS NULL)
+               AS "unvalued!: i64"
            FROM copies WHERE bundle_id IS NULL"#
     )
     .fetch_one(pool)
@@ -132,6 +138,20 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
         };
         target.push(amount(row.currency, row.minor, row.copies));
     }
+    let estimated = sqlx::query!(
+        r#"SELECT estimated_currency AS "currency!", SUM(estimated_value) AS "minor!: i64",
+                  COUNT(*) AS "copies!: i64"
+           FROM copies
+           WHERE status = 'owned' AND estimated_value IS NOT NULL
+             AND estimated_currency IS NOT NULL
+           GROUP BY estimated_currency
+           ORDER BY COUNT(*) DESC, estimated_currency"#
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|row| amount(row.currency, row.minor, row.copies))
+    .collect();
 
     let spent_by_year = sqlx::query!(
         r#"SELECT substr(purchased_on, 1, 4) AS "year!: String", currency AS "currency!",
@@ -228,6 +248,8 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
         spent,
         unpriced: counts.unpriced,
         wishlist_value,
+        estimated,
+        unvalued: counts.unvalued,
         spent_by_year,
         play_statuses,
         platforms,

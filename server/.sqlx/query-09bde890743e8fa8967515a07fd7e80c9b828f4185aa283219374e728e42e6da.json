@@ -1,0 +1,63 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n             (SELECT COUNT(DISTINCT r.game_id) FROM releases r\n                JOIN copies c ON c.release_id = r.id WHERE c.status = 'owned') AS \"games!: i64\",\n             COUNT(*) FILTER (WHERE status = 'owned') AS \"copies!: i64\",\n             COUNT(*) FILTER (WHERE status = 'owned' AND format = 'physical') AS \"physical!: i64\",\n             COUNT(*) FILTER (WHERE status = 'owned' AND format = 'digital') AS \"digital!: i64\",\n             COUNT(*) FILTER (WHERE status = 'wanted') AS \"wishlist!: i64\",\n             COUNT(*) FILTER (WHERE status = 'owned' AND price IS NULL) AS \"unpriced!: i64\",\n             COUNT(*) FILTER (WHERE status = 'owned' AND estimated_value IS NULL)\n               AS \"unvalued!: i64\"\n           FROM copies WHERE bundle_id IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "games!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "physical!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "digital!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "wishlist!: i64",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "unpriced!: i64",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "unvalued!: i64",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "09bde890743e8fa8967515a07fd7e80c9b828f4185aa283219374e728e42e6da"
+}

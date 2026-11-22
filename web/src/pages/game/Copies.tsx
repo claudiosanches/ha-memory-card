@@ -108,6 +108,9 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
     store && (wanted ? t('wishlist.store', { store }) : store),
     copy.purchased_on && t('game.boughtOn', { date: formatDate(copy.purchased_on, i18n.language) }),
     copy.price && copy.currency && formatMoney(copy.price, copy.currency, i18n.language),
+    copy.estimated_value &&
+      copy.estimated_currency &&
+      t('game.worth', { amount: formatMoney(copy.estimated_value, copy.estimated_currency, i18n.language) }),
   ];
 
   return (

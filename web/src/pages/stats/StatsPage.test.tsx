@@ -17,6 +17,8 @@ const STATS: Stats = {
   ],
   unpriced: 4,
   wishlist_value: [{ currency: 'USD', amount: '60.00', copies: 1 }],
+  estimated: [{ currency: 'USD', amount: '900.00', copies: 9 }],
+  unvalued: 6,
   spent_by_year: [
     { year: '2025', currency: 'USD', amount: '120.50', copies: 4 },
     { year: '2026', currency: 'USD', amount: '300.00', copies: 6 },
@@ -60,6 +62,9 @@ describe('Stats page', () => {
     const value = await screen.findByTestId('stats-value');
     expect(within(value).getByText('$420.50')).toBeInTheDocument();
     expect(within(value).getByText(/R\$\s?199\.90 · 4 copies without a price/)).toBeInTheDocument();
+    const estimated = screen.getByTestId('stats-estimated');
+    expect(within(estimated).getByText('$900.00')).toBeInTheDocument();
+    expect(within(estimated).getByText('6 copies without an estimate')).toBeInTheDocument();
     expect(screen.getByText('9 physical, 6 digital')).toBeInTheDocument();
     expect(screen.getByText('$60.00 expected')).toBeInTheDocument();
     expect(screen.getByText('3 hours')).toBeInTheDocument();

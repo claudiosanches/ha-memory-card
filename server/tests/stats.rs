@@ -6,12 +6,12 @@ use axum::http::StatusCode;
 use common::TestApp;
 use serde_json::json;
 
-const COLLECTION: &str = "game_title,play_status,platform,region,format,status,store,purchased_on,price,currency\n\
-    Tetris,backlog,Switch,eu,physical,owned,Amazon,2025-03-01,30,USD\n\
-    Tetris,backlog,PS4,na,digital,owned,,2026-01-10,10.50,USD\n\
-    Hades,playing,PS4,na,digital,owned,PS Store,2026-02-01,100,BRL\n\
-    Celeste,,Switch,ww,digital,owned,,,,\n\
-    Silksong,,Switch,ww,physical,wanted,,,20,USD\n";
+const COLLECTION: &str = "game_title,play_status,platform,region,format,status,store,purchased_on,price,currency,estimated_value\n\
+    Tetris,backlog,Switch,eu,physical,owned,Amazon,2025-03-01,30,USD,50\n\
+    Tetris,backlog,PS4,na,digital,owned,,2026-01-10,10.50,USD,\n\
+    Hades,playing,PS4,na,digital,owned,PS Store,2026-02-01,100,BRL,150\n\
+    Celeste,,Switch,ww,digital,owned,,,,,\n\
+    Silksong,,Switch,ww,physical,wanted,,,20,USD,25\n";
 
 #[tokio::test]
 async fn stats_total_the_collection() {
@@ -48,6 +48,15 @@ async fn stats_total_the_collection() {
             {"currency": "BRL", "amount": "100.00", "copies": 1},
         ])
     );
+    assert_eq!(
+        stats["estimated"],
+        json!([
+            {"currency": "BRL", "amount": "150.00", "copies": 1},
+            {"currency": "USD", "amount": "50.00", "copies": 1},
+        ]),
+        "owned copies only"
+    );
+    assert_eq!(stats["unvalued"], 2);
     assert_eq!(
         stats["wishlist_value"],
         json!([{"currency": "USD", "amount": "20.00", "copies": 1}])

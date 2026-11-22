@@ -890,7 +890,10 @@ async fn copies_record_edition_purchase_date_and_price() {
     let detail = add_copy(
         &app,
         game,
-        with(json!({"edition": " Big Box ", "purchased_on": "2026-11-01", "price": "1.299,90", "currency": "brl"})),
+        with(json!({
+            "edition": " Big Box ", "purchased_on": "2026-11-01", "price": "1.299,90",
+            "currency": "brl", "estimated_value": "80", "estimated_currency": "usd",
+        })),
     )
     .await;
     let copy = &detail["releases"][0]["copies"][0];
@@ -898,6 +901,8 @@ async fn copies_record_edition_purchase_date_and_price() {
     assert_eq!(copy["purchased_on"], "2026-11-01");
     assert_eq!(copy["price"], "1299.90");
     assert_eq!(copy["currency"], "BRL");
+    assert_eq!(copy["estimated_value"], "80.00");
+    assert_eq!(copy["estimated_currency"], "USD");
     let id = copy["id"].as_i64().unwrap();
     let (_, copies) = app.json("GET", "/api/copies", None).await;
     assert_eq!(copies[0]["edition"], "Big Box");
@@ -914,6 +919,7 @@ async fn copies_record_edition_purchase_date_and_price() {
     let copy = &detail["releases"][0]["copies"][0];
     assert_eq!(copy["price"], Value::Null);
     assert_eq!(copy["currency"], Value::Null, "a currency alone is dropped");
+    assert_eq!(copy["estimated_value"], Value::Null);
 
     for (extra, code, field) in [
         (json!({"price": "10"}), "required", "currency"),
@@ -926,6 +932,16 @@ async fn copies_record_edition_purchase_date_and_price() {
             json!({"price": "ten", "currency": "USD"}),
             "invalid_price",
             "price",
+        ),
+        (
+            json!({"estimated_value": "10", "currency": "USD"}),
+            "required",
+            "estimated_currency",
+        ),
+        (
+            json!({"estimated_value": "ten", "estimated_currency": "USD"}),
+            "invalid_price",
+            "estimated_value",
         ),
         (
             json!({"purchased_on": "01/11/2026"}),

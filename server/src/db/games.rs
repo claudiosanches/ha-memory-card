@@ -29,6 +29,10 @@ pub struct CopyDetail {
     pub price: Option<String>,
     /// ISO 4217 code of `price`.
     pub currency: Option<String>,
+    /// Decimal text: what an owned copy would sell for now.
+    pub estimated_value: Option<String>,
+    /// ISO 4217 code of `estimated_value`.
+    pub estimated_currency: Option<String>,
     /// UPC or EAN from the box.
     pub barcode: Option<String>,
     /// The bundle copy this copy came in. Its status, format, device, store,
@@ -213,6 +217,7 @@ pub struct CopyFields {
     pub edition: Option<String>,
     pub purchased_on: Option<String>,
     pub price: Option<Price>,
+    pub estimated_value: Option<Price>,
     pub barcode: Option<String>,
 }
 
@@ -273,7 +278,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         r#"SELECT c.id AS "id!", c.release_id, c.status AS "status: CopyStatus",
                   c.format AS "format: Format", c.device_id, c.store_id,
                   c.condition AS "condition: Condition", c.notes, c.edition, c.purchased_on,
-                  c.price, c.currency, c.barcode, c.created_at,
+                  c.price, c.currency, c.estimated_value, c.estimated_currency,
+                  c.barcode, c.created_at,
                   c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,
                   c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name
            FROM copies c JOIN releases r ON r.id = c.release_id
@@ -395,6 +401,11 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                             .zip(c.currency.as_deref())
                             .map(|(minor, currency)| money::format(minor, currency)),
                         currency: c.currency,
+                        estimated_value: c
+                            .estimated_value
+                            .zip(c.estimated_currency.as_deref())
+                            .map(|(minor, currency)| money::format(minor, currency)),
+                        estimated_currency: c.estimated_currency,
                         barcode: c.barcode,
                         bundle: bundle_of(c.id),
                         contents: contents_of(c.id),
@@ -592,11 +603,13 @@ pub async fn add_copy(
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
     let status = fields.status.unwrap_or(CopyStatus::Owned);
-    let (price, currency) = price_columns(fields);
+    let (price, currency) = money_columns(fields.price.as_ref());
+    let (value, value_currency) = money_columns(fields.estimated_value.as_ref());
     sqlx::query!(
         "INSERT INTO copies (release_id, status, format, device_id, store_id, condition, notes,
-                             edition, purchased_on, price, currency, barcode, created_by, updated_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             edition, purchased_on, price, currency, estimated_value,
+                             estimated_currency, barcode, created_by, updated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         release_id,
         status,
         fields.format,
@@ -608,6 +621,8 @@ pub async fn add_copy(
         fields.purchased_on,
         price,
         currency,
+        value,
+        value_currency,
         fields.barcode,
         by,
         by
@@ -649,12 +664,14 @@ pub async fn update_copy(
     }
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
-    let (price, currency) = price_columns(fields);
+    let (price, currency) = money_columns(fields.price.as_ref());
+    let (value, value_currency) = money_columns(fields.estimated_value.as_ref());
     sqlx::query!(
         "UPDATE copies
          SET release_id = ?, status = COALESCE(?, status), format = ?, device_id = ?,
              store_id = ?, condition = ?, notes = ?, edition = ?, purchased_on = ?,
-             price = ?, currency = ?, barcode = ?, updated_by = ?,
+             price = ?, currency = ?, estimated_value = ?, estimated_currency = ?,
+             barcode = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         release_id,
@@ -668,6 +685,8 @@ pub async fn update_copy(
         fields.purchased_on,
         price,
         currency,
+        value,
+        value_currency,
         fields.barcode,
         by,
         copy_id
@@ -823,12 +842,8 @@ pub async fn delete_release(pool: &SqlitePool, release_id: i64) -> ApiResult<i64
     Ok(game_id)
 }
 
-fn price_columns(fields: &CopyFields) -> (Option<i64>, Option<&str>) {
-    fields
-        .price
-        .as_ref()
-        .map(|p| (p.minor, p.currency.as_str()))
-        .unzip()
+fn money_columns(price: Option<&Price>) -> (Option<i64>, Option<&str>) {
+    price.map(|p| (p.minor, p.currency.as_str())).unzip()
 }
 
 pub async fn copy_exists(pool: &SqlitePool, copy_id: i64) -> ApiResult<()> {

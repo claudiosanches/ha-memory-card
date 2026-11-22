@@ -3388,6 +3388,20 @@
               "null"
             ]
           },
+          "estimated_currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 4217 code of `estimated_value`."
+          },
+          "estimated_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text: what an owned copy would sell for now."
+          },
           "format": {
             "$ref": "#/components/schemas/Format"
           },
@@ -3496,6 +3510,20 @@
               "string",
               "null"
             ]
+          },
+          "estimated_currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 4217 code."
+          },
+          "estimated_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text: what an owned copy would sell for now; needs `estimated_currency`."
           },
           "format": {
             "$ref": "#/components/schemas/Format"
@@ -5479,6 +5507,8 @@
           "spent",
           "unpriced",
           "wishlist_value",
+          "estimated",
+          "unvalued",
           "spent_by_year",
           "play_statuses",
           "platforms",
@@ -5496,6 +5526,13 @@
           "digital": {
             "type": "integer",
             "format": "int64"
+          },
+          "estimated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "description": "What owned copies would sell for now, per currency, largest first."
           },
           "games": {
             "type": "integer",
@@ -5567,6 +5604,11 @@
             "type": "integer",
             "format": "int64",
             "description": "Owned copies without a price."
+          },
+          "unvalued": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Owned copies without an estimated value."
           },
           "wishlist": {
             "type": "integer",

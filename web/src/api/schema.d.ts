@@ -801,6 +801,10 @@ export interface components {
             /** Format: int64 */
             device_id?: number | null;
             edition?: string | null;
+            /** @description ISO 4217 code of `estimated_value`. */
+            estimated_currency?: string | null;
+            /** @description Decimal text: what an owned copy would sell for now. */
+            estimated_value?: string | null;
             format: components["schemas"]["Format"];
             /** Format: int64 */
             id: number;
@@ -827,6 +831,10 @@ export interface components {
             /** Format: int64 */
             device_id?: number | null;
             edition?: string | null;
+            /** @description ISO 4217 code. */
+            estimated_currency?: string | null;
+            /** @description Decimal text: what an owned copy would sell for now; needs `estimated_currency`. */
+            estimated_value?: string | null;
             format: components["schemas"]["Format"];
             notes?: string | null;
             /** Format: int64 */
@@ -1391,6 +1399,8 @@ export interface components {
             copies: number;
             /** Format: int64 */
             digital: number;
+            /** @description What owned copies would sell for now, per currency, largest first. */
+            estimated: components["schemas"]["Amount"][];
             /**
              * Format: int64
              * @description Games with an owned copy.
@@ -1421,6 +1431,11 @@ export interface components {
              * @description Owned copies without a price.
              */
             unpriced: number;
+            /**
+             * Format: int64
+             * @description Owned copies without an estimated value.
+             */
+            unvalued: number;
             /**
              * Format: int64
              * @description Wanted copies.

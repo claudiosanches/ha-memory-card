@@ -63,6 +63,8 @@ pub struct CopyWrite {
     pub purchased_on: Option<String>,
     pub price: Option<i64>,
     pub currency: Option<String>,
+    pub estimated_value: Option<i64>,
+    pub estimated_currency: Option<String>,
     pub barcode: Option<String>,
 }
 
@@ -311,23 +313,35 @@ impl<'a> Planner<'a> {
         let edition = issues.text(&raw.edition, "edition", NAME_MAX, false);
         let purchased_on = issues.value(&raw.purchased_on, "purchased_on", date, false);
         let currency = issues.value(&raw.currency, "currency", money::currency, false);
-        let price = match (raw.price.as_deref(), currency.as_deref()) {
-            (None, _) => None,
-            (Some(_), None) => {
-                if raw.currency.is_none() {
-                    issues.error("currency", "required");
-                }
-                None
-            }
-            (Some(text), Some(currency)) => {
-                let minor = money::parse(text, currency);
-                if minor.is_none() {
-                    issues.error("price", "invalid_value");
-                }
-                minor
-            }
+        let price = issues.amount(
+            &raw.price,
+            "price",
+            currency.as_deref(),
+            &raw.currency,
+            "currency",
+        );
+        // A sheet with one currency column uses it for the value too.
+        let (estimated_currency, value_currency_cell) = match &raw.estimated_currency {
+            Some(_) => (
+                issues.value(
+                    &raw.estimated_currency,
+                    "estimated_currency",
+                    money::currency,
+                    false,
+                ),
+                &raw.estimated_currency,
+            ),
+            None => (currency.clone(), &raw.currency),
         };
         let currency = currency.filter(|_| price.is_some());
+        let estimated_value = issues.amount(
+            &raw.estimated_value,
+            "estimated_value",
+            estimated_currency.as_deref(),
+            value_currency_cell,
+            "estimated_currency",
+        );
+        let estimated_currency = estimated_currency.filter(|_| estimated_value.is_some());
         let barcode = issues.value(&raw.barcode, "barcode", domain::barcode, false);
 
         let existing_copy = match copy_id {
@@ -427,6 +441,8 @@ impl<'a> Planner<'a> {
             purchased_on,
             price,
             currency,
+            estimated_value,
+            estimated_currency,
             barcode,
         };
         let action = match existing_copy {
@@ -662,6 +678,8 @@ fn same_copy(copy: &CopyRow, write: &CopyWrite) -> bool {
         && write.purchased_on == copy.purchased_on
         && write.price == copy.price
         && write.currency == copy.currency
+        && write.estimated_value == copy.estimated_value
+        && write.estimated_currency == copy.estimated_currency
         && write.barcode == copy.barcode
 }
 
@@ -718,6 +736,30 @@ impl Issues {
             }
             Some(value) => Some(value.clone()),
         }
+    }
+
+    /// An amount in `currency`'s minor unit. `currency_cell` is the raw
+    /// currency cell, so a blank one is reported as missing under `currency_column`.
+    fn amount(
+        &mut self,
+        cell: &Option<String>,
+        column: &'static str,
+        currency: Option<&str>,
+        currency_cell: &Option<String>,
+        currency_column: &'static str,
+    ) -> Option<i64> {
+        let text = cell.as_deref()?;
+        let Some(currency) = currency else {
+            if currency_cell.is_none() {
+                self.error(currency_column, "required");
+            }
+            return None;
+        };
+        let minor = money::parse(text, currency);
+        if minor.is_none() {
+            self.error(column, "invalid_value");
+        }
+        minor
     }
 
     fn id(&mut self, cell: &Option<String>, column: &'static str) -> Option<i64> {

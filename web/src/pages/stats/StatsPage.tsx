@@ -62,7 +62,12 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
 
   const platformName = new Map((platforms.data ?? []).map((p) => [p.id, p.name]));
   const storeName = new Map((stores.data ?? []).map((s) => [s.id, s.name]));
-  const [main, ...others] = stats.spent;
+  const amounts = (list: Stats['spent'], missing: string | null) =>
+    [...list.slice(1).map((other) => money(other.amount, other.currency)), missing]
+      .filter(Boolean)
+      .join(t('common.separator'));
+  const [spent] = stats.spent;
+  const [estimated] = stats.estimated;
 
   return (
     <>
@@ -75,14 +80,15 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
         />
         <StatTile
           label={t('stats.value')}
-          value={main ? money(main.amount, main.currency) : t('stats.noPrices')}
-          detail={[
-            ...others.map((other) => money(other.amount, other.currency)),
-            stats.unpriced > 0 ? t('stats.unpriced', { count: stats.unpriced }) : null,
-          ]
-            .filter(Boolean)
-            .join(t('common.separator'))}
+          value={spent ? money(spent.amount, spent.currency) : t('stats.noPrices')}
+          detail={amounts(stats.spent, stats.unpriced > 0 ? t('stats.unpriced', { count: stats.unpriced }) : null)}
           testId="stats-value"
+        />
+        <StatTile
+          label={t('stats.estimated')}
+          value={estimated ? money(estimated.amount, estimated.currency) : t('stats.noEstimates')}
+          detail={amounts(stats.estimated, stats.unvalued > 0 ? t('stats.unvalued', { count: stats.unvalued }) : null)}
+          testId="stats-estimated"
         />
         <StatTile
           label={t('stats.wishlist')}

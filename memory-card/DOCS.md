@@ -140,9 +140,9 @@ Memory Card offers the games IGDB lists in it.
 Each game inside gets its own copy, so it shows in the library, the backlog
 and duplicates. Those copies follow the bundle copy: change the bundle's
 platform, region, format, device, store, condition or wishlist status and
-they change too. Price and purchase date stay on the bundle copy. Counts of
-copies, in Settings, the stats page and the Home Assistant sensors, count a
-bundle once. Bundle contents are not part of the CSV export.
+they change too. Price, estimated value and purchase date stay on the bundle
+copy. Counts of copies, in Settings, the stats page and the Home Assistant
+sensors, count a bundle once. Bundle contents are not part of the CSV export.
 
 ## Import and export (CSV)
 
@@ -197,6 +197,8 @@ names for each game, to link with a click or mark as not on IGDB.
 | `purchased_on` | Date bought, `YYYY-MM-DD` |
 | `price` | Price paid, or expected for a wanted copy. `59.99`, `59,99` and `1.299,90` all work; the export writes `1299.90`. Needs `currency`. |
 | `currency` | Three-letter ISO 4217 code, such as `USD`, `EUR` or `BRL` |
+| `estimated_value` | What an owned copy would sell for now, read like `price`. Uses `estimated_currency`, or `currency` when that is empty. |
+| `estimated_currency` | Three-letter code of `estimated_value`, when it differs from `currency` |
 | `barcode` | UPC or EAN digits from the box |
 | `notes` | Free text |
 

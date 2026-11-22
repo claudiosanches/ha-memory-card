@@ -199,6 +199,8 @@ describe('Game page', () => {
       purchased_on: '2026-10-05',
       price: '59.90',
       currency: 'USD',
+      estimated_value: '75.00',
+      estimated_currency: 'USD',
       created_at: '2026-11-01T10:00:00.000Z',
       contents: [],
       photos: [],
@@ -215,7 +217,7 @@ describe('Game page', () => {
     const item = await screen.findByTestId('copy-21');
     expect(item.tagName).toBe('LI');
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    for (const text of [en.format.physical, 'Steelbook', en.condition.cib, 'Sealed spare', '$59.90']) {
+    for (const text of [en.format.physical, 'Steelbook', en.condition.cib, 'Sealed spare', '$59.90', 'worth $75.00']) {
       expect(within(item).getByText(text)).toBeInTheDocument();
     }
     expect(await within(item).findByText('Amazon')).toBeInTheDocument();
@@ -350,6 +352,8 @@ describe('Game page', () => {
     fireEvent.change(within(dialog).getByLabelText(en.game.purchasedOn), { target: { value: '2026-11-20' } });
     fireEvent.change(within(dialog).getByLabelText(en.game.price), { target: { value: '1.299,90' } });
     expect((within(dialog).getByRole('combobox', { name: en.game.currency }) as HTMLInputElement).value).toMatch(/^BRL /);
+    fireEvent.change(within(dialog).getByLabelText(en.game.estimatedValue), { target: { value: '80' } });
+    expect((within(dialog).getByRole('combobox', { name: en.game.estimatedCurrency }) as HTMLInputElement).value).toMatch(/^BRL /);
     fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
 
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
@@ -358,6 +362,8 @@ describe('Game page', () => {
       purchased_on: '2026-11-20',
       price: '1.299,90',
       currency: 'BRL',
+      estimated_value: '80',
+      estimated_currency: 'BRL',
     });
   });
 
