@@ -1,15 +1,20 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './locales/en.json';
+import es from './locales/es.json';
 import ptBR from './locales/pt-BR.json';
 
 export const defaultNS = 'translation';
-export const resources = { en: { translation: en }, 'pt-BR': { translation: ptBR } } as const;
+export const resources = {
+  en: { translation: en },
+  es: { translation: es },
+  'pt-BR': { translation: ptBR },
+} as const;
 
-export const LANGUAGES = ['en', 'pt-BR'] as const;
+export const LANGUAGES = ['en', 'es', 'pt-BR'] as const;
 export type Language = (typeof LANGUAGES)[number];
 /** Each language's name in itself, so anyone can find theirs. */
-export const LANGUAGE_NAMES: Record<Language, string> = { en: 'English', 'pt-BR': 'Português (Brasil)' };
+export const LANGUAGE_NAMES: Record<Language, string> = { en: 'English', es: 'Español', 'pt-BR': 'Português (Brasil)' };
 
 const STORAGE_KEY = 'memory-card-language';
 
@@ -18,6 +23,7 @@ export function browserLanguage(): Language {
   for (const tag of navigator.languages ?? [navigator.language]) {
     const lower = tag.toLowerCase();
     if (lower.startsWith('pt')) return 'pt-BR';
+    if (lower.startsWith('es')) return 'es';
     if (lower.startsWith('en')) return 'en';
   }
   return 'en';

@@ -1,0 +1,43 @@
+configuration:
+  igdb_client_id:
+    name: ID de cliente de IGDB
+    description: >-
+      ID de cliente de tu aplicación de desarrollador de Twitch. Déjalo vacío
+      para usar la aplicación sin la información y las portadas de IGDB.
+  igdb_client_secret:
+    name: Secreto de cliente de IGDB
+    description: Secreto de cliente de la misma aplicación de Twitch.
+  log_level:
+    name: Nivel de registro
+    description: Cuánto escribe la aplicación en su registro.
+  managers:
+    name: Gestores
+    description: >-
+      IDs de usuario de Home Assistant que pueden cambiar la colección. Los
+      demás solo pueden explorarla, y mientras esto esté vacío nadie puede
+      cambiarla. Cada usuario encuentra su ID en Ajustes de Memory Card.
+  external_services:
+    name: Usar servicios externos
+    description: >-
+      Buscar juegos, portadas y plataformas en IGDB, y códigos de barras en
+      UPCitemdb. Desactívalo para que Memory Card no se conecte a internet;
+      las credenciales de IGDB se ignoran y los juegos se introducen a mano.
+  sensors:
+    name: Sensores de Home Assistant
+    description: >-
+      Publicar recuentos de la colección, a qué estás jugando y lo último que
+      añadiste como sensores de Home Assistant, con un botón que sortea un
+      juego. Necesita la aplicación Mosquitto broker y la integración MQTT.
+      Desactivarlo los elimina.
+  viewers_track_progress:
+    name: Los lectores registran su progreso
+    description: >-
+      Permitir que los usuarios que no son gestores cambien el estado de juego
+      y registren sesiones. Todo lo demás sigue siendo de solo lectura para
+      ellos.
+  tag_scan_finished:
+    name: Etiqueta leída en un juego terminado
+    description: >-
+      Qué hace la lectura de la etiqueta NFC de una copia cuando su juego está
+      completado, abandonado o al 100%. "playing" vuelve a poner el juego en
+      jugando; "keep" conserva su estado y solo registra la sesión.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import en from './en.json';
+import es from './es.json';
 import ptBR from './pt-BR.json';
 
 function leaves(node: unknown, path = ''): [string, unknown][] {
@@ -18,13 +19,16 @@ describe('en.json', () => {
   });
 });
 
-describe('pt-BR.json', () => {
+describe.each([
+  ['es.json', es],
+  ['pt-BR.json', ptBR],
+])('%s', (_, locale) => {
   it('has every key of en.json, and only those, with the same placeholders', () => {
     const english = new Map(leaves(en));
-    const portuguese = new Map(leaves(ptBR));
-    expect([...portuguese.keys()].sort()).toEqual([...english.keys()].sort());
+    const translated = new Map(leaves(locale));
+    expect([...translated.keys()].sort()).toEqual([...english.keys()].sort());
     const placeholders = (text: unknown) => [...String(text).matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort();
-    for (const [key, value] of portuguese) {
+    for (const [key, value] of translated) {
       expect(typeof value, key).toBe('string');
       expect((value as string).trim(), key).not.toBe('');
       expect(placeholders(value), key).toEqual(placeholders(english.get(key)));

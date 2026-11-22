@@ -80,8 +80,8 @@ copy, and the game page shows who added it and who changed it last.
 
 ## Language
 
-Memory Card follows your browser's language and comes in English and
-Brazilian Portuguese. To pick one, go to **Settings > Appearance >
+Memory Card follows your browser's language and comes in English, Spanish
+and Brazilian Portuguese. To pick one, go to **Settings > Appearance >
 Language**; the choice is saved in that browser. The app's options in Home
 Assistant are translated too.
 
