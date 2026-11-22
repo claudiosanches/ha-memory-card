@@ -7,8 +7,13 @@ use axum::body::Bytes;
 use axum::extract::{FromRequest, Request};
 use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
+use http_body_util::{BodyExt, LengthLimitError, Limited};
 
 use crate::error::ErrorBody;
+
+/// Largest import or upload; a large collection's CSV can pass 2 MB. Every
+/// other body stops at the app's default limit.
+const MAX: usize = 16 * 1024 * 1024;
 
 /// A CSV file, sent as `text/csv`.
 pub struct CsvBody(pub Bytes);
@@ -19,26 +24,30 @@ pub struct ImageBody(pub Bytes);
 impl<S: Send + Sync> FromRequest<S> for CsvBody {
     type Rejection = Response;
 
-    async fn from_request(request: Request, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(request: Request, _: &S) -> Result<Self, Self::Rejection> {
         if !has_type(&request, |essence| essence == "text/csv") {
-            return Err(unsupported());
+            return Err(error(
+                StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                "unsupported_media_type",
+            ));
         }
-        let body = Bytes::from_request(request, state).await;
-        body.map(Self).map_err(IntoResponse::into_response)
+        read(request).await.map(Self).map_err(|err| *err)
     }
 }
 
 impl<S: Send + Sync> FromRequest<S> for ImageBody {
     type Rejection = Response;
 
-    async fn from_request(request: Request, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(request: Request, _: &S) -> Result<Self, Self::Rejection> {
         let image =
             |essence: &str| essence == "application/octet-stream" || essence.starts_with("image/");
         if !has_type(&request, image) {
-            return Err(unsupported());
+            return Err(error(
+                StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                "unsupported_media_type",
+            ));
         }
-        let body = Bytes::from_request(request, state).await;
-        body.map(Self).map_err(IntoResponse::into_response)
+        read(request).await.map(Self).map_err(|err| *err)
     }
 }
 
@@ -51,13 +60,16 @@ fn has_type(request: &Request, allowed: impl Fn(&str) -> bool) -> bool {
         .is_some_and(|essence| allowed(&essence.trim().to_ascii_lowercase()))
 }
 
-fn unsupported() -> Response {
-    (
-        StatusCode::UNSUPPORTED_MEDIA_TYPE,
-        Json(ErrorBody {
-            code: "unsupported_media_type",
-            field: None,
-        }),
-    )
-        .into_response()
+async fn read(request: Request) -> Result<Bytes, Box<Response>> {
+    match Limited::new(request.into_body(), MAX).collect().await {
+        Ok(body) => Ok(body.to_bytes()),
+        Err(err) if err.is::<LengthLimitError>() => {
+            Err(Box::new(error(StatusCode::PAYLOAD_TOO_LARGE, "too_large")))
+        }
+        Err(_) => Err(Box::new(error(StatusCode::BAD_REQUEST, "invalid_body"))),
+    }
+}
+
+fn error(status: StatusCode, code: &'static str) -> Response {
+    (status, Json(ErrorBody { code, field: None })).into_response()
 }

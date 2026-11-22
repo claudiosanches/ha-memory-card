@@ -242,7 +242,8 @@
     "home_assistant_unavailable": "O Memory Card não está ouvindo as leituras de tags do Home Assistant agora.",
     "not_your_session": "Você só pode alterar as sessões que registrou.",
     "cross_site": "Outro site tentou alterar sua coleção. Abra o Memory Card diretamente e tente de novo.",
-    "unsupported_media_type": "O arquivo foi enviado num formato que o app não aceita."
+    "unsupported_media_type": "O arquivo foi enviado num formato que o app não aceita.",
+    "too_large": "Foi enviado demais de uma vez. Divida o arquivo e tente de novo."
   },
   "import": {
     "intro": "Leve sua coleção entre o Memory Card e uma planilha.",

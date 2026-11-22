@@ -98,8 +98,8 @@ pub fn app(state: AppState) -> Router {
         // Assets stay open so the UI can explain a missing identity.
         .route_layer(middleware::from_fn_with_state(policy, access::guard))
         .merge(assets::router())
-        // CSV imports of a large collection exceed axum's 2 MB default.
-        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        // Imports and uploads read larger bodies themselves; see `api::body`.
+        .layer(DefaultBodyLimit::max(1024 * 1024))
         .layer(middleware::from_fn(origin::same_origin_writes))
         .layer(middleware::from_fn_with_state(trusted, ingress::guard))
         // Under ingress the app shares Home Assistant's origin, so a hole here

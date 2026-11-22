@@ -130,3 +130,52 @@ async fn cross_site_writes_and_untyped_bodies_are_refused() {
         .await;
     assert_eq!(status, StatusCode::UNSUPPORTED_MEDIA_TYPE);
 }
+
+#[tokio::test]
+async fn bodies_and_lists_have_limits() {
+    let app = TestApp::new().await;
+    let big = serde_json::json!({ "title": "x".repeat(1024 * 1024) });
+    let (status, _) = app.json("POST", "/api/games", Some(big)).await;
+    assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+
+    // An import may be larger than other bodies.
+    let notes = "n".repeat(1500);
+    let csv: String = std::iter::once("game_title,notes\n".to_owned())
+        .chain((0..1500).map(|i| format!("Game {i},{notes}\n")))
+        .collect();
+    assert!(csv.len() > 2 * 1024 * 1024);
+    let (status, _) = app.post_csv("/api/import/preview", &csv).await;
+    assert_eq!(status, StatusCode::OK);
+    let huge = "x".repeat(17 * 1024 * 1024);
+    let (status, body) = app.post_csv("/api/import/preview", &huge).await;
+    assert_eq!(
+        (status, body["code"].as_str()),
+        (StatusCode::PAYLOAD_TOO_LARGE, Some("too_large"))
+    );
+
+    let many: Vec<String> = (0..101).map(|i| format!("p{i}")).collect();
+    let (status, _) = app
+        .json(
+            "GET",
+            &format!("/api/games?platform={}", many.join(",")),
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    let (status, _) = app
+        .json(
+            "GET",
+            &format!("/api/games?platform={}", many[..100].join(",")),
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, _) = app
+        .json(
+            "POST",
+            "/api/suggestions",
+            Some(serde_json::json!({ "platform": many })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+}

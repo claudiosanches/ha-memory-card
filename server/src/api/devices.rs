@@ -23,7 +23,7 @@ pub struct DeviceInput {
     pub notes: Option<String>,
     #[serde(default = "default_active")]
     pub active: bool,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "super::input::id_list")]
     pub platform_ids: Vec<i64>,
 }
 

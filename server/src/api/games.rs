@@ -48,7 +48,7 @@ pub struct GameInput {
     pub local_coop: Option<bool>,
     #[serde(default)]
     pub online_coop: Option<bool>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "super::input::id_list")]
     pub game_mode_ids: Vec<i64>,
     /// Other names to search by. Left out, the current ones stay.
     #[serde(default)]

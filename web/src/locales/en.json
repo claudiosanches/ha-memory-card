@@ -242,7 +242,8 @@
     "home_assistant_unavailable": "Memory Card cannot hear Home Assistant tag scans right now.",
     "not_your_session": "You can only change sessions you logged.",
     "cross_site": "Another site tried to change your collection. Open Memory Card directly and try again.",
-    "unsupported_media_type": "The file was sent in a form the app does not accept."
+    "unsupported_media_type": "The file was sent in a form the app does not accept.",
+    "too_large": "Too much was sent at once. Split the file and try again."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",

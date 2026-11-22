@@ -26,6 +26,8 @@ pub enum ApiError {
     Conflict(&'static str),
     #[error("forbidden: {0}")]
     Forbidden(&'static str),
+    #[error("request body too large")]
+    TooLarge,
     #[error("invalid {field:?}: {code}")]
     Invalid {
         code: &'static str,
@@ -66,6 +68,7 @@ impl IntoResponse for ApiError {
             Self::NoMatch(code) => (StatusCode::NOT_FOUND, code, None),
             Self::Conflict(code) => (StatusCode::CONFLICT, code, None),
             Self::Forbidden(code) => (StatusCode::FORBIDDEN, code, None),
+            Self::TooLarge => (StatusCode::PAYLOAD_TOO_LARGE, "too_large", None),
             Self::Invalid { code, field } => (StatusCode::UNPROCESSABLE_ENTITY, code, field),
             Self::Unavailable(code) => (StatusCode::SERVICE_UNAVAILABLE, code, None),
             Self::Upstream(err) => {
@@ -94,6 +97,9 @@ impl From<crate::igdb::IgdbError> for ApiError {
 impl From<JsonRejection> for ApiError {
     fn from(rejection: JsonRejection) -> Self {
         tracing::debug!(%rejection, "rejected request body");
+        if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE {
+            return Self::TooLarge;
+        }
         Self::Invalid {
             code: "invalid_body",
             field: None,

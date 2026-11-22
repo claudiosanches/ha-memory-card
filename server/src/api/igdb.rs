@@ -22,9 +22,13 @@ fn client(state: &AppState) -> ApiResult<Arc<Igdb>> {
         .ok_or(ApiError::Unavailable("igdb_not_configured"))
 }
 
+/// Longer searches are not titles.
+const SEARCH_MAX: usize = 200;
+
 #[derive(Debug, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct SearchQuery {
+    /// At most 200 characters.
     #[serde(default)]
     pub q: String,
 }
@@ -34,6 +38,7 @@ pub struct SearchQuery {
     params(SearchQuery),
     responses(
         (status = OK, body = Vec<SearchHit>),
+        (status = UNPROCESSABLE_ENTITY, description = "`too_long`", body = ErrorBody),
         (status = SERVICE_UNAVAILABLE, description = "`igdb_not_configured`", body = ErrorBody),
         (status = BAD_GATEWAY, description = "`igdb_failed`", body = ErrorBody),
     )
@@ -46,6 +51,9 @@ pub async fn search(
     let text = query.q.trim();
     if text.is_empty() {
         return Ok(Json(Vec::new()));
+    }
+    if text.chars().count() > SEARCH_MAX {
+        return Err(ApiError::invalid("too_long", "q"));
     }
     let mut hits = igdb.search(text).await?;
     mark_collected(&state, &mut hits).await?;
@@ -234,10 +242,10 @@ pub async fn title_differences(
 #[serde(deny_unknown_fields)]
 pub struct TitleChoices {
     /// Games to rename to their IGDB title.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "super::input::id_list")]
     pub use_igdb: Vec<i64>,
     /// Games whose title stays; they leave the list until IGDB renames them.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "super::input::id_list")]
     pub keep: Vec<i64>,
 }
 

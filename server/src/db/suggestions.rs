@@ -16,23 +16,23 @@ use crate::slug::Slug;
 #[serde(deny_unknown_fields)]
 pub struct SuggestionFilter {
     /// Play status keys. Empty means every status that counts as backlog.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "library::filter_list")]
     pub play_status: Vec<String>,
     /// Platform slugs.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "library::filter_list")]
     #[schema(value_type = Vec<String>)]
     pub platform: Vec<Slug>,
     /// Device slugs: copies on these devices, or with no device on a platform
     /// one of them plays.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "library::filter_list")]
     #[schema(value_type = Vec<String>)]
     pub device: Vec<Slug>,
     /// Genre slugs.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "library::filter_list")]
     #[schema(value_type = Vec<String>)]
     pub genre: Vec<Slug>,
     /// Game mode slugs.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "library::filter_list")]
     #[schema(value_type = Vec<String>)]
     pub game_mode: Vec<Slug>,
     /// Local (same screen) players, release value first, then the game's.

@@ -357,8 +357,14 @@ impl Igdb {
     }
 }
 
+/// Quotes and backslashes escaped; control characters, which could end
+/// the query line, dropped.
 fn escape(text: &str) -> String {
-    text.replace('\\', "\\\\").replace('"', "\\\"")
+    text.chars()
+        .filter(|c| !c.is_control())
+        .collect::<String>()
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
 }
 
 fn year(timestamp: i64) -> Option<i32> {
@@ -374,5 +380,6 @@ mod tests {
     #[test]
     fn escapes_quotes_and_backslashes() {
         assert_eq!(escape(r#"Say "hi" \o/"#), r#"Say \"hi\" \\o/"#);
+        assert_eq!(escape("Zelda\n; where id = 1;\r\0"), "Zelda; where id = 1;");
     }
 }

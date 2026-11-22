@@ -2806,6 +2806,7 @@ export interface operations {
     searchIgdb: {
         parameters: {
             query?: {
+                /** @description At most 200 characters. */
                 q?: string;
             };
             header?: never;
@@ -2820,6 +2821,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchHit"][];
+                };
+            };
+            /** @description `too_long` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
             /** @description `igdb_failed` */

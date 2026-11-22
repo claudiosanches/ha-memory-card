@@ -1781,6 +1781,7 @@
           {
             "name": "q",
             "in": "query",
+            "description": "At most 200 characters.",
             "required": false,
             "schema": {
               "type": "string"
@@ -1796,6 +1797,16 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchHit"
                   }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`too_long`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }

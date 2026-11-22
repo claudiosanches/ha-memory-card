@@ -150,13 +150,17 @@ impl<'de> Deserialize<'de> for StatusFilter {
     }
 }
 
+/// Most values one filter takes.
+pub const FILTER_MAX: usize = 100;
+
 fn comma_list<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
     D: Deserializer<'de>,
     T: serde::de::DeserializeOwned,
 {
     let raw: Option<String> = Option::deserialize(deserializer)?;
-    raw.unwrap_or_default()
+    let list: Vec<T> = raw
+        .unwrap_or_default()
         .split(',')
         .map(str::trim)
         .filter(|part| !part.is_empty())
@@ -164,7 +168,25 @@ where
             serde_json::from_value(serde_json::Value::String(part.to_owned()))
                 .map_err(serde::de::Error::custom)
         })
-        .collect()
+        .collect::<Result<_, _>>()?;
+    capped(list)
+}
+
+/// A filter list sent as a JSON array.
+pub fn filter_list<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    capped(Vec::deserialize(deserializer)?)
+}
+
+fn capped<T, E: serde::de::Error>(list: Vec<T>) -> Result<Vec<T>, E> {
+    if list.len() > FILTER_MAX {
+        Err(E::custom(format!("more than {FILTER_MAX} values")))
+    } else {
+        Ok(list)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

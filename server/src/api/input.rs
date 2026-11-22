@@ -6,6 +6,17 @@ use crate::error::ApiError;
 pub const NAME_MAX: usize = 100;
 pub const SHORT_MAX: usize = 20;
 pub const NOTES_MAX: usize = 2000;
+/// Most IDs one request lists.
+pub const IDS_MAX: usize = 1000;
+
+/// A JSON list of at most [`IDS_MAX`] IDs.
+pub fn id_list<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Vec<i64>, D::Error> {
+    let ids: Vec<i64> = serde::Deserialize::deserialize(deserializer)?;
+    if ids.len() > IDS_MAX {
+        return Err(serde::de::Error::custom(format!("more than {IDS_MAX} ids")));
+    }
+    Ok(ids)
+}
 
 pub fn required(value: &str, field: &'static str, max: usize) -> Result<String, ApiError> {
     let value = value.trim();
