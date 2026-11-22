@@ -23,10 +23,12 @@ use std::sync::{Arc, Mutex};
 
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
+use axum::http::{HeaderName, HeaderValue, header};
 use axum::middleware;
 use sqlx::SqlitePool;
 use tokio::sync::Notify;
 use tower_http::services::ServeDir;
+use tower_http::set_header::{SetResponseHeader, SetResponseHeaderLayer};
 use tower_http::trace::TraceLayer;
 
 use crate::config::Config;
@@ -79,7 +81,12 @@ pub fn app(state: AppState) -> Router {
     });
     let (api, _) = api::router().split_for_parts();
 
-    let covers = ServeDir::new(state.config.covers_dir());
+    // Uploaded files never run as a page, even when opened directly.
+    let covers = SetResponseHeader::overriding(
+        ServeDir::new(state.config.covers_dir()),
+        header::CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static("default-src 'none'; sandbox"),
+    );
 
     api.nest_service("/covers", covers)
         .route_layer(middleware::from_fn_with_state(
@@ -96,6 +103,20 @@ pub fn app(state: AppState) -> Router {
         // CSV imports of a large collection exceed axum's 2 MB default.
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
         .layer(middleware::from_fn_with_state(trusted, ingress::guard))
+        // Under ingress the app shares Home Assistant's origin, so a hole here
+        // reaches the Home Assistant session.
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::X_CONTENT_TYPE_OPTIONS,
+            HeaderValue::from_static("nosniff"),
+        ))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::REFERRER_POLICY,
+            HeaderValue::from_static("no-referrer"),
+        ))
+        .layer(SetResponseHeaderLayer::if_not_present(
+            HeaderName::from_static("permissions-policy"),
+            HeaderValue::from_static("camera=(), geolocation=(), microphone=()"),
+        ))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

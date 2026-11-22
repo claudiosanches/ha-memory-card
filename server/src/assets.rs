@@ -11,6 +11,13 @@ struct WebDist;
 
 const INGRESS_PATH_HEADER: &str = "x-ingress-path";
 
+/// Everything the UI loads comes from the app itself. WebAssembly decodes
+/// barcodes; Mantine sets inline styles. Ingress frames the app from Home
+/// Assistant's own origin.
+const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; \
+    style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; \
+    object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+
 pub fn router<S: Clone + Send + Sync + 'static>() -> Router<S> {
     Router::new().fallback(serve)
 }
@@ -45,6 +52,7 @@ fn index(headers: &HeaderMap) -> Response {
     let Some(file) = WebDist::get("index.html") else {
         return (
             StatusCode::SERVICE_UNAVAILABLE,
+            [(header::CONTENT_SECURITY_POLICY, CONTENT_SECURITY_POLICY)],
             "Web UI not built. Run `npm run build -w web`.",
         )
             .into_response();
@@ -58,6 +66,7 @@ fn index(headers: &HeaderMap) -> Response {
         [
             (header::CONTENT_TYPE, "text/html; charset=utf-8"),
             (header::CACHE_CONTROL, "no-cache"),
+            (header::CONTENT_SECURITY_POLICY, CONTENT_SECURITY_POLICY),
         ],
         html,
     )
