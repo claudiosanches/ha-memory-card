@@ -79,3 +79,54 @@ async fn responses_carry_security_headers() {
     assert_eq!(csp[1], None);
     assert_eq!(csp[2].as_deref(), Some("default-src 'none'; sandbox"));
 }
+
+#[tokio::test]
+async fn cross_site_writes_and_untyped_bodies_are_refused() {
+    let app = TestApp::new().await;
+    let post = |site: Option<&str>, content_type: &str| {
+        let mut request = Request::post("/api/import/preview").header("content-type", content_type);
+        if let Some(site) = site {
+            request = request.header("sec-fetch-site", site);
+        }
+        request.body(Body::from("game_title\nCeleste\n")).unwrap()
+    };
+
+    for site in ["cross-site", "same-site"] {
+        let (status, body) = app.request(SUPERVISOR, post(Some(site), "text/csv")).await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "{site}");
+        let body: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(body["code"], "cross_site");
+    }
+    for site in [Some("same-origin"), Some("none"), None] {
+        let (status, _) = app
+            .request(SUPERVISOR, post(site, "text/csv; charset=utf-8"))
+            .await;
+        assert_eq!(status, StatusCode::OK, "{site:?}");
+    }
+    let request = Request::get("/api/status")
+        .header("sec-fetch-site", "cross-site")
+        .body(Body::empty())
+        .unwrap();
+    assert_eq!(app.request(SUPERVISOR, request).await.0, StatusCode::OK);
+
+    for content_type in [
+        "text/plain",
+        "application/x-www-form-urlencoded",
+        "multipart/form-data",
+    ] {
+        let (status, body) = app.request(SUPERVISOR, post(None, content_type)).await;
+        assert_eq!(status, StatusCode::UNSUPPORTED_MEDIA_TYPE, "{content_type}");
+        let body: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(body["code"], "unsupported_media_type");
+    }
+    let (status, _) = app
+        .request(
+            SUPERVISOR,
+            Request::put("/api/games/1/cover")
+                .header("content-type", "text/plain")
+                .body(Body::from("x"))
+                .unwrap(),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNSUPPORTED_MEDIA_TYPE);
+}

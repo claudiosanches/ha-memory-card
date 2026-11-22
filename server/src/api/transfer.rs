@@ -1,5 +1,4 @@
 use axum::Json;
-use axum::body::Bytes;
 use axum::extract::rejection::QueryRejection;
 use axum::extract::{Query, State};
 use axum::http::header;
@@ -9,6 +8,7 @@ use time::OffsetDateTime;
 use time::macros::format_description;
 use utoipa::ToSchema;
 
+use super::body::CsvBody;
 use crate::AppState;
 use crate::access::Actor;
 use crate::db::devices::DeviceKind;
@@ -186,7 +186,10 @@ pub async fn template_csv() -> Response {
     request_body(content = String, content_type = "text/csv"),
     responses((status = OK, body = ImportPreview))
 )]
-pub async fn preview(State(state): State<AppState>, body: Bytes) -> ApiResult<Json<ImportPreview>> {
+pub async fn preview(
+    State(state): State<AppState>,
+    CsvBody(body): CsvBody,
+) -> ApiResult<Json<ImportPreview>> {
     let mut preview = match parse(&body) {
         Ok(rows) => {
             let mut conn = state.db.acquire().await?;
@@ -214,7 +217,7 @@ pub async fn preview(State(state): State<AppState>, body: Bytes) -> ApiResult<Js
 pub async fn run(
     State(state): State<AppState>,
     Actor(by): Actor,
-    body: Bytes,
+    CsvBody(body): CsvBody,
 ) -> ApiResult<Json<ImportResult>> {
     let rows = parse(&body).map_err(|_| ApiError::Invalid {
         code: "import_invalid",

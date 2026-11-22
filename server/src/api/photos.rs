@@ -3,11 +3,11 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use axum::Json;
-use axum::body::Bytes;
 use axum::extract::State;
 use axum::http::StatusCode;
 use time::OffsetDateTime;
 
+use super::body::ImageBody;
 use super::covers::{Image, image_extension};
 use crate::AppState;
 use crate::access::Actor;
@@ -36,7 +36,7 @@ pub async fn add(
     State(state): State<AppState>,
     Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
-    body: Bytes,
+    ImageBody(body): ImageBody,
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
     if body.len() > MAX_BYTES {
         return Err(ApiError::Invalid {

@@ -1,4 +1,5 @@
 pub mod barcodes;
+pub mod body;
 pub mod covers;
 pub mod devices;
 pub mod duplicates;

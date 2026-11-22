@@ -12,6 +12,7 @@ pub mod igdb;
 pub mod ingress;
 pub mod logging;
 pub mod money;
+pub mod origin;
 pub mod sensors;
 pub mod shutdown;
 pub mod slug;
@@ -99,6 +100,7 @@ pub fn app(state: AppState) -> Router {
         .merge(assets::router())
         // CSV imports of a large collection exceed axum's 2 MB default.
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        .layer(middleware::from_fn(origin::same_origin_writes))
         .layer(middleware::from_fn_with_state(trusted, ingress::guard))
         // Under ingress the app shares Home Assistant's origin, so a hole here
         // reaches the Home Assistant session.

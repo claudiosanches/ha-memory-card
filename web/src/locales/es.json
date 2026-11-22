@@ -240,7 +240,9 @@
     "too_many_photos": "Una copia puede tener hasta 20 fotos.",
     "invalid_barcode": "No es un UPC o EAN válido. Revisa los dígitos bajo las barras.",
     "home_assistant_unavailable": "Memory Card no puede recibir ahora las lecturas de etiquetas de Home Assistant.",
-    "not_your_session": "Solo puedes cambiar las sesiones que registraste."
+    "not_your_session": "Solo puedes cambiar las sesiones que registraste.",
+    "cross_site": "Otro sitio intentó cambiar tu colección. Abre Memory Card directamente e inténtalo de nuevo.",
+    "unsupported_media_type": "El archivo se envió en un formato que la app no acepta."
   },
   "import": {
     "intro": "Pasa tu colección entre Memory Card y una hoja de cálculo.",

@@ -1,11 +1,11 @@
 //! Uploaded covers. An upload wins over IGDB's cover until it is removed.
 
 use axum::Json;
-use axum::body::Bytes;
 use axum::extract::State;
 use time::OffsetDateTime;
 use utoipa::ToSchema;
 
+use super::body::ImageBody;
 use crate::AppState;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, GameDetail};
@@ -32,7 +32,7 @@ pub struct Image(#[allow(dead_code)] Vec<u8>);
 pub async fn upload_game(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<i64>,
-    body: Bytes,
+    ImageBody(body): ImageBody,
 ) -> ApiResult<Json<GameDetail>> {
     upload(&state, Owner::Game(id), &body).await
 }
@@ -65,7 +65,7 @@ pub async fn remove_game(
 pub async fn upload_release(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<i64>,
-    body: Bytes,
+    ImageBody(body): ImageBody,
 ) -> ApiResult<Json<GameDetail>> {
     upload(&state, Owner::Release(id), &body).await
 }

@@ -240,7 +240,9 @@
     "too_many_photos": "A copy can have up to 20 photos.",
     "invalid_barcode": "Not a valid UPC or EAN. Check the digits under the bars.",
     "home_assistant_unavailable": "Memory Card cannot hear Home Assistant tag scans right now.",
-    "not_your_session": "You can only change sessions you logged."
+    "not_your_session": "You can only change sessions you logged.",
+    "cross_site": "Another site tried to change your collection. Open Memory Card directly and try again.",
+    "unsupported_media_type": "The file was sent in a form the app does not accept."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
