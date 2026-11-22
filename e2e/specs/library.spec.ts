@@ -37,7 +37,8 @@ test('add a game and a copy, then find and delete it', async ({ page }, testInfo
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('menuitem', { name: en.cover.upload }).click();
   await (await chooser).setFiles({ name: 'cover.png', mimeType: 'image/png', buffer: png });
-  const cover = page.getByRole('button', { name: en.cover.changeGame }).getByRole('img');
+  // The release card shows the game cover too; the first is the game's own.
+  const cover = page.getByRole('button', { name: en.cover.open.replace('{{title}}', title) }).first().getByRole('img');
   await expect(cover).toHaveAttribute('src', /^covers\/game-\d+\/upload-\d+\.png$/);
   await expect.poll(() => cover.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1);
 
