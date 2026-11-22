@@ -20,8 +20,8 @@
 .meters { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(6rem, 35%) minmax(0, 1fr) auto; gap: 10px 12px; }
 .meter { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; row-gap: 4px; font-size: .875rem; }
 .meterLabel { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
-.track { display: block; height: 8px; border-radius: 4px; background: var(--mantine-primary-color-light); }
-.fill { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--mantine-primary-color-filled); }
+.track { display: block; height: 8px; border-radius: 4px; background: var(--mc-chart-track); }
+.fill { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--mc-chart-bar); }
 .figure { color: var(--mc-muted); font-size: .8125rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .copyLabel { display: flex; flex-direction: column; min-width: 0; }
 

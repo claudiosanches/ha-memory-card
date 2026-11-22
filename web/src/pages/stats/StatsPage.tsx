@@ -231,8 +231,8 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
             <Panel title={t('stats.formatByPlatform')}>
               <SplitBars
                 parts={[
-                  { key: 'physical', label: t('format.physical'), color: 'var(--mc-chart-pair-1)' },
-                  { key: 'digital', label: t('format.digital'), color: 'var(--mc-chart-pair-2)' },
+                  { key: 'physical', label: t('format.physical'), color: 'var(--mc-chart-physical)' },
+                  { key: 'digital', label: t('format.digital'), color: 'var(--mc-chart-digital)' },
                 ]}
                 rows={[...stats.platforms]
                   .sort((a, b) => b.copies - a.copies)
@@ -365,14 +365,14 @@ function MeterList({ rows }: { rows: Row[] }) {
 }
 
 type Group = 'finished' | 'inProgress' | 'notStarted' | 'notCounted' | 'notSet';
-// Gray stays free for games without a play status. Not counted goes last,
-// after gray, since pink beside green is hard to tell apart for some readers.
+// Not counted goes last, after not set, so with the default colors pink
+// rarely sits beside green, which some readers cannot tell apart.
 const GROUPS: { key: Group; color: string }[] = [
-  { key: 'finished', color: 'var(--mc-chart-3)' },
-  { key: 'inProgress', color: 'var(--mc-chart-4)' },
-  { key: 'notStarted', color: 'var(--mc-chart-1)' },
-  { key: 'notSet', color: 'var(--mc-chart-other)' },
-  { key: 'notCounted', color: 'var(--mc-chart-5)' },
+  { key: 'finished', color: 'var(--mc-chart-finished)' },
+  { key: 'inProgress', color: 'var(--mc-chart-in-progress)' },
+  { key: 'notStarted', color: 'var(--mc-chart-not-started)' },
+  { key: 'notSet', color: 'var(--mc-chart-not-set)' },
+  { key: 'notCounted', color: 'var(--mc-chart-not-counted)' },
 ];
 const GROUP_OF: Record<StatusGroup, Group> = {
   finished: 'finished',

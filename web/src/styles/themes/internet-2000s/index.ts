@@ -1,5 +1,5 @@
 import type { MantineThemeOverride } from '@mantine/core';
-import { chartSeries, themePair, variables as base } from '../default/variables';
+import { chartColors, variables as base } from '../default/variables';
 import './portal.css';
 import stars from './stars.gif';
 import globe from './globe.gif';
@@ -42,8 +42,7 @@ export const internet2000s = {
       '--mantine-color-text': '#202c51',
       '--mantine-color-dimmed': '#4c5d81',
       '--mantine-color-default-border': '#acbadd',
-      ...chartSeries.light,
-      ...themePair.light,
+      ...chartColors.light,
     },
     dark: {
       '--mc-background': '#141d36',
@@ -57,8 +56,7 @@ export const internet2000s = {
       '--mantine-color-text': '#eaf0ff',
       '--mantine-color-dimmed': '#b4c2e2',
       '--mantine-color-default-border': '#435175',
-      ...chartSeries.dark,
-      ...themePair.dark,
+      ...chartColors.dark,
     },
   },
 };
