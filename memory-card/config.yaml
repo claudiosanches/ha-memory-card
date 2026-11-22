@@ -27,6 +27,7 @@ options:
   viewers_track_progress: false
   external_services: true
   sensors: true
+  tag_scan_finished: playing
 schema:
   igdb_client_id: "str?"
   igdb_client_secret: "password?"
@@ -36,3 +37,4 @@ schema:
   viewers_track_progress: bool
   external_services: bool
   sensors: bool
+  tag_scan_finished: "list(playing|keep)"

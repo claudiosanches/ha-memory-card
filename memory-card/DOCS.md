@@ -96,6 +96,7 @@ Assistant are translated too.
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
 | `sensors` | Publishes Home Assistant sensors through the MQTT broker. On by default; does nothing without a broker. |
 | `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
+| `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 
 ## Wishlist
 
@@ -255,6 +256,8 @@ tag Home Assistant reports works, including ones written under **Settings >
 Tags** in Home Assistant.
 
 Scanning the same tag again on the same day does not add another session.
+A game whose status counts as finished goes back to playing too, unless the
+`tag_scan_finished` option is set to `keep`.
 Memory Card hears scans through the Home Assistant API, which is why the app
 asks for access to it; the Status section under Settings says whether it is
 listening. **Unlink NFC tags** in the same menu removes a copy's tags.

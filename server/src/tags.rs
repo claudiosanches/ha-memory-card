@@ -204,9 +204,15 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
         None => match db::tags::copy_for(&state.db, tag_id).await {
             Ok(Some(copy_id)) => {
                 let today = local_date(state).await;
-                db::sessions::start_from_tag(&state.db, copy_id, &today, user)
-                    .await
-                    .map(|game_id| Scan::Played { game_id })
+                db::sessions::start_from_tag(
+                    &state.db,
+                    copy_id,
+                    &today,
+                    user,
+                    state.config.tag_scan_finished,
+                )
+                .await
+                .map(|game_id| Scan::Played { game_id })
             }
             Ok(None) => Ok(Scan::Unknown),
             Err(err) => Err(err.into()),

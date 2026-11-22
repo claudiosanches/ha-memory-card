@@ -34,3 +34,9 @@ configuration:
     description: >-
       Let users who are not managers change play status and log play sessions.
       Everything else stays read only for them.
+  tag_scan_finished:
+    name: Tag scan on a finished game
+    description: >-
+      What scanning a copy's NFC tag does when its game is completed, dropped
+      or mastered. "playing" sets the game back to playing; "keep" keeps its
+      status and only logs the session.

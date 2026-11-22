@@ -69,6 +69,29 @@ impl FromStr for LogLevel {
     }
 }
 
+/// What scanning a copy's NFC tag does to a game whose status counts as finished.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum FinishedScan {
+    /// Sets it back to playing.
+    #[default]
+    Playing,
+    /// Keeps its status and only logs the session.
+    Keep,
+}
+
+impl FromStr for FinishedScan {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "playing" => Ok(Self::Playing),
+            "keep" => Ok(Self::Keep),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct IgdbCredentials {
     pub client_id: String,
@@ -122,6 +145,7 @@ struct Options {
     viewers_track_progress: Option<bool>,
     external_services: Option<bool>,
     sensors: Option<bool>,
+    tag_scan_finished: Option<FinishedScan>,
 }
 
 #[derive(Debug, Clone)]
@@ -142,6 +166,7 @@ pub struct Config {
     pub external_services: bool,
     /// Publishes Home Assistant sensors through the MQTT broker.
     pub sensors: bool,
+    pub tag_scan_finished: FinishedScan,
     /// Broker named by `MEMORY_CARD_MQTT_*`, used instead of asking the Supervisor.
     pub mqtt: Option<MqttBroker>,
     pub supervisor_url: String,
@@ -288,6 +313,13 @@ impl Config {
             .to_owned();
 
         let home_assistant = HomeAssistantApi::from_env(&env, &supervisor_url);
+        let tag_scan_finished = match env("MEMORY_CARD_TAG_SCAN_FINISHED") {
+            None => options.tag_scan_finished.unwrap_or_default(),
+            Some(raw) => raw.parse().map_err(|()| ConfigError::InvalidEnv {
+                name: "MEMORY_CARD_TAG_SCAN_FINISHED",
+                value: raw.clone(),
+            })?,
+        };
 
         Ok(Self {
             home_assistant,
@@ -301,6 +333,7 @@ impl Config {
             viewers_track_progress,
             external_services,
             sensors,
+            tag_scan_finished,
             mqtt,
             supervisor_url,
             barcode_url: env("MEMORY_CARD_BARCODE_URL").unwrap_or(DEFAULT_BARCODE_URL.into()),
@@ -405,6 +438,7 @@ mod tests {
         assert!(config.managers.is_empty());
         assert!(!config.viewers_track_progress);
         assert!(config.external_services);
+        assert_eq!(config.tag_scan_finished, FinishedScan::Playing);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
     }
 
@@ -413,7 +447,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("options.json"),
-            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true}"#,
+            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true,"tag_scan_finished":"keep"}"#,
         )
         .unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
@@ -421,6 +455,7 @@ mod tests {
         assert_eq!(config.log_level.as_directive(), "warn");
         assert_eq!(config.managers, vec!["abc123"]);
         assert!(config.viewers_track_progress);
+        assert_eq!(config.tag_scan_finished, FinishedScan::Keep);
         let igdb = config.igdb.unwrap();
         assert_eq!(igdb.client_id, "id");
         assert!(!format!("{igdb:?}").contains("secret\""));
@@ -510,6 +545,9 @@ mod tests {
         let err = load_with(dir.path(), &[("MEMORY_CARD_TRUSTED_PEER", "nope")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
         let err = load_with(dir.path(), &[("MEMORY_CARD_EXTERNAL_SERVICES", "maybe")]).unwrap_err();
+        assert!(matches!(err, ConfigError::InvalidEnv { .. }));
+        let err =
+            load_with(dir.path(), &[("MEMORY_CARD_TAG_SCAN_FINISHED", "paused")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
     }
 

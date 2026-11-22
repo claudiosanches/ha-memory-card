@@ -35,3 +35,9 @@ configuration:
     description: >-
       Permitir que usuários que não são gestores mudem o status de jogo e
       registrem sessões. O resto continua somente leitura para eles.
+  tag_scan_finished:
+    name: Tag lida em um jogo terminado
+    description: >-
+      O que a leitura da tag NFC de uma cópia faz quando o jogo está zerado,
+      abandonado ou em 100%. "playing" volta o jogo para jogando; "keep"
+      mantém o status e só registra a sessão.

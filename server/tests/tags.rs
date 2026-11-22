@@ -149,3 +149,40 @@ async fn links_expire_and_cancel_and_wishes_do_not_play() {
     let (status, _) = app.json("POST", "/api/copies/999/tag-link", None).await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn a_finished_game_can_keep_its_status_on_a_scan() {
+    let url = home_assistant().await;
+    let app = TestApp::with_env(&[
+        ("MEMORY_CARD_HA_URL", &url),
+        ("MEMORY_CARD_HA_TOKEN", "ha-token"),
+        ("MEMORY_CARD_TAG_SCAN_FINISHED", "keep"),
+    ])
+    .await;
+    *app.state.tag_status.lock().unwrap() = TagsStatus::Connected;
+    let (game, copy) = copy_of(&app, "Celeste", "owned").await;
+    app.json("POST", &format!("/api/copies/{copy}/tag-link"), None)
+        .await;
+    tags::scanned(&app.state, "t2", None).await;
+
+    assert_eq!(
+        tags::scanned(&app.state, "t2", None).await,
+        Scan::Played { game_id: game }
+    );
+    let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
+    assert_eq!(detail["sessions"].as_array().unwrap().len(), 1);
+    assert_eq!(detail["play_status"], "completed");
+
+    app.json(
+        "PUT",
+        &format!("/api/games/{game}/play-status"),
+        Some(json!({"play_status": "paused"})),
+    )
+    .await;
+    tags::scanned(&app.state, "t2", None).await;
+    let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
+    assert_eq!(
+        detail["play_status"], "playing",
+        "only finished games keep it"
+    );
+}

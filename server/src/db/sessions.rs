@@ -3,6 +3,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::users::Person;
+use crate::config::FinishedScan;
 use crate::error::{ApiError, ApiResult};
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -85,13 +86,15 @@ pub async fn add(
 }
 
 /// What a tag scan does: logs today's session for the copy, once a day, and
-/// sets the game to playing unless its status already counts as playing.
+/// sets the game to playing unless its status already counts as playing, or
+/// counts as finished and `finished` says to keep it.
 /// Returns the game id. A wanted copy is left alone.
 pub async fn start_from_tag(
     pool: &SqlitePool,
     copy_id: i64,
     today: &str,
     user: Option<&str>,
+    finished: FinishedScan,
 ) -> ApiResult<i64> {
     let mut tx = super::write_tx(pool).await?;
     let copy = sqlx::query!(
@@ -125,7 +128,12 @@ pub async fn start_from_tag(
     )
     .execute(&mut *tx)
     .await?;
-    if copy.counts_as.as_deref() != Some("playing") {
+    let keep = match copy.counts_as.as_deref() {
+        Some("playing") => true,
+        Some("finished") => finished == FinishedScan::Keep,
+        _ => false,
+    };
+    if !keep {
         sqlx::query!(
             "UPDATE games SET play_status = 'playing', updated_by = COALESCE(?, updated_by),
                  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
