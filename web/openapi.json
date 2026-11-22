@@ -3336,6 +3336,7 @@
           "id",
           "status",
           "format",
+          "source",
           "contents",
           "photos",
           "tags",
@@ -3457,6 +3458,9 @@
               "null"
             ],
             "description": "`YYYY-MM-DD`."
+          },
+          "source": {
+            "$ref": "#/components/schemas/CopySource"
           },
           "status": {
             "$ref": "#/components/schemas/CopyStatus"
@@ -3790,6 +3794,14 @@
             "type": "string"
           }
         }
+      },
+      "CopySource": {
+        "type": "string",
+        "description": "Where a copy came from: added in the app, or by a CSV import.",
+        "enum": [
+          "manual",
+          "csv"
+        ]
       },
       "CopyStatus": {
         "type": "string",

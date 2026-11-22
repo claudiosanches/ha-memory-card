@@ -149,8 +149,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,
                                          notes, edition, purchased_on, price, currency,
                                          estimated_value, estimated_currency, barcode,
-                                         bundle_id, created_by, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                         bundle_id, created_by, updated_by, source)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'csv')",
                     release_id,
                     copy.status,
                     device_id,

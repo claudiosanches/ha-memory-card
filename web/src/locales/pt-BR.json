@@ -703,6 +703,7 @@
     "added": "Adicionado em {{date}}.",
     "addedBy": "Adicionado por {{name}} em {{date}}.",
     "changedBy": "Alterado por último por {{name}}.",
+    "fromCsv": "Importada de um arquivo CSV.",
     "someone": "alguém"
   },
   "sessions": {

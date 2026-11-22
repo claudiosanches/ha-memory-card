@@ -173,6 +173,7 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
         )}
         <Text size="xs" c="dimmed" className={classes.history}>
           {history(copy, t, i18n.language)}
+          {copy.source === 'csv' && ` ${t('history.fromCsv')}`}
         </Text>
       </div>
 

@@ -9,7 +9,7 @@ use super::sessions::{self, PlaySession};
 use super::tags::CopyTag;
 use super::users::Person;
 use crate::covers::Owner;
-use crate::domain::{Condition, CopyStatus, Format, Region, sort_title};
+use crate::domain::{Condition, CopySource, CopyStatus, Format, Region, sort_title};
 use crate::error::{ApiError, ApiResult};
 use crate::money;
 
@@ -35,6 +35,7 @@ pub struct CopyDetail {
     pub estimated_currency: Option<String>,
     /// UPC or EAN from the box.
     pub barcode: Option<String>,
+    pub source: CopySource,
     /// The bundle copy this copy came in. Its status, format, device, store,
     /// condition, platform and region follow that copy.
     pub bundle: Option<CopyLink>,
@@ -279,7 +280,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                   c.format AS "format: Format", c.device_id, c.store_id,
                   c.condition AS "condition: Condition", c.notes, c.edition, c.purchased_on,
                   c.price, c.currency, c.estimated_value, c.estimated_currency,
-                  c.barcode, c.created_at,
+                  c.barcode, c.source AS "source: CopySource", c.created_at,
                   c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,
                   c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name
            FROM copies c JOIN releases r ON r.id = c.release_id
@@ -407,6 +408,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                             .map(|(minor, currency)| money::format(minor, currency)),
                         estimated_currency: c.estimated_currency,
                         barcode: c.barcode,
+                        source: c.source,
                         bundle: bundle_of(c.id),
                         contents: contents_of(c.id),
                         photos: photos_of(c.id),

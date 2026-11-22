@@ -89,6 +89,14 @@ value_list! {
 }
 
 value_list! {
+    /// Where a copy came from: added in the app, or by a CSV import.
+    CopySource {
+        Manual = "manual" [],
+        Csv = "csv" [],
+    }
+}
+
+value_list! {
     /// The play statuses every install has. Users can add more; see `play_statuses`.
     BuiltinStatus {
         Backlog = "backlog" [],

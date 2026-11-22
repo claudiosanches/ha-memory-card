@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes, c.edition, c.purchased_on,\n                  c.price, c.currency, c.estimated_value, c.estimated_currency,\n                  c.barcode, c.created_at,\n                  c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           LEFT JOIN users cu ON cu.id = c.created_by\n           LEFT JOIN users uu ON uu.id = c.updated_by\n           WHERE r.game_id = ?\n           ORDER BY c.id",
+  "query": "SELECT c.id AS \"id!\", c.release_id, c.status AS \"status: CopyStatus\",\n                  c.format AS \"format: Format\", c.device_id, c.store_id,\n                  c.condition AS \"condition: Condition\", c.notes, c.edition, c.purchased_on,\n                  c.price, c.currency, c.estimated_value, c.estimated_currency,\n                  c.barcode, c.source AS \"source: CopySource\", c.created_at,\n                  c.created_by, COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  c.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           LEFT JOIN users cu ON cu.id = c.created_by\n           LEFT JOIN users uu ON uu.id = c.updated_by\n           WHERE r.game_id = ?\n           ORDER BY c.id",
   "describe": {
     "columns": [
       {
@@ -169,8 +169,19 @@
         }
       },
       {
-        "name": "created_at",
+        "name": "source: CopySource",
         "ordinal": 15,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 16,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -181,7 +192,7 @@
       },
       {
         "name": "created_by",
-        "ordinal": 16,
+        "ordinal": 17,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -192,13 +203,13 @@
       },
       {
         "name": "created_by_name",
-        "ordinal": 17,
+        "ordinal": 18,
         "type_info": "Text",
         "origin": "Expression"
       },
       {
         "name": "updated_by",
-        "ordinal": 18,
+        "ordinal": 19,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -209,7 +220,7 @@
       },
       {
         "name": "updated_by_name",
-        "ordinal": 19,
+        "ordinal": 20,
         "type_info": "Text",
         "origin": "Expression"
       }
@@ -234,11 +245,12 @@
       true,
       true,
       false,
+      false,
       true,
       true,
       true,
       true
     ]
   },
-  "hash": "15c2556313248d8e58de154c72f03a807ab6732134f12cdf3fa56600c78e9dba"
+  "hash": "3da8b331241755268f1ea13a1036607314d5c522f79f3b79e458308b0cb3f4d5"
 }

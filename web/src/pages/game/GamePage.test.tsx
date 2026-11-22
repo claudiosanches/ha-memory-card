@@ -45,7 +45,7 @@ const GAME: GameDetail = {
       local_coop: null,
       online_coop: null,
       copies: [
-        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
+        { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: null, source: 'manual', created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
       ],
     },
   ],
@@ -186,7 +186,7 @@ describe('Game page', () => {
     await waitFor(() => expect(router.state.location.searchStr).toBe('?genre=platform'));
   });
 
-  it('lists each copy with its edition, purchase and who added it', async () => {
+  it('lists each copy with its edition, purchase and where it came from', async () => {
     const copy = {
       id: 21,
       status: 'owned',
@@ -201,6 +201,7 @@ describe('Game page', () => {
       currency: 'USD',
       estimated_value: '75.00',
       estimated_currency: 'USD',
+      source: 'csv',
       created_at: '2026-11-01T10:00:00.000Z',
       contents: [],
       photos: [],
@@ -209,7 +210,7 @@ describe('Game page', () => {
     };
     mockApi({
       ...SETUP,
-      'GET /api/stores': [{ id: 3, name: 'Amazon', notes: null, copy_count: 1 }],
+      'GET /api/stores': [{ id: 3, name: 'Amazon', slug: 'amazon', notes: null, copy_count: 1 }],
       'GET /api/games/4': { ...GAME, releases: [{ ...GAME.releases[0], copies: [copy] }] },
     });
     renderAt('/games/4');
@@ -222,7 +223,7 @@ describe('Game page', () => {
     }
     expect(await within(item).findByText('Amazon')).toBeInTheDocument();
     expect(within(item).getByText(/^Bought /)).toBeInTheDocument();
-    expect(within(item).getByText(/^Added by Sam on /)).toBeInTheDocument();
+    expect(within(item).getByText(/^Added by Sam on /)).toHaveTextContent(en.history.fromCsv);
     expect(within(item).getByRole('button', { name: en.game.editCopy })).toBeInTheDocument();
   });
 

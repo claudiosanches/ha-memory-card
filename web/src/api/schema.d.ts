@@ -820,6 +820,7 @@ export interface components {
             price?: string | null;
             /** @description `YYYY-MM-DD`. */
             purchased_on?: string | null;
+            source: components["schemas"]["CopySource"];
             status: components["schemas"]["CopyStatus"];
             /** Format: int64 */
             store_id?: number | null;
@@ -908,6 +909,11 @@ export interface components {
             store_id?: number | null;
             title: string;
         };
+        /**
+         * @description Where a copy came from: added in the app, or by a CSV import.
+         * @enum {string}
+         */
+        CopySource: "manual" | "csv";
         /** @enum {string} */
         CopyStatus: "owned" | "wanted";
         CopyTag: {

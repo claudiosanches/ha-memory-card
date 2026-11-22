@@ -229,6 +229,11 @@ async fn edited_export_updates_copies() {
     let (_, result) = app.post_csv("/api/import", &edited).await;
     assert_eq!(result["summary"]["updated_copies"], 1, "{result}");
     assert_eq!(result["summary"]["new_copies"], 0);
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM copies WHERE source = 'csv'")
+            .await,
+        1
+    );
 
     let (store, condition, notes): (String, String, String) = sqlx::query_as(
         "SELECT s.name, c.condition, c.notes FROM copies c JOIN stores s ON s.id = c.store_id",

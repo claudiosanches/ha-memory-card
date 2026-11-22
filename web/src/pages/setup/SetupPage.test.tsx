@@ -42,7 +42,7 @@ function detail(id: number, title: string): GameDetail {
         local_coop: null,
         online_coop: null,
         copies: [
-          { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: 'Spare', created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
+          { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: 'Spare', source: 'manual', created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
         ],
       },
     ],

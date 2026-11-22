@@ -53,6 +53,7 @@ async fn copies_find_or_create_their_release() {
     assert_eq!(releases[0]["region"], "eu");
     assert_eq!(releases[0]["copies"].as_array().unwrap().len(), 2);
     assert_eq!(releases[0]["copies"][0]["condition"], "cib");
+    assert_eq!(releases[0]["copies"][0]["source"], "manual");
     assert_eq!(releases[1]["region"], "jp");
 }
 
