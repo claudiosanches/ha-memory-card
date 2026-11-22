@@ -75,12 +75,19 @@ fn index(headers: &HeaderMap) -> Response {
 
 /// Turns `X-Ingress-Path` into a `<base href>` value, so relative URLs resolve
 /// under the ingress prefix even if the panel URL lacks its trailing slash.
+/// Only plain absolute paths pass: `//host` would point the base at another
+/// site, and `..` would climb out of the prefix.
 fn ingress_base(value: &HeaderValue) -> Option<String> {
     let path = value.to_str().ok()?.trim_end_matches('/');
-    let valid = path.starts_with('/')
-        && path
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'_' | b'-' | b'.'));
+    let mut segments = path.strip_prefix('/')?.split('/');
+    let valid = segments.all(|segment| {
+        !segment.is_empty()
+            && segment != "."
+            && segment != ".."
+            && segment
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
+    });
     valid.then(|| format!("{path}/"))
 }
 
@@ -118,7 +125,19 @@ mod tests {
 
     #[test]
     fn base_rejects_unsafe_values() {
-        for raw in ["relative/path", "/a\"b", "/a<b>", "https://evil.example/"] {
+        for raw in [
+            "relative/path",
+            "/a\"b",
+            "/a<b>",
+            "https://evil.example/",
+            "//evil.example",
+            "//evil.example/x/",
+            "/api//x",
+            "/api/../x",
+            "/api/./x",
+            "/",
+            "",
+        ] {
             let value = HeaderValue::from_str(raw).unwrap();
             assert_eq!(ingress_base(&value), None, "{raw}");
         }
