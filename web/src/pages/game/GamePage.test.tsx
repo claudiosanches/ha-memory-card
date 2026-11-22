@@ -283,6 +283,17 @@ describe('Game page', () => {
     expect(within(card).getByRole('img')).toHaveAttribute('src', 'covers/release-9/co5wrq.jpg');
   });
 
+  it('opens the cover full size and changes it only from its button', async () => {
+    mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, cover_path: 'game-4/co1.jpg' } });
+    renderAt('/games/4');
+
+    const [hero] = await screen.findAllByRole('button', { name: en.cover.open.replace('{{title}}', 'Metroid Dread') });
+    fireEvent.click(hero!);
+    expect(screen.queryByRole('menuitem', { name: en.cover.upload })).toBeNull();
+    const dialog = await screen.findByRole('dialog', { name: 'Metroid Dread' });
+    expect(within(dialog).getByRole('img')).toHaveAttribute('src', 'covers/game-4/co1.jpg');
+  });
+
   it('uploads a release cover from the cover menu', async () => {
     const calls = mockApi({
       ...SETUP,

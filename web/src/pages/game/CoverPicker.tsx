@@ -1,7 +1,7 @@
-import { Loader, Menu, UnstyledButton } from '@mantine/core';
+import { Loader, Menu, Modal, UnstyledButton } from '@mantine/core';
 import { IconPhotoEdit, IconTrash, IconUpload } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
@@ -35,7 +35,10 @@ function removeCover(target: CoverTarget) {
     : call(api.DELETE('/api/releases/{id}/cover', { params }));
 }
 
-/** A cover that opens a menu to upload a replacement or remove an upload. */
+/**
+ * A cover that opens full size when clicked, with a corner button whose menu
+ * uploads a replacement or removes an upload. A missing cover opens the menu.
+ */
 export function CoverPicker({
   target,
   path,
@@ -54,6 +57,10 @@ export function CoverPicker({
   const { t } = useTranslation();
   const saved = useGameSaved();
   const input = useRef<HTMLInputElement>(null);
+  const [viewing, setViewing] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [broken, setBroken] = useState<string | null>(null);
+  const viewable = Boolean(path) && path !== broken;
 
   const upload = useMutation({
     mutationFn: (file: File) => uploadCover(target, file),
@@ -68,45 +75,60 @@ export function CoverPicker({
   const busy = upload.isPending || remove.isPending;
   const small = width < 64;
 
-  if (readOnly) return <Cover path={path} title={title} width={width} />;
   return (
-    <>
-      <Menu position="bottom-start" shadow="md">
-        <Menu.Target>
-          <UnstyledButton
-            className={`${classes.button} ${small ? classes.small : ''}`}
-            aria-label={t(target.kind === 'game' ? 'cover.changeGame' : 'cover.changeRelease')}
-            disabled={busy}
-          >
-            <Cover path={path} title={title} width={width} />
-            <span className={classes.hint} aria-hidden>
+    <div className={`${classes.picker} ${small ? classes.small : ''}`}>
+      {/* One element in every state, so the image does not load again. With nothing
+          to view, the placeholder opens the menu; the corner button is the accessible way in. */}
+      <UnstyledButton
+        className={classes.open}
+        {...(viewable
+          ? { 'aria-label': t('cover.open', { title }), onClick: () => setViewing(true) }
+          : { tabIndex: -1, 'aria-hidden': true, 'data-placeholder': true, disabled: readOnly, onClick: () => setMenu(true) })}
+      >
+        <Cover path={path} title={title} width={width} onError={() => setBroken(path ?? null)} />
+      </UnstyledButton>
+      {!readOnly && (
+        <Menu position="bottom-start" shadow="md" opened={menu} onChange={setMenu}>
+          <Menu.Target>
+            <UnstyledButton
+              className={classes.change}
+              aria-label={t(target.kind === 'game' ? 'cover.changeGame' : 'cover.changeRelease')}
+              disabled={busy}
+            >
               {busy ? <Loader size={small ? 10 : 12} /> : <IconPhotoEdit size={small ? 12 : 14} />}
-            </span>
-          </UnstyledButton>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Item leftSection={<IconUpload size={14} />} onClick={() => input.current?.click()}>
-            {t('cover.upload')}
-          </Menu.Item>
-          {uploaded && (
-            <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => remove.mutate()}>
-              {t('cover.remove')}
+            </UnstyledButton>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item leftSection={<IconUpload size={14} />} onClick={() => input.current?.click()}>
+              {t('cover.upload')}
             </Menu.Item>
-          )}
-        </Menu.Dropdown>
-      </Menu>
-      <input
-        ref={input}
-        type="file"
-        accept={ACCEPT}
-        hidden
-        data-testid={`cover-file-${target.kind}-${target.id}`}
-        onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
-          event.currentTarget.value = '';
-          if (file) upload.mutate(file);
-        }}
-      />
-    </>
+            {uploaded && (
+              <Menu.Item color="red" leftSection={<IconTrash size={14} />} onClick={() => remove.mutate()}>
+                {t('cover.remove')}
+              </Menu.Item>
+            )}
+          </Menu.Dropdown>
+        </Menu>
+      )}
+      {viewing && viewable && (
+        <Modal opened onClose={() => setViewing(false)} title={title} size="auto" centered>
+          <img src={`covers/${path}`} alt={t('game.cover', { title })} className={classes.full} />
+        </Modal>
+      )}
+      {!readOnly && (
+        <input
+          ref={input}
+          type="file"
+          accept={ACCEPT}
+          hidden
+          data-testid={`cover-file-${target.kind}-${target.id}`}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = '';
+            if (file) upload.mutate(file);
+          }}
+        />
+      )}
+    </div>
   );
 }

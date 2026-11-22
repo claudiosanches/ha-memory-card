@@ -1,5 +1,12 @@
-.button { position: relative; display: block; flex-shrink: 0; border-radius: 6px; }
-.button:disabled { cursor: progress; }
-.hint { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--mc-surface); color: var(--mantine-color-text); box-shadow: var(--mc-cover-action-shadow); opacity: 0.85; transition: opacity 120ms ease; }
-.button:hover .hint, .button:focus-visible .hint { opacity: 1; }
-.small .hint { right: 2px; bottom: 2px; width: 18px; height: 18px; border-radius: 5px; }
+.picker { position: relative; flex-shrink: 0; align-self: flex-start; border-radius: 6px; }
+.open { display: block; border-radius: 6px; cursor: zoom-in; }
+.open[data-placeholder] { cursor: pointer; }
+.open:disabled { cursor: default; }
+.change { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--mc-surface); color: var(--mantine-color-text); box-shadow: var(--mc-cover-action-shadow); opacity: 0.85; transition: opacity 120ms ease; }
+/* A larger touch target than the icon shows. */
+.change::before { content: ""; position: absolute; inset: -8px; }
+.change:hover, .change:focus-visible { opacity: 1; }
+.change:disabled { cursor: progress; }
+.small .change { right: 2px; bottom: 2px; width: 18px; height: 18px; border-radius: 5px; }
+.small .change::before { inset: -5px; }
+.full { display: block; max-width: 100%; max-height: calc(100dvh - 140px); margin-inline: auto; border-radius: 6px; }

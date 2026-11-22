@@ -479,6 +479,7 @@
     "label": "Cover",
     "changeGame": "Change the game cover",
     "changeRelease": "Change this release's cover",
+    "open": "Open the cover of {{title}}",
     "upload": "Upload a cover",
     "remove": "Remove the uploaded cover",
     "uploaded": "Cover uploaded",

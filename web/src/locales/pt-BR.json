@@ -479,6 +479,7 @@
     "label": "Capa",
     "changeGame": "Trocar a capa do jogo",
     "changeRelease": "Trocar a capa deste lançamento",
+    "open": "Abrir a capa de {{title}}",
     "upload": "Enviar uma capa",
     "remove": "Remover a capa enviada",
     "uploaded": "Capa enviada",
