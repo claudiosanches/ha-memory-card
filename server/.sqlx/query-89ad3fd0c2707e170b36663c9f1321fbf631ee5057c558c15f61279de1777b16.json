@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT d.id AS \"id!\", d.name, d.kind AS \"kind: DeviceKind\", d.model, d.notes,\n                  d.active AS \"active: bool\",\n                  (SELECT json_group_array(platform_id) FROM (\n                       SELECT dp.platform_id FROM device_platforms dp\n                       JOIN platforms p ON p.id = dp.platform_id\n                       WHERE dp.device_id = d.id\n                       ORDER BY p.sort_order, p.name)) AS \"platform_ids!: Json<Vec<i64>>\",\n                  (SELECT COUNT(*) FROM copies c WHERE c.device_id = d.id) AS \"copy_count!: i64\"\n           FROM devices d\n           ORDER BY d.name COLLATE NOCASE",
+  "query": "SELECT d.id AS \"id!\", d.name, d.slug, d.kind AS \"kind: DeviceKind\", d.model, d.notes,\n                  d.active AS \"active: bool\",\n                  (SELECT json_group_array(platform_id) FROM (\n                       SELECT dp.platform_id FROM device_platforms dp\n                       JOIN platforms p ON p.id = dp.platform_id\n                       WHERE dp.device_id = d.id\n                       ORDER BY p.sort_order, p.name)) AS \"platform_ids!: Json<Vec<i64>>\",\n                  (SELECT COUNT(*) FROM copies c WHERE c.device_id = d.id) AS \"copy_count!: i64\"\n           FROM devices d\n           ORDER BY d.name COLLATE NOCASE",
   "describe": {
     "columns": [
       {
@@ -26,8 +26,19 @@
         }
       },
       {
-        "name": "kind: DeviceKind",
+        "name": "slug",
         "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "name": "kind: DeviceKind",
+        "ordinal": 3,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,7 +49,7 @@
       },
       {
         "name": "model",
-        "ordinal": 3,
+        "ordinal": 4,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -49,7 +60,7 @@
       },
       {
         "name": "notes",
-        "ordinal": 4,
+        "ordinal": 5,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -60,7 +71,7 @@
       },
       {
         "name": "active: bool",
-        "ordinal": 5,
+        "ordinal": 6,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -71,13 +82,13 @@
       },
       {
         "name": "platform_ids!: Json<Vec<i64>>",
-        "ordinal": 6,
+        "ordinal": 7,
         "type_info": "Integer",
         "origin": "Expression"
       },
       {
         "name": "copy_count!: i64",
-        "ordinal": 7,
+        "ordinal": 8,
         "type_info": "Integer",
         "origin": "Expression"
       }
@@ -89,6 +100,7 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       false,
@@ -96,5 +108,5 @@
       false
     ]
   },
-  "hash": "07494c0251ba52ad4e8ebf7cc502a0ce3853dd56280ca063be25f20c4eab6b74"
+  "hash": "89ad3fd0c2707e170b36663c9f1321fbf631ee5057c558c15f61279de1777b16"
 }

@@ -403,11 +403,6 @@ async fn titles(app: &TestApp, query: &str) -> Vec<String> {
         .collect()
 }
 
-async fn ids(app: &TestApp, sql: &'static str) -> String {
-    let ids: Vec<i64> = sqlx::query_scalar(sql).fetch_all(&app.pool).await.unwrap();
-    ids.iter().map(i64::to_string).collect::<Vec<_>>().join(",")
-}
-
 #[tokio::test]
 async fn library_lists_owned_games_by_default() {
     let app = library_app().await;
@@ -462,17 +457,18 @@ async fn library_filters_by_igdb_link() {
 #[tokio::test]
 async fn library_filters_combine_on_one_copy() {
     let app = library_app().await;
-    let ps4 = ids(&app, "SELECT id FROM platforms WHERE slug = 'ps4'").await;
-    let wii_u = ids(&app, "SELECT id FROM platforms WHERE slug = 'wii-u'").await;
-    let switch = ids(&app, "SELECT id FROM platforms WHERE slug = 'switch'").await;
-    let ps5_device = ids(&app, "SELECT id FROM devices WHERE name = 'PS5'").await;
-    let amazon = ids(&app, "SELECT id FROM stores WHERE name = 'Amazon'").await;
+    let (ps4, wii_u, switch, ps5_device, amazon) = ("ps4", "wii-u", "switch", "ps5", "amazon");
 
     assert_eq!(
         titles(&app, &format!("platform={ps4},{wii_u}")).await,
         ["The Last of Us Part II", "Mario Kart 8 Deluxe", "Splatoon"]
     );
     assert_eq!(titles(&app, "region=jp").await, ["Splatoon"]);
+    assert_eq!(
+        titles(&app, "platform=WII-U").await,
+        ["Mario Kart 8 Deluxe", "Splatoon"]
+    );
+    assert_eq!(titles(&app, "platform=nope").await, Vec::<String>::new());
     assert_eq!(
         titles(&app, &format!("device={ps5_device}")).await,
         ["Astro Bot", "The Last of Us Part II"]
@@ -514,7 +510,7 @@ async fn library_filters_combine_on_one_copy() {
 #[tokio::test]
 async fn copies_view_filters_each_copy() {
     let app = library_app().await;
-    let wii_u = ids(&app, "SELECT id FROM platforms WHERE slug = 'wii-u'").await;
+    let wii_u = "wii-u";
     let rows = |query: String| {
         let app = &app;
         async move {
@@ -559,8 +555,7 @@ async fn copies_view_filters_each_copy() {
 #[tokio::test]
 async fn local_players_use_the_release_then_the_game() {
     let app = library_app().await;
-    let wii_u = ids(&app, "SELECT id FROM platforms WHERE slug = 'wii-u'").await;
-    let switch = ids(&app, "SELECT id FROM platforms WHERE slug = 'switch'").await;
+    let (wii_u, switch) = ("wii-u", "switch");
 
     assert_eq!(
         titles(&app, "min_local_players=2").await,
@@ -593,11 +588,7 @@ async fn library_game_mode_filter_and_sorting() {
     .execute(&app.pool)
     .await
     .unwrap();
-    let multiplayer = ids(&app, "SELECT id FROM game_modes WHERE slug = 'multiplayer'").await;
-    assert_eq!(
-        titles(&app, &format!("game_mode={multiplayer}")).await,
-        ["Splatoon"]
-    );
+    assert_eq!(titles(&app, "game_mode=multiplayer").await, ["Splatoon"]);
 
     for (title, day) in [("Astro Bot", "2026-11-01"), ("Splatoon", "2026-11-15")] {
         sqlx::query(

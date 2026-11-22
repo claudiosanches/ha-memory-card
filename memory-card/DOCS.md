@@ -240,10 +240,11 @@ Settings in Memory Card says whether the sensors are connected.
 
 An automation can roll with filters by publishing JSON to
 `memory_card/pick/roll` with the `mqtt.publish` action, for example
-`{"device": [2], "min_local_players": 2}` for a game for two on device 2.
-The fields match the Backlog page's picker: `play_status`, `platform`,
-`device`, `genre`, `game_mode` (lists of keys or IDs) and
-`min_local_players`.
+`{"device": ["switch"], "min_local_players": 2}` for a game for two on the
+Switch. The fields match the Backlog page's picker: `play_status` (a list of
+play status keys), `platform`, `device`, `genre`, `game_mode` (lists of
+slugs) and `min_local_players`. Each platform, device and store shows its
+slug in its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
 collection grows. Sensors update a second after each change and show as

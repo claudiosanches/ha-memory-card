@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO devices (name, kind, model, notes, active)\n           VALUES (?, ?, ?, ?, ?)\n           RETURNING id AS \"id!\"",
+  "query": "INSERT INTO stores (name, slug) VALUES (?, ?) RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -9,18 +9,18 @@
         "type_info": "Integer",
         "origin": {
           "Table": {
-            "table": "devices",
+            "table": "stores",
             "name": "id"
           }
         }
       }
     ],
     "parameters": {
-      "Right": 5
+      "Right": 2
     },
     "nullable": [
       false
     ]
   },
-  "hash": "d6cb8477fa8b8c416482bee6699c4bbc384442f0d1e0701adac43e77620ab2e6"
+  "hash": "0713fb6bb2ea79e84ca79b4a81df5ae1d20ca26a1b1217ce36850392ed06f8d6"
 }

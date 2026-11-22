@@ -14,6 +14,7 @@ pub mod logging;
 pub mod money;
 pub mod sensors;
 pub mod shutdown;
+pub mod slug;
 pub mod tags;
 pub mod transfer;
 

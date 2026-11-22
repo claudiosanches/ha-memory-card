@@ -11,6 +11,8 @@ import type { Store, StoreInput } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
+import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
+import { trimSlug } from '../../slug';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { ManageToolbar } from './ManageToolbar';
 import classes from './ManageList.module.css';
@@ -98,9 +100,13 @@ function StoreForm({ store, onClose }: { store?: Store; onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const form = useForm({
-    initialValues: { name: store?.name ?? '', notes: store?.notes ?? '' },
-    validate: { name: (value) => (value.trim() ? null : t('errors.required')) },
+    initialValues: { name: store?.name ?? '', slug: store?.slug ?? '', notes: store?.notes ?? '' },
+    validate: {
+      name: (value) => (value.trim() ? null : t('errors.required')),
+      slug: slugRule(t, store !== undefined),
+    },
   });
+  const inputs = useSlugInputs(form, store?.slug);
   const onApiError = useApiErrorHandler(form);
 
   const save = useMutation({
@@ -122,9 +128,10 @@ function StoreForm({ store, onClose }: { store?: Store; onClose: () => void }) {
       title={store ? t('stores.edit') : t('stores.add')}
       saving={save.isPending}
       onClose={onClose}
-      onSubmit={form.onSubmit((values) => save.mutate(values))}
+      onSubmit={form.onSubmit((values) => save.mutate({ ...values, slug: trimSlug(values.slug) || null }))}
     >
-      <TextInput label={t('common.name')} required data-autofocus {...form.getInputProps('name')} />
+      <TextInput label={t('common.name')} required data-autofocus {...inputs.name} />
+      <SlugInput param="store" saved={store?.slug} {...inputs.slug} />
       <Textarea label={t('common.notes')} autosize minRows={2} {...form.getInputProps('notes')} />
     </FormModal>
   );

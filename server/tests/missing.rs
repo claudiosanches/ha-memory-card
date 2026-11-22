@@ -29,7 +29,7 @@ async fn lists_what_each_game_lacks() {
         .scalar("SELECT id FROM stores ORDER BY id LIMIT 1")
         .await;
     let device: i64 = sqlx::query_scalar(
-        "INSERT INTO devices (name, kind) VALUES ('Switch', 'console') RETURNING id",
+        "INSERT INTO devices (name, slug, kind) VALUES ('Switch', 'switch', 'console') RETURNING id",
     )
     .fetch_one(&app.pool)
     .await

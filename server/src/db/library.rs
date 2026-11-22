@@ -10,6 +10,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::play_statuses;
 use crate::domain::{Condition, CopyStatus, Format, Region};
+use crate::slug::{Slug, Table};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -56,30 +57,30 @@ pub enum LibrarySort {
 pub struct LibraryFilter {
     /// Text in the title, a release title or another name, ignoring case and accents.
     pub q: Option<String>,
-    /// Platform ids.
+    /// Platform slugs.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
-    pub platform: Vec<i64>,
-    /// Device ids.
+    pub platform: Vec<Slug>,
+    /// Device slugs.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
-    pub device: Vec<i64>,
-    /// Store ids.
+    pub device: Vec<Slug>,
+    /// Store slugs.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
-    pub store: Vec<i64>,
+    pub store: Vec<Slug>,
     /// Region codes.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
     pub region: Vec<Region>,
-    /// Genre ids.
+    /// Genre slugs.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
-    pub genre: Vec<i64>,
-    /// Game mode ids.
+    pub genre: Vec<Slug>,
+    /// Game mode slugs.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
-    pub game_mode: Vec<i64>,
+    pub game_mode: Vec<Slug>,
     /// Play statuses, plus `none` for games without one.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
@@ -161,7 +162,6 @@ where
         .filter(|part| !part.is_empty())
         .map(|part| {
             serde_json::from_value(serde_json::Value::String(part.to_owned()))
-                .or_else(|_| serde_json::from_str(part))
                 .map_err(serde::de::Error::custom)
         })
         .collect()
@@ -272,12 +272,12 @@ pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, devic
 pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
     if !filter.genre.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_genres gg WHERE gg.game_id = g.id");
-        push_in(qb, "gg.genre_id", &filter.genre);
+        push_slugs(qb, "gg.genre_id", Table::Genres, &filter.genre);
         qb.push(")");
     }
     if !filter.game_mode.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_game_modes gm WHERE gm.game_id = g.id");
-        push_in(qb, "gm.game_mode_id", &filter.game_mode);
+        push_slugs(qb, "gm.game_mode_id", Table::GameModes, &filter.game_mode);
         qb.push(")");
     }
     push_play_status(qb, &filter.play_status);
@@ -308,22 +308,22 @@ pub fn push_copy_filters(
     if let Some(status) = filter.ownership.unwrap_or_default().status() {
         qb.push(" AND c.status = ").push_bind(status);
     }
-    push_in(qb, "r.platform_id", &filter.platform);
+    push_slugs(qb, "r.platform_id", Table::Platforms, &filter.platform);
     match device {
-        DeviceMatch::Assigned => push_in(qb, "c.device_id", &filter.device),
+        DeviceMatch::Assigned => push_slugs(qb, "c.device_id", Table::Devices, &filter.device),
         DeviceMatch::Playable if !filter.device.is_empty() => {
             qb.push(" AND (c.device_id IN ");
-            push_list(qb, &filter.device);
+            push_ids(qb, Table::Devices, &filter.device);
             qb.push(
                 " OR (c.device_id IS NULL AND r.platform_id IN
                    (SELECT platform_id FROM device_platforms WHERE device_id IN ",
             );
-            push_list(qb, &filter.device);
+            push_ids(qb, Table::Devices, &filter.device);
             qb.push(")))");
         }
         DeviceMatch::Playable => {}
     }
-    push_in(qb, "c.store_id", &filter.store);
+    push_slugs(qb, "c.store_id", Table::Stores, &filter.store);
     push_in(qb, "r.region", &filter.region);
     if let Some(format) = filter.format {
         qb.push(" AND c.format = ").push_bind(format);
@@ -366,6 +366,24 @@ where
     }
     qb.push(" AND ").push(column).push(" IN ");
     push_list(qb, values);
+}
+
+/// ` AND column IN (ids of the rows of table with these slugs)`.
+fn push_slugs(qb: &mut QueryBuilder<Sqlite>, column: &'static str, table: Table, slugs: &[Slug]) {
+    if slugs.is_empty() {
+        return;
+    }
+    qb.push(" AND ").push(column).push(" IN ");
+    push_ids(qb, table, slugs);
+}
+
+/// Pushes `(SELECT id FROM table WHERE slug IN (?, ...))`.
+fn push_ids(qb: &mut QueryBuilder<Sqlite>, table: Table, slugs: &[Slug]) {
+    qb.push("(SELECT id FROM ")
+        .push(table.name())
+        .push(" WHERE slug IN ");
+    push_list(qb, slugs);
+    qb.push(")");
 }
 
 /// Pushes `(?, ?, ...)`.
@@ -488,10 +506,11 @@ mod tests {
     #[test]
     fn parses_comma_lists() {
         let filter: LibraryFilter = serde_urlencoded::from_str(
-            "platform=1,%202,&region=eu,jp&play_status=backlog&format=digital",
+            "platform=switch,%20PS5,&store=itch-io&region=eu,jp&play_status=backlog&format=digital",
         )
         .unwrap();
-        assert_eq!(filter.platform, [1, 2]);
+        assert_eq!(filter.platform, ["switch".into(), "ps5".into()]);
+        assert_eq!(filter.store, ["itch-io".into()]);
         assert_eq!(filter.region, [Region::Eu, Region::Jp]);
         assert_eq!(
             filter.play_status,
@@ -499,6 +518,7 @@ mod tests {
         );
         assert_eq!(filter.format, Some(Format::Digital));
         assert!(serde_urlencoded::from_str::<LibraryFilter>("region=mars").is_err());
+        assert!(serde_urlencoded::from_str::<LibraryFilter>("store=itch.io").is_err());
         let filter: LibraryFilter = serde_urlencoded::from_str("play_status=none,paused").unwrap();
         assert_eq!(
             filter.play_status,

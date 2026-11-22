@@ -12,6 +12,10 @@ use crate::error::{ApiJson, ApiPath, ApiResult, ErrorBody};
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct StoreInput {
     pub name: String,
+    /// Names it in library links. Blank makes one from the name for a new
+    /// one and keeps the current one on update.
+    #[serde(default)]
+    pub slug: Option<String>,
     #[serde(default)]
     pub notes: Option<String>,
 }
@@ -20,6 +24,7 @@ impl StoreInput {
     fn validate(&self) -> ApiResult<StoreFields> {
         Ok(StoreFields {
             name: required(&self.name, "name", NAME_MAX)?,
+            slug: crate::slug::input(self.slug.as_deref())?,
             notes: optional(self.notes.as_deref(), "notes", NOTES_MAX)?,
         })
     }
@@ -38,7 +43,7 @@ pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<Store>>> 
     request_body = StoreInput,
     responses(
         (status = CREATED, body = Store),
-        (status = CONFLICT, description = "`name_taken`", body = ErrorBody),
+        (status = CONFLICT, description = "`name_taken`, `slug_taken`", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]
@@ -57,7 +62,7 @@ pub async fn create(
     responses(
         (status = OK, body = Store),
         (status = NOT_FOUND, body = ErrorBody),
-        (status = CONFLICT, description = "`name_taken`", body = ErrorBody),
+        (status = CONFLICT, description = "`name_taken`, `slug_taken`", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]

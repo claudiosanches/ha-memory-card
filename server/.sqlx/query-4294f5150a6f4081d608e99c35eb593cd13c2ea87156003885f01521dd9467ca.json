@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT s.id AS \"id!\", s.name, s.notes,\n                  (SELECT COUNT(*) FROM copies c WHERE c.store_id = s.id) AS \"copy_count!: i64\"\n           FROM stores s\n           ORDER BY s.name COLLATE NOCASE",
+  "query": "SELECT s.id AS \"id!\", s.name, s.slug, s.notes,\n                  (SELECT COUNT(*) FROM copies c WHERE c.store_id = s.id) AS \"copy_count!: i64\"\n           FROM stores s\n           ORDER BY s.name COLLATE NOCASE",
   "describe": {
     "columns": [
       {
@@ -26,8 +26,19 @@
         }
       },
       {
-        "name": "notes",
+        "name": "slug",
         "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "stores",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "name": "notes",
+        "ordinal": 3,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,7 +49,7 @@
       },
       {
         "name": "copy_count!: i64",
-        "ordinal": 3,
+        "ordinal": 4,
         "type_info": "Integer",
         "origin": "Expression"
       }
@@ -49,9 +60,10 @@
     "nullable": [
       false,
       false,
+      false,
       true,
       false
     ]
   },
-  "hash": "e9133e12ae7139415a0e0debb1373f5550af1765c245d4fadb89d45f86212990"
+  "hash": "4294f5150a6f4081d608e99c35eb593cd13c2ea87156003885f01521dd9467ca"
 }

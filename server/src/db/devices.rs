@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 
 use super::found;
 use crate::error::{ApiError, ApiResult};
+use crate::slug::{self, Table};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
@@ -20,6 +21,8 @@ pub enum DeviceKind {
 pub struct Device {
     pub id: i64,
     pub name: String,
+    /// Names the device in library links.
+    pub slug: String,
     pub kind: DeviceKind,
     pub model: Option<String>,
     pub notes: Option<String>,
@@ -32,6 +35,8 @@ pub struct Device {
 
 pub struct DeviceFields {
     pub name: String,
+    /// `None` makes one from the name for a new device and keeps it on update.
+    pub slug: Option<String>,
     pub kind: DeviceKind,
     pub model: Option<String>,
     pub notes: Option<String>,
@@ -42,6 +47,7 @@ pub struct DeviceFields {
 struct DeviceRow {
     id: i64,
     name: String,
+    slug: String,
     kind: DeviceKind,
     model: Option<String>,
     notes: Option<String>,
@@ -55,6 +61,7 @@ impl From<DeviceRow> for Device {
         Self {
             id: row.id,
             name: row.name,
+            slug: row.slug,
             kind: row.kind,
             model: row.model,
             notes: row.notes,
@@ -68,7 +75,7 @@ impl From<DeviceRow> for Device {
 pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Device>> {
     let rows = sqlx::query_as!(
         DeviceRow,
-        r#"SELECT d.id AS "id!", d.name, d.kind AS "kind: DeviceKind", d.model, d.notes,
+        r#"SELECT d.id AS "id!", d.name, d.slug, d.kind AS "kind: DeviceKind", d.model, d.notes,
                   d.active AS "active: bool",
                   (SELECT json_group_array(platform_id) FROM (
                        SELECT dp.platform_id FROM device_platforms dp
@@ -87,7 +94,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Device>> {
 pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Device> {
     sqlx::query_as!(
         DeviceRow,
-        r#"SELECT d.id AS "id!", d.name, d.kind AS "kind: DeviceKind", d.model, d.notes,
+        r#"SELECT d.id AS "id!", d.name, d.slug, d.kind AS "kind: DeviceKind", d.model, d.notes,
                   d.active AS "active: bool",
                   (SELECT json_group_array(platform_id) FROM (
                        SELECT dp.platform_id FROM device_platforms dp
@@ -108,12 +115,21 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Device> {
 pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
     let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
+    slug::ensure_name_free(&mut tx, Table::Devices, &fields.name, None).await?;
+    let slug = slug::for_new(
+        &mut tx,
+        Table::Devices,
+        fields.slug.as_deref(),
+        &fields.name,
+    )
+    .await?;
 
     let id = sqlx::query_scalar!(
-        r#"INSERT INTO devices (name, kind, model, notes, active)
-           VALUES (?, ?, ?, ?, ?)
+        r#"INSERT INTO devices (name, slug, kind, model, notes, active)
+           VALUES (?, ?, ?, ?, ?, ?)
            RETURNING id AS "id!""#,
         fields.name,
+        slug,
         fields.kind,
         fields.model,
         fields.notes,
@@ -121,7 +137,7 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
     )
     .fetch_one(&mut *tx)
     .await
-    .map_err(|err| ApiError::unique(err, "name_taken"))?;
+    .map_err(slug::conflict)?;
 
     set_platforms(&mut tx, id, &platform_ids).await?;
     tx.commit().await?;
@@ -130,14 +146,16 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
+    slug::ensure_name_free(&mut tx, Table::Devices, &fields.name, Some(id)).await?;
     let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
 
     let result = sqlx::query!(
         "UPDATE devices
-         SET name = ?, kind = ?, model = ?, notes = ?, active = ?,
+         SET name = ?, slug = COALESCE(?, slug), kind = ?, model = ?, notes = ?, active = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         fields.name,
+        fields.slug,
         fields.kind,
         fields.model,
         fields.notes,
@@ -146,7 +164,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiRes
     )
     .execute(&mut *tx)
     .await
-    .map_err(|err| ApiError::unique(err, "name_taken"))?;
+    .map_err(slug::conflict)?;
     found(result.rows_affected())?;
 
     sqlx::query!("DELETE FROM device_platforms WHERE device_id = ?", id)

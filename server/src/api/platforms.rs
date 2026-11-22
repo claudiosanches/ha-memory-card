@@ -12,6 +12,10 @@ use crate::error::{ApiJson, ApiPath, ApiResult, ErrorBody};
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct PlatformInput {
     pub name: String,
+    /// Names it in library links. Blank makes one from the name for a new
+    /// one and keeps the current one on update.
+    #[serde(default)]
+    pub slug: Option<String>,
     #[serde(default)]
     pub abbreviation: Option<String>,
     #[serde(default)]
@@ -28,6 +32,7 @@ impl PlatformInput {
     fn validate(&self) -> ApiResult<PlatformFields> {
         Ok(PlatformFields {
             name: required(&self.name, "name", NAME_MAX)?,
+            slug: crate::slug::input(self.slug.as_deref())?,
             abbreviation: optional(self.abbreviation.as_deref(), "abbreviation", SHORT_MAX)?,
             category: self.category,
             active: self.active,
@@ -54,7 +59,7 @@ pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<Platform>
     request_body = PlatformInput,
     responses(
         (status = CREATED, body = Platform),
-        (status = CONFLICT, description = "`name_taken`", body = ErrorBody),
+        (status = CONFLICT, description = "`name_taken`, `slug_taken`", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]
@@ -76,7 +81,7 @@ pub async fn create(
     responses(
         (status = OK, body = Platform),
         (status = NOT_FOUND, body = ErrorBody),
-        (status = CONFLICT, description = "`name_taken`", body = ErrorBody),
+        (status = CONFLICT, description = "`name_taken`, `slug_taken`", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]

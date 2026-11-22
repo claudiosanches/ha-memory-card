@@ -48,14 +48,12 @@ test('add a game and a copy, then find and delete it', async ({ page }, testInfo
   await expect(page.getByTestId('last-played')).not.toContainText(en.game.never);
 
   // Back in the library, the filters in the URL find it.
-  const playing = encodeURIComponent(JSON.stringify(['playing']));
-  await page.goto(`${PREFIX}/#/?play_status=${playing}&q=${encodeURIComponent(title)}`);
+  await page.goto(`${PREFIX}/#/?play_status=playing&platform=switch&q=${encodeURIComponent(title)}`);
   const card = page.getByTestId(`game-${title}`);
   await expect(card).toContainText(en.playStatus.playing);
   await expect(card).toContainText('Switch');
 
-  const backlog = encodeURIComponent(JSON.stringify(['backlog']));
-  await page.goto(`${PREFIX}/#/?play_status=${backlog}&q=${encodeURIComponent(title)}`);
+  await page.goto(`${PREFIX}/#/?play_status=backlog,paused&q=${encodeURIComponent(title)}`);
   await expect(page.getByText(en.library.noMatch)).toBeVisible();
 
   await page.goto(`${PREFIX}/#/?q=${encodeURIComponent(title)}`);

@@ -35,6 +35,7 @@ const PLATFORMS = [
 const WII_U: Device = {
   id: 7,
   name: 'Living room Wii U',
+  slug: 'living-room-wii-u',
   kind: 'console',
   model: 'Deluxe',
   notes: null,
@@ -72,6 +73,7 @@ describe('Manage devices', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
       name: 'Switch OLED',
+      slug: 'switch-oled',
       kind: 'console',
       model: '',
       notes: '',
@@ -123,12 +125,58 @@ describe('Manage devices', () => {
 
 describe('Manage stores', () => {
   it('opens on the tab named in the URL', async () => {
-    const stores: Store[] = [{ id: 1, name: 'Amazon', notes: 'Prime', copy_count: 0 }];
+    const stores: Store[] = [{ id: 1, name: 'Amazon', slug: 'amazon', notes: 'Prime', copy_count: 0 }];
     mockApi({ 'GET /api/stores': stores });
     renderAt('/manage?tab=stores');
 
     const row = await screen.findByTestId('store-Amazon');
     expect(within(row).getByText('Prime')).toBeInTheDocument();
+  });
+
+  it('gives a new store a slug from its name until the slug is edited', async () => {
+    const calls = mockApi({
+      'GET /api/stores': [],
+      'POST /api/stores': (body: unknown) => json({ id: 2, copy_count: 0, ...(body as object) }, 201),
+    });
+    renderAt('/manage?tab=stores');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.stores.add }));
+    const name = screen.getByRole('textbox', { name: en.common.name });
+    const slug = screen.getByRole('textbox', { name: en.slug.label });
+    fireEvent.change(name, { target: { value: 'Café Jogos' } });
+    expect(slug).toHaveValue('cafe-jogos');
+
+    fireEvent.change(slug, { target: { value: 'My Shop!' } });
+    expect(slug).toHaveValue('my-shop-');
+    fireEvent.blur(slug);
+    expect(slug).toHaveValue('my-shop');
+    fireEvent.change(name, { target: { value: 'Café Jogos Centro' } });
+    expect(slug).toHaveValue('my-shop');
+    expect(screen.queryByTestId('slug-changed')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Café Jogos Centro', slug: 'my-shop', notes: '' });
+  });
+
+  it('warns that changing a saved slug breaks its links', async () => {
+    mockApi({
+      'GET /api/stores': [{ id: 1, name: 'Amazon', slug: 'amazon', notes: null, copy_count: 0 }],
+      'PUT /api/stores/1': () => json({ code: 'slug_taken' }, 409),
+    });
+    renderAt('/manage?tab=stores');
+
+    fireEvent.click(within(await screen.findByTestId('store-Amazon')).getByRole('button', { name: en.common.edit }));
+    const slug = screen.getByRole('textbox', { name: en.slug.label });
+    expect(slug).toHaveValue('amazon');
+    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Amazon US' } });
+    expect(slug).toHaveValue('amazon');
+    expect(screen.queryByTestId('slug-changed')).not.toBeInTheDocument();
+
+    fireEvent.change(slug, { target: { value: 'steam' } });
+    expect(screen.getByTestId('slug-changed')).toHaveTextContent(en.slug.changed);
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    expect(await screen.findByText(en.errors.slug_taken)).toBeInTheDocument();
   });
 });
 

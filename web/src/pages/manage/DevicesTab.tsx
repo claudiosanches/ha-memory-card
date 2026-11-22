@@ -23,6 +23,8 @@ import { DEVICE_KINDS, type Device, type DeviceInput, type DeviceKind, type Plat
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
+import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
+import { trimSlug } from '../../slug';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { ManageToolbar } from './ManageToolbar';
 import classes from './ManageList.module.css';
@@ -145,6 +147,7 @@ export function DevicesTab() {
 
 type FormValues = {
   name: string;
+  slug: string;
   kind: DeviceKind;
   model: string;
   notes: string;
@@ -166,14 +169,19 @@ function DeviceForm({
   const form = useForm<FormValues>({
     initialValues: {
       name: device?.name ?? '',
+      slug: device?.slug ?? '',
       kind: device?.kind ?? 'console',
       model: device?.model ?? '',
       notes: device?.notes ?? '',
       active: device?.active ?? true,
       platform_ids: (device?.platform_ids ?? []).map(String),
     },
-    validate: { name: (value) => (value.trim() ? null : t('errors.required')) },
+    validate: {
+      name: (value) => (value.trim() ? null : t('errors.required')),
+      slug: slugRule(t, device !== undefined),
+    },
   });
+  const inputs = useSlugInputs(form, device?.slug);
   const onApiError = useApiErrorHandler(form);
 
   // Inactive platforms stay listed when the device already uses them.
@@ -202,7 +210,7 @@ function DeviceForm({
       saving={save.isPending}
       onClose={onClose}
       onSubmit={form.onSubmit((values) =>
-        save.mutate({ ...values, platform_ids: values.platform_ids.map(Number) }),
+        save.mutate({ ...values, slug: trimSlug(values.slug) || null, platform_ids: values.platform_ids.map(Number) }),
       )}
     >
       <TextInput
@@ -211,8 +219,9 @@ function DeviceForm({
         placeholder={t('devices.namePlaceholder')}
         required
         data-autofocus
-        {...form.getInputProps('name')}
+        {...inputs.name}
       />
+      <SlugInput param="device" saved={device?.slug} {...inputs.slug} />
       <Select
         label={t('devices.kind')}
         allowDeselect={false}

@@ -19,6 +19,7 @@ import { SETTINGS_TABS, SettingsPage, type SettingsTab } from './pages/SettingsP
 import { IgdbMatchesPage } from './pages/IgdbMatchesPage';
 import { SetupPage } from './pages/setup/SetupPage';
 import { StatsPage } from './pages/stats/StatsPage';
+import { parseSearch, stringifySearch } from './searchParams';
 
 const rootRoute = createRootRoute({ component: Layout });
 
@@ -83,7 +84,7 @@ const routeTree = rootRoute.addChildren([
 
 /** Hash history: the server never sees client routes, so deep links survive a reload under ingress. */
 export function createAppRouter(history: RouterHistory = createHashHistory()) {
-  return createRouter({ routeTree, history });
+  return createRouter({ routeTree, history, parseSearch, stringifySearch });
 }
 
 declare module '@tanstack/react-router' {

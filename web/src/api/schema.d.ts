@@ -936,6 +936,8 @@ export interface components {
             notes?: string | null;
             /** @description Platforms this device plays, in platform list order. */
             platform_ids: number[];
+            /** @description Names the device in library links. */
+            slug: string;
         };
         DeviceInput: {
             active?: boolean;
@@ -944,6 +946,11 @@ export interface components {
             name: string;
             notes?: string | null;
             platform_ids?: number[];
+            /**
+             * @description Names it in library links. Blank makes one from the name for a new
+             *     one and keeps the current one on update.
+             */
+            slug?: string | null;
         };
         /** @enum {string} */
         DeviceKind: "console" | "handheld" | "pc" | "account";
@@ -1084,6 +1091,7 @@ export interface components {
             /** Format: int64 */
             id: number;
             name: string;
+            slug: string;
         };
         /**
          * @description How a header was read. `column` is empty for headers that match nothing
@@ -1250,6 +1258,11 @@ export interface components {
             active?: boolean;
             category?: components["schemas"]["PlatformCategory"] | null;
             name: string;
+            /**
+             * @description Names it in library links. Blank makes one from the name for a new
+             *     one and keeps the current one on update.
+             */
+            slug?: string | null;
         };
         PlatformOrder: {
             /** @description Every platform id, once, in the new order. */
@@ -1519,6 +1532,8 @@ export interface components {
             id: number;
             name: string;
             notes?: string | null;
+            /** @description Names the store in library links. */
+            slug: string;
         };
         StoreCount: {
             /** Format: int64 */
@@ -1529,6 +1544,11 @@ export interface components {
         StoreInput: {
             name: string;
             notes?: string | null;
+            /**
+             * @description Names it in library links. Blank makes one from the name for a new
+             *     one and keeps the current one on update.
+             */
+            slug?: string | null;
         };
         Suggestion: {
             /** @description Owned copies of the game that match the filters. */
@@ -1540,16 +1560,22 @@ export interface components {
          *     apply to the same owned copy.
          */
         SuggestionFilter: {
-            /** @description Copies on these devices, or with no device on a platform one of them plays. */
-            device?: number[];
-            game_mode?: number[];
-            genre?: number[];
+            /**
+             * @description Device slugs: copies on these devices, or with no device on a platform
+             *     one of them plays.
+             */
+            device?: string[];
+            /** @description Game mode slugs. */
+            game_mode?: string[];
+            /** @description Genre slugs. */
+            genre?: string[];
             /**
              * Format: int64
              * @description Local (same screen) players, release value first, then the game's.
              */
             min_local_players?: number | null;
-            platform?: number[];
+            /** @description Platform slugs. */
+            platform?: string[];
             /** @description Play status keys. Empty means every status that counts as backlog. */
             play_status?: string[];
         };
@@ -1671,17 +1697,17 @@ export interface operations {
             query?: {
                 /** @description Text in the title, a release title or another name, ignoring case and accents. */
                 q?: string;
-                /** @description Platform ids. */
+                /** @description Platform slugs. */
                 platform?: string;
-                /** @description Device ids. */
+                /** @description Device slugs. */
                 device?: string;
-                /** @description Store ids. */
+                /** @description Store slugs. */
                 store?: string;
                 /** @description Region codes. */
                 region?: string;
-                /** @description Genre ids. */
+                /** @description Genre slugs. */
                 genre?: string;
-                /** @description Game mode ids. */
+                /** @description Game mode slugs. */
                 game_mode?: string;
                 /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
@@ -1995,7 +2021,7 @@ export interface operations {
                     "application/json": components["schemas"]["Device"];
                 };
             };
-            /** @description `name_taken` */
+            /** @description `name_taken`, `slug_taken` */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2046,7 +2072,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description `name_taken` */
+            /** @description `name_taken`, `slug_taken` */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2119,17 +2145,17 @@ export interface operations {
             query?: {
                 /** @description Text in the title, a release title or another name, ignoring case and accents. */
                 q?: string;
-                /** @description Platform ids. */
+                /** @description Platform slugs. */
                 platform?: string;
-                /** @description Device ids. */
+                /** @description Device slugs. */
                 device?: string;
-                /** @description Store ids. */
+                /** @description Store slugs. */
                 store?: string;
                 /** @description Region codes. */
                 region?: string;
-                /** @description Genre ids. */
+                /** @description Genre slugs. */
                 genre?: string;
-                /** @description Game mode ids. */
+                /** @description Game mode slugs. */
                 game_mode?: string;
                 /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
@@ -2191,17 +2217,17 @@ export interface operations {
             query?: {
                 /** @description Text in the title, a release title or another name, ignoring case and accents. */
                 q?: string;
-                /** @description Platform ids. */
+                /** @description Platform slugs. */
                 platform?: string;
-                /** @description Device ids. */
+                /** @description Device slugs. */
                 device?: string;
-                /** @description Store ids. */
+                /** @description Store slugs. */
                 store?: string;
                 /** @description Region codes. */
                 region?: string;
-                /** @description Genre ids. */
+                /** @description Genre slugs. */
                 genre?: string;
-                /** @description Game mode ids. */
+                /** @description Game mode slugs. */
                 game_mode?: string;
                 /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
@@ -3113,7 +3139,7 @@ export interface operations {
                     "application/json": components["schemas"]["Platform"];
                 };
             };
-            /** @description `name_taken` */
+            /** @description `name_taken`, `slug_taken` */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3195,7 +3221,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description `name_taken` */
+            /** @description `name_taken`, `slug_taken` */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3761,7 +3787,7 @@ export interface operations {
                     "application/json": components["schemas"]["Store"];
                 };
             };
-            /** @description `name_taken` */
+            /** @description `name_taken`, `slug_taken` */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3811,7 +3837,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description `name_taken` */
+            /** @description `name_taken`, `slug_taken` */
             409: {
                 headers: {
                     [name: string]: unknown;

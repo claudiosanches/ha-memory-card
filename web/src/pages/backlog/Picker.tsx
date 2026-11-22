@@ -23,7 +23,7 @@ export function Picker() {
   const setStatus = useSetPlayStatus();
 
   const pick = useMutation({
-    mutationFn: () => call(api.POST('/api/suggestions', { body: device ? { device: [Number(device)] } : {} })),
+    mutationFn: () => call(api.POST('/api/suggestions', { body: device ? { device: [device] } : {} })),
     onSuccess: (suggestion) => setPicked((last) => ({ suggestion, roll: (last?.roll ?? 0) + 1 })),
     onError: () => setPicked(null),
   });
@@ -54,7 +54,7 @@ export function Picker() {
             placeholder={t('backlog.anyDevice')}
             data={(devices.data ?? [])
               .filter((d) => d.active)
-              .map((d) => ({ value: String(d.id), label: d.name }))}
+              .map((d) => ({ value: d.slug, label: d.name }))}
             value={device}
             onChange={setDevice}
             clearable

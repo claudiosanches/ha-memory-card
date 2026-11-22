@@ -141,8 +141,8 @@ function GameView({ game }: { game: GameDetail }) {
       platform: new Map((platforms.data ?? []).map((p) => [p.id, p.name])),
       device: new Map((devices.data ?? []).map((d) => [d.id, d.name])),
       store: new Map((stores.data ?? []).map((s) => [s.id, s.name])),
-      mode: new Map((gameModes.data ?? []).map((m) => [m.id, m.name])),
-      genre: new Map((genres.data ?? []).map((g) => [g.id, g.name])),
+      mode: new Map((gameModes.data ?? []).map((m) => [m.id, m])),
+      genre: new Map((genres.data ?? []).map((g) => [g.id, g])),
     }),
     [platforms.data, devices.data, stores.data, gameModes.data, genres.data],
   );
@@ -226,7 +226,7 @@ function GameView({ game }: { game: GameDetail }) {
     !game.local_coop &&
     !game.online_coop &&
     game.game_mode_ids.length > 0 &&
-    game.game_mode_ids.every((id) => gameModes.data?.find((mode) => mode.id === id)?.slug === 'single-player');
+    game.game_mode_ids.every((id) => names.mode.get(id)?.slug === 'single-player');
 
   return (
     <Stack gap="section" className={classes.page}>
@@ -357,34 +357,40 @@ function GameView({ game }: { game: GameDetail }) {
               <Text size="sm"><strong>{t('game.gameModes')}:</strong></Text>
               {game.game_mode_ids.length === 0 ? (
                 <Text size="sm" c="dimmed">{t('common.notSet')}</Text>
-              ) : game.game_mode_ids.map((modeId) => (
-                <Badge
-                  key={modeId}
-                  size="sm"
-                  variant="light"
-                  tt="none"
-                  className={classes.tagLink}
-                  renderRoot={(props) => <Link to="/" search={{ game_mode: [modeId] }} {...props} />}
-                >
-                  {names.mode.get(modeId)}
-                </Badge>
-              ))}
+              ) : game.game_mode_ids.map((modeId) => {
+                const mode = names.mode.get(modeId);
+                return (
+                  <Badge
+                    key={modeId}
+                    size="sm"
+                    variant="light"
+                    tt="none"
+                    className={classes.tagLink}
+                    renderRoot={(props) => <Link to="/" search={mode ? { game_mode: [mode.slug] } : {}} {...props} />}
+                  >
+                    {mode?.name}
+                  </Badge>
+                );
+              })}
             </Group>
             {game.genre_ids.length > 0 && (
               <Group gap="xs" className={classes.tagRow}>
                 <Text size="sm"><strong>{t('game.genres')}:</strong></Text>
-                {game.genre_ids.map((genreId) => (
-                  <Badge
-                    key={genreId}
-                    size="sm"
-                    variant="outline"
-                    tt="none"
-                    className={classes.tagLink}
-                    renderRoot={(props) => <Link to="/" search={{ genre: [genreId] }} {...props} />}
-                  >
-                    {names.genre.get(genreId)}
-                  </Badge>
-                ))}
+                {game.genre_ids.map((genreId) => {
+                  const genre = names.genre.get(genreId);
+                  return (
+                    <Badge
+                      key={genreId}
+                      size="sm"
+                      variant="outline"
+                      tt="none"
+                      className={classes.tagLink}
+                      renderRoot={(props) => <Link to="/" search={genre ? { genre: [genre.slug] } : {}} {...props} />}
+                    >
+                      {genre?.name}
+                    </Badge>
+                  );
+                })}
               </Group>
             )}
             <Text size="sm">

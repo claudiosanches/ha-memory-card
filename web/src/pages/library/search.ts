@@ -5,25 +5,27 @@ import {
   REGIONS,
   type Region,
 } from '../../api/types';
+import { listParam } from '../../searchParams';
+import { isSlug } from '../../slug';
 
 /** A play status key, or `none` for games without a status. */
 export type StatusFilter = string;
 export const NO_STATUS = 'none';
 
 function statusKeys(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const list = value.filter((v): v is string => typeof v === 'string' && /^[a-z0-9_]+$/.test(v));
+  const list = listParam(value).filter((v) => /^[a-z0-9_]+$/.test(v));
   return list.length ? list : undefined;
 }
 
 /** Library filters as kept in the URL. Absent means "no filter". */
 export type LibrarySearch = {
   q?: string;
-  platform?: number[];
-  device?: number[];
-  store?: number[];
-  genre?: number[];
-  game_mode?: number[];
+  /** Slugs, like the rest of these lists. */
+  platform?: string[];
+  device?: string[];
+  store?: string[];
+  genre?: string[];
+  game_mode?: string[];
   region?: Region[];
   play_status?: StatusFilter[];
   format?: Format;
@@ -33,17 +35,17 @@ export type LibrarySearch = {
   sort?: 'added' | 'played';
 };
 
-const ID_LISTS = ['platform', 'device', 'store', 'genre', 'game_mode'] as const;
+const SLUG_LISTS = ['platform', 'device', 'store', 'genre', 'game_mode'] as const;
 
-function ids(value: unknown): number[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const list = value.map(Number).filter((n) => Number.isInteger(n) && n > 0);
+function slugs(value: unknown): string[] | undefined {
+  const list = listParam(value)
+    .map((v) => v.toLowerCase())
+    .filter(isSlug);
   return list.length ? list : undefined;
 }
 
 function oneOf<T extends string>(allowed: readonly T[], value: unknown): T[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const list = value.filter((v): v is T => allowed.includes(v as T));
+  const list = listParam(value).filter((v): v is T => allowed.includes(v as T));
   return list.length ? list : undefined;
 }
 
@@ -51,8 +53,8 @@ function oneOf<T extends string>(allowed: readonly T[], value: unknown): T[] | u
 export function validateLibrarySearch(search: Record<string, unknown>): LibrarySearch {
   const result: LibrarySearch = {};
   if (typeof search.q === 'string' && search.q.trim()) result.q = search.q;
-  for (const key of ID_LISTS) {
-    const list = ids(search[key]);
+  for (const key of SLUG_LISTS) {
+    const list = slugs(search[key]);
     if (list) result[key] = list;
   }
   const region = oneOf(REGIONS, search.region);
@@ -71,7 +73,7 @@ export function validateLibrarySearch(search: Record<string, unknown>): LibraryS
 /** Number of active filters, not counting search text, ownership or sort. */
 export function activeFilterCount(search: LibrarySearch): number {
   return (
-    ID_LISTS.filter((key) => search[key]).length +
+    SLUG_LISTS.filter((key) => search[key]).length +
     (search.region ? 1 : 0) +
     (search.play_status ? 1 : 0) +
     (search.format ? 1 : 0) +
@@ -95,7 +97,7 @@ export function exportHref(search: LibrarySearch): string {
 export function toApiQuery(search: LibrarySearch): LibraryQuery {
   const query: LibraryQuery = {};
   if (search.q) query.q = search.q;
-  for (const key of ID_LISTS) {
+  for (const key of SLUG_LISTS) {
     const list = search[key];
     if (list) query[key] = list.join(',');
   }

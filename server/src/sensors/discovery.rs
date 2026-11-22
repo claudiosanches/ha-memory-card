@@ -244,8 +244,8 @@ mod tests {
     fn the_button_rolls_with_defaults_and_automations_send_filters() {
         assert!(pick_filter(b"roll").unwrap().platform.is_empty());
         assert!(pick_filter(b"").unwrap().device.is_empty());
-        let filter = pick_filter(br#"{"device": [3], "min_local_players": 2}"#).unwrap();
-        assert_eq!(filter.device, [3]);
+        let filter = pick_filter(br#"{"device": ["switch"], "min_local_players": 2}"#).unwrap();
+        assert_eq!(filter.device, ["switch".into()]);
         assert_eq!(filter.min_local_players, Some(2));
         assert!(pick_filter(b"{\"colour\": 1}").is_err());
     }

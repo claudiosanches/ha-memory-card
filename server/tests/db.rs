@@ -88,14 +88,18 @@ async fn fresh_database_has_schema_and_seed() {
 #[tokio::test]
 async fn names_are_unique_ignoring_case() {
     let app = TestApp::new().await;
-    sqlx::query("INSERT INTO stores (name) VALUES ('Amazon')")
+    sqlx::query("INSERT INTO stores (name, slug) VALUES ('Amazon', 'amazon')")
         .execute(&app.pool)
         .await
         .unwrap();
-    let duplicate = sqlx::query("INSERT INTO stores (name) VALUES ('amazon')")
+    let duplicate = sqlx::query("INSERT INTO stores (name, slug) VALUES ('amazon', 'amazon-2')")
         .execute(&app.pool)
         .await;
     assert!(duplicate.is_err());
+    let slug = sqlx::query("INSERT INTO stores (name, slug) VALUES ('Amazon US', 'AMAZON')")
+        .execute(&app.pool)
+        .await;
+    assert!(slug.is_err());
 }
 
 #[tokio::test]
@@ -160,8 +164,9 @@ async fn pending_migration_snapshots_existing_database() {
 async fn close_leaves_no_wal_content() {
     let app = TestApp::new().await;
     for i in 0..50 {
-        sqlx::query("INSERT INTO stores (name) VALUES (?)")
+        sqlx::query("INSERT INTO stores (name, slug) VALUES (?, ?)")
             .bind(format!("Store {i}"))
+            .bind(format!("store-{i}"))
             .execute(&app.pool)
             .await
             .unwrap();

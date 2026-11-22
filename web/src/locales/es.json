@@ -200,6 +200,8 @@
     "network": "No se pudo conectar con el servidor.",
     "not_found": "Ya no existe. Vuelve a cargar la página.",
     "name_taken": "Este nombre ya está en uso.",
+    "slug_taken": "Este slug ya está en uso.",
+    "invalid_slug": "Usa letras minúsculas, números y guiones.",
     "required": "Obligatorio.",
     "too_long": "Demasiado largo.",
     "invalid_body": "La solicitud no era válida.",
@@ -861,5 +863,10 @@
     "link": "Vincular",
     "later": "Más tarde",
     "notOnIgdb": "No está en IGDB"
+  },
+  "slug": {
+    "label": "Slug",
+    "description": "Se usa en los enlaces de la biblioteca: {{link}}",
+    "changed": "Los enlaces con el slug anterior dejan de funcionar."
   }
 }

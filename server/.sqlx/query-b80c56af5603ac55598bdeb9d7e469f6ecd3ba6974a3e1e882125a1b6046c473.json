@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE platforms\n         SET name = ?1, abbreviation = ?2, category = ?3, active = ?4, slug = COALESCE(?6, slug),\n             sort_order = CASE WHEN ?4 AND NOT active\n                 THEN (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active)\n                 ELSE sort_order END\n         WHERE id = ?5",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "b80c56af5603ac55598bdeb9d7e469f6ecd3ba6974a3e1e882125a1b6046c473"
+}

@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 
 use super::found;
 use crate::error::{ApiError, ApiResult};
+use crate::slug::{self, Table};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
@@ -44,6 +45,8 @@ pub struct Platform {
 
 pub struct PlatformFields {
     pub name: String,
+    /// `None` makes one from the name for a new platform and keeps it on update.
+    pub slug: Option<String>,
     pub abbreviation: Option<String>,
     pub category: Option<PlatformCategory>,
     pub active: bool,
@@ -89,18 +92,18 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
     .ok_or(ApiError::NotFound)
 }
 
-/// New platforms go to the end of the list with a slug derived from the name.
+/// New platforms go to the end of the list.
 pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
 
-    let base = slugify(&fields.name);
-    let taken: Vec<String> = sqlx::query_scalar!(
-        r#"SELECT slug AS "slug!" FROM platforms WHERE slug = ?1 OR slug LIKE ?1 || '-%'"#,
-        base
+    slug::ensure_name_free(&mut tx, Table::Platforms, &fields.name, None).await?;
+    let slug = slug::for_new(
+        &mut tx,
+        Table::Platforms,
+        fields.slug.as_deref(),
+        &fields.name,
     )
-    .fetch_all(&mut *tx)
     .await?;
-    let slug = unique_slug(&base, &taken);
 
     let id = sqlx::query_scalar!(
         r#"INSERT INTO platforms (name, abbreviation, slug, category, active, custom, sort_order)
@@ -114,17 +117,19 @@ pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64
     )
     .fetch_one(&mut *tx)
     .await
-    .map_err(|err| ApiError::unique(err, "name_taken"))?;
+    .map_err(slug::conflict)?;
 
     tx.commit().await?;
     Ok(id)
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &PlatformFields) -> ApiResult<()> {
+    let mut tx = crate::db::write_tx(pool).await?;
+    slug::ensure_name_free(&mut tx, Table::Platforms, &fields.name, Some(id)).await?;
     let result = sqlx::query!(
         // A platform switched on goes to the end of the active list.
         "UPDATE platforms
-         SET name = ?1, abbreviation = ?2, category = ?3, active = ?4,
+         SET name = ?1, abbreviation = ?2, category = ?3, active = ?4, slug = COALESCE(?6, slug),
              sort_order = CASE WHEN ?4 AND NOT active
                  THEN (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms WHERE active)
                  ELSE sort_order END
@@ -133,12 +138,15 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &PlatformFields) -> ApiR
         fields.abbreviation,
         fields.category,
         fields.active,
-        id
+        id,
+        fields.slug
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await
-    .map_err(|err| ApiError::unique(err, "name_taken"))?;
-    found(result.rows_affected())
+    .map_err(slug::conflict)?;
+    found(result.rows_affected())?;
+    tx.commit().await?;
+    Ok(())
 }
 
 /// `ids` must list every platform exactly once, in the new order.
@@ -200,54 +208,4 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
         .await?;
     tx.commit().await?;
     Ok(())
-}
-
-pub(crate) fn slugify(name: &str) -> String {
-    let mut slug = String::new();
-    for c in name.chars().flat_map(char::to_lowercase) {
-        if c.is_alphanumeric() {
-            slug.push(c);
-        } else if !slug.ends_with('-') {
-            slug.push('-');
-        }
-    }
-    let slug = slug.trim_matches('-');
-    if slug.is_empty() {
-        "platform".to_owned()
-    } else {
-        slug.to_owned()
-    }
-}
-
-pub(crate) fn unique_slug(base: &str, taken: &[String]) -> String {
-    if !taken.iter().any(|s| s.eq_ignore_ascii_case(base)) {
-        return base.to_owned();
-    }
-    (2..)
-        .map(|n| format!("{base}-{n}"))
-        .find(|candidate| !taken.iter().any(|s| s.eq_ignore_ascii_case(candidate)))
-        .expect("unbounded range")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn slugify_names() {
-        assert_eq!(
-            slugify("Sega Mega Drive/Genesis"),
-            "sega-mega-drive-genesis"
-        );
-        assert_eq!(slugify("  Xbox Series X|S "), "xbox-series-x-s");
-        assert_eq!(slugify("PC-Engine"), "pc-engine");
-        assert_eq!(slugify("???"), "platform");
-    }
-
-    #[test]
-    fn unique_slug_appends_counter() {
-        let taken = vec!["dreamcast".to_owned(), "dreamcast-2".to_owned()];
-        assert_eq!(unique_slug("saturn", &taken), "saturn");
-        assert_eq!(unique_slug("dreamcast", &taken), "dreamcast-3");
-    }
 }

@@ -69,7 +69,7 @@
           {
             "name": "platform",
             "in": "query",
-            "description": "Platform ids.",
+            "description": "Platform slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -78,7 +78,7 @@
           {
             "name": "device",
             "in": "query",
-            "description": "Device ids.",
+            "description": "Device slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -87,7 +87,7 @@
           {
             "name": "store",
             "in": "query",
-            "description": "Store ids.",
+            "description": "Store slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -105,7 +105,7 @@
           {
             "name": "genre",
             "in": "query",
-            "description": "Genre ids.",
+            "description": "Genre slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -114,7 +114,7 @@
           {
             "name": "game_mode",
             "in": "query",
-            "description": "Game mode ids.",
+            "description": "Game mode slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -571,7 +571,7 @@
             }
           },
           "409": {
-            "description": "`name_taken`",
+            "description": "`name_taken`, `slug_taken`",
             "content": {
               "application/json": {
                 "schema": {
@@ -640,7 +640,7 @@
             }
           },
           "409": {
-            "description": "`name_taken`",
+            "description": "`name_taken`, `slug_taken`",
             "content": {
               "application/json": {
                 "schema": {
@@ -736,7 +736,7 @@
           {
             "name": "platform",
             "in": "query",
-            "description": "Platform ids.",
+            "description": "Platform slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -745,7 +745,7 @@
           {
             "name": "device",
             "in": "query",
-            "description": "Device ids.",
+            "description": "Device slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -754,7 +754,7 @@
           {
             "name": "store",
             "in": "query",
-            "description": "Store ids.",
+            "description": "Store slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -772,7 +772,7 @@
           {
             "name": "genre",
             "in": "query",
-            "description": "Genre ids.",
+            "description": "Genre slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -781,7 +781,7 @@
           {
             "name": "game_mode",
             "in": "query",
-            "description": "Game mode ids.",
+            "description": "Game mode slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -919,7 +919,7 @@
           {
             "name": "platform",
             "in": "query",
-            "description": "Platform ids.",
+            "description": "Platform slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -928,7 +928,7 @@
           {
             "name": "device",
             "in": "query",
-            "description": "Device ids.",
+            "description": "Device slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -937,7 +937,7 @@
           {
             "name": "store",
             "in": "query",
-            "description": "Store ids.",
+            "description": "Store slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -955,7 +955,7 @@
           {
             "name": "genre",
             "in": "query",
-            "description": "Genre ids.",
+            "description": "Genre slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -964,7 +964,7 @@
           {
             "name": "game_mode",
             "in": "query",
-            "description": "Game mode ids.",
+            "description": "Game mode slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2171,7 +2171,7 @@
             }
           },
           "409": {
-            "description": "`name_taken`",
+            "description": "`name_taken`, `slug_taken`",
             "content": {
               "application/json": {
                 "schema": {
@@ -2281,7 +2281,7 @@
             }
           },
           "409": {
-            "description": "`name_taken`",
+            "description": "`name_taken`, `slug_taken`",
             "content": {
               "application/json": {
                 "schema": {
@@ -2983,7 +2983,7 @@
             }
           },
           "409": {
-            "description": "`name_taken`",
+            "description": "`name_taken`, `slug_taken`",
             "content": {
               "application/json": {
                 "schema": {
@@ -3051,7 +3051,7 @@
             }
           },
           "409": {
-            "description": "`name_taken`",
+            "description": "`name_taken`, `slug_taken`",
             "content": {
               "application/json": {
                 "schema": {
@@ -3839,6 +3839,7 @@
         "required": [
           "id",
           "name",
+          "slug",
           "kind",
           "active",
           "platform_ids",
@@ -3882,6 +3883,10 @@
               "format": "int64"
             },
             "description": "Platforms this device plays, in platform list order."
+          },
+          "slug": {
+            "type": "string",
+            "description": "Names the device in library links."
           }
         }
       },
@@ -3919,6 +3924,13 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Names it in library links. Blank makes one from the name for a new\none and keeps the current one on update."
           }
         }
       },
@@ -4462,7 +4474,8 @@
         "type": "object",
         "required": [
           "id",
-          "name"
+          "name",
+          "slug"
         ],
         "properties": {
           "id": {
@@ -4470,6 +4483,9 @@
             "format": "int64"
           },
           "name": {
+            "type": "string"
+          },
+          "slug": {
             "type": "string"
           }
         }
@@ -5006,6 +5022,13 @@
           },
           "name": {
             "type": "string"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Names it in library links. Blank makes one from the name for a new\none and keeps the current one on update."
           }
         }
       },
@@ -5827,6 +5850,7 @@
         "required": [
           "id",
           "name",
+          "slug",
           "copy_count"
         ],
         "properties": {
@@ -5847,6 +5871,10 @@
               "string",
               "null"
             ]
+          },
+          "slug": {
+            "type": "string",
+            "description": "Names the store in library links."
           }
         }
       },
@@ -5883,6 +5911,13 @@
               "string",
               "null"
             ]
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Names it in library links. Blank makes one from the name for a new\none and keeps the current one on update."
           }
         }
       },
@@ -5913,24 +5948,23 @@
           "device": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             },
-            "description": "Copies on these devices, or with no device on a platform one of them plays."
+            "description": "Device slugs: copies on these devices, or with no device on a platform\none of them plays."
           },
           "game_mode": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64"
-            }
+              "type": "string"
+            },
+            "description": "Game mode slugs."
           },
           "genre": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64"
-            }
+              "type": "string"
+            },
+            "description": "Genre slugs."
           },
           "min_local_players": {
             "type": [
@@ -5943,9 +5977,9 @@
           "platform": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64"
-            }
+              "type": "string"
+            },
+            "description": "Platform slugs."
           },
           "play_status": {
             "type": "array",

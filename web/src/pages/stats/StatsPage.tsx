@@ -70,8 +70,17 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
   const number = (value: number) => value.toLocaleString(locale);
   const copies = (count: number) => t('stats.copiesCount', { count });
 
+  const platformById = new Map((platforms.data ?? []).map((p) => [p.id, p]));
   const platformName = new Map((platforms.data ?? []).map((p) => [p.id, p.name]));
-  const storeName = new Map((stores.data ?? []).map((s) => [s.id, s.name]));
+  const storeById = new Map((stores.data ?? []).map((s) => [s.id, s]));
+  const platformSearch = (id: number) => {
+    const slug = platformById.get(id)?.slug;
+    return slug ? { platform: [slug] } : undefined;
+  };
+  const storeSearch = (id: number | null | undefined) => {
+    const slug = id ? storeById.get(id)?.slug : undefined;
+    return slug ? { store: [slug] } : undefined;
+  };
   const amounts = (list: Stats['spent'], missing: string | null) =>
     [...list.slice(1).map((other) => money(other.amount, other.currency)), missing]
       .filter(Boolean)
@@ -150,7 +159,7 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
                 key: String(row.platform_id),
                 label: platformName.get(row.platform_id) ?? '',
                 value: row.copies,
-                search: { platform: [row.platform_id] },
+                search: platformSearch(row.platform_id),
               }))}
               figure={copies}
               locale={locale}
@@ -170,7 +179,7 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
                   .map((row) => ({
                     key: String(row.platform_id),
                     label: platformName.get(row.platform_id) ?? '',
-                    search: { platform: [row.platform_id] },
+                    search: platformSearch(row.platform_id),
                     values: [row.physical, row.digital],
                     figure: t('stats.formats', { physical: number(row.physical), digital: number(row.digital) }),
                   }))}
@@ -182,9 +191,9 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
             <DonutChart
               slices={stats.stores.map((row) => ({
                 key: String(row.store_id),
-                label: row.store_id ? (storeName.get(row.store_id) ?? '') : t('stats.noStore'),
+                label: row.store_id ? (storeById.get(row.store_id)?.name ?? '') : t('stats.noStore'),
                 value: row.copies,
-                search: row.store_id ? { store: [row.store_id] } : undefined,
+                search: storeSearch(row.store_id),
               }))}
               figure={copies}
               locale={locale}

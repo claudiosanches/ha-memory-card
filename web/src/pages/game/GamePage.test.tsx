@@ -171,7 +171,7 @@ describe('Game page', () => {
     mockApi({
       ...SETUP,
       'GET /api/game-modes': [{ id: 3, name: 'Co-operative', slug: 'co-operative' }],
-      'GET /api/genres': [{ id: 8, name: 'Platform' }],
+      'GET /api/genres': [{ id: 8, name: 'Platform', slug: 'platform' }],
       'GET /api/games/4': { ...GAME, game_mode_ids: [3], genre_ids: [8] },
       'GET /api/games': [],
     });
@@ -179,11 +179,11 @@ describe('Game page', () => {
 
     fireEvent.click(await screen.findByRole('link', { name: 'Co-operative' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
-    expect(router.state.location.search).toEqual({ game_mode: [3] });
+    expect(router.state.location.searchStr).toBe('?game_mode=co-operative');
 
     await router.navigate({ to: '/games/$gameId', params: { gameId: '4' } });
     fireEvent.click(await screen.findByRole('link', { name: 'Platform' }));
-    await waitFor(() => expect(router.state.location.search).toEqual({ genre: [8] }));
+    await waitFor(() => expect(router.state.location.searchStr).toBe('?genre=platform'));
   });
 
   it('lists each copy with its edition, purchase and who added it', async () => {

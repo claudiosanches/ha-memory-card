@@ -8,6 +8,7 @@ use super::games::{self, GameDetail};
 use super::library::{self, DeviceMatch, LibraryFilter, Ownership, StatusFilter};
 use super::play_statuses;
 use crate::error::{ApiError, ApiResult};
+use crate::slug::Slug;
 
 /// Values inside one filter are OR, filters are AND, and the copy filters
 /// apply to the same owned copy.
@@ -17,15 +18,23 @@ pub struct SuggestionFilter {
     /// Play status keys. Empty means every status that counts as backlog.
     #[serde(default)]
     pub play_status: Vec<String>,
+    /// Platform slugs.
     #[serde(default)]
-    pub platform: Vec<i64>,
-    /// Copies on these devices, or with no device on a platform one of them plays.
+    #[schema(value_type = Vec<String>)]
+    pub platform: Vec<Slug>,
+    /// Device slugs: copies on these devices, or with no device on a platform
+    /// one of them plays.
     #[serde(default)]
-    pub device: Vec<i64>,
+    #[schema(value_type = Vec<String>)]
+    pub device: Vec<Slug>,
+    /// Genre slugs.
     #[serde(default)]
-    pub genre: Vec<i64>,
+    #[schema(value_type = Vec<String>)]
+    pub genre: Vec<Slug>,
+    /// Game mode slugs.
     #[serde(default)]
-    pub game_mode: Vec<i64>,
+    #[schema(value_type = Vec<String>)]
+    pub game_mode: Vec<Slug>,
     /// Local (same screen) players, release value first, then the game's.
     #[serde(default)]
     pub min_local_players: Option<i64>,

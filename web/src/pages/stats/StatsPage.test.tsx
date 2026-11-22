@@ -132,12 +132,12 @@ describe('Stats page', () => {
     await screen.findByTestId('stats-value');
     const platforms = section(en.stats.byPlatform);
     const ps5 = await within(platforms).findByRole('link', { name: 'PlayStation 5' });
-    expect(decodeURIComponent(ps5.getAttribute('href')!)).toContain('platform=[2]');
+    expect(ps5).toHaveAttribute('href', '/?platform=p2');
     expect(within(section(en.stats.byStore)).queryByRole('link')).not.toBeInTheDocument();
     const japan = within(section(en.stats.byRegion)).getByRole('link', { name: en.region.jp });
-    expect(decodeURIComponent(japan.getAttribute('href')!)).toContain('region=["jp"]');
+    expect(japan).toHaveAttribute('href', '/?region=jp');
     const notSet = within(section(en.stats.byStatus)).getByRole('link', { name: en.common.notSet });
-    expect(decodeURIComponent(notSet.getAttribute('href')!)).toContain('play_status=["none"]');
+    expect(notSet).toHaveAttribute('href', '/?play_status=none');
     const main = screen.getByRole('main');
     expect(within(main).getByRole('link', { name: en.stats.wishlist })).toHaveAttribute('href', expect.stringContaining('/wishlist'));
   });

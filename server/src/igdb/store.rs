@@ -13,10 +13,10 @@ use time::macros::format_description;
 use super::{GameData, Igdb, Localization, MultiplayerMode};
 use crate::covers::{self, Owner};
 use crate::db::games::PlayerCounts;
-use crate::db::platforms::slugify;
 use crate::db::write_tx;
 use crate::domain::sort_title;
 use crate::error::{ApiError, ApiResult};
+use crate::slug::{self, Table};
 
 const NOW: &str = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
 
@@ -136,11 +136,11 @@ pub async fn apply(
     for genre in &data.genres {
         let id = tag_id(
             &mut tx,
-            "genres",
+            Table::Genres,
             "igdb_genre_id",
             genre.id,
             &genre.name,
-            None,
+            &genre.name,
         )
         .await?;
         sqlx::query("INSERT OR IGNORE INTO game_genres (game_id, genre_id) VALUES (?, ?)")
@@ -164,14 +164,14 @@ pub async fn apply(
             .await?;
     if !has_modes {
         for mode in &data.game_modes {
-            let slug = mode.slug.clone().unwrap_or_else(|| slugify(&mode.name));
+            let slug = mode.slug.as_deref().unwrap_or(&mode.name);
             let id = tag_id(
                 &mut tx,
-                "game_modes",
+                Table::GameModes,
                 "igdb_game_mode_id",
                 mode.id,
                 &mode.name,
-                Some(&slug),
+                slug,
             )
             .await?;
             sqlx::query(
@@ -361,15 +361,16 @@ async fn clean_up(covers_dir: &Path, changed: Vec<(Owner, Option<String>)>) {
 /// Finds a genre or game mode by IGDB id, then by name, or creates it.
 async fn tag_id(
     tx: &mut Transaction<'static, Sqlite>,
-    table: &'static str,
+    table: Table,
     igdb_column: &'static str,
     igdb_id: i64,
     name: &str,
-    slug: Option<&str>,
+    slug_from: &str,
 ) -> sqlx::Result<i64> {
+    let table_name = table.name();
     let found: Option<i64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT id FROM {table} WHERE {igdb_column} = ?1
-         UNION ALL SELECT id FROM {table} WHERE name = ?2 AND {igdb_column} IS NULL
+        "SELECT id FROM {table_name} WHERE {igdb_column} = ?1
+         UNION ALL SELECT id FROM {table_name} WHERE name = ?2 AND {igdb_column} IS NULL
          LIMIT 1"
     )))
     .bind(igdb_id)
@@ -378,7 +379,7 @@ async fn tag_id(
     .await?;
     if let Some(id) = found {
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "UPDATE {table} SET {igdb_column} = ? WHERE id = ?"
+            "UPDATE {table_name} SET {igdb_column} = ? WHERE id = ?"
         )))
         .bind(igdb_id)
         .bind(id)
@@ -386,19 +387,13 @@ async fn tag_id(
         .await?;
         return Ok(id);
     }
-    match slug {
-        Some(slug) => sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO {table} ({igdb_column}, name, slug) VALUES (?, ?, ?) RETURNING id"
-        )))
-        .bind(igdb_id)
-        .bind(name)
-        .bind(slug),
-        None => sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO {table} ({igdb_column}, name) VALUES (?, ?) RETURNING id"
-        )))
-        .bind(igdb_id)
-        .bind(name),
-    }
+    let slug = slug::free(tx, table, slug_from).await?;
+    sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "INSERT INTO {table_name} ({igdb_column}, name, slug) VALUES (?, ?, ?) RETURNING id"
+    )))
+    .bind(igdb_id)
+    .bind(name)
+    .bind(slug)
     .fetch_one(&mut **tx)
     .await
 }

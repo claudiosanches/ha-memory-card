@@ -157,7 +157,7 @@ describe('Library', () => {
         },
       ],
     });
-    renderAt('/?platform=%5B1%5D');
+    renderAt('/?platform=switch');
 
     fireEvent.click(await screen.findByRole('button', { name: en.library.copiesView }));
     const row = await screen.findByTestId('copy-row-21');
@@ -165,11 +165,11 @@ describe('Library', () => {
     expect(row).toHaveTextContent(en.region.eu);
     await waitFor(() => expect(row).toHaveTextContent('Amazon'));
     expect(screen.getByTestId('library-count')).toHaveTextContent('1 copy');
-    expect(calls.find((c) => c.path === '/api/copies')?.query.get('platform')).toBe('1');
+    expect(calls.find((c) => c.path === '/api/copies')?.query.get('platform')).toBe('switch');
     expect(localStorage.getItem('memory-card-library-view')).toBe('"copies"');
     expect(screen.getByRole('link', { name: en.library.export })).toHaveAttribute(
       'href',
-      'api/export.csv?ownership=owned&platform=1',
+      'api/export.csv?ownership=owned&platform=switch',
     );
   });
 
@@ -192,12 +192,12 @@ describe('Library', () => {
 
   it('sends the filters from the URL to the API', async () => {
     const calls = mockApi({ 'GET /api/games': [], 'GET /api/platforms': [SWITCH] });
-    renderAt('/?platform=%5B1%5D&play_status=%5B%22backlog%22%5D&ownership=any');
+    renderAt('/?platform=switch,wii-u&play_status=backlog&ownership=any');
 
     expect(await screen.findByText(en.library.noMatch)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filters (2)' })).toBeInTheDocument();
     const query = calls.find((c) => c.path === '/api/games')?.query;
-    expect(Object.fromEntries(query ?? [])).toEqual({ platform: '1', play_status: 'backlog', ownership: 'any' });
+    expect(Object.fromEntries(query ?? [])).toEqual({ platform: 'switch,wii-u', play_status: 'backlog', ownership: 'any' });
   });
 
   it('offers platform chips only for platforms with games under the Show filter', async () => {

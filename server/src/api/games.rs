@@ -127,6 +127,7 @@ pub struct GameMode {
 pub struct Genre {
     pub id: i64,
     pub name: String,
+    pub slug: String,
 }
 
 pub(super) fn date(value: Option<&str>, field: &'static str) -> ApiResult<Option<String>> {
@@ -559,7 +560,7 @@ pub async fn genres(State(state): State<AppState>) -> ApiResult<Json<Vec<Genre>>
     Ok(Json(
         sqlx::query_as!(
             Genre,
-            r#"SELECT id AS "id!", name FROM genres ORDER BY name"#
+            r#"SELECT id AS "id!", name, slug FROM genres ORDER BY name"#
         )
         .fetch_all(&state.db)
         .await?,

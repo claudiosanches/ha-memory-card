@@ -4,8 +4,8 @@ use std::collections::HashSet;
 
 use super::plan::{Plan, Ref};
 use crate::db::games::sync_contents;
-use crate::db::platforms::{slugify, unique_slug};
 use crate::domain::sort_title;
+use crate::slug::{self, Table};
 
 fn resolve(r: Ref, created: &[i64]) -> i64 {
     match r {
@@ -17,13 +17,9 @@ fn resolve(r: Ref, created: &[i64]) -> i64 {
 /// Writes the plan. The caller owns the transaction and must not apply a
 /// plan that has errors.
 pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::Result<()> {
-    let mut taken: Vec<String> = sqlx::query_scalar!(r#"SELECT slug AS "slug!" FROM platforms"#)
-        .fetch_all(&mut *conn)
-        .await?;
     let mut platforms = Vec::with_capacity(plan.platforms.len());
     for name in &plan.platforms {
-        let slug = unique_slug(&slugify(name), &taken);
-        taken.push(slug.clone());
+        let slug = slug::free(conn, Table::Platforms, name).await?;
         let id = sqlx::query_scalar!(
             r#"INSERT INTO platforms (name, slug, active, custom, sort_order)
                VALUES (?, ?, 1, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
@@ -38,9 +34,11 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
 
     let mut stores = Vec::with_capacity(plan.stores.len());
     for name in &plan.stores {
+        let slug = slug::free(conn, Table::Stores, name).await?;
         let id = sqlx::query_scalar!(
-            r#"INSERT INTO stores (name) VALUES (?) RETURNING id AS "id!""#,
-            name
+            r#"INSERT INTO stores (name, slug) VALUES (?, ?) RETURNING id AS "id!""#,
+            name,
+            slug
         )
         .fetch_one(&mut *conn)
         .await?;
@@ -49,9 +47,11 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
 
     let mut devices = Vec::with_capacity(plan.devices.len());
     for device in &plan.devices {
+        let slug = slug::free(conn, Table::Devices, &device.name).await?;
         let id = sqlx::query_scalar!(
-            r#"INSERT INTO devices (name, kind) VALUES (?, ?) RETURNING id AS "id!""#,
+            r#"INSERT INTO devices (name, slug, kind) VALUES (?, ?, ?) RETURNING id AS "id!""#,
             device.name,
+            slug,
             device.kind
         )
         .fetch_one(&mut *conn)

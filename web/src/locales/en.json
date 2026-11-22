@@ -200,6 +200,8 @@
     "network": "Could not reach the server.",
     "not_found": "It no longer exists. Reload the page.",
     "name_taken": "This name is already in use.",
+    "slug_taken": "This slug is already in use.",
+    "invalid_slug": "Use lowercase letters, numbers and hyphens.",
     "required": "Required.",
     "too_long": "Too long.",
     "invalid_body": "The request was not valid.",
@@ -861,5 +863,10 @@
     "link": "Link",
     "later": "Later",
     "notOnIgdb": "Not on IGDB"
+  },
+  "slug": {
+    "label": "Slug",
+    "description": "Used in library links: {{link}}",
+    "changed": "Links with the old slug stop working."
   }
 }

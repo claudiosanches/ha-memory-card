@@ -88,6 +88,76 @@ async fn store_names_conflict_ignoring_case() {
 }
 
 #[tokio::test]
+async fn store_slugs_come_from_the_name_or_the_input() {
+    let app = TestApp::new().await;
+    let (_, list) = app.json("GET", "/api/stores", None).await;
+    assert_eq!(list[2]["slug"], "itch-io");
+
+    let (status, created) = app
+        .json("POST", "/api/stores", Some(json!({"name": "Café Jogos"})))
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    assert_eq!(created["slug"], "cafe-jogos");
+    let id = created["id"].as_i64().unwrap();
+
+    let (_, created) = app
+        .json("POST", "/api/stores", Some(json!({"name": "Café: Jogos"})))
+        .await;
+    assert_eq!(created["slug"], "cafe-jogos-2");
+
+    let (status, updated) = app
+        .json(
+            "PUT",
+            &format!("/api/stores/{id}"),
+            Some(json!({"name": "Cafe", "slug": " Cafe "})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    assert_eq!(updated["slug"], "cafe");
+    let (_, updated) = app
+        .json(
+            "PUT",
+            &format!("/api/stores/{id}"),
+            Some(json!({"name": "Cafe 2"})),
+        )
+        .await;
+    assert_eq!(updated["slug"], "cafe", "no slug keeps the current one");
+
+    let (status, body) = app
+        .json(
+            "PUT",
+            &format!("/api/stores/{id}"),
+            Some(json!({"name": "Cafe", "slug": "steam"})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(body["code"], "slug_taken");
+
+    // The form fills the slug from the name, so a taken name brings a taken slug.
+    let (status, body) = app
+        .json(
+            "POST",
+            "/api/stores",
+            Some(json!({"name": "STEAM", "slug": "steam"})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(body["code"], "name_taken");
+
+    for bad in ["wii u", "itch.io", "-cafe", "café"] {
+        let (status, body) = app
+            .json(
+                "POST",
+                "/api/stores",
+                Some(json!({"name": "New", "slug": bad})),
+            )
+            .await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{bad}");
+        assert_eq!(body, json!({"code": "invalid_slug", "field": "slug"}));
+    }
+}
+
+#[tokio::test]
 async fn store_validation_names_the_field() {
     let app = TestApp::new().await;
     let (status, body) = app
@@ -175,6 +245,7 @@ async fn device_crud_with_platforms() {
         .await;
     assert_eq!(status, StatusCode::CREATED, "{created}");
     assert_eq!(created["kind"], "console");
+    assert_eq!(created["slug"], "wii-u");
     assert_eq!(created["active"], true);
     // Deduplicated, in platform list order (Wii U sorts before Wii).
     assert_eq!(created["platform_ids"], json!([wii_u, wii]));
@@ -378,6 +449,24 @@ async fn platform_create_update_delete() {
     assert_eq!(updated["abbreviation"], Value::Null);
     assert_eq!(updated["active"], false);
     assert_eq!(updated["slug"], "homebrew-console", "slug is stable");
+
+    let (status, body) = app
+        .json(
+            "PUT",
+            &format!("/api/platforms/{id}"),
+            Some(json!({"name": "Homebrew Box", "slug": "switch"})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(body["code"], "slug_taken");
+    let (_, updated) = app
+        .json(
+            "PUT",
+            &format!("/api/platforms/{id}"),
+            Some(json!({"name": "Homebrew Box", "slug": "homebrew"})),
+        )
+        .await;
+    assert_eq!(updated["slug"], "homebrew");
 
     let (status, _) = app
         .json("DELETE", &format!("/api/platforms/{id}"), None)

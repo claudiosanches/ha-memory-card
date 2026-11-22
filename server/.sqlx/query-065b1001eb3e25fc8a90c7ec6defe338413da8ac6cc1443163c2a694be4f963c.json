@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", name FROM genres ORDER BY name",
+  "query": "SELECT id AS \"id!\", name, slug FROM genres ORDER BY name",
   "describe": {
     "columns": [
       {
@@ -24,6 +24,17 @@
             "name": "name"
           }
         }
+      },
+      {
+        "name": "slug",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "genres",
+            "name": "slug"
+          }
+        }
       }
     ],
     "parameters": {
@@ -31,8 +42,9 @@
     },
     "nullable": [
       false,
+      false,
       false
     ]
   },
-  "hash": "510951d8231b864d962a9989e3fb70949d9b9611fd81b01392d978379a2db47b"
+  "hash": "065b1001eb3e25fc8a90c7ec6defe338413da8ac6cc1443163c2a694be4f963c"
 }

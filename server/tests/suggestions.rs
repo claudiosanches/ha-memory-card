@@ -98,22 +98,19 @@ async fn returns_the_oldest_recent_pick_and_prunes_old_history() {
 #[tokio::test]
 async fn filters_match_one_owned_copy() {
     let app = collection().await;
-    let (wii, switch) = (
-        app.platform_id("wii").await,
-        app.platform_id("switch").await,
-    );
+    let switch = app.platform_id("switch").await;
 
     assert_eq!(
         title(
             &app,
-            json!({ "play_status": ["paused", "backlog"], "platform": [wii] })
+            json!({ "play_status": ["paused", "backlog"], "platform": ["wii"] })
         )
         .await,
         "Mario Kart Wii"
     );
 
     // Tetris has a Switch copy and a PS4 copy; only the Switch one matches.
-    let (status, body) = suggest(&app, json!({ "platform": [switch] })).await;
+    let (status, body) = suggest(&app, json!({ "platform": ["switch"] })).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["game"]["title"], "Tetris");
     let switch_copy: i64 = sqlx::query_scalar(
@@ -139,13 +136,19 @@ async fn filters_match_one_owned_copy() {
         "Tetris"
     );
 
-    sqlx::query("INSERT INTO game_game_modes (game_id, game_mode_id) SELECT id, 3 FROM games WHERE title = 'Hades'")
-        .execute(&app.pool)
-        .await
-        .unwrap();
-    assert_eq!(title(&app, json!({ "game_mode": [3] })).await, "Hades");
+    sqlx::query(
+        "INSERT INTO game_game_modes (game_id, game_mode_id)
+         SELECT g.id, m.id FROM games g, game_modes m WHERE g.title = 'Hades' AND m.slug = 'co-op'",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        title(&app, json!({ "game_mode": ["co-op"] })).await,
+        "Hades"
+    );
 
-    let (status, body) = suggest(&app, json!({ "platform": [app.platform_id("3ds").await] })).await;
+    let (status, body) = suggest(&app, json!({ "platform": ["3ds"] })).await;
     assert_eq!(status, StatusCode::NOT_FOUND);
     assert_eq!(body["code"], "no_candidates");
 }
@@ -167,19 +170,16 @@ async fn a_device_matches_its_copies_and_unassigned_copies_it_plays() {
     assert_eq!(
         title(
             &app,
-            json!({ "play_status": any, "device": [device["id"]] })
+            json!({ "play_status": any, "device": [device["slug"]] })
         )
         .await,
         "Mario Kart Wii"
     );
 
     // The import gave the PS5 the PS4 platform. Hades is on it; Tetris has a PS4 copy with no device.
-    let ps5: i64 = app
-        .scalar("SELECT id FROM devices WHERE name = 'PS5'")
-        .await;
     let mut picked = [
-        title(&app, json!({ "device": [ps5] })).await,
-        title(&app, json!({ "device": [ps5] })).await,
+        title(&app, json!({ "device": ["ps5"] })).await,
+        title(&app, json!({ "device": ["ps5"] })).await,
     ];
     picked.sort();
     assert_eq!(picked, ["Hades", "Tetris"]);
@@ -188,7 +188,9 @@ async fn a_device_matches_its_copies_and_unassigned_copies_it_plays() {
 #[tokio::test]
 async fn rejects_unknown_filters() {
     let app = collection().await;
-    let (status, body) = suggest(&app, json!({ "platfrom": [1] })).await;
+    let (status, body) = suggest(&app, json!({ "platfrom": ["wii"] })).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(body["code"], "invalid_body");
+    let (status, _) = suggest(&app, json!({ "platform": [1] })).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
 }

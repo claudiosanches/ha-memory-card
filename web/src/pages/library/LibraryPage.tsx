@@ -85,7 +85,7 @@ export function LibraryPage() {
   // Only platforms with games under the current Show filter, so no chip leads to an empty list.
   const gamesOn = (p: Platform) =>
     search.ownership === 'wanted' ? p.wanted_game_count : search.ownership === 'any' ? p.game_count : p.owned_game_count;
-  const collectionPlatforms = (platforms.data ?? []).filter((p) => gamesOn(p) > 0 || search.platform?.includes(p.id));
+  const collectionPlatforms = (platforms.data ?? []).filter((p) => gamesOn(p) > 0 || search.platform?.includes(p.slug));
 
   return (
     <Stack gap="section">
@@ -177,7 +177,7 @@ export function LibraryPage() {
               {t('library.allPlatforms')}
             </FilterButton>
             {collectionPlatforms.map((platform) => (
-              <FilterButton key={platform.id} selected={search.platform?.includes(platform.id) ?? false} onClick={() => setSearch({ platform: [platform.id] })}>
+              <FilterButton key={platform.id} selected={search.platform?.includes(platform.slug) ?? false} onClick={() => setSearch({ platform: [platform.slug] })}>
                 {platform.abbreviation ?? platform.name}
               </FilterButton>
             ))}

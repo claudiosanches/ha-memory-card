@@ -36,6 +36,8 @@ import { PLATFORM_CATEGORIES, type Platform, type PlatformCategory, type Platfor
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
+import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
+import { trimSlug } from '../../slug';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { SectionHeading } from '../../components/SectionHeading';
 import { FilterBar, FilterButton } from '../../components/FilterBar';
@@ -364,11 +366,16 @@ function PlatformForm({ platform, onClose }: { platform?: Platform; onClose: () 
   const form = useForm({
     initialValues: {
       name: platform?.name ?? '',
+      slug: platform?.slug ?? '',
       abbreviation: platform?.abbreviation ?? '',
       category: (platform?.category ?? '') as PlatformCategory | '',
     },
-    validate: { name: (value) => (value.trim() ? null : t('errors.required')) },
+    validate: {
+      name: (value) => (value.trim() ? null : t('errors.required')),
+      slug: slugRule(t, platform !== undefined),
+    },
   });
+  const inputs = useSlugInputs(form, platform?.slug);
   const onApiError = useApiErrorHandler(form);
 
   const save = useMutation({
@@ -393,13 +400,15 @@ function PlatformForm({ platform, onClose }: { platform?: Platform; onClose: () 
       onSubmit={form.onSubmit((values) =>
         save.mutate({
           name: values.name,
+          slug: trimSlug(values.slug) || null,
           abbreviation: values.abbreviation || null,
           category: values.category || null,
           active: platform?.active ?? true,
         }),
       )}
     >
-      <TextInput label={t('common.name')} required data-autofocus {...form.getInputProps('name')} />
+      <TextInput label={t('common.name')} required data-autofocus {...inputs.name} />
+      <SlugInput param="platform" saved={platform?.slug} {...inputs.slug} />
       <TextInput label={t('platforms.abbreviation')} {...form.getInputProps('abbreviation')} />
       <Select
         label={t('platforms.category')}

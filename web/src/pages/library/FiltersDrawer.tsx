@@ -13,8 +13,7 @@ type Props = {
   onClose: () => void;
 };
 
-const toIds = (values: string[]) => (values.length ? values.map(Number) : undefined);
-const fromIds = (values?: number[]) => (values ?? []).map(String);
+const orUndefined = (values: string[]) => (values.length ? values : undefined);
 
 export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Props) {
   const { t } = useTranslation();
@@ -26,8 +25,8 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
   const genres = useGenres();
 
   const platformOptions = (platforms.data ?? [])
-    .filter((p) => p.active || p.game_count > 0 || search.platform?.includes(p.id))
-    .map((p) => ({ value: String(p.id), label: p.name }));
+    .filter((p) => p.active || p.game_count > 0 || search.platform?.includes(p.slug))
+    .map((p) => ({ value: p.slug, label: p.name }));
 
   return (
     <Drawer opened={opened} onClose={onClose} title={t('library.filters')} position="right" size="sm">
@@ -52,16 +51,16 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
         <MultiSelect
           label={t('library.filter.platform')}
           data={platformOptions}
-          value={fromIds(search.platform)}
-          onChange={(values) => onChange({ platform: toIds(values) })}
+          value={search.platform ?? []}
+          onChange={(values) => onChange({ platform: orUndefined(values) })}
           searchable
           clearable
         />
         <MultiSelect
           label={t('library.filter.device')}
-          data={(devices.data ?? []).map((d) => ({ value: String(d.id), label: d.name }))}
-          value={fromIds(search.device)}
-          onChange={(values) => onChange({ device: toIds(values) })}
+          data={(devices.data ?? []).map((d) => ({ value: d.slug, label: d.name }))}
+          value={search.device ?? []}
+          onChange={(values) => onChange({ device: orUndefined(values) })}
           searchable
           clearable
         />
@@ -97,25 +96,25 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
         />
         <MultiSelect
           label={search.ownership === 'wanted' ? t('library.filter.buyAt') : t('library.filter.store')}
-          data={(stores.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))}
-          value={fromIds(search.store)}
-          onChange={(values) => onChange({ store: toIds(values) })}
+          data={(stores.data ?? []).map((s) => ({ value: s.slug, label: s.name }))}
+          value={search.store ?? []}
+          onChange={(values) => onChange({ store: orUndefined(values) })}
           searchable
           clearable
         />
         <MultiSelect
           label={t('library.filter.gameMode')}
-          data={(gameModes.data ?? []).map((m) => ({ value: String(m.id), label: m.name }))}
-          value={fromIds(search.game_mode)}
-          onChange={(values) => onChange({ game_mode: toIds(values) })}
+          data={(gameModes.data ?? []).map((m) => ({ value: m.slug, label: m.name }))}
+          value={search.game_mode ?? []}
+          onChange={(values) => onChange({ game_mode: orUndefined(values) })}
           clearable
         />
         {(genres.data?.length ?? 0) > 0 && (
           <MultiSelect
             label={t('library.filter.genre')}
-            data={(genres.data ?? []).map((g) => ({ value: String(g.id), label: g.name }))}
-            value={fromIds(search.genre)}
-            onChange={(values) => onChange({ genre: toIds(values) })}
+            data={(genres.data ?? []).map((g) => ({ value: g.slug, label: g.name }))}
+            value={search.genre ?? []}
+            onChange={(values) => onChange({ genre: orUndefined(values) })}
             searchable
             clearable
           />
