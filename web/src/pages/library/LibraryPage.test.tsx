@@ -223,4 +223,11 @@ describe('Library', () => {
     renderAt('/');
     expect(await screen.findByText(en.library.empty)).toBeInTheDocument();
   });
+
+  it('does not ask viewers to add games', async () => {
+    mockApi({ 'GET /api/me': VIEWER, 'GET /api/games': [], 'GET /api/platforms': [SWITCH] });
+    renderAt('/');
+    expect(await screen.findByText(en.library.emptyViewer)).toBeInTheDocument();
+    expect(screen.queryByText(en.library.empty)).not.toBeInTheDocument();
+  });
 });

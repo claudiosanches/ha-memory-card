@@ -431,6 +431,7 @@
     "addGame": "Add game",
     "addIgdbHint": "Search IGDB to fill in the details from a match, or save to enter them yourself.",
     "empty": "No games yet. Import a CSV file or add a game.",
+    "emptyViewer": "No games in the collection yet.",
     "noMatch": "No games match these filters.",
     "count_one": "{{count}} game",
     "count_other": "{{count}} games",

@@ -186,14 +186,14 @@ export function LibraryPage() {
       </div>
 
       {shown.isPending ? (
-        <div className={classes.empty}><Loader size="sm" /></div>
+        <Stack align="center" className={classes.empty}><Loader size="sm" /></Stack>
       ) : shown.isError ? (
         <Text c="red" role="alert">{errorMessage(t, shown.error)}</Text>
       ) : shown.data.length === 0 ? (
         <Stack align="center" className={classes.empty}>
           <IconDeviceGamepad2 size={48} stroke={1.2} />
           <Title order={3}>{filtered ? t('library.noMatchTitle') : t('library.emptyTitle')}</Title>
-          <Text c="dimmed" ta="center">{!filtered ? t('library.empty') : showCopies ? t('library.noCopiesMatch') : t('library.noMatch')}</Text>
+          <Text c="dimmed" ta="center">{!filtered ? t(canManage ? 'library.empty' : 'library.emptyViewer') : showCopies ? t('library.noCopiesMatch') : t('library.noMatch')}</Text>
           {filtered && <Button variant="default" onClick={clearFilters}>{t('library.clearFilters')}</Button>}
         </Stack>
       ) : showCopies ? (

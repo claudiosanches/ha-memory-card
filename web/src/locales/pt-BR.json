@@ -431,6 +431,7 @@
     "addGame": "Adicionar jogo",
     "addIgdbHint": "Busque no IGDB para preencher os detalhes a partir de um resultado, ou salve para preencher você mesmo.",
     "empty": "Nenhum jogo ainda. Importe um arquivo CSV ou adicione um jogo.",
+    "emptyViewer": "Nenhum jogo na coleção ainda.",
     "noMatch": "Nenhum jogo corresponde a estes filtros.",
     "count_one": "{{count}} jogo",
     "count_other": "{{count}} jogos",
