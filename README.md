@@ -83,6 +83,7 @@ pulls the image with that tag, so the image must exist before `main` changes.
 
 - Interface icons from [Tabler Icons](https://tabler.io/icons) (MIT).
 - Game metadata and covers from [IGDB](https://www.igdb.com), when IGDB credentials are set.
+- Product names for scanned barcodes from [UPCitemdb](https://www.upcitemdb.com).
 
 ## License
 
