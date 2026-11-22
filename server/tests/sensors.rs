@@ -117,7 +117,7 @@ async fn status_says_why_sensors_are_not_published() {
     let (_, status) = app.json("GET", "/api/status", None).await;
     assert_eq!(status["sensors"], "no_broker");
 
-    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "false")]).await;
+    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "off")]).await;
     let (_, status) = app.json("GET", "/api/status", None).await;
     assert_eq!(status["sensors"], "off");
 

@@ -57,7 +57,7 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_MANAGERS` | from `options.json` | Comma-separated user IDs; overrides `managers` |
 | `MEMORY_CARD_EXTERNAL_SERVICES` | from `options.json` | `true` or `false`; overrides `external_services` |
 | `MEMORY_CARD_VIEWERS_TRACK_PROGRESS` | from `options.json` | `true` or `false`; overrides `viewers_track_progress` |
-| `MEMORY_CARD_SENSORS` | from `options.json` | `true` or `false`; overrides `sensors` |
+| `MEMORY_CARD_SENSORS` | from `options.json` | `mqtt` or `off`; overrides `sensors` |
 | `MEMORY_CARD_TAG_SCAN_FINISHED` | from `options.json` | `playing` or `keep`; overrides `tag_scan_finished` |
 | `MEMORY_CARD_CURRENCY` | from `options.json` | Three-letter code; overrides `currency` |
 | `MEMORY_CARD_MQTT_HOST` | unset | MQTT broker for the sensors, instead of asking the Supervisor |

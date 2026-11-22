@@ -28,8 +28,8 @@ configuration:
     description: >-
       Publicar contagens da coleção, o que você está jogando e o que adicionou
       por último como sensores do Home Assistant, com um botão que sorteia um
-      jogo. Precisa do aplicativo Mosquitto broker e da integração MQTT.
-      Desligar remove tudo isso.
+      jogo. "mqtt" publica tudo isso pelo aplicativo Mosquitto broker e pela
+      integração MQTT; "off" remove tudo isso.
   viewers_track_progress:
     name: Visualizadores registram progresso
     description: >-

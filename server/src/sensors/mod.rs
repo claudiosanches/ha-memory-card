@@ -21,7 +21,7 @@ use self::discovery::{
     AVAILABILITY_TOPIC, DISCOVERY_TOPIC, HA_STATUS_TOPIC, PICK_TOPIC, STATE_TOPIC,
 };
 use crate::AppState;
-use crate::config::{Config, MqttBroker};
+use crate::config::{Config, MqttBroker, SensorsMode};
 use crate::db;
 
 const CLIENT_ID: &str = "memory_card";
@@ -46,7 +46,7 @@ pub enum SensorsStatus {
 
 impl SensorsStatus {
     pub fn initial(config: &Config) -> Self {
-        if !config.sensors {
+        if config.sensors == SensorsMode::Off {
             Self::Off
         } else if config.mqtt.is_none() && config.supervisor_token.is_none() {
             Self::NoBroker
@@ -125,16 +125,15 @@ async fn run(state: AppState, stop: Arc<Notify>) {
         }
     };
     let Some(broker) = broker else {
-        if state.config.sensors {
+        if state.config.sensors == SensorsMode::Mqtt {
             tracing::info!("no MQTT broker, Home Assistant sensors are off");
             set_status(&state, SensorsStatus::NoBroker);
         }
         return;
     };
-    if state.config.sensors {
-        publish(&state, &stop, broker).await;
-    } else {
-        remove(&broker.mqtt).await;
+    match state.config.sensors {
+        SensorsMode::Mqtt => publish(&state, &stop, broker).await,
+        SensorsMode::Off => remove(&broker.mqtt).await,
     }
 }
 

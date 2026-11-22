@@ -26,9 +26,9 @@ configuration:
     name: Home Assistant sensors
     description: >-
       Publish collection counts, what you are playing and what you added last
-      as Home Assistant sensors, with a button that picks a random game. Needs
-      the Mosquitto broker app and the MQTT integration. Turning it off removes
-      them.
+      as Home Assistant sensors, with a button that picks a random game. "mqtt"
+      publishes them through the Mosquitto broker app and the MQTT
+      integration; "off" removes them.
   viewers_track_progress:
     name: Viewers track play progress
     description: >-

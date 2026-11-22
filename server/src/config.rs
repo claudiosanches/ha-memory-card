@@ -91,6 +91,29 @@ impl FromStr for FinishedScan {
     }
 }
 
+/// Where Home Assistant sensors are published.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SensorsMode {
+    /// MQTT discovery through the broker.
+    #[default]
+    Mqtt,
+    /// Not published, and removed from the broker.
+    Off,
+}
+
+impl FromStr for SensorsMode {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "mqtt" => Ok(Self::Mqtt),
+            "off" => Ok(Self::Off),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct IgdbCredentials {
     pub client_id: String,
@@ -143,7 +166,7 @@ struct Options {
     managers: Option<Vec<String>>,
     viewers_track_progress: Option<bool>,
     external_services: Option<bool>,
-    sensors: Option<bool>,
+    sensors: Option<SensorsMode>,
     tag_scan_finished: Option<FinishedScan>,
     currency: Option<String>,
 }
@@ -164,8 +187,7 @@ pub struct Config {
     pub viewers_track_progress: bool,
     /// False keeps the app from contacting IGDB or anything else online.
     pub external_services: bool,
-    /// Publishes Home Assistant sensors through the MQTT broker.
-    pub sensors: bool,
+    pub sensors: SensorsMode,
     pub tag_scan_finished: FinishedScan,
     /// ISO 4217 code new prices start with, ahead of Home Assistant's.
     pub currency: Option<String>,
@@ -293,7 +315,13 @@ impl Config {
             false,
         )?;
 
-        let sensors = flag(&env, "MEMORY_CARD_SENSORS", options.sensors, true)?;
+        let sensors = match env("MEMORY_CARD_SENSORS") {
+            None => options.sensors.unwrap_or_default(),
+            Some(raw) => raw.parse().map_err(|()| ConfigError::InvalidEnv {
+                name: "MEMORY_CARD_SENSORS",
+                value: raw.clone(),
+            })?,
+        };
         let mqtt = match non_empty(env("MEMORY_CARD_MQTT_HOST")) {
             None => None,
             Some(host) => {
@@ -540,12 +568,12 @@ mod tests {
     fn sensors_use_the_broker_from_env_or_ask_the_supervisor() {
         let dir = tempfile::tempdir().unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
-        assert!(config.sensors);
+        assert_eq!(config.sensors, SensorsMode::Mqtt);
         assert!(config.mqtt.is_none());
         assert!(config.supervisor_token.is_none());
         assert_eq!(config.supervisor_url, "http://supervisor");
 
-        std::fs::write(dir.path().join("options.json"), r#"{"sensors":false}"#).unwrap();
+        std::fs::write(dir.path().join("options.json"), r#"{"sensors":"off"}"#).unwrap();
         let config = load_with(
             dir.path(),
             &[
@@ -555,7 +583,8 @@ mod tests {
             ],
         )
         .unwrap();
-        assert!(!config.sensors);
+        assert_eq!(config.sensors, SensorsMode::Off);
+        assert!(load_with(dir.path(), &[("MEMORY_CARD_SENSORS", "true")]).is_err());
         assert_eq!(config.supervisor_token.unwrap().expose(), "token-1");
         let mqtt = config.mqtt.unwrap();
         assert_eq!((mqtt.host.as_str(), mqtt.port), ("localhost", 1883));

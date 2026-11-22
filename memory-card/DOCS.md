@@ -99,7 +99,7 @@ currency of the copy priced last, else in Home Assistant's currency.
 | `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials above. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
-| `sensors` | Publishes Home Assistant sensors through the MQTT broker. On by default; does nothing without a broker. |
+| `sensors` | `mqtt` (default) publishes Home Assistant sensors through the MQTT broker and does nothing without one. `off` removes them. |
 | `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
@@ -257,8 +257,8 @@ slug in its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
 collection grows. Sensors update a second after each change and show as
-unavailable while Memory Card is stopped. Turning off the `sensors` option
-removes the device on the next start.
+unavailable while Memory Card is stopped. Setting the `sensors` option to
+`off` removes the device on the next start.
 
 ## NFC tags
 
