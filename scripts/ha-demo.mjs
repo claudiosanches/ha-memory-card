@@ -207,7 +207,17 @@ async function app(ha, state, igdb) {
     await ha.supervisor('post', `/store/addons/${APP}/install`, undefined, LONG);
   } else {
     console.log('Rebuilding Memory Card');
-    await ha.supervisor('post', `/store/addons/${APP}/update`, { backup: false }, LONG);
+    // A running app restarts after the update, which fails on options its
+    // new schema refuses. The update itself is in by then.
+    await ha.supervisor('post', `/store/addons/${APP}/update`, { backup: false }, LONG).catch((error) => {
+      if (!error.message.includes('has invalid options')) throw error;
+    });
+    const { valid } = await ha.supervisor('post', `/addons/${APP}/options/validate`, {});
+    if (!valid) {
+      console.log('The saved options do not fit this version, so they start over from the defaults');
+      await ha.supervisor('post', `/addons/${APP}/options`, { options: null });
+      state.configured = false;
+    }
   }
   if (!state.configured) {
     // The Supervisor replaces all options at once.
