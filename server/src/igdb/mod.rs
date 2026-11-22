@@ -52,7 +52,12 @@ pub enum IgdbError {
     Http(#[from] reqwest::Error),
     #[error("IGDB answered {0}")]
     Status(StatusCode),
+    #[error("the cover is larger than 10 MB")]
+    CoverTooLarge,
 }
+
+/// Covers are a few hundred KB; anything near this is not one.
+const COVER_MAX: usize = 10 * 1024 * 1024;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct SearchHit {
@@ -287,8 +292,21 @@ impl Igdb {
 
     pub async fn cover(&self, image_id: &str) -> Result<Vec<u8>, IgdbError> {
         let url = format!("{}/t_cover_big_2x/{image_id}.jpg", self.endpoints.image_url);
-        let response = self.http.get(url).send().await?.error_for_status()?;
-        Ok(response.bytes().await?.to_vec())
+        let mut response = self.http.get(url).send().await?.error_for_status()?;
+        if response
+            .content_length()
+            .is_some_and(|length| length > COVER_MAX as u64)
+        {
+            return Err(IgdbError::CoverTooLarge);
+        }
+        let mut bytes = Vec::new();
+        while let Some(chunk) = response.chunk().await? {
+            bytes.extend_from_slice(&chunk);
+            if bytes.len() > COVER_MAX {
+                return Err(IgdbError::CoverTooLarge);
+            }
+        }
+        Ok(bytes)
     }
 
     async fn post<T: DeserializeOwned>(&self, endpoint: &str, body: &str) -> Result<T, IgdbError> {

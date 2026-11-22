@@ -1,5 +1,7 @@
 //! Uploaded covers. An upload wins over IGDB's cover until it is removed.
 
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use axum::Json;
 use axum::extract::State;
 use time::OffsetDateTime;
@@ -11,8 +13,12 @@ use crate::covers::{self, Owner};
 use crate::db::games::{self, GameDetail};
 use crate::error::{ApiError, ApiPath, ApiResult, ErrorBody};
 use crate::igdb::store;
+use crate::images;
 
 const MAX_BYTES: usize = 10 * 1024 * 1024;
+
+/// Keeps file names apart when uploads land in the same millisecond.
+static UPLOADS: AtomicU64 = AtomicU64::new(0);
 
 /// A JPEG, PNG or WebP image, at most 10 MB.
 #[derive(ToSchema)]
@@ -92,7 +98,7 @@ async fn upload(state: &AppState, owner: Owner, bytes: &[u8]) -> ApiResult<Json<
             field: None,
         });
     }
-    let extension = image_extension(bytes).ok_or(ApiError::Invalid {
+    let image = images::clean(bytes).ok_or(ApiError::Invalid {
         code: "invalid_image",
         field: None,
     })?;
@@ -101,7 +107,9 @@ async fn upload(state: &AppState, owner: Owner, bytes: &[u8]) -> ApiResult<Json<
     let dir = state.config.covers_dir();
     // A new name per upload, so browsers never show a cached older one.
     let stamp = OffsetDateTime::now_utc().unix_timestamp_nanos() / 1_000_000;
-    let path = covers::write(&dir, owner, &format!("upload-{stamp}.{extension}"), bytes)
+    let n = UPLOADS.fetch_add(1, Ordering::Relaxed);
+    let name = format!("upload-{stamp}-{n}.{}", image.extension);
+    let path = covers::write(&dir, owner, &name, &image.bytes)
         .await
         .map_err(|err| ApiError::Internal(format!("saving cover: {err}")))?;
     if !games::set_uploaded_cover(&state.db, owner, Some(&path)).await? {
@@ -149,42 +157,5 @@ async fn restore_igdb_covers(state: &AppState, game_id: i64) {
     };
     if let Err(err) = result {
         tracing::warn!(game_id, error = %err, "could not restore the IGDB cover");
-    }
-}
-
-pub(crate) fn image_extension(bytes: &[u8]) -> Option<&'static str> {
-    match bytes {
-        [0xFF, 0xD8, 0xFF, ..] => Some("jpg"),
-        [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A, ..] => Some("png"),
-        [
-            b'R',
-            b'I',
-            b'F',
-            b'F',
-            _,
-            _,
-            _,
-            _,
-            b'W',
-            b'E',
-            b'B',
-            b'P',
-            ..,
-        ] => Some("webp"),
-        _ => None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::image_extension;
-
-    #[test]
-    fn recognizes_images_by_their_bytes() {
-        assert_eq!(image_extension(b"\xFF\xD8\xFF\xE0rest"), Some("jpg"));
-        assert_eq!(image_extension(b"\x89PNG\r\n\x1a\nrest"), Some("png"));
-        assert_eq!(image_extension(b"RIFF\0\0\0\0WEBPVP8 "), Some("webp"));
-        assert_eq!(image_extension(b"<svg></svg>"), None);
-        assert_eq!(image_extension(b""), None);
     }
 }

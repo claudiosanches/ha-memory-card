@@ -542,7 +542,10 @@ async fn save_cover(
         return Ok(relative);
     }
     let bytes = igdb.cover(image_id).await?;
-    Ok(covers::write(covers_dir, owner, &file_name, &bytes).await?)
+    let image = crate::images::clean(&bytes)
+        .filter(|image| image.extension == "jpg")
+        .ok_or("IGDB sent a cover that is not a JPEG")?;
+    Ok(covers::write(covers_dir, owner, &file_name, &image.bytes).await?)
 }
 
 #[cfg(test)]

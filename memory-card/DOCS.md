@@ -129,7 +129,9 @@ To keep photos of a copy, such as the box, the cartridge or the manual,
 choose **Add photos** from the copy's **⋯** menu on the game page. On a
 phone this offers the camera. Each copy takes up to 20 JPEG, PNG or WebP
 photos of up to 10 MB each. They are stored with the app's data, so Home
-Assistant backups include them.
+Assistant backups include them. Memory Card removes the location, camera
+details and other metadata a phone stores in a photo, and keeps only which
+way up it goes. Uploaded covers are cleaned the same way.
 
 ## Bundles
 

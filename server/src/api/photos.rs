@@ -8,13 +8,14 @@ use axum::http::StatusCode;
 use time::OffsetDateTime;
 
 use super::body::ImageBody;
-use super::covers::{Image, image_extension};
+use super::covers::Image;
 use crate::AppState;
 use crate::access::Actor;
 use crate::covers;
 use crate::db::games::{self, GameDetail};
 use crate::db::photos;
 use crate::error::{ApiError, ApiPath, ApiResult, ErrorBody};
+use crate::images;
 
 const MAX_BYTES: usize = 10 * 1024 * 1024;
 
@@ -44,23 +45,27 @@ pub async fn add(
             field: None,
         });
     }
-    let extension = image_extension(&body).ok_or(ApiError::Invalid {
+    let image = images::clean(&body).ok_or(ApiError::Invalid {
         code: "invalid_image",
         field: None,
     })?;
-    let game_id = photos::room_for(&state.db, id).await?;
+    // Checked again when the row is added; this spares writing a file.
+    photos::room_for(&state.db, id).await?;
 
     let dir = state.config.covers_dir();
     let stamp = OffsetDateTime::now_utc().unix_timestamp_nanos() / 1_000_000;
     let n = UPLOADS.fetch_add(1, Ordering::Relaxed);
-    let name = format!("photo-{stamp}-{n}.{extension}");
-    let path = covers::write_in(&dir, &covers::copy_dir(id), &name, &body)
+    let name = format!("photo-{stamp}-{n}.{}", image.extension);
+    let path = covers::write_in(&dir, &covers::copy_dir(id), &name, &image.bytes)
         .await
         .map_err(|err| ApiError::Internal(format!("saving photo: {err}")))?;
-    if let Err(err) = photos::add(&state.db, id, &path, &by).await {
-        covers::remove_file(&dir, &path).await;
-        return Err(err);
-    }
+    let game_id = match photos::add(&state.db, id, &path, &by).await {
+        Ok(game_id) => game_id,
+        Err(err) => {
+            covers::remove_file(&dir, &path).await;
+            return Err(err);
+        }
+    };
     Ok((
         StatusCode::CREATED,
         Json(games::get(&state.db, game_id).await?),

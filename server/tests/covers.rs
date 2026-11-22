@@ -3,11 +3,8 @@
 mod common;
 
 use axum::http::StatusCode;
-use common::TestApp;
+use common::{COVER as JPEG, PNG, TestApp, stored};
 use serde_json::Value;
-
-const PNG: &[u8] = b"\x89PNG\r\n\x1a\nnot really";
-const JPEG: &[u8] = b"\xFF\xD8\xFF\xE0also not really";
 
 fn files(app: &TestApp, dir: &str) -> Vec<String> {
     match std::fs::read_dir(app.config.covers_dir().join(dir)) {
@@ -33,7 +30,7 @@ async fn uploads_replace_the_game_cover() {
     assert!(first.starts_with(&format!("game-{game}/upload-")) && first.ends_with(".png"));
     let (status, bytes) = app.get(&format!("/covers/{first}")).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(bytes, PNG);
+    assert_eq!(bytes, stored(PNG));
 
     // A second upload replaces the first file.
     let (_, detail) = app

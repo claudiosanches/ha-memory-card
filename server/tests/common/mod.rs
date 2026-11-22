@@ -19,6 +19,21 @@ pub const SUPERVISOR: &str = "172.30.32.2:50000";
 /// The Home Assistant user the helpers send as, a manager unless a test names others.
 pub const MANAGER: &str = "0123456789abcdef0123456789abcdef";
 
+/// A phone photo with GPS EXIF, XMP and a comment.
+#[allow(dead_code)]
+pub const PHOTO: &[u8] = include_bytes!("../fixtures/images/photo.jpg");
+#[allow(dead_code)]
+pub const PNG: &[u8] = include_bytes!("../fixtures/images/photo.png");
+/// A JPEG with no metadata.
+#[allow(dead_code)]
+pub const COVER: &[u8] = include_bytes!("../fixtures/images/cover.jpg");
+
+/// What the app stores for an image it accepts.
+#[allow(dead_code)]
+pub fn stored(image: &[u8]) -> Vec<u8> {
+    memory_card::images::clean(image).unwrap().bytes
+}
+
 pub struct TestApp {
     pub dir: TempDir,
     pub pool: SqlitePool,

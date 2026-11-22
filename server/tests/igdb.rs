@@ -76,11 +76,11 @@ async fn with_igdb() -> TestApp {
         .route("/v4/games", post(games))
         .route(
             "/img/t_cover_big_2x/co1mxf.jpg",
-            get(|| async { "jpeg bytes" }),
+            get(|| async { common::COVER }),
         )
         .route(
             "/img/t_cover_big_2x/co5wrq.jpg",
-            get(|| async { "japanese jpeg" }),
+            get(|| async { common::PHOTO }),
         );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
@@ -198,7 +198,7 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
     assert_eq!(detail["cover_path"], cover.as_str());
     let (status, bytes) = app.get(&format!("/covers/{cover}")).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(bytes, b"jpeg bytes");
+    assert_eq!(bytes, common::stored(common::COVER));
 
     // Japan has its own cover; Europe's is the generic one, so it is not repeated.
     let jp_cover = format!("release-{}/co5wrq.jpg", release("jp")["id"]);
@@ -206,7 +206,7 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
     assert_eq!(release("na")["cover_path"], Value::Null);
     let (status, bytes) = app.get(&format!("/covers/{jp_cover}")).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(bytes, b"japanese jpeg");
+    assert_eq!(bytes, common::stored(common::PHOTO));
 
     // A second game cannot take the same IGDB id.
     let (_, other) = app
@@ -263,7 +263,7 @@ async fn uploads_survive_a_refresh_and_removing_one_restores_igdb_covers() {
     };
     link(false).await;
 
-    let png = b"\x89PNG\r\n\x1a\nmine";
+    let png = common::PNG;
     let (_, uploaded) = app
         .put_bytes(&format!("/api/games/{game}/cover"), png)
         .await;
