@@ -177,7 +177,12 @@ async function mosquitto(ha, token) {
 const secrets = [];
 
 function redact(text) {
-  return secrets.reduce((out, secret) => out.replaceAll(secret, '<hidden>'), text);
+  return (
+    secrets
+      .reduce((out, secret) => out.replaceAll(secret, '<hidden>'), text)
+      // Supervisor errors repeat the app's options, including saved ones.
+      .replace(/(['"]\w*(?:secret|password|token)\w*['"]\s*:\s*)(['"])[^'"]*\2/gi, '$1$2<hidden>$2')
+  );
 }
 
 /** IGDB credentials from `make run`, so covers and search work here too. */
@@ -194,7 +199,7 @@ async function igdbOptions() {
   return {};
 }
 
-async function app(ha, state) {
+async function app(ha, state, igdb) {
   await ha.supervisor('post', '/store/reload', undefined, 300);
   const store = await ha.supervisor('get', `/store/addons/${APP}`);
   if (!store.installed) {
@@ -208,7 +213,7 @@ async function app(ha, state) {
     // The Supervisor replaces all options at once.
     const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
     await ha.supervisor('post', `/addons/${APP}/options`, {
-      options: { ...options, managers: [state.owner.id], ...(await igdbOptions()) },
+      options: { ...options, managers: [state.owner.id], ...igdb },
       ingress_panel: true,
     });
     state.configured = true;
@@ -232,6 +237,7 @@ async function waitForSupervisor(ha) {
 }
 
 async function main() {
+  const igdb = await igdbOptions();
   const steps = await waitForCore();
   let state;
   if (steps && !steps.every((step) => step.done)) {
@@ -253,7 +259,7 @@ async function main() {
       await saveState(state);
     }
     await mosquitto(ha, state.token);
-    await app(ha, state);
+    await app(ha, state, igdb);
   } finally {
     ha.close();
   }
