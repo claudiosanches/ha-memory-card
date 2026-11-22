@@ -89,6 +89,9 @@ pub fn parse(text: &str, currency: &str) -> Option<i64> {
 
 /// Minor units as plain decimal text, such as `59.99` or `5980`.
 pub fn format(minor: i64, currency: &str) -> String {
+    if minor < 0 {
+        return format!("-{}", format(-minor, currency));
+    }
     let exponent = exponent(currency);
     if exponent == 0 {
         return minor.to_string();
@@ -136,6 +139,8 @@ mod tests {
         assert_eq!(format(5, "EUR"), "0.05");
         assert_eq!(format(5980, "JPY"), "5980");
         assert_eq!(format(1250, "KWD"), "1.250");
+        assert_eq!(format(-150, "USD"), "-1.50");
+        assert_eq!(format(-5, "USD"), "-0.05");
     }
 
     #[test]
