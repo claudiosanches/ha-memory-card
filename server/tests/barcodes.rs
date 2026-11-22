@@ -3,10 +3,11 @@
 mod common;
 
 use axum::Router;
+use axum::body::Body;
 use axum::extract::Query;
-use axum::http::StatusCode;
+use axum::http::{Request, StatusCode};
 use axum::routing::get;
-use common::TestApp;
+use common::{SUPERVISOR, TestApp};
 use serde_json::{Value, json};
 use std::collections::HashMap;
 
@@ -111,5 +112,20 @@ async fn offline_scans_only_check_the_collection() {
     .await;
     let (_, body) = look_up(&app, "4902370536485").await;
     assert_eq!(body["lookup"], "offline");
+    assert_eq!(body["product"], Value::Null);
+}
+
+#[tokio::test]
+async fn viewers_only_check_the_collection() {
+    let url = database().await;
+    let app = TestApp::with_env(&[("MEMORY_CARD_BARCODE_URL", &url)]).await;
+    let request = Request::get("/api/barcodes/4902370536485")
+        .header("x-remote-user-id", "viewer")
+        .body(Body::empty())
+        .unwrap();
+    let (status, body) = app.raw(SUPERVISOR, request).await;
+    assert_eq!(status, StatusCode::OK);
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["lookup"], "not_in_collection");
     assert_eq!(body["product"], Value::Null);
 }

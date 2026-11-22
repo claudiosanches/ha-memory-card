@@ -21,13 +21,15 @@ const USER_NAME: &str = "x-remote-user-name";
 const USER_DISPLAY_NAME: &str = "x-remote-user-display-name";
 
 /// Reads anyone may make, except these manager tools.
-const MANAGER_READS: [&str; 6] = [
+const MANAGER_READS: [&str; 8] = [
     "/api/export.csv",
     "/api/import/template.csv",
     "/api/igdb/search",
     "/api/igdb/titles",
     "/api/games/{id}/igdb-contents",
     "/api/igdb/matches",
+    "/api/igdb/sync",
+    "/api/missing-details",
 ];
 
 /// Play progress, open to viewers when the option allows it.
@@ -44,6 +46,24 @@ pub struct Policy {
     /// Home Assistant user IDs; while empty, nobody can change anything.
     pub managers: Vec<String>,
     pub viewers_track_progress: bool,
+}
+
+impl Policy {
+    pub fn from_config(config: &crate::config::Config) -> Self {
+        Self {
+            managers: config.managers.clone(),
+            viewers_track_progress: config.viewers_track_progress,
+        }
+    }
+
+    /// Whether `user` may log play. Without managers nobody may; a scan
+    /// from a reader with no Home Assistant user counts as a viewer.
+    pub fn can_track_progress(&self, user: Option<&str>) -> bool {
+        if self.managers.is_empty() {
+            return false;
+        }
+        user.is_some_and(|id| self.managers.iter().any(|m| m == id)) || self.viewers_track_progress
+    }
 }
 
 /// The Home Assistant user behind a request.
@@ -160,11 +180,7 @@ fn user(headers: &HeaderMap) -> Option<User> {
         return None;
     };
     let id = id.to_str().ok()?.trim();
-    let valid = (1..=64).contains(&id.len())
-        && id
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_');
-    if !valid {
+    if !valid_user_id(id) {
         tracing::debug!("ignored malformed Home Assistant user id");
         return None;
     }
@@ -173,6 +189,14 @@ fn user(headers: &HeaderMap) -> Option<User> {
         name: text(headers, USER_NAME),
         display_name: text(headers, USER_DISPLAY_NAME),
     })
+}
+
+/// The shape of a Home Assistant user ID.
+pub fn valid_user_id(id: &str) -> bool {
+    (1..=64).contains(&id.len())
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
 }
 
 fn text(headers: &HeaderMap, name: &str) -> Option<String> {

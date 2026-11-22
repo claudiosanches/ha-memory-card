@@ -1,9 +1,10 @@
-use axum::Json;
 use axum::extract::State;
+use axum::{Extension, Json};
 use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::AppState;
+use crate::access::{Access, Role};
 use crate::barcodes::{self, Product};
 use crate::domain::{self, CopyStatus, Region};
 use crate::error::{ApiError, ApiPath, ApiResult, ErrorBody};
@@ -35,6 +36,9 @@ pub enum LookupOutcome {
     InCollection,
     Found,
     NotFound,
+    /// No copy has the code. Only managers, who add copies, look codes up,
+    /// which keeps viewers from spending the database's daily limit.
+    NotInCollection,
     /// `external_services` is off.
     Offline,
     /// The database could not be reached or refused, for example over its daily limit.
@@ -51,6 +55,7 @@ pub enum LookupOutcome {
 )]
 pub async fn look_up(
     State(state): State<AppState>,
+    Extension(access): Extension<Access>,
     ApiPath(code): ApiPath<String>,
 ) -> ApiResult<Json<BarcodeLookup>> {
     let barcode = domain::barcode(&code).ok_or(ApiError::invalid("invalid_barcode", "barcode"))?;
@@ -68,6 +73,8 @@ pub async fn look_up(
 
     let (product, lookup) = if !copies.is_empty() {
         (None, LookupOutcome::InCollection)
+    } else if access.role != Role::Manager {
+        (None, LookupOutcome::NotInCollection)
     } else if !state.config.external_services {
         (None, LookupOutcome::Offline)
     } else {

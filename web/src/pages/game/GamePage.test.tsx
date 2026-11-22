@@ -617,6 +617,30 @@ describe('Game page', () => {
     expect(screen.queryByRole('button', { name: en.common.edit })).not.toBeInTheDocument();
   });
 
+  it('lets a viewer change only the sessions they logged', async () => {
+    const session = (id: number, by: string) => ({
+      id,
+      played_on: '2026-11-02',
+      copy_id: null,
+      minutes: null,
+      notes: null,
+      created_at: '2026-11-02T20:00:00Z',
+      created_by: { id: by, name: by },
+    });
+    mockApi({
+      ...SETUP,
+      'GET /api/me': { ...VIEWER, can_track_progress: true },
+      'GET /api/games/4': { ...GAME, sessions: [session(1, VIEWER.user.id), session(2, 'manager-id')] },
+    });
+    renderAt('/games/4');
+
+    const mine = await screen.findByTestId('session-1');
+    expect(within(mine).getByRole('button', { name: en.sessions.edit })).toBeInTheDocument();
+    const theirs = screen.getByTestId('session-2');
+    expect(within(theirs).queryByRole('button', { name: en.sessions.edit })).not.toBeInTheDocument();
+    expect(within(theirs).queryByRole('button', { name: en.sessions.delete })).not.toBeInTheDocument();
+  });
+
   it('links the game to an IGDB search result', async () => {
     const calls = mockApi({
       ...SETUP,

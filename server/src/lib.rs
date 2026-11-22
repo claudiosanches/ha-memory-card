@@ -75,10 +75,7 @@ impl AppState {
 
 pub fn app(state: AppState) -> Router {
     let trusted: Arc<[IpAddr]> = state.config.trusted_peers.clone().into();
-    let policy = Arc::new(access::Policy {
-        managers: state.config.managers.clone(),
-        viewers_track_progress: state.config.viewers_track_progress,
-    });
+    let policy = Arc::new(access::Policy::from_config(&state.config));
     let (api, _) = api::router().split_for_parts();
 
     // Uploaded files never run as a page, even when opened directly.

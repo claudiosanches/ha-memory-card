@@ -181,6 +181,8 @@ async fn every_route_checks_the_role() {
         "/api/igdb/titles",
         "/api/games/{id}/igdb-contents",
         "/api/igdb/matches",
+        "/api/igdb/sync",
+        "/api/missing-details",
     ];
 
     let openapi = memory_card::openapi();
@@ -253,6 +255,41 @@ async fn viewers_track_progress_when_the_option_allows_it() {
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body) = send(&app, SUPERVISOR, "DELETE", &uri, Some(VIEWER), None).await;
     assert_eq!(status, StatusCode::OK, "{body}");
+
+    // Another person's sessions are theirs to change, or a manager's.
+    let uri = format!("/api/games/{game}/sessions");
+    let (_, body) = send(
+        &app,
+        SUPERVISOR,
+        "POST",
+        &uri,
+        Some(MANAGER),
+        Some(json!({ "played_on": "2026-11-21" })),
+    )
+    .await;
+    let session = body["sessions"][0]["id"].as_i64().unwrap();
+    let uri = format!("/api/sessions/{session}");
+    let moved = json!({ "played_on": "2026-11-19" });
+    let (status, body) = send(
+        &app,
+        SUPERVISOR,
+        "PUT",
+        &uri,
+        Some(VIEWER),
+        Some(moved.clone()),
+    )
+    .await;
+    assert_eq!(
+        (status, body["code"].as_str()),
+        (StatusCode::FORBIDDEN, Some("not_your_session"))
+    );
+    let (status, _) = send(&app, SUPERVISOR, "DELETE", &uri, Some(VIEWER), None).await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    let other = "0000000000000000000000000000beef";
+    let (status, _) = send(&app, SUPERVISOR, "DELETE", &uri, Some(other), None).await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    let (status, _) = send(&app, SUPERVISOR, "PUT", &uri, Some(MANAGER), Some(moved)).await;
+    assert_eq!(status, StatusCode::OK);
 
     let (status, _) = send(
         &app,

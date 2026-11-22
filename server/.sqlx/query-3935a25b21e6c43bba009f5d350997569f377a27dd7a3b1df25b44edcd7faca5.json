@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT game_id, created_by FROM play_sessions WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "play_sessions",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "created_by",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "play_sessions",
+            "name": "created_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "3935a25b21e6c43bba009f5d350997569f377a27dd7a3b1df25b44edcd7faca5"
+}

@@ -149,9 +149,15 @@ pub async fn start_from_tag(
 }
 
 /// Updates a session and returns its game id.
-pub async fn update(pool: &SqlitePool, id: i64, fields: &SessionFields) -> ApiResult<i64> {
+/// `owner` limits the change to sessions that user logged; `None` allows any.
+pub async fn update(
+    pool: &SqlitePool,
+    id: i64,
+    fields: &SessionFields,
+    owner: Option<&str>,
+) -> ApiResult<i64> {
     let mut tx = super::write_tx(pool).await?;
-    let game_id = session_game(&mut tx, id).await?;
+    let game_id = session_game(&mut tx, id, owner).await?;
     ensure_game_copy(&mut tx, game_id, fields.copy_id).await?;
     sqlx::query!(
         "UPDATE play_sessions SET copy_id = ?, played_on = ?, minutes = ?, notes = ? WHERE id = ?",
@@ -167,22 +173,32 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &SessionFields) -> ApiRe
     Ok(game_id)
 }
 
-/// Deletes a session and returns its game id.
-pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<i64> {
-    let game_id = sqlx::query_scalar!(
-        "DELETE FROM play_sessions WHERE id = ? RETURNING game_id",
-        id
-    )
-    .fetch_optional(pool)
-    .await?;
-    game_id.ok_or(ApiError::NotFound)
+/// Deletes a session and returns its game id. `owner` as for [`update`].
+pub async fn delete(pool: &SqlitePool, id: i64, owner: Option<&str>) -> ApiResult<i64> {
+    let mut tx = super::write_tx(pool).await?;
+    let game_id = session_game(&mut tx, id, owner).await?;
+    sqlx::query!("DELETE FROM play_sessions WHERE id = ?", id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(game_id)
 }
 
-async fn session_game(conn: &mut SqliteConnection, id: i64) -> ApiResult<i64> {
-    sqlx::query_scalar!("SELECT game_id FROM play_sessions WHERE id = ?", id)
-        .fetch_optional(conn)
-        .await?
-        .ok_or(ApiError::NotFound)
+/// The session's game. `not_your_session` when `owner` did not log it.
+async fn session_game(conn: &mut SqliteConnection, id: i64, owner: Option<&str>) -> ApiResult<i64> {
+    let row = sqlx::query!(
+        "SELECT game_id, created_by FROM play_sessions WHERE id = ?",
+        id
+    )
+    .fetch_optional(conn)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+    match owner {
+        Some(user) if row.created_by.as_deref() != Some(user) => {
+            Err(ApiError::Forbidden("not_your_session"))
+        }
+        _ => Ok(row.game_id),
+    }
 }
 
 /// The copy played must be an owned copy of the game.

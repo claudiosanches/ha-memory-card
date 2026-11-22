@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
+import { useMe } from '../../api/queries';
 import type { GameDetail, PlaySession } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
@@ -33,6 +34,10 @@ export function Sessions({ game, copies, canTrack }: Props) {
   const [all, setAll] = useState(false);
   const close = () => setDialog(null);
   const saved = useGameSaved();
+  const me = useMe().data;
+  // Viewers change only the sessions they logged.
+  const canChange = (session: PlaySession) =>
+    canTrack && (me?.role === 'manager' || session.created_by?.id === me?.user.id);
 
   const remove = useMutation({
     mutationFn: (id: number) => call(api.DELETE('/api/sessions/{id}', { params: { path: { id } } })),
@@ -88,7 +93,7 @@ export function Sessions({ game, copies, canTrack }: Props) {
                   </Text>
                 )}
               </div>
-              {canTrack && (
+              {canChange(session) && (
                 <Group gap={4} wrap="nowrap">
                   <ActionIcon
                     variant="subtle"

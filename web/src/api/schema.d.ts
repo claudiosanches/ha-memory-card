@@ -1155,7 +1155,7 @@ export interface components {
             overwrite?: boolean;
         };
         /** @enum {string} */
-        LookupOutcome: "in_collection" | "found" | "not_found" | "offline" | "failed";
+        LookupOutcome: "in_collection" | "found" | "not_found" | "not_in_collection" | "offline" | "failed";
         MatchCandidate: components["schemas"]["SearchHit"] & {
             /**
              * Format: int32
@@ -3651,6 +3651,15 @@ export interface operations {
                     "application/json": components["schemas"]["GameDetail"];
                 };
             };
+            /** @description `not_your_session` */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -3687,6 +3696,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameDetail"];
+                };
+            };
+            /** @description `not_your_session` */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
             404: {

@@ -239,7 +239,8 @@
     "unknown_game": "Ese juego ya no existe.",
     "too_many_photos": "Una copia puede tener hasta 20 fotos.",
     "invalid_barcode": "No es un UPC o EAN válido. Revisa los dígitos bajo las barras.",
-    "home_assistant_unavailable": "Memory Card no puede recibir ahora las lecturas de etiquetas de Home Assistant."
+    "home_assistant_unavailable": "Memory Card no puede recibir ahora las lecturas de etiquetas de Home Assistant.",
+    "not_your_session": "Solo puedes cambiar las sesiones que registraste."
   },
   "import": {
     "intro": "Pasa tu colección entre Memory Card y una hoja de cálculo.",
@@ -838,6 +839,7 @@
     "whichGame": "¿Qué juego es?",
     "addTitle": "Añadir {{title}}",
     "unknown": "La base de códigos de barras no conoce este código. Introduce el juego tú.",
+    "notOwned": "Ninguna copia de la colección tiene este código de barras.",
     "offline": "Memory Card está configurado para no conectarse a internet, así que no puede consultar el código. Introduce el juego tú.",
     "failed": "La base de códigos de barras no respondió. Permite 100 consultas al día; inténtalo más tarde o introduce el juego tú."
   },

@@ -24,6 +24,8 @@ pub enum ApiError {
     NoMatch(&'static str),
     #[error("conflict: {0}")]
     Conflict(&'static str),
+    #[error("forbidden: {0}")]
+    Forbidden(&'static str),
     #[error("invalid {field:?}: {code}")]
     Invalid {
         code: &'static str,
@@ -63,6 +65,7 @@ impl IntoResponse for ApiError {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found", None),
             Self::NoMatch(code) => (StatusCode::NOT_FOUND, code, None),
             Self::Conflict(code) => (StatusCode::CONFLICT, code, None),
+            Self::Forbidden(code) => (StatusCode::FORBIDDEN, code, None),
             Self::Invalid { code, field } => (StatusCode::UNPROCESSABLE_ENTITY, code, field),
             Self::Unavailable(code) => (StatusCode::SERVICE_UNAVAILABLE, code, None),
             Self::Upstream(err) => {

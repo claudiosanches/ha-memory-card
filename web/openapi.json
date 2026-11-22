@@ -2821,6 +2821,16 @@
               }
             }
           },
+          "403": {
+            "description": "`not_your_session`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "404": {
             "content": {
               "application/json": {
@@ -2864,6 +2874,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GameDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`not_your_session`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -4689,6 +4709,7 @@
           "in_collection",
           "found",
           "not_found",
+          "not_in_collection",
           "offline",
           "failed"
         ]

@@ -1,13 +1,13 @@
-use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
+use axum::{Extension, Json};
 use serde::Deserialize;
 use utoipa::ToSchema;
 
 use super::games::date;
 use super::input::{NOTES_MAX, optional};
 use crate::AppState;
-use crate::access::Actor;
+use crate::access::{Access, Actor, Role};
 use crate::db::games::{self, GameDetail};
 use crate::db::sessions::{self, SessionFields};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
@@ -74,16 +74,18 @@ pub async fn add(
     request_body = SessionInput,
     responses(
         (status = OK, description = "The session's game", body = GameDetail),
+        (status = FORBIDDEN, description = "`not_your_session`", body = ErrorBody),
         (status = NOT_FOUND, body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]
 pub async fn update(
     State(state): State<AppState>,
+    Extension(access): Extension<Access>,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<SessionInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = sessions::update(&state.db, id, &input.validate()?).await?;
+    let game_id = sessions::update(&state.db, id, &input.validate()?, owner(&access)).await?;
     Ok(Json(games::get(&state.db, game_id).await?))
 }
 
@@ -92,13 +94,20 @@ pub async fn update(
     params(("id" = i64, Path)),
     responses(
         (status = OK, description = "The session's game", body = GameDetail),
+        (status = FORBIDDEN, description = "`not_your_session`", body = ErrorBody),
         (status = NOT_FOUND, body = ErrorBody),
     )
 )]
 pub async fn delete(
     State(state): State<AppState>,
+    Extension(access): Extension<Access>,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = sessions::delete(&state.db, id).await?;
+    let game_id = sessions::delete(&state.db, id, owner(&access)).await?;
     Ok(Json(games::get(&state.db, game_id).await?))
+}
+
+/// Viewers change only the sessions they logged; managers change any.
+fn owner(access: &Access) -> Option<&str> {
+    (access.role != Role::Manager).then_some(access.user.id.as_str())
 }

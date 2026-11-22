@@ -5,7 +5,7 @@ mod common;
 use axum::Router;
 use axum::http::{HeaderMap, StatusCode};
 use axum::routing::post;
-use common::TestApp;
+use common::{MANAGER, TestApp};
 use memory_card::tags::{self, Scan, TagsStatus};
 use serde_json::{Value, json};
 
@@ -29,12 +29,17 @@ async fn home_assistant() -> String {
 }
 
 async fn app() -> TestApp {
+    app_with(&[]).await
+}
+
+async fn app_with(vars: &[(&str, &str)]) -> TestApp {
     let url = home_assistant().await;
-    TestApp::with_env(&[
-        ("MEMORY_CARD_HA_URL", &url),
+    let mut all = vec![
+        ("MEMORY_CARD_HA_URL", url.as_str()),
         ("MEMORY_CARD_HA_TOKEN", "ha-token"),
-    ])
-    .await
+    ];
+    all.extend_from_slice(vars);
+    TestApp::with_env(&all).await
 }
 
 async fn copy_of(app: &TestApp, title: &str, status: &str) -> (i64, i64) {
@@ -78,7 +83,7 @@ async fn a_scanned_tag_starts_its_copy() {
     assert!(body["expires_at"].as_str().is_some());
 
     assert_eq!(
-        tags::scanned(&app.state, "04-a1-b2", Some("phone-user")).await,
+        tags::scanned(&app.state, "04-a1-b2", Some(MANAGER)).await,
         Scan::Linked { copy_id: copy }
     );
     let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
@@ -93,7 +98,7 @@ async fn a_scanned_tag_starts_its_copy() {
 
     for _ in 0..2 {
         assert_eq!(
-            tags::scanned(&app.state, "04-a1-b2", Some("phone-user")).await,
+            tags::scanned(&app.state, "04-a1-b2", Some(MANAGER)).await,
             Scan::Played { game_id: game }
         );
     }
@@ -105,7 +110,7 @@ async fn a_scanned_tag_starts_its_copy() {
         "Home Assistant's day"
     );
     assert_eq!(sessions[0]["copy_id"], copy);
-    assert_eq!(sessions[0]["created_by"]["id"], "phone-user");
+    assert_eq!(sessions[0]["created_by"]["id"], MANAGER);
     assert_eq!(detail["play_status"], "playing");
 
     assert_eq!(
@@ -141,7 +146,7 @@ async fn links_expire_and_cancel_and_wishes_do_not_play() {
 
     app.json("POST", &path, None).await;
     tags::scanned(&app.state, "t1", None).await;
-    tags::scanned(&app.state, "t1", None).await;
+    tags::scanned(&app.state, "t1", Some(MANAGER)).await;
     let (_, detail): (_, Value) = app.json("GET", &format!("/api/games/{game}"), None).await;
     assert!(detail["sessions"].as_array().unwrap().is_empty());
     assert_eq!(detail["play_status"], "completed");
@@ -166,7 +171,7 @@ async fn a_finished_game_can_keep_its_status_on_a_scan() {
     tags::scanned(&app.state, "t2", None).await;
 
     assert_eq!(
-        tags::scanned(&app.state, "t2", None).await,
+        tags::scanned(&app.state, "t2", Some(MANAGER)).await,
         Scan::Played { game_id: game }
     );
     let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
@@ -179,10 +184,96 @@ async fn a_finished_game_can_keep_its_status_on_a_scan() {
         Some(json!({"play_status": "paused"})),
     )
     .await;
-    tags::scanned(&app.state, "t2", None).await;
+    tags::scanned(&app.state, "t2", Some(MANAGER)).await;
     let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
     assert_eq!(
         detail["play_status"], "playing",
         "only finished games keep it"
     );
+}
+
+#[tokio::test]
+async fn scans_respect_who_may_link_and_log_play() {
+    let app = app().await;
+    *app.state.tag_status.lock().unwrap() = TagsStatus::Connected;
+    let (game, copy) = copy_of(&app, "Hades", "owned").await;
+    app.json("POST", &format!("/api/copies/{copy}/tag-link"), None)
+        .await;
+
+    // Another user's scan leaves the manager's link waiting.
+    assert_eq!(
+        tags::scanned(&app.state, "t3", Some("viewer")).await,
+        Scan::Unknown
+    );
+    assert!(app.state.tag_link.lock().unwrap().is_some());
+    assert_eq!(
+        tags::scanned(&app.state, "t3", None).await,
+        Scan::Linked { copy_id: copy }
+    );
+
+    // Viewers and readers with no user cannot log play by default.
+    assert_eq!(
+        tags::scanned(&app.state, "t3", Some("viewer")).await,
+        Scan::Unknown
+    );
+    assert_eq!(tags::scanned(&app.state, "t3", None).await, Scan::Unknown);
+    assert_eq!(
+        tags::scanned(&app.state, "t3", Some("bad id!")).await,
+        Scan::Unknown
+    );
+    let long = "t".repeat(129);
+    assert_eq!(
+        tags::scanned(&app.state, &long, Some(MANAGER)).await,
+        Scan::Unknown
+    );
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 0);
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM users WHERE id = 'bad id!'")
+            .await,
+        0
+    );
+
+    assert_eq!(
+        tags::scanned(&app.state, "t3", Some(MANAGER)).await,
+        Scan::Played { game_id: game }
+    );
+}
+
+#[tokio::test]
+async fn viewers_log_play_from_tags_only_when_allowed_and_managers_exist() {
+    let app = app_with(&[("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true")]).await;
+    let (game, copy) = copy_of(&app, "Celeste", "owned").await;
+    sqlx::query("INSERT INTO nfc_tags (tag_id, copy_id) VALUES ('t4', ?)")
+        .bind(copy)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        tags::scanned(&app.state, "t4", None).await,
+        Scan::Played { game_id: game }
+    );
+
+    let locked = app_with(&[
+        ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true"),
+        ("MEMORY_CARD_MANAGERS", ""),
+    ])
+    .await;
+    let release = locked.release("Celeste", "switch").await;
+    let copy: i64 = sqlx::query_scalar(
+        "INSERT INTO copies (release_id, format) VALUES (?, 'physical') RETURNING id",
+    )
+    .bind(release)
+    .fetch_one(&locked.pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO nfc_tags (tag_id, copy_id) VALUES ('t5', ?)")
+        .bind(copy)
+        .execute(&locked.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        tags::scanned(&locked.state, "t5", Some(MANAGER)).await,
+        Scan::Unknown
+    );
+    assert_eq!(locked.scalar("SELECT COUNT(*) FROM play_sessions").await, 0);
 }

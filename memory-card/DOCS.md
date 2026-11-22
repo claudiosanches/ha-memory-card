@@ -119,8 +119,9 @@ copies, so in a shop you can see whether you already own a game. When no
 copy has the code, it asks [UPCitemdb](https://www.upcitemdb.com) for the
 product name, then lets you pick the game and add the copy with the barcode,
 platform and region filled in. UPCitemdb allows 100 lookups a day without an
-account. With `external_services` off, only your own copies are checked. If
-the photo cannot be read, type the digits under the bars instead.
+account. With `external_services` off, only your own copies are checked, and
+viewers only ever check your copies, so they cannot use up the daily lookups.
+If the photo cannot be read, type the digits under the bars instead.
 
 ## Photos of copies
 
@@ -259,6 +260,11 @@ and sets the game to playing. To link a tag, choose **Link NFC tag** from the
 copy's **⋯** menu on the game page, then scan the tag within a minute. Any
 tag Home Assistant reports works, including ones written under **Settings >
 Tags** in Home Assistant.
+
+A scan logs play for managers, and for viewers when `viewers_track_progress`
+is on. A reader with no Home Assistant user, such as an ESPHome NFC reader,
+counts as a viewer, and nothing is logged while no managers are set. A link
+waits for a scan by the manager who started it or by a reader with no user.
 
 Scanning the same tag again on the same day does not add another session.
 A game whose status counts as finished goes back to playing too, unless the

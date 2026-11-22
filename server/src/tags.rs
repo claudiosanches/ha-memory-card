@@ -14,6 +14,7 @@ use tokio_tungstenite::tungstenite::Message;
 use utoipa::ToSchema;
 
 use crate::AppState;
+use crate::access::{self, Policy};
 use crate::config::HomeAssistantApi;
 use crate::db;
 
@@ -21,6 +22,8 @@ const RETRY: Duration = Duration::from_secs(15);
 const STOP_TIMEOUT: Duration = Duration::from_millis(500);
 /// How long a link waits for a scan.
 pub const LINK_WAIT: Duration = Duration::from_secs(60);
+/// Longer IDs are not tags Home Assistant made.
+const TAG_ID_MAX: usize = 128;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -184,17 +187,17 @@ pub enum Scan {
 }
 
 /// Handles one scan. Public so tests can scan without Home Assistant.
+/// `user` is the Home Assistant user who scanned, `None` for a reader with
+/// no user.
 pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan {
     let tag_id = tag_id.trim();
-    if tag_id.is_empty() {
+    if tag_id.is_empty()
+        || tag_id.len() > TAG_ID_MAX
+        || user.is_some_and(|id| !access::valid_user_id(id))
+    {
         return Scan::Unknown;
     }
-    let pending = state
-        .tag_link
-        .lock()
-        .expect("tag link lock")
-        .take()
-        .filter(|link| link.until > OffsetDateTime::now_utc());
+    let pending = take_link(state, user);
     let result = match pending {
         Some(link) => db::tags::link(&state.db, tag_id, link.copy_id, &link.by)
             .await
@@ -202,6 +205,10 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
                 copy_id: link.copy_id,
             }),
         None => match db::tags::copy_for(&state.db, tag_id).await {
+            Ok(Some(_)) if !Policy::from_config(&state.config).can_track_progress(user) => {
+                tracing::info!("ignored a tag scan by someone who cannot log play");
+                Ok(Scan::Unknown)
+            }
             Ok(Some(copy_id)) => {
                 let today = local_date(state).await;
                 db::sessions::start_from_tag(
@@ -231,6 +238,21 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
             Scan::Unknown
         }
     }
+}
+
+/// The link waiting for this scan, if any. A scan by another named user
+/// leaves it waiting; a reader with no user may complete it.
+fn take_link(state: &AppState, user: Option<&str>) -> Option<PendingLink> {
+    let mut waiting = state.tag_link.lock().expect("tag link lock");
+    let link = waiting.as_ref()?;
+    if link.until <= OffsetDateTime::now_utc() {
+        *waiting = None;
+        return None;
+    }
+    if user.is_some_and(|id| id != link.by) {
+        return None;
+    }
+    waiting.take()
 }
 
 /// Today in Home Assistant's time zone, asked of Home Assistant; the UTC date if it does not answer.

@@ -143,6 +143,12 @@ function CodeEntry({
   );
 }
 
+const NOT_FOUND_MESSAGE: Partial<Record<BarcodeLookup['lookup'], 'scan.offline' | 'scan.failed' | 'scan.notOwned'>> = {
+  offline: 'scan.offline',
+  failed: 'scan.failed',
+  not_in_collection: 'scan.notOwned',
+};
+
 function Result({ lookup, onNext, onClose }: { lookup: BarcodeLookup; onNext: (title: string) => void; onClose: () => void }) {
   const { t } = useTranslation();
   const canManage = useCanManage();
@@ -193,7 +199,7 @@ function Result({ lookup, onNext, onClose }: { lookup: BarcodeLookup; onNext: (t
         </Text>
       ) : (
         <Text size="sm">
-          {lookup.lookup === 'offline' ? t('scan.offline') : lookup.lookup === 'failed' ? t('scan.failed') : t('scan.unknown')}
+          {t(NOT_FOUND_MESSAGE[lookup.lookup] ?? 'scan.unknown')}
         </Text>
       )}
       {canManage && (
