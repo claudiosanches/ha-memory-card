@@ -18,7 +18,8 @@ See [DOCS.md](memory-card/DOCS.md) for configuration.
 Requirements: the Rust toolchain from `rust-toolchain.toml`, Node.js 24.
 Changing SQL queries needs sqlx-cli
 (`cargo install sqlx-cli --version 0.9.1 --locked --no-default-features --features sqlite`).
-Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
+Building the image and `make ha-up` also need zig 0.15.2, cargo-zigbuild and
+Docker.
 
 `make` lists the targets. The common ones:
 
@@ -33,6 +34,7 @@ Building the image also needs zig 0.15.2, cargo-zigbuild and Docker.
 | `make smoke` | Builds the amd64 image and runs it like Home Assistant |
 | `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
+| `make ha-up` | Local Home Assistant with the app from this tree, see below |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 
 The server answers only requests that name a Home Assistant user, so open
@@ -65,6 +67,31 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_SUPERVISOR_URL` | `http://supervisor` | Supervisor API, asked for the broker when `SUPERVISOR_TOKEN` is set |
 | `MEMORY_CARD_BARCODE_URL` | UPCitemdb's trial lookup | Barcode lookup endpoint, for tests |
 | `MEMORY_CARD_HA_URL`, `MEMORY_CARD_HA_TOKEN` | none | A Home Assistant URL (`http://`) and long-lived token to hear tag scans outside Home Assistant |
+
+### Local Home Assistant
+
+`make ha-up` runs Home Assistant with a real Supervisor in Docker, using
+Home Assistant's [app devcontainer](https://github.com/home-assistant/devcontainer),
+and installs the app built from this tree. The first run downloads Home
+Assistant and takes a few minutes. It also:
+
+- finishes onboarding with an `owner` administrator, made a Memory Card
+  manager, and adds a `viewer` regular user. Their passwords are printed and
+  kept in `target/ha/demo.json`.
+- installs Mosquitto and the MQTT integration, for the sensors.
+- copies the IGDB credentials from `.data/options.json`, if set.
+
+Open http://127.0.0.1:7123 (`HA_PORT` changes the port). Run `make ha-up`
+again after a change to update the app; its data stays. `make ha-logs`
+follows the app's log, `make ha-stop` stops everything and `make ha-destroy`
+deletes the instance and its data.
+
+To scan an NFC tag without one, fire a `tag_scanned` event with
+`{"tag_id": "any-id"}` under **Developer tools > Events**. The scan counts as
+the user who fires it.
+
+The container runs privileged, since the devcontainer runs systemd and Docker
+inside it.
 
 ## Releasing
 

@@ -7,6 +7,9 @@ PROXY_PORT ?= 18100
 IMAGE ?= memory-card:dev
 # Home Assistant user ID that the dev proxies send, made a manager by `make run`.
 DEV_USER ?= dev
+# Local Home Assistant from `make ha-up`.
+HA_PORT ?= 7123
+HOST_ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 
 # Database the sqlx query macros check against while preparing server/.sqlx.
 SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
@@ -102,7 +105,7 @@ check: lint test licenses api-check sqlx-check e2e ## Everything CI runs except 
 binaries: web ## Static musl binaries into dist/ (needs zig and cargo-zigbuild)
 	@command -v zig >/dev/null || { echo "zig not found: install zig 0.15.2" >&2; exit 1; }
 	@command -v cargo-zigbuild >/dev/null || { echo "cargo-zigbuild not found: cargo install cargo-zigbuild --locked" >&2; exit 1; }
-	./scripts/build-binaries.sh
+	./scripts/build-binaries.sh $(ARCHS)
 
 .PHONY: image
 image: binaries ## Build the amd64 image (override IMAGE)
@@ -111,6 +114,23 @@ image: binaries ## Build the amd64 image (override IMAGE)
 .PHONY: smoke
 smoke: image ## Run the image like Home Assistant and check start, UI, API and stop
 	./scripts/smoke-image.sh $(IMAGE)
+
+.PHONY: ha-up
+ha-up: ARCHS = $(HOST_ARCH)
+ha-up: binaries ## Local Home Assistant with the app from this tree (rerun to update it)
+	HA_PORT=$(HA_PORT) ./scripts/ha-demo.sh up
+
+.PHONY: ha-logs
+ha-logs: ## Follow the app's logs in the local Home Assistant
+	./scripts/ha-demo.sh logs
+
+.PHONY: ha-stop
+ha-stop: ## Stop the local Home Assistant, keeping its data
+	./scripts/ha-demo.sh stop
+
+.PHONY: ha-destroy
+ha-destroy: ## Delete the local Home Assistant and all its data
+	./scripts/ha-demo.sh destroy
 
 .PHONY: reset-db
 reset-db: ## Delete the local database and covers, keeping options.json
