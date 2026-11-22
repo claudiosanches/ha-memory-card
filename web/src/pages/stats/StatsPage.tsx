@@ -365,13 +365,14 @@ function MeterList({ rows }: { rows: Row[] }) {
 }
 
 type Group = 'finished' | 'inProgress' | 'notStarted' | 'notCounted' | 'notSet';
-// Gray stays free for games without a play status.
+// Gray stays free for games without a play status. Not counted goes last,
+// after gray, since pink beside green is hard to tell apart for some readers.
 const GROUPS: { key: Group; color: string }[] = [
   { key: 'finished', color: 'var(--series-3)' },
-  { key: 'inProgress', color: 'var(--series-2)' },
+  { key: 'inProgress', color: 'var(--series-4)' },
   { key: 'notStarted', color: 'var(--series-1)' },
-  { key: 'notCounted', color: 'var(--series-4)' },
   { key: 'notSet', color: 'var(--series-other)' },
+  { key: 'notCounted', color: 'var(--series-5)' },
 ];
 const GROUP_OF: Record<StatusGroup, Group> = {
   finished: 'finished',
