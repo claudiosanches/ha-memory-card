@@ -17,7 +17,8 @@ covers and metadata, give it access to the IGDB API.
    - **Client Type:** Confidential
 3. Copy the **Client ID** and generate a **Client Secret**.
 4. In Home Assistant, open the Memory Card app, go to **Configuration**, fill
-   in both fields and save.
+   in both fields and save. To keep them in Home Assistant's `secrets.yaml`
+   instead, enter `!secret` and the key, such as `!secret igdb_client_secret`.
 5. Restart the app. Options are read only at startup.
 
 Releases for Japan, Korea and Europe get their regional cover when IGDB has
