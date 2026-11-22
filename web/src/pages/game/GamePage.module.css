@@ -16,8 +16,9 @@
 .copySelect { width: 260px; }
 .lastPlayed { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 8px 12px; border-radius: 8px; background: var(--mc-background); }
 .tagRow { flex-wrap: wrap; }
-.tagLink { cursor: pointer; text-decoration: none; }
-.tagLink:hover { text-decoration: underline; }
+.tagLink { cursor: pointer; text-decoration: none; transition: background-color 120ms ease; }
+.tagLink:hover { background-color: var(--mantine-primary-color-light-hover); }
+.tagLink[data-variant="outline"]:hover { background-color: var(--mantine-primary-color-light); }
 .releasesHeading { min-width: 0; }
 .release { min-width: 0; overflow: hidden; border-radius: 12px; }
 .releaseHeader { min-width: 0; }
