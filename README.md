@@ -97,6 +97,15 @@ again after a change to update the app; its data stays. `make ha-logs`
 follows the app's log, `make ha-stop` shuts the VM down and `make ha-destroy`
 deletes it and its data.
 
+`HA_HTTPS=1 make ha-up` serves Home Assistant over HTTPS, with a certificate
+from a test certificate authority made for this VM and saved as
+`target/haos/ca.pem`. The next `make ha-up` without it goes back to HTTP.
+`HA_LAN=1` opens the port to your network instead of this machine only, so a
+phone can reach it; anyone on the network can then reach it too. On a phone
+over HTTP, the barcode scanner takes a photo. Over HTTPS it uses the live
+camera once the phone trusts the certificate: install `ca.pem` on it as a CA
+certificate, and remove it when you are done testing.
+
 To scan an NFC tag without one, fire a `tag_scanned` event with
 `{"tag_id": "any-id"}` under **Developer tools > Events**. The scan counts as
 the user who fires it.

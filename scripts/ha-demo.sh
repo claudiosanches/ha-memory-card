@@ -3,6 +3,8 @@
 # built from the working tree. QEMU runs in an unprivileged container that
 # gets /dev/kvm and nothing else.
 # Usage: scripts/ha-demo.sh up|stop|destroy|logs
+# HA_HTTPS=1 serves HTTPS with a certificate from a test CA. HA_LAN=1 opens
+# the port to the network instead of this machine only.
 set -eu
 cd "$(dirname "$0")/.."
 
@@ -35,9 +37,59 @@ refuse_foreign() {
     fi
 }
 
+ssh_options='-p 22222 -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR'
+
 vm_ssh() {
-    docker exec -i "$name" ssh -p 22222 -o BatchMode=yes -o ConnectTimeout=5 \
-        -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR root@127.0.0.1 "$@"
+    # shellcheck disable=SC2086
+    docker exec -i "$name" ssh $ssh_options root@127.0.0.1 "$@"
+}
+
+lan_ip() {
+    ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p'
+}
+
+# Issues the certificate from a CA kept in the volume, for localhost and,
+# with HA_LAN, this machine's address, and puts it in Home Assistant's ssl
+# folder. Prints whether it changed.
+issue_certificate() {
+    san="DNS:localhost,IP:127.0.0.1${HA_LAN:+,IP:$(lan_ip)}"
+    docker exec -e SAN="$san" "$name" sh -euc '
+        mkdir -p tls && cd tls
+        if [ ! -f ca.pem ]; then
+            openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 825 \
+                -subj "/CN=Memory Card test CA" -keyout ca.key -out ca.pem 2>/dev/null
+        fi
+        if [ "$(cat san 2>/dev/null)" = "$SAN" ]; then echo same; exit; fi
+        openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -subj "/CN=Memory Card test" \
+            -keyout key.pem -out request.pem 2>/dev/null
+        printf "subjectAltName=%s\nextendedKeyUsage=serverAuth\n" "$SAN" >extensions
+        openssl x509 -req -in request.pem -CA ca.pem -CAkey ca.key -CAcreateserial -days 397 \
+            -extfile extensions -out cert.pem 2>/dev/null
+        echo "$SAN" >san
+        echo changed'
+    # shellcheck disable=SC2016
+    docker exec "$name" sh -c 'cat tls/cert.pem tls/ca.pem | ssh '"$ssh_options"' root@127.0.0.1 "cat >/mnt/data/supervisor/ssl/memory-card-demo.pem"
+        ssh '"$ssh_options"' root@127.0.0.1 "cat >/mnt/data/supervisor/ssl/memory-card-demo.key" <tls/key.pem'
+    docker exec "$name" cat tls/ca.pem >"$state/ca.pem"
+}
+
+answering_scheme() {
+    for scheme in http https; do
+        if with_ca curl -fsS -o /dev/null "$scheme://127.0.0.1:$port/" 2>/dev/null; then
+            echo "$scheme"
+            return
+        fi
+    done
+    return 1
+}
+
+# Runs a command trusting the test CA, once there is one.
+with_ca() {
+    if [ -f "$state/ca.pem" ]; then
+        NODE_EXTRA_CA_CERTS=$state/ca.pem CURL_CA_BUNDLE=$state/ca.pem "$@"
+    else
+        "$@"
+    fi
 }
 
 download() {
@@ -84,7 +136,20 @@ up() {
     fi
     refuse_foreign
     stage
-    docker build -q -t "$image" --label "$label=1" scripts/haos >/dev/null
+    # Without provenance an unchanged build keeps its image ID.
+    docker build -q --provenance=false -t "$image" --label "$label=1" scripts/haos >/dev/null
+    docker image prune -f --filter "label=$label=1" >/dev/null
+
+    bind=127.0.0.1
+    [ -z "${HA_LAN:-}" ] || bind=0.0.0.0
+    # A new image or a different address needs a new container; the volume
+    # keeps the VM.
+    if exists && { [ "$(docker container inspect -f '{{.Image}}' "$name")" != "$(docker image inspect -f '{{.Id}}' "$image")" ] ||
+        [ "$(docker container inspect -f '{{range (index .HostConfig.PortBindings "8080/tcp")}}{{.HostIp}}:{{.HostPort}}{{end}}' "$name")" != "$bind:$port" ]; }; then
+        echo "Recreating the container"
+        docker stop "$name" >/dev/null
+        docker rm "$name" >/dev/null
+    fi
 
     if ! exists; then
         if ! docker volume inspect "$name-vm" >/dev/null 2>&1; then
@@ -98,7 +163,7 @@ up() {
         docker run -d --name "$name" --label "$label=1" --stop-timeout 180 \
             --device /dev/kvm --group-add "$(stat -c %g /dev/kvm)" \
             --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp \
-            -p "127.0.0.1:$port:8080" \
+            -p "$bind:$port:8080" \
             -v "$name-vm:/vm" \
             "$image" >/dev/null
         echo "Starting Home Assistant OS"
@@ -128,7 +193,30 @@ up() {
         rm -rf memory-card
         tar -xf -'
 
-    node scripts/ha-demo.mjs "http://127.0.0.1:$port" "$state/demo.json"
+    certificate=
+    if [ -n "${HA_HTTPS:-}" ]; then
+        certificate=$(issue_certificate)
+    fi
+
+    # Whichever way Home Assistant answers now. While it installs or
+    # restarts it answers neither way.
+    tries=0
+    until scheme=$(answering_scheme); do
+        tries=$((tries + 1))
+        if [ "$tries" -gt 600 ]; then
+            echo "Home Assistant did not answer" >&2
+            exit 1
+        fi
+        sleep 3
+    done
+    HA_HTTPS=${HA_HTTPS:-} HA_NEW_CERTIFICATE=$([ "$certificate" != changed ] || echo 1) \
+        with_ca node scripts/ha-demo.mjs "$scheme://127.0.0.1:$port" "$state/demo.json"
+
+    if [ -n "${HA_LAN:-}" ]; then
+        scheme=http
+        [ -z "${HA_HTTPS:-}" ] || scheme=https
+        echo "On the network it is at $scheme://$(lan_ip):$port"
+    fi
 }
 
 case ${1:-} in
@@ -150,6 +238,7 @@ destroy)
     if labelled image Config. "$image"; then
         docker image rm "$image" >/dev/null
     fi
+    docker image prune -f --filter "label=$label=1" >/dev/null
     rm -rf "$state"
     ;;
 logs)

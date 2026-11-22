@@ -94,8 +94,8 @@ async function onboard(steps) {
   return { owner, token: longLived };
 }
 
-async function connect(token) {
-  const socket = new WebSocket(`${base.replace(/^http/, 'ws')}/api/websocket`);
+async function connect(token, url = base) {
+  const socket = new WebSocket(`${url.replace(/^http/, 'ws')}/api/websocket`);
   const pending = new Map();
   let next = 0;
   await new Promise((resolve, reject) => {
@@ -353,6 +353,53 @@ async function dashboard(ha) {
   });
 }
 
+const CERTIFICATE = { ssl_certificate: '/ssl/memory-card-demo.pem', ssl_key: '/ssl/memory-card-demo.key' };
+
+/**
+ * Serves HTTPS when HA_HTTPS is set and HTTP otherwise, through Home
+ * Assistant's HTTP settings, and returns the URL it then answers on.
+ */
+async function httpSettings(ha, token) {
+  const https = Boolean(process.env.HA_HTTPS);
+  const url = base.replace(/^https?/, https ? 'https' : 'http');
+  const { stable, pending } = await ha.call('http/config');
+  const settings = { ...stable };
+  for (const key of ['created_at', 'error', 'error_message', ...Object.keys(CERTIFICATE)]) delete settings[key];
+
+  if (!pending && Boolean(stable.ssl_certificate) === https) {
+    if (!(https && process.env.HA_NEW_CERTIFICATE)) return url;
+    console.log('Restarting Home Assistant for its new certificate');
+    await ha.call('call_service', { domain: 'homeassistant', service: 'restart' });
+    await restarted(url);
+    return url;
+  }
+  console.log(`Switching Home Assistant to ${https ? 'HTTPS' : 'HTTP'}`);
+  const { restart } = await ha.call('http/config/configure', { config: https ? { ...settings, ...CERTIFICATE } : settings });
+  if (restart) await restarted(url);
+  // Home Assistant goes back to the previous settings unless these are confirmed.
+  const confirm = await connect(token, url);
+  await confirm.call('http/config/promote');
+  confirm.close();
+  return url;
+}
+
+async function answers(url) {
+  try {
+    return (await fetch(`${url}/auth/providers`)).ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Waits for Home Assistant to stop answering at url, then to answer again. */
+async function restarted(url) {
+  for (let tries = 0; tries < 30 && (await answers(url)); tries++) await sleep(1000);
+  for (let tries = 0; !(await answers(url)); tries++) {
+    if (tries > 100) throw new Error(`Home Assistant did not come back at ${url}`);
+    await sleep(3000);
+  }
+}
+
 /** Home Assistant answers before the Supervisor takes app operations. */
 async function waitForSupervisor(ha) {
   for (let tries = 0; ; tries++) {
@@ -382,6 +429,7 @@ async function main() {
   }
 
   const ha = await connect(state.token);
+  let url = base;
   try {
     await waitForSupervisor(ha);
     if (!state.viewer) {
@@ -400,15 +448,16 @@ async function main() {
       state.dashboard = true;
       await saveState(state);
     }
+    url = await httpSettings(ha, state.token);
   } finally {
     ha.close();
   }
 
   console.log(`
-Home Assistant is at ${base}, with the app's sensors at ${base}/${DASHBOARD}
+Home Assistant is at ${url}
   owner / ${state.owner.password}   administrator, made a Memory Card manager at install
   viewer / ${state.viewer.password}   regular user
-These logins are kept in ${stateFile}.`);
+These logins are kept in ${stateFile}. The app's sensors are on the Games dashboard.`);
 }
 
 async function saveState(state) {

@@ -3,7 +3,7 @@ FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f0
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        dosfstools mtools openssh-client ovmf qemu-system-x86 xz-utils \
+        dosfstools mtools openssh-client openssl ovmf qemu-system-x86 xz-utils \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --home-dir /vm --no-create-home vm \
     && mkdir /vm && chown vm:vm /vm
