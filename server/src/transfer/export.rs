@@ -74,6 +74,19 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     qb
 }
 
+/// A cell that starts with one of these runs as a formula in a spreadsheet.
+pub const FORMULA_START: [char; 6] = ['=', '+', '-', '@', '\t', '\r'];
+
+/// Free text that would start a formula gets a leading `'`, which
+/// spreadsheets show as text and the import drops again.
+fn plain(text: String) -> String {
+    if text.starts_with(FORMULA_START) {
+        format!("'{text}")
+    } else {
+        text
+    }
+}
+
 pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>, ExportError> {
     let mut filter = filter.clone();
     library::resolve_search(pool, &mut filter).await?;
@@ -86,6 +99,7 @@ pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>
         for row in rows {
             let id = |v: Option<i64>| v.map(|v| v.to_string()).unwrap_or_default();
             let text = |v: Option<String>| v.unwrap_or_default();
+            let free = |v: Option<String>| plain(v.unwrap_or_default());
             let price = row
                 .price
                 .zip(row.currency.as_deref())
@@ -98,16 +112,16 @@ pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>
                 id(row.copy_id),
                 text(row.status.map(|v| v.as_str().to_owned())),
                 id(row.igdb_id),
-                row.game_title,
+                plain(row.game_title),
                 text(row.play_status),
-                text(row.platform),
+                free(row.platform),
                 text(row.region.map(|v| v.as_str().to_owned())),
-                text(row.release_title),
-                text(row.product_code),
+                free(row.release_title),
+                free(row.product_code),
                 text(row.format.map(|v| v.as_str().to_owned())),
-                text(row.edition),
-                text(row.device),
-                text(row.store),
+                free(row.edition),
+                free(row.device),
+                free(row.store),
                 text(row.condition.map(|v| v.as_str().to_owned())),
                 text(row.purchased_on),
                 text(price),
@@ -115,7 +129,7 @@ pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>
                 text(estimated_value),
                 text(row.estimated_currency),
                 text(row.barcode),
-                text(row.notes),
+                free(row.notes),
                 id(row.bundle_copy_id),
             ])?;
         }

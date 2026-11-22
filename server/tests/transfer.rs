@@ -584,3 +584,35 @@ async fn preview_says_how_each_header_was_read() {
         "headers come back to fix the file"
     );
 }
+
+#[tokio::test]
+async fn formulas_export_as_text_and_import_back_unchanged() {
+    let app = TestApp::new().await;
+    let csv = format!(
+        "{HEADER}\n,,,\"=HYPERLINK(\"\"http://x\"\")\",,Switch,eu,,,physical,,,,+1 spare\n"
+    );
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+
+    let exported = export(&app).await;
+    assert!(
+        exported.contains(",\"'=HYPERLINK(\"\"http://x\"\")\","),
+        "{exported}"
+    );
+    assert!(exported.contains(",'+1 spare,"), "{exported}");
+
+    let (_, result) = app.post_csv("/api/import", &exported).await;
+    assert_eq!(result["summary"]["updated_copies"], 0, "{result}");
+    assert_eq!(result["summary"]["new_copies"], 0, "{result}");
+    assert_eq!(result["summary"]["new_games"], 0, "{result}");
+    let (title, notes): (String, String) = sqlx::query_as(
+        "SELECT g.title, c.notes FROM games g JOIN releases r ON r.game_id = g.id JOIN copies c ON c.release_id = r.id",
+    )
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        (title.as_str(), notes.as_str()),
+        ("=HYPERLINK(\"http://x\")", "+1 spare")
+    );
+}
