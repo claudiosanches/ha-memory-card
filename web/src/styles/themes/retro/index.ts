@@ -1,5 +1,5 @@
 import type { MantineThemeOverride } from '@mantine/core';
-import { variables as base } from '../default/variables';
+import { chartSeries, themePair, variables as base } from '../default/variables';
 
 export const retro = {
   id: 'retro' as const,
@@ -30,6 +30,8 @@ export const retro = {
       '--mantine-color-dimmed': '#665742',
       '--mantine-color-body': '#fff7e6',
       '--mantine-color-default-border': '#c7b79a',
+      ...chartSeries.light,
+      ...themePair.light,
     },
     dark: {
       '--mc-background': '#221f1b',
@@ -43,6 +45,8 @@ export const retro = {
       '--mantine-color-dimmed': '#c4b69f',
       '--mantine-color-body': '#2d2924',
       '--mantine-color-default-border': '#51483b',
+      ...chartSeries.dark,
+      ...themePair.dark,
     },
   },
 };

@@ -70,7 +70,7 @@ export function DonutChart({
   if (total === 0) return <Text size="sm" c="dimmed">{empty}</Text>;
 
   const share = shareFormat(locale, total);
-  const color = (key: string, index: number) => `var(--series-${key === 'other' ? 'other' : index + 1})`;
+  const color = (key: string, index: number) => `var(--mc-chart-${key === 'other' ? 'other' : index + 1})`;
   const shown = parts.reduce<(Slice & { start: number; end: number; color: string })[]>((list, part, index) => {
     const start = list.at(-1)?.end ?? 0;
     return [...list, { ...part, start, end: start + (part.value / total) * 2 * Math.PI, color: color(part.key, index) }];

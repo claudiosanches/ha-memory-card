@@ -80,7 +80,7 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
   const [estimated] = stats.estimated;
 
   return (
-    <Stack gap={32} className={charts.series}>
+    <Stack gap={32}>
       <dl className={classes.tiles}>
         <StatTile label={t('stats.games')} value={number(stats.games)} to="/" />
         <StatTile
@@ -231,8 +231,8 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
             <Panel title={t('stats.formatByPlatform')}>
               <SplitBars
                 parts={[
-                  { key: 'physical', label: t('format.physical'), color: 'var(--pair-1)' },
-                  { key: 'digital', label: t('format.digital'), color: 'var(--pair-2)' },
+                  { key: 'physical', label: t('format.physical'), color: 'var(--mc-chart-pair-1)' },
+                  { key: 'digital', label: t('format.digital'), color: 'var(--mc-chart-pair-2)' },
                 ]}
                 rows={[...stats.platforms]
                   .sort((a, b) => b.copies - a.copies)
@@ -368,11 +368,11 @@ type Group = 'finished' | 'inProgress' | 'notStarted' | 'notCounted' | 'notSet';
 // Gray stays free for games without a play status. Not counted goes last,
 // after gray, since pink beside green is hard to tell apart for some readers.
 const GROUPS: { key: Group; color: string }[] = [
-  { key: 'finished', color: 'var(--series-3)' },
-  { key: 'inProgress', color: 'var(--series-4)' },
-  { key: 'notStarted', color: 'var(--series-1)' },
-  { key: 'notSet', color: 'var(--series-other)' },
-  { key: 'notCounted', color: 'var(--series-5)' },
+  { key: 'finished', color: 'var(--mc-chart-3)' },
+  { key: 'inProgress', color: 'var(--mc-chart-4)' },
+  { key: 'notStarted', color: 'var(--mc-chart-1)' },
+  { key: 'notSet', color: 'var(--mc-chart-other)' },
+  { key: 'notCounted', color: 'var(--mc-chart-5)' },
 ];
 const GROUP_OF: Record<StatusGroup, Group> = {
   finished: 'finished',
