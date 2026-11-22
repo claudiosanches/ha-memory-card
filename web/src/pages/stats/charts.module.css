@@ -8,9 +8,10 @@
   --series-5: #e87ba4;
   --series-6: #008300;
   --series-other: #5f5e5a;
-  /* Two kinds of the same thing: the theme color, strong and soft. */
-  --pair-strong: var(--mantine-primary-color-filled);
-  --pair-soft: var(--mantine-primary-color-4);
+  /* Physical and digital. Violet sits outside the slots above, so the pair
+     does not read as the blue and green of backlog progress. */
+  --pair-1: #6250d6;
+  --pair-2: #1baf7a;
 }
 
 :global([data-mantine-color-scheme='dark']) .series {
@@ -21,7 +22,8 @@
   --series-5: #d55181;
   --series-6: #0ca30c;
   --series-other: #c3c2b7;
-  --pair-soft: var(--mantine-primary-color-7);
+  --pair-1: #9085e9;
+  --pair-2: #199e70;
 }
 
 .legend { min-width: 0; margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }

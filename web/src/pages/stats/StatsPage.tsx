@@ -231,8 +231,8 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
             <Panel title={t('stats.formatByPlatform')}>
               <SplitBars
                 parts={[
-                  { key: 'physical', label: t('format.physical'), color: 'var(--pair-strong)' },
-                  { key: 'digital', label: t('format.digital'), color: 'var(--pair-soft)' },
+                  { key: 'physical', label: t('format.physical'), color: 'var(--pair-1)' },
+                  { key: 'digital', label: t('format.digital'), color: 'var(--pair-2)' },
                 ]}
                 rows={[...stats.platforms]
                   .sort((a, b) => b.copies - a.copies)
