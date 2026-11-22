@@ -1,6 +1,6 @@
 import { Badge, Card, Loader, SegmentedControl, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import type { TFunction } from 'i18next';
 import { Children, type ReactNode, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -386,6 +386,7 @@ const GROUP_OF: Record<StatusGroup, Group> = {
 function Progress({ stats, locale }: { stats: Stats; locale: string }) {
   const { t } = useTranslation();
   const statuses = usePlayStatusList();
+  const navigate = useNavigate();
   const [active, setActive] = useState<string | null>(null);
 
   const totals = new Map<Group, { games: number; keys: string[] }>();
@@ -426,6 +427,7 @@ function Progress({ stats, locale }: { stats: Stats; locale: string }) {
               data-dim={active && active !== part.key ? '' : undefined}
               onMouseEnter={() => setActive(part.key)}
               onMouseLeave={() => setActive(null)}
+              onClick={() => void navigate({ to: '/', search: { play_status: part.keys } })}
             />
           </Tooltip>
         ))}

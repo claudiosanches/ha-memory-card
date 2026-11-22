@@ -19,6 +19,9 @@ export const chartColors = {
     '--mc-chart-bar': 'var(--mantine-primary-color-filled)',
     '--mc-chart-track': 'var(--mantine-primary-color-light)',
     '--mc-chart-axis': 'var(--mc-border)',
+    // Outline of a legend or list row under the pointer, or tied to the hovered
+    // part of a chart, matching the stat tiles.
+    '--mc-chart-row-hover': 'var(--mantine-primary-color-filled)',
     // Backlog progress. Not counted sits after not set in the bar.
     '--mc-chart-finished': 'var(--mc-chart-3)',
     '--mc-chart-in-progress': 'var(--mc-chart-4)',
@@ -45,6 +48,7 @@ export const chartColors = {
     '--mc-chart-bar': 'var(--mantine-primary-color-filled)',
     '--mc-chart-track': 'var(--mantine-primary-color-light)',
     '--mc-chart-axis': 'var(--mc-border)',
+    '--mc-chart-row-hover': 'var(--mantine-primary-color-filled)',
     '--mc-chart-finished': 'var(--mc-chart-3)',
     '--mc-chart-in-progress': 'var(--mc-chart-4)',
     '--mc-chart-not-started': 'var(--mc-chart-1)',

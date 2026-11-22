@@ -1,4 +1,3 @@
-import { Tooltip } from '@mantine/core';
 import { Link } from '@tanstack/react-router';
 import type { LibrarySearch } from '../library/search';
 import charts from './charts.module.css';
@@ -35,12 +34,11 @@ export function SplitBars({ parts, rows }: { parts: SplitPart[]; rows: SplitRow[
             <span className={classes.track} aria-hidden>
               {row.values.map((value, i) =>
                 value > 0 ? (
-                  <Tooltip key={parts[i]!.key} label={`${parts[i]!.label}: ${value}`} withArrow>
-                    <span
-                      className={classes.segment}
-                      style={{ width: `${(value / max) * 100}%`, background: parts[i]!.color }}
-                    />
-                  </Tooltip>
+                  <span
+                    key={parts[i]!.key}
+                    className={classes.segment}
+                    style={{ width: `${(value / max) * 100}%`, background: parts[i]!.color }}
+                  />
                 ) : null,
               )}
             </span>
