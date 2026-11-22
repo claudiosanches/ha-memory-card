@@ -307,7 +307,8 @@
       "estimated_value": "What an owned copy would sell for now. Uses estimated_currency, or currency when that is empty.",
       "estimated_currency": "Three-letter code of estimated_value, when it differs from currency.",
       "barcode": "UPC or EAN digits from the box.",
-      "notes": "Free text."
+      "notes": "Free text.",
+      "bundle_copy_id": "copy_id of the bundle copy this copy came in, such as a collection on one cartridge. Platform, region, format, device, store, condition and status then follow that copy."
     },
     "columnsRead": "How your columns are read",
     "columnsReadHint": "Memory Card recognizes its own column names and common ones from other spreadsheets. Pick another column for any header it read wrong, or leave one out.",
@@ -327,7 +328,11 @@
     "ambiguous_game": "More than one game has this title. Add the igdb_id.",
     "ambiguous_platform": "More than one platform uses this abbreviation. Use the full name.",
     "conflicting_play_status": "Another row gives this game a different play status.",
-    "device_platform_mismatch": "This device is not set to play this platform."
+    "device_platform_mismatch": "This device is not set to play this platform.",
+    "unknown_bundle": "No copy has this ID.",
+    "nested_bundle": "A bundle cannot go inside another bundle.",
+    "same_game": "The bundle copy is of this same game.",
+    "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy."
   },
   "fileIssues": {
     "not_utf8": "The file is not UTF-8. Save it as \"CSV UTF-8\" and try again.",

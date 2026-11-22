@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,\n                                         notes, edition, purchased_on, price, currency,\n                                         estimated_value, estimated_currency, barcode,\n                                         bundle_id, created_by, updated_by)\n                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 17
+    },
+    "nullable": []
+  },
+  "hash": "6021726e4ee23933cc6ada7aab35658abc6bc6b42c47dc9decbb1f7ac59d1c4e"
+}

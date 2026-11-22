@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT bundle_id AS \"bundle_id!\" FROM copies WHERE bundle_id IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "bundle_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "bundle_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "2c56c55e98a25a7b1309ed388ad1475105cf9634863785b3107d734ce21d0379"
+}

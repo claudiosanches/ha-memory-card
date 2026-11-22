@@ -28,6 +28,7 @@ struct ExportRow {
     estimated_value: Option<i64>,
     estimated_currency: Option<String>,
     barcode: Option<String>,
+    bundle_copy_id: Option<i64>,
 }
 
 /// Copies matching the library filters, as CSV. Without copy filters, games
@@ -37,13 +38,13 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         "SELECT copy_id, status, igdb_id, game_title, play_status, platform, region,
                 release_title, product_code, format, device, store, condition, notes,
                 edition, purchased_on, price, currency, estimated_value, estimated_currency,
-                barcode
+                barcode, bundle_copy_id
          FROM (
              SELECT c.id AS copy_id, c.status, g.igdb_id, g.title AS game_title, g.play_status,
                     p.name AS platform, r.region, r.title AS release_title, r.product_code,
                     c.format, d.name AS device, s.name AS store, c.condition, c.notes,
                     c.edition, c.purchased_on, c.price, c.currency, c.estimated_value,
-                    c.estimated_currency, c.barcode,
+                    c.estimated_currency, c.barcode, c.bundle_id AS bundle_copy_id,
                     g.sort_title, g.id AS game_id, p.sort_order AS platform_order
              FROM copies c
              JOIN releases r ON r.id = c.release_id
@@ -60,7 +61,7 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
             " UNION ALL
              SELECT NULL, NULL, g.igdb_id, g.title, g.play_status,
                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                     g.sort_title, g.id, NULL
              FROM games g
              WHERE NOT EXISTS (
@@ -115,6 +116,7 @@ pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>
                 text(row.estimated_currency),
                 text(row.barcode),
                 text(row.notes),
+                id(row.bundle_copy_id),
             ])?;
         }
         writer.flush()?;

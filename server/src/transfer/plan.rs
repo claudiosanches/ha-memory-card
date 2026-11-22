@@ -66,6 +66,8 @@ pub struct CopyWrite {
     pub estimated_value: Option<i64>,
     pub estimated_currency: Option<String>,
     pub barcode: Option<String>,
+    /// The existing bundle copy this copy comes in.
+    pub bundle: Option<i64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
@@ -165,6 +167,10 @@ struct Planner<'a> {
     releases: HashMap<(Ref, Ref, Region, String), Ref>,
     copies: HashMap<i64, &'a CopyRow>,
     seen_copies: HashMap<i64, u64>,
+    /// Each copy inside a bundle, and how many copies each bundle holds, as
+    /// the rows so far leave them.
+    bundle_of: HashMap<i64, i64>,
+    contents: HashMap<i64, usize>,
     game_statuses: HashMap<Ref, String>,
     release_titles: HashMap<Ref, String>,
     /// Per new device: true while every row using it is digital.
@@ -242,6 +248,18 @@ impl<'a> Planner<'a> {
                 .collect(),
             copies: snapshot.copies.iter().map(|c| (c.id, c)).collect(),
             seen_copies: HashMap::new(),
+            bundle_of: snapshot
+                .copies
+                .iter()
+                .filter_map(|c| c.bundle_id.map(|b| (c.id, b)))
+                .collect(),
+            contents: snapshot.copies.iter().filter_map(|c| c.bundle_id).fold(
+                HashMap::new(),
+                |mut counts, b| {
+                    *counts.entry(b).or_default() += 1;
+                    counts
+                },
+            ),
             game_statuses: snapshot
                 .games
                 .iter()
@@ -343,6 +361,7 @@ impl<'a> Planner<'a> {
         );
         let estimated_currency = estimated_currency.filter(|_| estimated_value.is_some());
         let barcode = issues.value(&raw.barcode, "barcode", domain::barcode, false);
+        let bundle_id = issues.id(&raw.bundle_copy_id, "bundle_copy_id");
 
         let existing_copy = match copy_id {
             None => None,
@@ -358,6 +377,42 @@ impl<'a> Planner<'a> {
             }
         };
 
+        let bundle = bundle_id.and_then(|id| {
+            let Some(bundle) = self.copies.get(&id).copied() else {
+                issues.error("bundle_copy_id", "unknown_bundle");
+                return None;
+            };
+            let holds_copies =
+                copy_id.is_some_and(|c| self.contents.get(&c).is_some_and(|n| *n > 0));
+            if Some(id) == copy_id || self.bundle_of.contains_key(&id) || holds_copies {
+                issues.error("bundle_copy_id", "nested_bundle");
+                return None;
+            }
+            Some(bundle)
+        });
+        // Price and purchase date stay on the bundle copy.
+        let (purchased_on, price, currency, estimated_value, estimated_currency) =
+            if bundle.is_some() {
+                for (cell, column) in [
+                    (&raw.purchased_on, "purchased_on"),
+                    (&raw.price, "price"),
+                    (&raw.estimated_value, "estimated_value"),
+                ] {
+                    if cell.is_some() {
+                        issues.warning(column, "ignored_in_bundle");
+                    }
+                }
+                (None, None, None, None, None)
+            } else {
+                (
+                    purchased_on,
+                    price,
+                    currency,
+                    estimated_value,
+                    estimated_currency,
+                )
+            };
+
         // ---- look things up without changing the plan ----
         let Some(title) = title else {
             self.plan.rows.push(report(RowAction::Error, issues));
@@ -370,6 +425,11 @@ impl<'a> Planner<'a> {
                 None
             }
         };
+        if let (Some(bundle), Some((Ref::Existing(game), _))) = (bundle, game)
+            && self.copy_game(bundle).is_some_and(|g| g.id == game)
+        {
+            issues.error("bundle_copy_id", "same_game");
+        }
         if let (Some(status), Some(game)) = (play_status.as_deref(), game.map(|g| g.0))
             && self
                 .game_statuses
@@ -444,7 +504,19 @@ impl<'a> Planner<'a> {
             estimated_value,
             estimated_currency,
             barcode,
+            bundle: bundle.map(|b| b.id),
         };
+        if let Some(copy) = existing_copy
+            && let Some(old) = self.bundle_of.remove(&copy.id)
+        {
+            *self.contents.entry(old).or_default() -= 1;
+        }
+        if let Some(bundle) = write.bundle {
+            if let Some(copy) = existing_copy {
+                self.bundle_of.insert(copy.id, bundle);
+            }
+            *self.contents.entry(bundle).or_default() += 1;
+        }
         let action = match existing_copy {
             None => RowAction::NewCopy,
             Some(copy) if same_copy(copy, &write) => RowAction::Unchanged,
@@ -681,6 +753,7 @@ fn same_copy(copy: &CopyRow, write: &CopyWrite) -> bool {
         && write.estimated_value == copy.estimated_value
         && write.estimated_currency == copy.estimated_currency
         && write.barcode == copy.barcode
+        && write.bundle == copy.bundle_id
 }
 
 /// A `YYYY-MM-DD` date.

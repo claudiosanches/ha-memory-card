@@ -700,7 +700,7 @@ pub async fn update_copy(
 
 /// Copies the bundle copy's shared fields onto its contents and moves them
 /// to their games' releases on the bundle's platform and region.
-async fn sync_contents(conn: &mut SqliteConnection, bundle_id: i64) -> ApiResult<()> {
+pub(crate) async fn sync_contents(conn: &mut SqliteConnection, bundle_id: i64) -> sqlx::Result<()> {
     sqlx::query!(
         "UPDATE copies
          SET status = b.status, format = b.format, device_id = b.device_id,
@@ -925,6 +925,7 @@ async fn release_for(
         fields.product_code.as_deref(),
     )
     .await
+    .map_err(Into::into)
 }
 
 /// The game's release for this platform, region and product code, created if needed.
@@ -934,7 +935,7 @@ async fn release_id(
     platform_id: i64,
     region: Region,
     product_code: Option<&str>,
-) -> ApiResult<i64> {
+) -> sqlx::Result<i64> {
     let existing = sqlx::query_scalar!(
         r#"SELECT id AS "id!" FROM releases
            WHERE game_id = ? AND platform_id = ? AND region = ?
@@ -949,7 +950,7 @@ async fn release_id(
     if let Some(id) = existing {
         return Ok(id);
     }
-    Ok(sqlx::query_scalar!(
+    sqlx::query_scalar!(
         r#"INSERT INTO releases (game_id, platform_id, region, product_code)
            VALUES (?, ?, ?, ?) RETURNING id AS "id!""#,
         game_id,
@@ -958,7 +959,7 @@ async fn release_id(
         product_code
     )
     .fetch_one(&mut *conn)
-    .await?)
+    .await
 }
 
 /// Deduplicates ids, checks they exist in `game_modes`, returns them as a JSON array.

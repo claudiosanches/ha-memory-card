@@ -175,3 +175,121 @@ async fn bundle_contents_are_checked() {
         (StatusCode::CONFLICT, json!("nested_bundle"))
     );
 }
+
+fn row_issues(preview: &Value, line: u64) -> Vec<(String, String, bool)> {
+    preview["rows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|row| row["line"] == line)
+        .flat_map(|row| row["issues"].as_array().unwrap().clone())
+        .map(|i| {
+            let text = |v: &Value| v.as_str().unwrap().to_owned();
+            (
+                text(&i["column"]),
+                text(&i["code"]),
+                i["error"].as_bool().unwrap(),
+            )
+        })
+        .collect()
+}
+
+#[tokio::test]
+async fn csv_rows_put_copies_in_bundles() {
+    let app = TestApp::new().await;
+    let header =
+        "copy_id,game_title,platform,region,format,condition,price,currency,bundle_copy_id";
+    let (status, result) = app
+        .post_csv(
+            "/api/import",
+            &format!(
+                "{header}\n\
+                 ,Super Mario 3D All-Stars,Switch,eu,physical,cib,59.99,EUR,\n\
+                 ,Super Mario Sunshine,Switch,eu,physical,,,,\n"
+            ),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let copy_of = async |title: &str| -> i64 {
+        sqlx::query_scalar(
+            "SELECT c.id FROM copies c JOIN releases r ON r.id = c.release_id
+             JOIN games g ON g.id = r.game_id WHERE g.title = ?",
+        )
+        .bind(title)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap()
+    };
+    let bundle = copy_of("Super Mario 3D All-Stars").await;
+    let sunshine = copy_of("Super Mario Sunshine").await;
+    let sunshine_now = async || -> (Option<String>, Option<i64>) {
+        sqlx::query_as("SELECT condition, bundle_id FROM copies WHERE id = ?")
+            .bind(sunshine)
+            .fetch_one(&app.pool)
+            .await
+            .unwrap()
+    };
+
+    let csv = format!(
+        "{header}\n\
+         {sunshine},Super Mario Sunshine,Wii U,na,physical,,10,USD,{bundle}\n"
+    );
+    let (_, preview) = app.post_csv("/api/import/preview", &csv).await;
+    assert_eq!(
+        row_issues(&preview, 2),
+        [("price".into(), "ignored_in_bundle".into(), false)]
+    );
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let (platform, condition, price, in_bundle): (String, Option<String>, Option<i64>, i64) =
+        sqlx::query_as(
+            "SELECT p.slug, c.condition, c.price, c.bundle_id FROM copies c
+             JOIN releases r ON r.id = c.release_id JOIN platforms p ON p.id = r.platform_id
+             WHERE c.id = ?",
+        )
+        .bind(sunshine)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        (platform.as_str(), condition.as_deref(), price, in_bundle),
+        ("switch", Some("cib"), None, bundle),
+        "it follows the bundle copy"
+    );
+
+    let (_, bytes) = app.get("/api/export.csv").await;
+    let exported = String::from_utf8(bytes).unwrap();
+    let row = exported
+        .lines()
+        .find(|line| line.contains("Super Mario Sunshine"))
+        .unwrap();
+    assert!(row.ends_with(&format!(",{bundle}")), "{row}");
+    let (_, preview) = app.post_csv("/api/import/preview", &exported).await;
+    assert_eq!(preview["summary"]["unchanged_copies"], 2, "{preview}");
+
+    let edited = exported.replacen(",cib,", ",loose,", 1);
+    app.post_csv("/api/import", &edited).await;
+    assert_eq!(
+        sunshine_now().await.0.as_deref(),
+        Some("loose"),
+        "contents follow an edited bundle row"
+    );
+
+    let bad = format!(
+        "{header}\n\
+         ,Galaxy,Switch,eu,physical,,,,999\n\
+         ,Galaxy,Switch,eu,physical,,,,{sunshine}\n\
+         {bundle},Super Mario 3D All-Stars,Switch,eu,physical,,,,{bundle}\n\
+         ,Super Mario 3D All-Stars,Switch,eu,physical,,,,{bundle}\n"
+    );
+    let (_, preview) = app.post_csv("/api/import/preview", &bad).await;
+    let error = |code: &str| vec![("bundle_copy_id".to_owned(), code.to_owned(), true)];
+    assert_eq!(row_issues(&preview, 2), error("unknown_bundle"));
+    assert_eq!(row_issues(&preview, 3), error("nested_bundle"));
+    assert_eq!(row_issues(&preview, 4), error("nested_bundle"));
+    assert_eq!(row_issues(&preview, 5), error("same_game"));
+
+    let csv = format!("{header}\n{sunshine},Super Mario Sunshine,Switch,eu,physical,loose,,,\n");
+    app.post_csv("/api/import", &csv).await;
+    assert_eq!(sunshine_now().await.1, None, "a blank cell takes it out");
+}

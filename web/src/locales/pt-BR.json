@@ -307,7 +307,8 @@
       "estimated_value": "Quanto uma cópia que você tem venderia hoje. Usa estimated_currency, ou currency quando ela estiver vazia.",
       "estimated_currency": "Código de três letras de estimated_value, quando difere de currency.",
       "barcode": "Números do UPC ou EAN da caixa.",
-      "notes": "Texto livre."
+      "notes": "Texto livre.",
+      "bundle_copy_id": "copy_id da cópia da coletânea em que esta cópia veio, como uma coleção em um só cartucho. Plataforma, região, formato, dispositivo, loja, estado e status passam a seguir essa cópia."
     },
     "columnsRead": "Como suas colunas foram lidas",
     "columnsReadHint": "O Memory Card reconhece os próprios nomes de coluna e nomes comuns de outras planilhas. Escolha outra coluna para um cabeçalho lido errado, ou deixe-o de fora.",
@@ -327,7 +328,11 @@
     "ambiguous_game": "Mais de um jogo tem este título. Adicione o igdb_id.",
     "ambiguous_platform": "Mais de uma plataforma usa esta abreviação. Use o nome completo.",
     "conflicting_play_status": "Outra linha dá a este jogo outro status de jogo.",
-    "device_platform_mismatch": "Este dispositivo não está configurado para rodar esta plataforma."
+    "device_platform_mismatch": "Este dispositivo não está configurado para rodar esta plataforma.",
+    "unknown_bundle": "Nenhuma cópia tem este ID.",
+    "nested_bundle": "Uma coletânea não pode ficar dentro de outra.",
+    "same_game": "A cópia da coletânea é deste mesmo jogo.",
+    "ignored_in_bundle": "Ignorado: preço, valor estimado e data de compra ficam na cópia da coletânea."
   },
   "fileIssues": {
     "not_utf8": "O arquivo não está em UTF-8. Salve como \"CSV UTF-8\" e tente de novo.",

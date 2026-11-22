@@ -8,7 +8,7 @@ pub mod plan;
 pub mod snapshot;
 
 /// Column order for export and the blank template.
-pub const COLUMNS: [&str; 21] = [
+pub const COLUMNS: [&str; 22] = [
     "copy_id",
     "status",
     "igdb_id",
@@ -30,6 +30,7 @@ pub const COLUMNS: [&str; 21] = [
     "estimated_currency",
     "barcode",
     "notes",
+    "bundle_copy_id",
 ];
 
 /// Excel only reads a CSV as UTF-8 when it starts with a BOM.

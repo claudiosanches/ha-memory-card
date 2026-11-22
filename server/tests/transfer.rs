@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 /// The columns most rows here use; imports read columns by name.
 const HEADER: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,device,store,condition,notes";
 /// Every column, in export order.
-const COLUMNS: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,edition,device,store,condition,purchased_on,price,currency,estimated_value,estimated_currency,barcode,notes";
+const COLUMNS: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,edition,device,store,condition,purchased_on,price,currency,estimated_value,estimated_currency,barcode,notes,bundle_copy_id";
 
 fn issues(preview: &Value, line: u64) -> Vec<(String, String)> {
     let row = preview["rows"]
@@ -185,18 +185,18 @@ async fn import_then_export_round_trips() {
     assert_eq!(lines.len(), 4, "{exported}");
     // Same platform: rows sort by region, so eu comes before na.
     assert!(
-        lines[1].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,eu,Super Mario Odyssey (PAL),,digital,,,,,,,,,,,"),
+        lines[1].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,eu,Super Mario Odyssey (PAL),,digital,,,,,,,,,,,,"),
         "{}",
         lines[1]
     );
     assert!(
-        lines[2].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,na,,HAC-AAACA,physical,,Switch OLED,Amazon,cib,,,,,,,\"Gift, 2017\""),
+        lines[2].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,na,,HAC-AAACA,physical,,Switch OLED,Amazon,cib,,,,,,,\"Gift, 2017\","),
         "{}",
         lines[2]
     );
     assert_eq!(
         lines[3],
-        ",,,Zelda: Breath of the Wild,mastered,,,,,,,,,,,,,,,,"
+        ",,,Zelda: Breath of the Wild,mastered,,,,,,,,,,,,,,,,,"
     );
 
     // Importing the export again changes nothing.
@@ -468,17 +468,17 @@ async fn purchase_columns_import_and_export() {
     let exported = export(&app).await;
     let lines: Vec<&str> = exported.trim_start_matches('\u{feff}').lines().collect();
     assert!(
-        lines[2].ends_with(",digital,Deluxe,,Steam,,2024-09-17,1299.90,BRL,,,,"),
+        lines[2].ends_with(",digital,Deluxe,,Steam,,2024-09-17,1299.90,BRL,,,,,"),
         "{}",
         lines[2]
     );
     assert!(
-        lines[3].ends_with(",physical,,,,,,5980,JPY,,,4902370536485,"),
+        lines[3].ends_with(",physical,,,,,,5980,JPY,,,4902370536485,,"),
         "{}",
         lines[3]
     );
     assert!(
-        lines[1].ends_with(",Collector's,,,,,59.90,USD,,,,"),
+        lines[1].ends_with(",Collector's,,,,,59.90,USD,,,,,"),
         "{}",
         lines[1]
     );
@@ -538,8 +538,12 @@ async fn estimated_values_import_and_export() {
 
     let exported = export(&app).await;
     let lines: Vec<&str> = exported.trim_start_matches('\u{feff}').lines().collect();
-    assert!(lines[1].ends_with(",20.00,USD,35.00,USD,,"), "{}", lines[1]);
-    assert!(lines[2].ends_with(",,,1000.50,BRL,,"), "{}", lines[2]);
+    assert!(
+        lines[1].ends_with(",20.00,USD,35.00,USD,,,"),
+        "{}",
+        lines[1]
+    );
+    assert!(lines[2].ends_with(",,,1000.50,BRL,,,"), "{}", lines[2]);
 
     let edited = exported.replace("35.00,USD", "4000,JPY");
     let (_, preview) = app.post_csv("/api/import/preview", &edited).await;

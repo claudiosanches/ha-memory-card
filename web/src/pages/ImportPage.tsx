@@ -40,6 +40,7 @@ const COLUMNS = [
   'estimated_currency',
   'barcode',
   'notes',
+  'bundle_copy_id',
 ] as const;
 
 const SUMMARY_KEYS = [

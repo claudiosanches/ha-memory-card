@@ -1,6 +1,9 @@
 use sqlx::SqliteConnection;
 
+use std::collections::HashSet;
+
 use super::plan::{Plan, Ref};
+use crate::db::games::sync_contents;
 use crate::db::platforms::{slugify, unique_slug};
 use crate::domain::sort_title;
 
@@ -146,8 +149,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,
                                          notes, edition, purchased_on, price, currency,
                                          estimated_value, estimated_currency, barcode,
-                                         created_by, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                         bundle_id, created_by, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     release_id,
                     copy.status,
                     device_id,
@@ -162,6 +165,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     copy.estimated_value,
                     copy.estimated_currency,
                     copy.barcode,
+                    copy.bundle,
                     by,
                     by
                 )
@@ -174,7 +178,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                      SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,
                          condition = ?, notes = ?, edition = ?, purchased_on = ?, price = ?,
                          currency = ?, estimated_value = ?, estimated_currency = ?,
-                         barcode = ?, updated_by = ?,
+                         barcode = ?, bundle_id = ?, updated_by = ?,
                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                      WHERE id = ?",
                     release_id,
@@ -191,6 +195,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     copy.estimated_value,
                     copy.estimated_currency,
                     copy.barcode,
+                    copy.bundle,
                     by,
                     id
                 )
@@ -198,6 +203,22 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                 .await?;
             }
         }
+    }
+
+    // Contents follow their bundle copy, whichever side the rows changed.
+    let touched: HashSet<i64> = plan
+        .copies
+        .iter()
+        .flat_map(|copy| [copy.bundle, copy.existing])
+        .flatten()
+        .collect();
+    let bundles: Vec<i64> = sqlx::query_scalar!(
+        r#"SELECT DISTINCT bundle_id AS "bundle_id!" FROM copies WHERE bundle_id IS NOT NULL"#
+    )
+    .fetch_all(&mut *conn)
+    .await?;
+    for bundle in bundles.into_iter().filter(|b| touched.contains(b)) {
+        sync_contents(conn, bundle).await?;
     }
 
     Ok(())
