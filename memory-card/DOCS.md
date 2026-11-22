@@ -90,6 +90,9 @@ Assistant are translated too.
 New prices start in the `currency` option when it is set, else in the
 currency of the copy priced last, else in Home Assistant's currency.
 
+Memory Card reads Home Assistant's language and currency once after it
+starts. Restart the app after changing either of them in Home Assistant.
+
 ## Options
 
 | Option | Description |
