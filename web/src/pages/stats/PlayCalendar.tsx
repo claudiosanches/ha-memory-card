@@ -151,7 +151,7 @@ function Row({
         return day ? (
           <span key={w} className={classes.cell} data-level={level(day.sessions)} onMouseEnter={() => onActive(day)} />
         ) : (
-          <span key={w} />
+          <span key={w} className={classes.cell} data-future="" onMouseEnter={() => onActive(null)} />
         );
       })}
     </>

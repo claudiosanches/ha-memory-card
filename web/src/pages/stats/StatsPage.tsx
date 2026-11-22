@@ -276,24 +276,28 @@ function PlayActivity({ stats, locale }: { stats: Stats; locale: string }) {
   return (
     <section aria-labelledby={id} className={classes.group}>
       <Title order={3} size="h4" id={id}>{t('stats.activity')}</Title>
-      <dl className={classes.tiles}>
-        <StatTile
-          label={t('stats.lifetimePlay')}
-          value={playTime(stats.total_minutes, t)}
-          detail={stats.total_sessions > 0 ? t('stats.thisMonth', { value: playTime(minutes, t) }) : undefined}
-        />
-        <StatTile
-          label={t('stats.lifetimeSessions')}
-          value={stats.total_sessions.toLocaleString(locale)}
-          detail={stats.total_sessions > 0 ? t('stats.thisMonth', { value: t('stats.sessions', { count: sessions }) }) : undefined}
-        />
-      </dl>
       {stats.total_sessions > 0 ? (
-        <Card withBorder className={classes.panel}>
-          <PlayCalendar stats={stats} locale={locale} playTime={playTime} />
-        </Card>
+        <div className={classes.activity}>
+          <dl className={classes.tiles}>
+            <StatTile
+              label={t('stats.lifetimePlay')}
+              value={playTime(stats.total_minutes, t)}
+              detail={t('stats.thisMonth', { value: playTime(minutes, t) })}
+            />
+            <StatTile
+              label={t('stats.lifetimeSessions')}
+              value={stats.total_sessions.toLocaleString(locale)}
+              detail={t('stats.thisMonth', { value: t('stats.sessions', { count: sessions }) })}
+            />
+          </dl>
+          <Card withBorder className={classes.panel}>
+            <PlayCalendar stats={stats} locale={locale} playTime={playTime} />
+          </Card>
+        </div>
       ) : (
-        <Text size="sm" c="dimmed">{t('stats.noSessions')}</Text>
+        <Card withBorder className={classes.panel}>
+          <Text size="sm" c="dimmed">{t('stats.noSessions')}</Text>
+        </Card>
       )}
     </section>
   );

@@ -20,6 +20,12 @@
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--mantine-spacing-card); }
 .grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 @container (width < 46rem) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.activity { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--mantine-spacing-card); }
+@container (min-width: 70rem) {
+  .activity { grid-template-columns: minmax(14rem, 1fr) auto; }
+  .activity > .tiles { grid-auto-flow: row; grid-template-rows: repeat(2, 1fr); }
+  .activity > .panel { justify-content: center; }
+}
 .panel { min-width: 0; }
 
 .meters { list-style: none; margin: 0 -6px; padding: 0; display: grid; grid-template-columns: minmax(6rem, 35%) minmax(0, 1fr) auto; gap: 2px 12px; }

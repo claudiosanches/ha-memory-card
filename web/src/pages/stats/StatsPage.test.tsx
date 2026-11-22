@@ -211,7 +211,7 @@ describe('Stats page', () => {
     expect(paid).toHaveTextContent(en.stats.noPrices);
     expect(paid).toHaveTextContent('4 copies without a price');
     expect(screen.getByTestId('stats-estimated')).toHaveTextContent('6 copies without an estimate');
-    expect(within(section(en.stats.activity)).getByText('0 minutes')).toBeInTheDocument();
+    expect(within(section(en.stats.activity)).queryByText('0 minutes')).not.toBeInTheDocument();
     expect(screen.getByText(en.stats.noSessions)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: en.stats.valueTitle })).not.toBeInTheDocument();
   });
