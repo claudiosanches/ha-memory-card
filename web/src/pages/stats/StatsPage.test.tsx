@@ -73,10 +73,28 @@ describe('Stats page', () => {
     await within(platforms).findByText('PlayStation 5');
     const rows = within(platforms).getAllByRole('listitem');
     expect(rows[0]).toHaveTextContent('PlayStation 5');
-    expect(rows[0]).toHaveTextContent('11 copies');
+    expect(rows[0]).toHaveTextContent('11 copies · 73%');
+    expect(rows[1]).toHaveTextContent('Nintendo Switch');
     expect(within(screen.getByRole('heading', { name: en.stats.byStatus }).closest('section')!).getByText(en.common.notSet)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Hades' })).toBeInTheDocument();
     expect(screen.getAllByRole('listitem', { name: /sessions?$/ })).toHaveLength(12);
+  });
+
+  it('folds the smallest stores into one slice', async () => {
+    const stores = Array.from({ length: 7 }, (_, i) => ({ id: i + 1, name: `Store ${i + 1}`, copy_count: 0 }));
+    mockApi({
+      'GET /api/stats': { ...STATS, stores: stores.map((store, i) => ({ store_id: store.id, copies: 10 - i })) },
+      'GET /api/platforms': PLATFORMS,
+      'GET /api/stores': stores,
+    });
+    renderAt('/stats');
+
+    const section = (await screen.findByRole('heading', { name: en.stats.byStore })).closest('section')!;
+    await within(section).findByText('Store 1');
+    const rows = within(section).getAllByRole('listitem');
+    expect(rows).toHaveLength(6);
+    expect(rows[4]).toHaveTextContent('Store 5');
+    expect(rows[5]).toHaveTextContent(`${en.stats.other}9 copies`);
   });
 
   it('says when there is nothing to count', async () => {

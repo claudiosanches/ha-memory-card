@@ -744,6 +744,8 @@
     "spentByYear": "Spent by year",
     "byStore": "Copies by store",
     "noStore": "No store",
+    "other": "Other",
+    "noOwned": "No owned copies yet.",
     "activity": "Play sessions, last 12 months",
     "noSessions": "No play sessions yet. Log one from a game's page.",
     "mostPlayed": "Most played",

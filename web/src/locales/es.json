@@ -744,6 +744,8 @@
     "spentByYear": "Gasto por año",
     "byStore": "Copias por tienda",
     "noStore": "Sin tienda",
+    "other": "Otros",
+    "noOwned": "Todavía no tienes copias.",
     "activity": "Sesiones de juego, últimos 12 meses",
     "noSessions": "Aún no hay sesiones de juego. Registra una desde la página de un juego.",
     "mostPlayed": "Más jugados",

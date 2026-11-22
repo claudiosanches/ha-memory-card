@@ -11,6 +11,7 @@ import type { Stats } from '../../api/types';
 import { formatMoney } from '../../components/money';
 import { PageHeader } from '../../components/PageHeader';
 import { usePlayStatusList } from '../../components/playStatuses';
+import { DonutChart } from './DonutChart';
 import classes from './StatsPage.module.css';
 
 export function useStats() {
@@ -59,6 +60,7 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
   const statuses = usePlayStatusList();
   const money = (amount: string, currency: string) => formatMoney(amount, currency, locale);
   const number = (value: number) => value.toLocaleString(locale);
+  const copies = (count: number) => t('stats.copiesCount', { count });
 
   const platformName = new Map((platforms.data ?? []).map((p) => [p.id, p.name]));
   const storeName = new Map((stores.data ?? []).map((s) => [s.id, s.name]));
@@ -104,15 +106,15 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
 
       <div className={classes.grid}>
         <Section title={t('stats.byPlatform')}>
-          <MeterList
-            rows={[...stats.platforms]
-              .sort((a, b) => b.copies - a.copies)
-              .map((row) => ({
-                key: String(row.platform_id),
-                label: platformName.get(row.platform_id) ?? '',
-                value: row.copies,
-                figure: t('stats.copiesCount', { count: row.copies }),
-              }))}
+          <DonutChart
+            slices={stats.platforms.map((row) => ({
+              key: String(row.platform_id),
+              label: platformName.get(row.platform_id) ?? '',
+              value: row.copies,
+            }))}
+            figure={copies}
+            locale={locale}
+            empty={t('stats.noOwned')}
           />
         </Section>
 
@@ -139,13 +141,15 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
         )}
 
         <Section title={t('stats.byStore')}>
-          <MeterList
-            rows={stats.stores.map((row) => ({
+          <DonutChart
+            slices={stats.stores.map((row) => ({
               key: String(row.store_id),
               label: row.store_id ? (storeName.get(row.store_id) ?? '') : t('stats.noStore'),
               value: row.copies,
-              figure: t('stats.copiesCount', { count: row.copies }),
             }))}
+            figure={copies}
+            locale={locale}
+            empty={t('stats.noOwned')}
           />
         </Section>
 
