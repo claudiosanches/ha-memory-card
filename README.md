@@ -19,7 +19,7 @@ Requirements: the Rust toolchain from `rust-toolchain.toml`, Node.js 24.
 Changing SQL queries needs sqlx-cli
 (`cargo install sqlx-cli --version 0.9.1 --locked --no-default-features --features sqlite`).
 Building the image and `make ha-up` also need zig 0.15.2, cargo-zigbuild and
-Docker.
+Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 
 `make` lists the targets. The common ones:
 
@@ -70,28 +70,31 @@ The server reads these variables; `make run` sets the first four and
 
 ### Local Home Assistant
 
-`make ha-up` runs Home Assistant with a real Supervisor in Docker, using
-Home Assistant's [app devcontainer](https://github.com/home-assistant/devcontainer),
-and installs the app built from this tree. The first run downloads Home
-Assistant and takes a few minutes. It also:
+`make ha-up` runs [Home Assistant OS](https://github.com/home-assistant/operating-system)
+in a virtual machine and installs the app built from this tree. The VM runs
+in QEMU inside an unprivileged Docker container that gets only `/dev/kvm`,
+so Home Assistant has its own kernel and changes nothing on your machine. It
+uses 2 CPUs and 4 GB of RAM. The first run downloads Home Assistant OS (about
+500 MB, kept in `target/haos-image`) and then Home Assistant, and takes a few
+minutes. It also:
 
 - finishes onboarding with an `owner` administrator, made a Memory Card
   manager, and adds a `viewer` regular user. Their passwords are printed and
-  kept in `target/ha/demo.json`.
+  kept in `target/haos/demo.json`.
 - installs Mosquitto and the MQTT integration, for the sensors.
 - copies the IGDB credentials from `.data/options.json`, if set.
 
 Open http://127.0.0.1:7123 (`HA_PORT` changes the port). Run `make ha-up`
 again after a change to update the app; its data stays. `make ha-logs`
-follows the app's log, `make ha-stop` stops everything and `make ha-destroy`
-deletes the instance and its data.
+follows the app's log, `make ha-stop` shuts the VM down and `make ha-destroy`
+deletes it and its data.
 
 To scan an NFC tag without one, fire a `tag_scanned` event with
 `{"tag_id": "any-id"}` under **Developer tools > Events**. The scan counts as
 the user who fires it.
 
-The container runs privileged, since the devcontainer runs systemd and Docker
-inside it.
+For a root shell on the Home Assistant OS host, run
+`docker exec -it memory-card-haos ssh -p 22222 root@127.0.0.1`.
 
 ## Releasing
 

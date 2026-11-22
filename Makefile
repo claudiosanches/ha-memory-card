@@ -9,7 +9,6 @@ IMAGE ?= memory-card:dev
 DEV_USER ?= dev
 # Local Home Assistant from `make ha-up`.
 HA_PORT ?= 7123
-HOST_ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 
 # Database the sqlx query macros check against while preparing server/.sqlx.
 SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
@@ -116,7 +115,7 @@ smoke: image ## Run the image like Home Assistant and check start, UI, API and s
 	./scripts/smoke-image.sh $(IMAGE)
 
 .PHONY: ha-up
-ha-up: ARCHS = $(HOST_ARCH)
+ha-up: ARCHS = amd64
 ha-up: binaries ## Local Home Assistant with the app from this tree (rerun to update it)
 	HA_PORT=$(HA_PORT) ./scripts/ha-demo.sh up
 

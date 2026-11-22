@@ -1,20 +1,23 @@
 #!/bin/sh
-# A throwaway Home Assistant with a real Supervisor, run in Home Assistant's
-# app devcontainer, with this app built from the working tree.
+# A throwaway Home Assistant OS in a QEMU virtual machine, with this app
+# built from the working tree. QEMU runs in an unprivileged container that
+# gets /dev/kvm and nothing else.
 # Usage: scripts/ha-demo.sh up|stop|destroy|logs
 set -eu
 cd "$(dirname "$0")/.."
 
-name=${HA_NAME:-memory-card-ha}
+name=${HA_NAME:-memory-card-haos}
 port=${HA_PORT:-7123}
-image=${HA_IMAGE:-ghcr.io/home-assistant/devcontainer:6-apps}
 label=memory-card.ha-demo
-volumes="docker containerd supervisor"
-state=target/ha
+image=memory-card-haos:local
+os_version=18.4
+os_sha256=756ec485b1b153099ca53e88a5eebd63a801d56b791afe5c6d63ef94a35dc02d
+os_file=target/haos-image/haos_ova-$os_version.qcow2.xz
+state=target/haos
 apps=$state/local
 
-ours() {
-    [ "$(docker container inspect -f "{{index .Config.Labels \"$label\"}}" "$name" 2>/dev/null)" = 1 ]
+labelled() {
+    [ "$(docker "$1" inspect -f "{{index .${2}Labels \"$label\"}}" "$3" 2>/dev/null)" = 1 ]
 }
 
 exists() {
@@ -22,14 +25,33 @@ exists() {
 }
 
 running() {
-    [ "$(docker container inspect -f '{{.State.Running}}' "$@" 2>/dev/null)" = true ]
+    [ "$(docker container inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" = true ]
 }
 
 refuse_foreign() {
-    if exists && ! ours; then
+    if exists && ! labelled container Config. "$name"; then
         echo "A container named $name exists that this script did not create. Set HA_NAME." >&2
         exit 1
     fi
+}
+
+vm_ssh() {
+    docker exec -i "$name" ssh -p 22222 -o BatchMode=yes -o ConnectTimeout=5 \
+        -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR root@127.0.0.1 "$@"
+}
+
+download() {
+    [ -f "$os_file" ] && return
+    mkdir -p "$(dirname "$os_file")"
+    echo "Downloading Home Assistant OS $os_version"
+    curl -fL --retry 3 -o "$os_file.part" \
+        "https://github.com/home-assistant/operating-system/releases/download/$os_version/haos_ova-$os_version.qcow2.xz"
+    if ! echo "$os_sha256  $os_file.part" | sha256sum -c --quiet -; then
+        rm -f "$os_file.part"
+        echo "The download does not match the expected checksum" >&2
+        exit 1
+    fi
+    mv "$os_file.part" "$os_file"
 }
 
 # The Supervisor builds the app from this folder. Its Dockerfile expects the
@@ -37,12 +59,11 @@ refuse_foreign() {
 # same paths here. Without `image` the Supervisor builds instead of pulling,
 # and a new version each time lets an update apply config.yaml changes.
 stage() {
-    arch=$1
     stamp=$(date +%Y%m%d%H%M%S)
     app=$apps/memory-card
     mkdir -p "$apps"
     rm -rf "$app"
-    mkdir -p "$app/dist/$arch" "$app/memory-card"
+    mkdir -p "$app/dist/amd64" "$app/memory-card"
     for file in memory-card/*; do
         case $file in
         memory-card/rootfs) cp -R "$file" "$app/memory-card/" ;;
@@ -53,51 +74,59 @@ stage() {
         *) cp -R "$file" "$app/" ;;
         esac
     done
-    cp "dist/$arch/memory-card" "$app/dist/$arch/"
+    cp dist/amd64/memory-card "$app/dist/amd64/"
 }
 
 up() {
-    arch=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+    if [ "$(uname -m)" != x86_64 ] || [ ! -e /dev/kvm ]; then
+        echo "make ha-up needs an x86-64 Linux machine with KVM" >&2
+        exit 1
+    fi
     refuse_foreign
-    stage "$arch"
+    stage
+    docker build -q -t "$image" --label "$label=1" scripts/haos >/dev/null
 
     if ! exists; then
-        for volume in $volumes; do
-            docker volume create --label "$label=1" "$name-$volume" >/dev/null
-        done
-        # Privileged for systemd and Docker inside, as the devcontainer needs.
-        # Home Assistant serves on port 80 and redirects 8123 there.
-        docker run -d --privileged --name "$name" --label "$label=1" \
-            -p "127.0.0.1:$port:80" \
-            -v "$name-docker:/var/lib/docker" \
-            -v "$name-containerd:/var/lib/containerd" \
-            -v "$name-supervisor:/mnt/supervisor" \
-            -v "$PWD/$apps:/mnt/supervisor/apps/local" \
-            --tmpfs /tmp \
-            -e SUPERVISOR_CHANNEL=stable \
+        if ! docker volume inspect "$name-vm" >/dev/null 2>&1; then
+            download
+            docker volume create --label "$label=1" "$name-vm" >/dev/null
+            echo "Unpacking Home Assistant OS"
+            docker run --rm -i --cap-drop ALL -v "$name-vm:/vm" --entrypoint sh "$image" \
+                -c 'xz -dc >haos.qcow2.part && mv haos.qcow2.part haos.qcow2' <"$os_file"
+        fi
+        # The stop timeout lets Home Assistant OS shut down when Docker stops.
+        docker run -d --name "$name" --label "$label=1" --stop-timeout 180 \
+            --device /dev/kvm --group-add "$(stat -c %g /dev/kvm)" \
+            --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp \
+            -p "127.0.0.1:$port:8080" \
+            -v "$name-vm:/vm" \
             "$image" >/dev/null
-    elif ! running "$name"; then
+        echo "Starting Home Assistant OS"
+    elif ! running; then
         docker start "$name" >/dev/null
-    fi
-
-    if ! docker exec "$name" test -f /mnt/supervisor/apps/local/memory-card/config.yaml; then
-        echo "The container does not see $apps. Run 'make ha-stop' and try again." >&2
-        exit 1
+        echo "Starting Home Assistant OS"
     fi
 
     tries=0
-    until docker exec "$name" docker info >/dev/null 2>&1; do
+    until vm_ssh true </dev/null 2>/dev/null; do
         tries=$((tries + 1))
-        if [ "$tries" -gt 120 ]; then
-            echo "Docker did not start in the container" >&2
+        if ! running; then
+            docker logs --tail 20 "$name" >&2
             exit 1
         fi
-        sleep 1
+        if [ "$tries" -gt 120 ]; then
+            echo "Home Assistant OS did not open SSH" >&2
+            exit 1
+        fi
+        sleep 5
     done
 
-    if [ "$(docker exec "$name" docker container inspect -f '{{.State.Running}}' hassio_supervisor 2>/dev/null)" != true ]; then
-        docker exec -d "$name" bash -c 'supervisor_run >/var/log/supervisor_run.log 2>&1'
-    fi
+    tar -C "$apps" -cf - memory-card | vm_ssh '
+        set -e
+        mkdir -p /mnt/data/supervisor/apps/local
+        cd /mnt/data/supervisor/apps/local
+        rm -rf memory-card
+        tar -xf -'
 
     node scripts/ha-demo.mjs "http://127.0.0.1:$port" "$state/demo.json"
 }
@@ -108,23 +137,24 @@ up)
     ;;
 stop)
     refuse_foreign
-    if running "$name"; then
-        docker stop -t 120 "$name" >/dev/null
+    if running; then
+        docker stop "$name" >/dev/null
     fi
     ;;
 destroy)
     refuse_foreign
     docker rm -f "$name" >/dev/null 2>&1 || true
-    for volume in $volumes; do
-        if [ "$(docker volume inspect -f "{{index .Labels \"$label\"}}" "$name-$volume" 2>/dev/null)" = 1 ]; then
-            docker volume rm "$name-$volume" >/dev/null
-        fi
-    done
+    if labelled volume "" "$name-vm"; then
+        docker volume rm "$name-vm" >/dev/null
+    fi
+    if labelled image Config. "$image"; then
+        docker image rm "$image" >/dev/null
+    fi
     rm -rf "$state"
     ;;
 logs)
     refuse_foreign
-    docker exec "$name" docker logs -f app_local_memory_card
+    vm_ssh docker logs -f app_local_memory_card
     ;;
 *)
     echo "usage: $0 up|stop|destroy|logs" >&2
