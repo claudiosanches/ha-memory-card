@@ -141,8 +141,8 @@ Each game inside gets its own copy, so it shows in the library, the backlog
 and duplicates. Those copies follow the bundle copy: change the bundle's
 platform, region, format, device, store, condition or wishlist status and
 they change too. Price, estimated value and purchase date stay on the bundle
-copy. Counts of copies, in Settings, the stats page and the Home Assistant
-sensors, count a bundle once. In the CSV, a copy inside a bundle names the
+copy. Counts of copies, on the stats page and in the Home Assistant sensors,
+count a bundle once. In the CSV, a copy inside a bundle names the
 bundle copy's `copy_id` in its `bundle_copy_id` column.
 
 ## Import and export (CSV)

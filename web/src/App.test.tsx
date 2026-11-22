@@ -64,14 +64,14 @@ describe('App', () => {
   });
 
   it('shows server status on the settings screen', async () => {
-    mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, external_services: true, games: 3, owned_copies: 5 } });
+    mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, external_services: true } });
     renderAt('/settings');
     expect(await screen.findByTestId('status-version')).toHaveTextContent('9.9.9');
     expect(screen.getByTestId('igdb-missing')).toHaveTextContent(en.settings.igdbMissing);
   });
 
   it('says when external services are off', async () => {
-    mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, external_services: false, games: 0, owned_copies: 0 } });
+    mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, external_services: false } });
     renderAt('/settings');
     expect(await screen.findByTestId('igdb-missing')).toHaveTextContent(en.settings.igdbOffline);
   });

@@ -347,7 +347,7 @@ describe('Game page', () => {
   it('prices a copy in the currency used last', async () => {
     const calls = mockApi({
       ...SETUP,
-      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, games: 1, owned_copies: 1, last_currency: 'BRL', sensors: 'off' },
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, last_currency: 'BRL', sensors: 'off' },
       'GET /api/games/4': GAME,
       'POST /api/games/4/copies': GAME,
     });
@@ -391,7 +391,7 @@ describe('Game page', () => {
     };
     const calls = mockApi({
       ...SETUP,
-      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 1, owned_copies: 1, sensors: 'off' },
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, sensors: 'off' },
       'GET /api/games/4': bundle,
       'GET /api/games/4/igdb-contents': [
         { igdb_id: 64, name: 'Super Mario 64', year: 1996, platforms: [], game_id: 7 },
@@ -461,7 +461,7 @@ describe('Game page', () => {
     let scanned = false;
     const calls = mockApi({
       ...SETUP,
-      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, games: 1, owned_copies: 1, sensors: 'off', tags: 'connected' },
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, sensors: 'off', tags: 'connected' },
       'GET /api/games/4': () => (scanned ? tagged : GAME),
       'POST /api/copies/21/tag-link': () => {
         scanned = true;
@@ -619,7 +619,7 @@ describe('Game page', () => {
   it('links the game to an IGDB search result', async () => {
     const calls = mockApi({
       ...SETUP,
-      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 1, owned_copies: 1 },
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true },
       'GET /api/games/4': GAME,
       'GET /api/igdb/search': [{ igdb_id: 7, name: 'Metroid Dread', year: 2021, platforms: ['Switch'], game_id: null }],
       'POST /api/games/4/igdb': { ...GAME, igdb_id: 7, developers: ['MercurySteam'] },

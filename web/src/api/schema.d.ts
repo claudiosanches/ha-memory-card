@@ -1445,34 +1445,17 @@ export interface components {
             wishlist_value: components["schemas"]["Amount"][];
         };
         Status: {
-            /**
-             * Format: int64
-             * @description Games with at least two owned copies.
-             */
-            duplicate_games: number;
             /** @description False when the app options keep Memory Card offline. */
             external_services: boolean;
-            /**
-             * Format: int64
-             * @description Games with at least one owned copy.
-             */
-            games: number;
             /** @description IGDB credentials are set and external services are on. */
             igdb_configured: boolean;
             /** @description Currency of the copy priced last; new prices start with it. */
             last_currency?: string | null;
-            /** Format: int64 */
-            owned_copies: number;
             /** @description Whether Home Assistant sensors are being published. */
             sensors: components["schemas"]["SensorsStatus"];
             /** @description Whether Memory Card hears Home Assistant tag scans. */
             tags: components["schemas"]["TagsStatus"];
             version: string;
-            /**
-             * Format: int64
-             * @description Individual wanted copies.
-             */
-            wishlist_items: number;
         };
         /**
          * @description Mantine palette names.

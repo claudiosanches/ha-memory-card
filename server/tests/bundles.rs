@@ -102,11 +102,9 @@ async fn bundle_contents_follow_the_bundle_copy() {
         json!({"status": "owned", "platform_id": wii_u, "region": "na", "format": "physical"});
     app.json("PUT", &format!("/api/copies/{bundle_copy}"), Some(got))
         .await;
-    let (_, status) = app.json("GET", "/api/status", None).await;
-    assert_eq!(status["owned_copies"], 1);
-    assert_eq!(status["games"], 3);
     let (_, stats) = app.json("GET", "/api/stats", None).await;
     assert_eq!(stats["copies"], 1);
+    assert_eq!(stats["games"], 3);
 
     // Deleting the bundle copy takes its contents with it.
     app.json("DELETE", &format!("/api/copies/{bundle_copy}"), None)

@@ -5630,27 +5630,13 @@
           "version",
           "igdb_configured",
           "external_services",
-          "games",
-          "owned_copies",
-          "wishlist_items",
-          "duplicate_games",
           "sensors",
           "tags"
         ],
         "properties": {
-          "duplicate_games": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Games with at least two owned copies."
-          },
           "external_services": {
             "type": "boolean",
             "description": "False when the app options keep Memory Card offline."
-          },
-          "games": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Games with at least one owned copy."
           },
           "igdb_configured": {
             "type": "boolean",
@@ -5663,10 +5649,6 @@
             ],
             "description": "Currency of the copy priced last; new prices start with it."
           },
-          "owned_copies": {
-            "type": "integer",
-            "format": "int64"
-          },
           "sensors": {
             "$ref": "#/components/schemas/SensorsStatus",
             "description": "Whether Home Assistant sensors are being published."
@@ -5677,11 +5659,6 @@
           },
           "version": {
             "type": "string"
-          },
-          "wishlist_items": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Individual wanted copies."
           }
         }
       },

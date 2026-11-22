@@ -124,22 +124,12 @@ function Status() {
   const status = useStatus();
   return (
     <Stack gap={24}>
-      <ToolSection title={t('settings.collection')}>
-        {status.isPending && <Loader size="sm" />}
-        {status.isError && (
-          <Alert color="red" data-testid="status-error">
-            {t('settings.loadError')}
-          </Alert>
-        )}
-        {status.data && (
-          <dl className={classes.status}>
-            <div><dt>{t('settings.games')}</dt><dd>{status.data.games}</dd></div>
-            <div><dt>{t('settings.ownedCopies')}</dt><dd>{status.data.owned_copies}</dd></div>
-            <div><dt>{t('settings.wishlistItems')}</dt><dd>{status.data.wishlist_items}</dd></div>
-            <div><dt>{t('settings.duplicateGames')}</dt><dd>{status.data.duplicate_games}</dd></div>
-          </dl>
-        )}
-      </ToolSection>
+      {status.isPending && <Loader size="sm" />}
+      {status.isError && (
+        <Alert color="red" data-testid="status-error">
+          {t('settings.loadError')}
+        </Alert>
+      )}
       {status.data && (
         <ToolSection title={t('settings.integrations')}>
           <dl className={classes.integrations}>

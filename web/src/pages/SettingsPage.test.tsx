@@ -15,8 +15,6 @@ const STATUS = {
   version: '0.1.0',
   igdb_configured: true,
   external_services: true,
-  games: 2,
-  owned_copies: 2,
   sensors: 'connected',
   tags: 'unavailable',
 };

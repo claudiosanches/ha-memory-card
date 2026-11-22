@@ -14,8 +14,6 @@ async fn status_reports_empty_collection() {
     let json: Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["version"], env!("CARGO_PKG_VERSION"));
     assert_eq!(json["igdb_configured"], false);
-    assert_eq!(json["games"], 0);
-    assert_eq!(json["owned_copies"], 0);
 }
 
 #[tokio::test]

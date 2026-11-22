@@ -755,9 +755,9 @@ async fn wanted_copies_make_a_wishlist() {
         list[0]["platforms"],
         json!([{"platform_id": switch, "copies": 1}])
     );
-    let (_, status) = app.json("GET", "/api/status", None).await;
-    assert_eq!(status["owned_copies"], 1);
-    assert_eq!(status["games"], 1, "wishlist-only games are not counted");
+    let (_, stats) = app.json("GET", "/api/stats", None).await;
+    assert_eq!(stats["copies"], 1);
+    assert_eq!(stats["games"], 1, "wishlist-only games are not counted");
     let (_, platforms) = app.json("GET", "/api/platforms", None).await;
     let on_switch = platforms
         .as_array()

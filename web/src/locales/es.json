@@ -132,10 +132,8 @@
     }
   },
   "settings": {
-    "intro": "Consulta tu colección, integraciones y acceso, o personaliza la apariencia.",
+    "intro": "Consulta las integraciones y el acceso, o personaliza la apariencia.",
     "status": "Estado",
-    "wishlistItems": "Elementos en la lista de deseos",
-    "duplicateGames": "Juegos con varias copias",
     "about": "Acerca de Memory Card",
     "version": "Versión",
     "license": "Licencia",
@@ -144,10 +142,7 @@
     "authorName": "Claudio Sanches",
     "donations": "Apoya el desarrollo",
     "githubSponsors": "GitHub Sponsors",
-    "games": "Juegos",
-    "ownedCopies": "Copias que tienes",
     "igdb": "IGDB",
-    "collection": "Resumen de la colección",
     "integrations": "Integraciones",
     "colorScheme": "Esquema de colores",
     "igdbConfigured": "Conectado",

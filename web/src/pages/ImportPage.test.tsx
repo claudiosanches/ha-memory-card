@@ -82,7 +82,7 @@ describe('Import page', () => {
 
   it('points to the IGDB sync when imported games are not linked', async () => {
     mockApi({
-      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, games: 3, owned_copies: 1 },
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true },
       'POST /api/import/preview': {
         file_issue: null,
         headers: [],

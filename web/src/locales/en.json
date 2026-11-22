@@ -132,10 +132,8 @@
     }
   },
   "settings": {
-    "intro": "Check your collection, integrations, and access, or personalize your appearance.",
+    "intro": "Check integrations and access, or personalize your appearance.",
     "status": "Status",
-    "wishlistItems": "Wishlist items",
-    "duplicateGames": "Games with multiple copies",
     "about": "About Memory Card",
     "version": "Version",
     "license": "License",
@@ -144,10 +142,7 @@
     "authorName": "Claudio Sanches",
     "donations": "Support development",
     "githubSponsors": "GitHub Sponsors",
-    "games": "Games",
-    "ownedCopies": "Owned copies",
     "igdb": "IGDB",
-    "collection": "Collection overview",
     "integrations": "Integrations",
     "colorScheme": "Color scheme",
     "igdbConfigured": "Connected",

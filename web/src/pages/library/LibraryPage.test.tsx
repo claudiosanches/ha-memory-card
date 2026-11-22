@@ -61,7 +61,7 @@ function detail(id: number, title: string, igdbId: number | null = null): GameDe
   };
 }
 
-const IGDB_STATUS = { version: '0.1.0', igdb_configured: true, external_services: true, games: 1, owned_copies: 1 };
+const IGDB_STATUS = { version: '0.1.0', igdb_configured: true, external_services: true };
 const HITS = [
   { igdb_id: 7, name: 'Metroid Dread', year: 2021, platforms: ['Switch'], game_id: null },
   { igdb_id: 8, name: 'Metroid Prime', year: 2002, platforms: ['GC'], game_id: 12 },
