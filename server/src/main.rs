@@ -1,4 +1,3 @@
-use std::net::SocketAddr;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
@@ -6,6 +5,7 @@ use std::time::Duration;
 use clap::{Parser, Subcommand};
 use memory_card::config::Config;
 use memory_card::sensors::Sensors;
+use memory_card::serve::{self, Limits};
 use memory_card::tags::Tags;
 use memory_card::{AppState, db, logging, shutdown};
 use tokio::sync::Notify;
@@ -13,6 +13,9 @@ use tokio::sync::Notify;
 /// In-flight requests get this long after SIGTERM. Together with the
 /// checkpoint it must fit s6's default 3 s grace time.
 const DRAIN_TIMEOUT: Duration = Duration::from_millis(1500);
+/// Every open page holds one for its change events, up to 64.
+const CONNECTIONS_MAX: usize = 256;
+const HEADER_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -71,6 +74,7 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
     )
     .await?;
     let listen = config.listen;
+    let trusted: Arc<[std::net::IpAddr]> = config.trusted_peers.clone().into();
     let state = AppState::new(pool.clone(), Arc::new(config));
     let sensors = Sensors::start(state.clone());
     let tags = Tags::start(state.clone());
@@ -81,18 +85,19 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!(%listen, "listening");
 
     let stop = Arc::new(Notify::new());
-    let server = axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown({
+    let limits = Limits {
+        connections: CONNECTIONS_MAX,
+        header_timeout: HEADER_TIMEOUT,
+        peers: Some(trusted),
+    };
+    let server = serve::serve(listener, app, limits, {
         let stop = stop.clone();
         async move { stop.notified().await }
     });
-    let mut server = std::pin::pin!(server.into_future());
+    let mut server = std::pin::pin!(server);
 
     tokio::select! {
-        result = &mut server => result?,
+        () = &mut server => {}
         () = shutdown::signal() => {
             tracing::info!("shutting down");
             changes.close();

@@ -17,6 +17,7 @@ pub mod money;
 pub mod origin;
 pub mod regional;
 pub mod sensors;
+pub mod serve;
 pub mod shutdown;
 pub mod slug;
 pub mod tags;

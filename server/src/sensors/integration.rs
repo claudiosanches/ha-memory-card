@@ -30,12 +30,18 @@ use crate::access::{self, Policy};
 use crate::config::Secret;
 use crate::db;
 use crate::error::ApiError;
+use crate::serve::{Limits, serve};
 
 /// The Home Assistant user behind a roll; absent for automations.
 pub const USER_HEADER: &str = "x-home-assistant-user";
 /// Bumped when the integration could misread a message.
 pub const API_VERSION: u32 = 1;
 pub const FEEDS_MAX: usize = 4;
+/// Home Assistant needs a feed and a roll at a time; the rest is room for retries.
+const CONNECTIONS_MAX: usize = 32;
+/// Longer than aiohttp's 15 s keep-alive, so Home Assistant never reuses a
+/// connection the app is closing.
+const HEADER_TIMEOUT: Duration = Duration::from_secs(20);
 const PING: Duration = Duration::from_secs(30);
 const BODY_MAX: usize = 4 * 1024;
 const RETRY: Duration = Duration::from_secs(15);
@@ -313,12 +319,14 @@ pub async fn run(state: &AppState, stop: &Notify) {
 
     let feed = Feed::new(state.clone(), token.clone());
     let mut closed = feed.closed.subscribe();
-    let server = axum::serve(listener, router(feed.clone()))
-        .with_graceful_shutdown(async move {
-            let _ = closed.wait_for(|closed| *closed).await;
-        })
-        .into_future();
-    let server = tokio::spawn(server);
+    let limits = Limits {
+        connections: CONNECTIONS_MAX,
+        header_timeout: HEADER_TIMEOUT,
+        peers: None,
+    };
+    let server = tokio::spawn(serve(listener, router(feed.clone()), limits, async move {
+        let _ = closed.wait_for(|closed| *closed).await;
+    }));
     let handover = tokio::spawn(hand_over(state.clone(), token, port));
 
     feed.refresh().await;
