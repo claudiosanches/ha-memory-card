@@ -635,3 +635,29 @@ async fn many_games_that_share_a_title_plan_quickly() {
     assert!(started.elapsed().as_secs() < 10, "{:?}", started.elapsed());
     assert_eq!(app.scalar("SELECT COUNT(*) FROM games").await, 3000);
 }
+
+#[tokio::test]
+async fn formulas_after_a_semicolon_or_line_break_export_as_text() {
+    let app = TestApp::new().await;
+    let csv = format!("{HEADER}\n,,,Zelda;=1+1,,Switch,eu,,,physical,,,,\"Box\n- manual\"\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+
+    let exported = export(&app).await;
+    assert!(exported.contains(",Zelda;'=1+1,"), "{exported}");
+    assert!(exported.contains(",\"Box\n'- manual\","), "{exported}");
+
+    let (_, result) = app.post_csv("/api/import", &exported).await;
+    assert_eq!(result["summary"]["updated_copies"], 0, "{result}");
+    assert_eq!(result["summary"]["new_games"], 0, "{result}");
+    let (title, notes): (String, String) = sqlx::query_as(
+        "SELECT g.title, c.notes FROM games g JOIN releases r ON r.game_id = g.id JOIN copies c ON c.release_id = r.id",
+    )
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        (title.as_str(), notes.as_str()),
+        ("Zelda;=1+1", "Box\n- manual")
+    );
+}

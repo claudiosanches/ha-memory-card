@@ -80,16 +80,51 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
 }
 
 /// A cell that starts with one of these runs as a formula in a spreadsheet.
-pub const FORMULA_START: [char; 6] = ['=', '+', '-', '@', '\t', '\r'];
+const FORMULA_START: [char; 6] = ['=', '+', '-', '@', '\t', '\r'];
+/// Where another cell starts inside a field for a spreadsheet that splits the
+/// file on semicolons or tabs, as Excel does where `;` separates lists.
+const CELL_BREAKS: [char; 4] = [';', '\t', '\n', '\r'];
 
-/// Free text that would start a formula gets a leading `'`, which
-/// spreadsheets show as text and the import drops again.
+/// Whether a cell starting with `text` would run as a formula, past the
+/// spaces and quotes a spreadsheet skips.
+fn opens_formula(text: &str) -> bool {
+    text.trim_start_matches([' ', '"'])
+        .starts_with(FORMULA_START)
+}
+
+/// Free text that would start a formula, at its start or after a cell break,
+/// gets a `'` there, which spreadsheets show as text and [`unplain`] drops.
 fn plain(text: String) -> String {
+    let mut out = String::with_capacity(text.len() + 1);
     if text.starts_with(FORMULA_START) {
-        format!("'{text}")
-    } else {
-        text
+        out.push('\'');
     }
+    for (at, c) in text.char_indices() {
+        out.push(c);
+        if CELL_BREAKS.contains(&c) && opens_formula(&text[at + c.len_utf8()..]) {
+            out.push('\'');
+        }
+    }
+    out
+}
+
+/// Undoes [`plain`] for a cell the import reads.
+pub fn unplain(text: &str) -> String {
+    let text = match text.strip_prefix('\'') {
+        Some(rest) if rest.starts_with(FORMULA_START) => rest,
+        _ => text,
+    };
+    let mut out = String::with_capacity(text.len());
+    let mut after_break = false;
+    for (at, c) in text.char_indices() {
+        if after_break && c == '\'' && opens_formula(&text[at + 1..]) {
+            after_break = false;
+            continue;
+        }
+        after_break = CELL_BREAKS.contains(&c);
+        out.push(c);
+    }
+    out
 }
 
 pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>, ExportError> {
@@ -152,4 +187,26 @@ pub enum ExportError {
     Csv(#[from] csv::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formulas_at_any_cell_break_export_as_text_and_read_back() {
+        for (text, exported) in [
+            ("=1+1", "'=1+1"),
+            ("Zelda;=1+1", "Zelda;'=1+1"),
+            ("a; \"=1", "a;' \"=1"),
+            ("Box\n- manual\r\n+ map", "Box\n'- manual\r\n'+ map"),
+            ("a\t\tb", "a\t'\tb"),
+            ("x; y", "x; y"),
+            ("Mario & Luigi", "Mario & Luigi"),
+            ("", ""),
+        ] {
+            assert_eq!(plain(text.to_owned()), exported, "{text:?}");
+            assert_eq!(unplain(exported), text, "{exported:?}");
+        }
+    }
 }

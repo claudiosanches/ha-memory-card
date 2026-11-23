@@ -182,14 +182,6 @@ impl FileIssue {
     }
 }
 
-/// Drops the `'` the export puts before text that would start a formula.
-fn unquote(value: &str) -> &str {
-    match value.strip_prefix('\'') {
-        Some(rest) if rest.starts_with(super::export::FORMULA_START) => rest,
-        _ => value,
-    }
-}
-
 pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
     let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
     let text = std::str::from_utf8(bytes).map_err(|_| FileIssue::new("not_utf8"))?;
@@ -238,9 +230,8 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
                 .get(column)
                 .and_then(|&i| record.get(i))
                 .map(str::trim)
-                .map(unquote)
+                .map(super::export::unplain)
                 .filter(|value| !value.is_empty())
-                .map(str::to_owned)
         };
         let row = RawRow {
             line: record.position().map_or(0, |p| p.line()),
