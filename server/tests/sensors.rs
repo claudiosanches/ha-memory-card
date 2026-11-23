@@ -120,13 +120,17 @@ async fn successful_writes_wake_the_sensors() {
 async fn status_says_why_sensors_are_not_published() {
     let app = TestApp::new().await;
     let (_, status) = app.json("GET", "/api/status", None).await;
+    assert_eq!(status["sensors"], "off", "off by default");
+
+    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "mqtt")]).await;
+    let (_, status) = app.json("GET", "/api/status", None).await;
     assert_eq!(status["sensors"], "no_broker");
 
-    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "off")]).await;
-    let (_, status) = app.json("GET", "/api/status", None).await;
-    assert_eq!(status["sensors"], "off");
-
-    let app = TestApp::with_env(&[("SUPERVISOR_TOKEN", "token-1")]).await;
+    let app = TestApp::with_env(&[
+        ("MEMORY_CARD_SENSORS", "mqtt"),
+        ("SUPERVISOR_TOKEN", "token-1"),
+    ])
+    .await;
     let (_, status) = app.json("GET", "/api/status", None).await;
     assert_eq!(status["sensors"], "connecting");
 }

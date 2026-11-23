@@ -97,15 +97,15 @@ starts. Restart the app after changing either of them in Home Assistant.
 
 | Option | Description |
 |---|---|
+| `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
+| `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
+| `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials below. |
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
-| `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials above. |
-| `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
-| `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
-| `sensors` | `mqtt` (default) publishes Home Assistant sensors through the MQTT broker and does nothing without one. `off` removes them. |
-| `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
+| `sensors` | `off` (the default) or `mqtt`, which publishes Home Assistant sensors through the MQTT broker and does nothing without one. Going back to `off` removes them. |
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
+| `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 
 ## Wishlist
 
@@ -245,11 +245,12 @@ labels in CSV files. Deleting a label keeps its games.
 
 ## Home Assistant sensors
 
-Memory Card adds a **Memory Card** device to Home Assistant through MQTT
+Memory Card can add a **Memory Card** device to Home Assistant through MQTT
 discovery. It needs the **Mosquitto broker** app and the **MQTT**
 integration, which Home Assistant offers to set up once the broker runs.
-Start Memory Card after the broker so it finds it; the Status section under
-Settings in Memory Card says whether the sensors are connected.
+Then set the `sensors` option to `mqtt` and restart Memory Card. Start it
+after the broker so it finds it; the Status section under Settings in Memory
+Card says whether the sensors are connected.
 
 | Entity | State | Attributes |
 |---|---|---|
@@ -273,8 +274,8 @@ slug in its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
 collection grows. Sensors update a second after each change and show as
-unavailable while Memory Card is stopped. Setting the `sensors` option to
-`off` removes the device on the next start.
+unavailable while Memory Card is stopped. Setting the `sensors` option back
+to `off` removes the device on the next start.
 
 ## NFC tags
 

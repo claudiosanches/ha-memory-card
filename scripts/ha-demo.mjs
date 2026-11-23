@@ -221,14 +221,14 @@ async function app(ha, state, igdb) {
       state.configured = false;
     }
   }
-  // Managers are set once; IGDB follows .data/options.json.
+  // Managers and the sensors are set once; IGDB follows .data/options.json.
   const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
   const igdbChanged = Object.entries(igdb).some(([key, value]) => options[key] !== value);
   if (!state.configured || igdbChanged) {
     // The Supervisor replaces all options at once.
-    const managers = state.configured ? {} : { managers: [state.owner.id] };
+    const first = state.configured ? {} : { managers: [state.owner.id], sensors: 'mqtt' };
     await ha.supervisor('post', `/addons/${APP}/options`, {
-      options: { ...options, ...managers, ...igdb },
+      options: { ...options, ...first, ...igdb },
       ingress_panel: true,
     });
     state.configured = true;

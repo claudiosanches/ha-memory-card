@@ -20,22 +20,22 @@ homeassistant_api: true
 services:
   - mqtt:want
 options:
-  igdb_client_id: ""
-  igdb_client_secret: ""
-  log_level: info
   managers: []
   viewers_track_progress: false
   external_services: true
-  sensors: mqtt
+  igdb_client_id: ""
+  igdb_client_secret: ""
+  sensors: "off"
   tag_scan_finished: playing
+  log_level: info
 schema:
-  igdb_client_id: "str?"
-  igdb_client_secret: "password?"
-  log_level: "list(trace|debug|info|warning|error)"
   managers:
     - str
   viewers_track_progress: bool
   external_services: bool
+  igdb_client_id: "str?"
+  igdb_client_secret: "password?"
   sensors: "list(mqtt|off)"
   tag_scan_finished: "list(playing|keep)"
   currency: "match(^[A-Za-z]{3}$)?"
+  log_level: "list(trace|debug|info|warning|error)"

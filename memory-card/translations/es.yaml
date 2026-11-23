@@ -1,4 +1,22 @@
 configuration:
+  managers:
+    name: Gestores
+    description: >-
+      IDs de usuario de Home Assistant que pueden cambiar la colección. Los
+      demás solo pueden explorarla, y mientras esto esté vacío nadie puede
+      cambiarla. Cada usuario encuentra su ID en Ajustes de Memory Card.
+  viewers_track_progress:
+    name: Los lectores registran su progreso
+    description: >-
+      Permitir que los usuarios que no son gestores cambien el estado de juego
+      y registren sesiones. Todo lo demás sigue siendo de solo lectura para
+      ellos.
+  external_services:
+    name: Usar servicios externos
+    description: >-
+      Buscar juegos, portadas y plataformas en IGDB, y códigos de barras en
+      UPCitemdb. Desactívalo para que Memory Card no se conecte a internet;
+      las credenciales de IGDB de abajo se ignoran y los juegos se introducen a mano.
   igdb_client_id:
     name: ID de cliente de IGDB
     description: >-
@@ -7,21 +25,6 @@ configuration:
   igdb_client_secret:
     name: Secreto de cliente de IGDB
     description: Secreto de cliente de la misma aplicación de Twitch.
-  log_level:
-    name: Nivel de registro
-    description: Cuánto escribe la aplicación en su registro.
-  managers:
-    name: Gestores
-    description: >-
-      IDs de usuario de Home Assistant que pueden cambiar la colección. Los
-      demás solo pueden explorarla, y mientras esto esté vacío nadie puede
-      cambiarla. Cada usuario encuentra su ID en Ajustes de Memory Card.
-  external_services:
-    name: Usar servicios externos
-    description: >-
-      Buscar juegos, portadas y plataformas en IGDB, y códigos de barras en
-      UPCitemdb. Desactívalo para que Memory Card no se conecte a internet;
-      las credenciales de IGDB se ignoran y los juegos se introducen a mano.
   sensors:
     name: Sensores de Home Assistant
     description: >-
@@ -29,12 +32,6 @@ configuration:
       añadiste como sensores de Home Assistant, con un botón que sortea un
       juego. "mqtt" los publica a través de la aplicación Mosquitto broker y
       la integración MQTT; "off" los elimina.
-  viewers_track_progress:
-    name: Los lectores registran su progreso
-    description: >-
-      Permitir que los usuarios que no son gestores cambien el estado de juego
-      y registren sesiones. Todo lo demás sigue siendo de solo lectura para
-      ellos.
   tag_scan_finished:
     name: Etiqueta leída en un juego terminado
     description: >-
@@ -47,3 +44,6 @@ configuration:
       Código de tres letras, como EUR o MXN, con el que empiezan los precios
       nuevos. Vacío usa la moneda de la última copia con precio y después la
       de Home Assistant.
+  log_level:
+    name: Nivel de registro
+    description: Cuánto escribe la aplicación en su registro.

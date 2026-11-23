@@ -96,9 +96,9 @@ impl FromStr for FinishedScan {
 #[serde(rename_all = "lowercase")]
 pub enum SensorsMode {
     /// MQTT discovery through the broker.
-    #[default]
     Mqtt,
     /// Not published, and removed from the broker.
+    #[default]
     Off,
 }
 
@@ -568,12 +568,12 @@ mod tests {
     fn sensors_use_the_broker_from_env_or_ask_the_supervisor() {
         let dir = tempfile::tempdir().unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
-        assert_eq!(config.sensors, SensorsMode::Mqtt);
+        assert_eq!(config.sensors, SensorsMode::Off);
         assert!(config.mqtt.is_none());
         assert!(config.supervisor_token.is_none());
         assert_eq!(config.supervisor_url, "http://supervisor");
 
-        std::fs::write(dir.path().join("options.json"), r#"{"sensors":"off"}"#).unwrap();
+        std::fs::write(dir.path().join("options.json"), r#"{"sensors":"mqtt"}"#).unwrap();
         let config = load_with(
             dir.path(),
             &[
@@ -583,7 +583,7 @@ mod tests {
             ],
         )
         .unwrap();
-        assert_eq!(config.sensors, SensorsMode::Off);
+        assert_eq!(config.sensors, SensorsMode::Mqtt);
         assert!(load_with(dir.path(), &[("MEMORY_CARD_SENSORS", "true")]).is_err());
         assert_eq!(config.supervisor_token.unwrap().expose(), "token-1");
         let mqtt = config.mqtt.unwrap();

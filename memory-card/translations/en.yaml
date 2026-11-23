@@ -1,4 +1,21 @@
 configuration:
+  managers:
+    name: Managers
+    description: >-
+      Home Assistant user IDs that can change the collection. Everyone else
+      can only browse it, and while this is empty nobody can change it. Each
+      user finds their ID under Settings in Memory Card.
+  viewers_track_progress:
+    name: Viewers track play progress
+    description: >-
+      Let users who are not managers change play status and log play sessions.
+      Everything else stays read only for them.
+  external_services:
+    name: Use external services
+    description: >-
+      Look up games, covers and platforms on IGDB, and barcodes on
+      UPCitemdb. Turn off to keep Memory Card from contacting the internet;
+      the IGDB credentials below are then ignored and games are entered by hand.
   igdb_client_id:
     name: IGDB client ID
     description: >-
@@ -7,21 +24,6 @@ configuration:
   igdb_client_secret:
     name: IGDB client secret
     description: Client secret of the same Twitch application.
-  log_level:
-    name: Log level
-    description: How much the app writes to its log.
-  managers:
-    name: Managers
-    description: >-
-      Home Assistant user IDs that can change the collection. Everyone else
-      can only browse it, and while this is empty nobody can change it. Each
-      user finds their ID under Settings in Memory Card.
-  external_services:
-    name: Use external services
-    description: >-
-      Look up games, covers and platforms on IGDB, and barcodes on
-      UPCitemdb. Turn off to keep Memory Card from contacting the internet;
-      the IGDB credentials are then ignored and games are entered by hand.
   sensors:
     name: Home Assistant sensors
     description: >-
@@ -29,11 +31,6 @@ configuration:
       as Home Assistant sensors, with a button that picks a random game. "mqtt"
       publishes them through the Mosquitto broker app and the MQTT
       integration; "off" removes them.
-  viewers_track_progress:
-    name: Viewers track play progress
-    description: >-
-      Let users who are not managers change play status and log play sessions.
-      Everything else stays read only for them.
   tag_scan_finished:
     name: Tag scan on a finished game
     description: >-
@@ -46,3 +43,6 @@ configuration:
       Three-letter code, such as EUR or BRL, that new prices start with.
       Empty uses the currency of the copy priced last, then Home Assistant's
       currency.
+  log_level:
+    name: Log level
+    description: How much the app writes to its log.
