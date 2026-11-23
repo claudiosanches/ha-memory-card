@@ -18,6 +18,7 @@ use rumqttc::{AsyncClient, Event, EventLoop, LastWill, MqttOptions, Outgoing, Pa
 use serde::Serialize;
 use tokio::sync::{Notify, mpsc};
 use tokio::task::JoinHandle;
+use tokio::time::Instant;
 use utoipa::ToSchema;
 
 use self::broker::Broker;
@@ -34,6 +35,8 @@ const DEBOUNCE: Duration = Duration::from_secs(1);
 /// entity IDs for the MQTT ones.
 const HANDOVER: Duration = Duration::from_secs(5);
 const RETRY: Duration = Duration::from_secs(15);
+/// MQTT names no one, so presses closer together than this are dropped.
+const ROLL_GAP: Duration = Duration::from_secs(1);
 const STOP_TIMEOUT: Duration = Duration::from_millis(500);
 const REMOVE_TIMEOUT: Duration = Duration::from_secs(10);
 /// How long the broker gets to hand back a device it kept.
@@ -251,6 +254,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     let config = discovery::device_config(broker.ingress_slug.as_deref()).to_string();
     let mut connected = false;
     let mut sent: Option<String> = None;
+    let mut last_roll: Option<Instant> = None;
 
     loop {
         tokio::select! {
@@ -273,7 +277,11 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     send(&client, AVAILABILITY_TOPIC, "online");
                     sent = send_state(&client, state, None).await;
                 }
+                Some(Signal::Roll(_)) if last_roll.is_some_and(|at| at.elapsed() < ROLL_GAP) => {
+                    tracing::debug!("ignored a roll right after another");
+                }
                 Some(Signal::Roll(payload)) => {
+                    last_roll = Some(Instant::now());
                     roll(state, &payload).await;
                     if connected {
                         sent = send_state(&client, state, sent).await;

@@ -321,7 +321,8 @@ Switch:
 
 Rolls need managers set in the options. With the integration, a person who
 rolls must also be one of them; an automation needs nothing more. MQTT can't
-tell who pressed the button, so there anyone who can press it rolls.
+tell who pressed the button, so there anyone who can press it rolls, once a
+second at most.
 
 The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs)
