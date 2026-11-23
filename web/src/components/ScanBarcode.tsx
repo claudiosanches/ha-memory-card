@@ -160,7 +160,11 @@ function LiveScan({
           audio: false,
         });
         const element = video.current;
-        if (stopped || !element) return;
+        if (stopped || !element) {
+          // Closed while the browser was still asking for the camera.
+          for (const track of stream.getTracks()) track.stop();
+          return;
+        }
         element.srcObject = stream;
         await element.play();
         const { decodeVideoFrame } = await import('./barcode');

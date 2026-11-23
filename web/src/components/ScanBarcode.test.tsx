@@ -164,6 +164,20 @@ describe('Scanning with the camera', () => {
     expect(stop).toHaveBeenCalled();
   });
 
+  it('lets the camera go when the scanner closes before the camera is granted', async () => {
+    const stop = vi.fn();
+    let grant: (stream: MediaStream) => void = () => {};
+    withCamera(() => new Promise((resolve) => (grant = resolve)));
+    mockApi({ 'GET /api/games': [], 'GET /api/platforms': [SWITCH] });
+    renderAt('/');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.scan.button }));
+    fireEvent.click(await screen.findByRole('button', { name: en.scan.type }));
+    expect(await screen.findByLabelText(en.scan.code)).toBeInTheDocument();
+    grant({ getTracks: () => [{ stop }] } as unknown as MediaStream);
+    await waitFor(() => expect(stop).toHaveBeenCalled());
+  });
+
   it('offers a photo or the digits when the camera is refused', async () => {
     withCamera(async () => {
       throw new DOMException('denied', 'NotAllowedError');
