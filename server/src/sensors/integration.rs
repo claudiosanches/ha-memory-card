@@ -6,7 +6,7 @@
 use std::collections::VecDeque;
 use std::convert::Infallible;
 use std::io::{ErrorKind, Write};
-use std::os::unix::fs::OpenOptionsExt;
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -53,7 +53,11 @@ const TOKEN_LEN: usize = 64;
 /// Reads the token, or creates one readable only by the app.
 pub fn token(path: &Path) -> std::io::Result<Secret> {
     match std::fs::read_to_string(path) {
-        Ok(saved) if valid_token(saved.trim()) => return Ok(Secret::new(saved.trim())),
+        Ok(saved) if valid_token(saved.trim()) => {
+            // A restored or copied file may have come back readable by others.
+            std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))?;
+            return Ok(Secret::new(saved.trim()));
+        }
         Ok(_) => std::fs::remove_file(path)?,
         Err(err) if err.kind() == ErrorKind::NotFound => {}
         Err(err) => return Err(err),

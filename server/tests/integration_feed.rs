@@ -69,6 +69,15 @@ async fn the_token_is_random_kept_and_readable_only_by_the_app() {
     assert_eq!(mode & 0o777, 0o600);
     assert_eq!(integration::token(&path).unwrap().expose(), first.expose());
 
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert_eq!(integration::token(&path).unwrap().expose(), first.expose());
+    let mode = std::fs::metadata(&path).unwrap().permissions().mode();
+    assert_eq!(
+        mode & 0o777,
+        0o600,
+        "kept, and readable only by the app again"
+    );
+
     std::fs::write(&path, "short").unwrap();
     let replaced = integration::token(&path).unwrap();
     assert_ne!(replaced.expose(), "short");
