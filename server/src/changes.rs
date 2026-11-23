@@ -5,8 +5,12 @@ use std::sync::Arc;
 
 use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore, watch};
 
+use crate::access::{PerPerson, Place};
+
 /// Most pages listening at once; every open tab is one.
 pub const LISTENERS_MAX: usize = 64;
+/// Most pages one person listens with.
+pub const LISTENERS_PER_PERSON: usize = 8;
 
 #[derive(Clone)]
 pub struct Changes {
@@ -14,6 +18,7 @@ pub struct Changes {
     /// How many changes so far, and whether the server is stopping.
     pages: Arc<watch::Sender<(u64, bool)>>,
     listeners: Arc<Semaphore>,
+    people: Arc<PerPerson>,
 }
 
 impl Default for Changes {
@@ -22,6 +27,7 @@ impl Default for Changes {
             sensors: Arc::default(),
             pages: Arc::new(watch::Sender::new((0, false))),
             listeners: Arc::new(Semaphore::new(LISTENERS_MAX)),
+            people: PerPerson::new(LISTENERS_PER_PERSON),
         }
     }
 }
@@ -30,6 +36,7 @@ impl Default for Changes {
 pub struct Listener {
     pub changes: watch::Receiver<(u64, bool)>,
     _place: OwnedSemaphorePermit,
+    _person: Place,
 }
 
 impl Changes {
@@ -43,12 +50,15 @@ impl Changes {
         self.sensors.notified().await;
     }
 
-    /// `None` while [`LISTENERS_MAX`] pages listen already.
-    pub fn subscribe(&self) -> Option<Listener> {
+    /// `None` while [`LISTENERS_MAX`] pages listen already, or `user` listens
+    /// with [`LISTENERS_PER_PERSON`].
+    pub fn subscribe(&self, user: &str) -> Option<Listener> {
+        let person = self.people.enter(user)?;
         let place = self.listeners.clone().try_acquire_owned().ok()?;
         Some(Listener {
             changes: self.pages.subscribe(),
             _place: place,
+            _person: person,
         })
     }
 

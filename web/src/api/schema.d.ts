@@ -2264,7 +2264,7 @@ export interface operations {
                     "text/event-stream": string;
                 };
             };
-            /** @description `too_many_listeners`: too many pages are open */
+            /** @description `too_many_listeners`: too many pages are open, or this person's 8 are */
             429: {
                 headers: {
                     [name: string]: unknown;

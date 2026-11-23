@@ -1,10 +1,12 @@
 use std::convert::Infallible;
 
+use axum::Extension;
 use axum::extract::State;
 use axum::response::sse::{Event, KeepAlive, Sse};
 use futures_util::Stream;
 
 use crate::AppState;
+use crate::access::Access;
 use crate::error::{ApiError, ErrorBody};
 
 /// Pages open in a browser refetch on these, so a tag scan or another
@@ -15,15 +17,16 @@ use crate::error::{ApiError, ErrorBody};
     tag = "status",
     responses(
         (status = OK, description = "Server-sent events: `changed`, with how many changes so far, after every change to the collection", content_type = "text/event-stream", body = String),
-        (status = TOO_MANY_REQUESTS, description = "`too_many_listeners`: too many pages are open", body = ErrorBody),
+        (status = TOO_MANY_REQUESTS, description = "`too_many_listeners`: too many pages are open, or this person's 8 are", body = ErrorBody),
     )
 )]
 pub async fn stream(
     State(state): State<AppState>,
+    Extension(access): Extension<Access>,
 ) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, ApiError> {
     let listener = state
         .changes
-        .subscribe()
+        .subscribe(&access.user.id)
         .ok_or(ApiError::Busy("too_many_listeners"))?;
     let events = futures_util::stream::unfold(listener, |mut listener| async move {
         let changes = &mut listener.changes;

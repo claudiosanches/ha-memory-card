@@ -52,8 +52,7 @@ pub struct Policy {
     /// Home Assistant user IDs; while empty, nobody can change anything.
     pub managers: Vec<String>,
     pub viewers_track_progress: bool,
-    /// Changes under way, by user ID.
-    writing: Mutex<HashMap<String, usize>>,
+    writing: Arc<PerPerson>,
 }
 
 impl Policy {
@@ -61,7 +60,7 @@ impl Policy {
         Self {
             managers: config.managers.clone(),
             viewers_track_progress: config.viewers_track_progress,
-            writing: Mutex::default(),
+            writing: PerPerson::new(WRITES_PER_PERSON),
         }
     }
 
@@ -137,7 +136,7 @@ pub async fn guard(
     let _writing = if is_read(request.method()) {
         None
     } else {
-        let Some(writing) = Writing::start(&policy, &user.id) else {
+        let Some(writing) = policy.writing.enter(&user.id) else {
             return deny(StatusCode::TOO_MANY_REQUESTS, "too_many_writes");
         };
         Some(writing)
@@ -152,41 +151,54 @@ pub async fn guard(
     next.run(request).await
 }
 
-/// A change under way, counted against its person until dropped.
-struct Writing {
-    policy: Arc<Policy>,
-    user: String,
+/// What each person has open, up to a limit, so one person cannot take
+/// what everyone shares.
+#[derive(Debug)]
+pub struct PerPerson {
+    limit: usize,
+    open: Mutex<HashMap<String, usize>>,
 }
 
-impl Writing {
-    fn start(policy: &Arc<Policy>, user: &str) -> Option<Self> {
-        let mut writing = policy
-            .writing
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-        let count = writing.entry(user.to_owned()).or_default();
-        if *count == WRITES_PER_PERSON {
+impl PerPerson {
+    pub fn new(limit: usize) -> Arc<Self> {
+        Arc::new(Self {
+            limit,
+            open: Mutex::default(),
+        })
+    }
+
+    /// A place for `user`, or `None` while they hold `limit` already.
+    pub fn enter(self: &Arc<Self>, user: &str) -> Option<Place> {
+        let mut open = self.open.lock().unwrap_or_else(PoisonError::into_inner);
+        let count = open.entry(user.to_owned()).or_default();
+        if *count == self.limit {
             return None;
         }
         *count += 1;
-        Some(Self {
-            policy: policy.clone(),
+        Some(Place {
+            counter: self.clone(),
             user: user.to_owned(),
         })
     }
 }
 
-impl Drop for Writing {
+/// A person's place, given back when dropped.
+pub struct Place {
+    counter: Arc<PerPerson>,
+    user: String,
+}
+
+impl Drop for Place {
     fn drop(&mut self) {
-        let mut writing = self
-            .policy
-            .writing
+        let mut open = self
+            .counter
+            .open
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        if let Some(count) = writing.get_mut(&self.user) {
+        if let Some(count) = open.get_mut(&self.user) {
             *count -= 1;
             if *count == 0 {
-                writing.remove(&self.user);
+                open.remove(&self.user);
             }
         }
     }
