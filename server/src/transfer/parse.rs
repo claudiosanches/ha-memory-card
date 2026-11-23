@@ -77,15 +77,15 @@ pub fn headers(bytes: &[u8]) -> Option<(Vec<HeaderMatch>, char)> {
     let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
     let text = std::str::from_utf8(bytes).ok()?;
     let delimiter = detect_delimiter(text);
+    if too_wide(text.as_bytes(), delimiter) {
+        return None;
+    }
     let mut reader = csv::ReaderBuilder::new()
         .delimiter(delimiter)
         .flexible(true)
         .trim(csv::Trim::All)
         .from_reader(text.as_bytes());
     let headers = reader.headers().ok()?;
-    if headers.len() > MAX_COLUMNS {
-        return None;
-    }
     let mut taken = Vec::new();
     let matches = headers
         .iter()
@@ -197,8 +197,12 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
         return Err(FileIssue::new("empty_file"));
     }
 
+    let delimiter = detect_delimiter(text);
+    if too_wide(text.as_bytes(), delimiter) {
+        return Err(FileIssue::new("too_many_columns"));
+    }
     let mut reader = csv::ReaderBuilder::new()
-        .delimiter(detect_delimiter(text))
+        .delimiter(delimiter)
         .flexible(true)
         .trim(csv::Trim::All)
         .from_reader(text.as_bytes());
@@ -207,9 +211,6 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
         .headers()
         .map_err(|_| FileIssue::new("malformed"))?
         .clone();
-    if headers.len() > MAX_COLUMNS {
-        return Err(FileIssue::new("too_many_columns"));
-    }
     let index: HashMap<&'static str, usize> = COLUMNS
         .iter()
         .filter_map(|column| {
@@ -289,6 +290,35 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
 
 /// Spreadsheets in many locales save CSV with `;`. Picks whichever of `,` and
 /// `;` appears more in the header line.
+/// Whether any record has more than [`MAX_COLUMNS`] fields. Counted field by
+/// field, since the csv reader holds a whole record, at 8 bytes a field,
+/// before its width can be checked.
+fn too_wide(bytes: &[u8], delimiter: u8) -> bool {
+    let mut reader = csv_core::ReaderBuilder::new()
+        .delimiter(delimiter)
+        .build();
+    let mut output = [0u8; 1024];
+    let mut input = bytes;
+    let mut fields = 0;
+    loop {
+        let (result, read, _) = reader.read_field(input, &mut output);
+        input = &input[read..];
+        match result {
+            csv_core::ReadFieldResult::Field { record_end } => {
+                fields += 1;
+                if fields > MAX_COLUMNS {
+                    return true;
+                }
+                if record_end {
+                    fields = 0;
+                }
+            }
+            csv_core::ReadFieldResult::End => return false,
+            csv_core::ReadFieldResult::InputEmpty | csv_core::ReadFieldResult::OutputFull => {}
+        }
+    }
+}
+
 fn detect_delimiter(text: &str) -> u8 {
     let header = text.lines().next().unwrap_or_default();
     let commas = header.matches(',').count();
@@ -308,6 +338,13 @@ mod tests {
         let wide = csv(MAX_COLUMNS + 1);
         assert_eq!(parse(wide.as_bytes()).unwrap_err().code, "too_many_columns");
         assert_eq!(headers(wide.as_bytes()), None);
+
+        // A row wider than its header, and fields that hold the separator.
+        let row = format!("game_title,notes\nZelda{}\n", ",".repeat(MAX_COLUMNS));
+        assert_eq!(parse(row.as_bytes()).unwrap_err().code, "too_many_columns");
+        assert_eq!(headers(row.as_bytes()), None);
+        let quoted = format!("game_title,notes\nZelda,\"{}\"\n", ",".repeat(1000));
+        assert_eq!(parse(quoted.as_bytes()).unwrap().len(), 1);
     }
 
     #[test]
