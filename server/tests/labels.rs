@@ -241,3 +241,19 @@ async fn imports_add_labels_and_exports_list_them() {
     );
     assert!(exported.contains(",Okami,,Favorites; Retro,"), "{exported}");
 }
+
+#[tokio::test]
+async fn an_import_row_names_at_most_fifty_labels() {
+    let app = TestApp::new().await;
+    let names: Vec<String> = (0..51).map(|n| format!("label {n}")).collect();
+    let csv = format!(
+        "game_title,labels,platform,region,format\nHades,\"{}\",Switch,eu,digital\n",
+        names.join(", ")
+    );
+    let (status, preview) = app.post_csv("/api/import/preview", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    assert_eq!(
+        preview["rows"][0]["issues"],
+        json!([{"column": "labels", "code": "too_many_labels", "error": true}])
+    );
+}

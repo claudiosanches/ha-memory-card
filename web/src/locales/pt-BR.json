@@ -348,7 +348,8 @@
     "unknown_bundle": "Nenhuma cópia tem este ID.",
     "nested_bundle": "Uma coletânea não pode ficar dentro de outra.",
     "same_game": "A cópia da coletânea é deste mesmo jogo.",
-    "ignored_in_bundle": "Ignorado: preço, valor estimado e data de compra ficam na cópia da coletânea."
+    "ignored_in_bundle": "Ignorado: preço, valor estimado e data de compra ficam na cópia da coletânea.",
+    "too_many_labels": "Mais de 50 etiquetas."
   },
   "fileIssues": {
     "not_utf8": "O arquivo não está em UTF-8. Salve como \"CSV UTF-8\" e tente de novo.",

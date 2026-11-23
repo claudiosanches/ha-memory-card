@@ -18,6 +18,8 @@ const TITLE_MAX: usize = 200;
 const NAME_MAX: usize = 100;
 const CODE_MAX: usize = 40;
 const NOTES_MAX: usize = 2000;
+/// Most labels one row can name.
+const LABELS_MAX: usize = 50;
 
 /// A row that already exists, or the n-th row the plan creates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -778,7 +780,8 @@ impl<'a> Planner<'a> {
 
 /// The names in a labels cell, once each.
 fn label_names(cell: Option<&str>, issues: &mut Issues) -> Vec<String> {
-    let mut names: Vec<String> = Vec::new();
+    let mut names = Vec::new();
+    let mut seen = HashSet::new();
     for name in cell
         .unwrap_or_default()
         .split(SEPARATORS)
@@ -787,7 +790,13 @@ fn label_names(cell: Option<&str>, issues: &mut Issues) -> Vec<String> {
     {
         if name.chars().count() > NAME_MAX {
             issues.error("labels", "too_long");
-        } else if !names.iter().any(|n| key(n) == key(name)) {
+            break;
+        }
+        if seen.insert(key(name)) {
+            if names.len() == LABELS_MAX {
+                issues.error("labels", "too_many_labels");
+                break;
+            }
             names.push(name.to_owned());
         }
     }

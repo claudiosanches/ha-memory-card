@@ -200,7 +200,7 @@ names for each game, to link with a click or mark as not on IGDB.
 | `igdb_id` | IGDB game id, optional |
 | `game_title` | Required |
 | `play_status` | `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write the key. |
-| `labels` | Label names, separated by commas or semicolons. The import adds them to the game and creates the ones you do not have yet, in gray; it never removes a label. Exports write them separated by `; `. |
+| `labels` | Label names, up to 50, separated by commas or semicolons. The import adds them to the game and creates the ones you do not have yet, in gray; it never removes a label. Exports write them separated by `; `. |
 | `platform` | Platform name, abbreviation or slug |
 | `region` | `na`, `eu`, `au`, `nz`, `jp`, `cn`, `asia`, `kr`, `br`, `ww` (worldwide or region-free); also `NTSC-U`, `PAL`, `NTSC-J` |
 | `release_title` | Title on this release, when it differs |

@@ -348,7 +348,8 @@
     "unknown_bundle": "No copy has this ID.",
     "nested_bundle": "A bundle cannot go inside another bundle.",
     "same_game": "The bundle copy is of this same game.",
-    "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy."
+    "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy.",
+    "too_many_labels": "More than 50 labels."
   },
   "fileIssues": {
     "not_utf8": "The file is not UTF-8. Save it as \"CSV UTF-8\" and try again.",
