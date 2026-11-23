@@ -4,11 +4,13 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use axum::Json;
+use axum::body::Body;
 use axum::extract::{FromRequestParts, MatchedPath, Request, State};
 use axum::http::request::Parts;
-use axum::http::{HeaderMap, Method, StatusCode};
+use axum::http::{HeaderMap, Method, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
+use http_body_util::BodyExt;
 use serde::Serialize;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
@@ -45,6 +47,11 @@ const PROGRESS_WRITES: [(Method, &str); 4] = [
 /// body on as slowly as the person sends it, so without a limit one person
 /// could hold every connection.
 const WRITES_PER_PERSON: usize = 16;
+/// Home Assistant reads an answer up to this size in one go and streams a
+/// larger one as fast as the person reads it, which keeps its connection.
+const STREAMED_OVER: u64 = 4_194_000;
+/// Streamed answers one person may have open, enough for a page of photos.
+const STREAMED_PER_PERSON: usize = 64;
 
 /// Who may do what, from the app options.
 #[derive(Debug)]
@@ -53,6 +60,7 @@ pub struct Policy {
     pub managers: Vec<String>,
     pub viewers_track_progress: bool,
     writing: Arc<PerPerson>,
+    streaming: Arc<PerPerson>,
 }
 
 impl Policy {
@@ -61,6 +69,7 @@ impl Policy {
             managers: config.managers.clone(),
             viewers_track_progress: config.viewers_track_progress,
             writing: PerPerson::new(WRITES_PER_PERSON),
+            streaming: PerPerson::new(STREAMED_PER_PERSON),
         }
     }
 
@@ -142,13 +151,32 @@ pub async fn guard(
         Some(writing)
     };
 
+    let id = user.id.clone();
     request.extensions_mut().insert(Access {
         role,
         managers_configured: !policy.managers.is_empty(),
         can_track_progress: policy.can_track_progress(Some(&user.id)),
         user,
     });
-    next.run(request).await
+    let response = next.run(request).await;
+
+    let streamed = response
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|length| length.to_str().ok()?.parse::<u64>().ok())
+        .is_some_and(|length| length > STREAMED_OVER);
+    if !streamed {
+        return response;
+    }
+    let Some(streaming) = policy.streaming.enter(&id) else {
+        return deny(StatusCode::TOO_MANY_REQUESTS, "too_many_downloads");
+    };
+    response.map(|body| {
+        Body::new(body.map_frame(move |frame| {
+            let _held = &streaming;
+            frame
+        }))
+    })
 }
 
 /// What each person has open, up to a limit, so one person cannot take

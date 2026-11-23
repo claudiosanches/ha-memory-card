@@ -3,6 +3,7 @@ mod common;
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use common::{MANAGER, SUPERVISOR, TestApp};
+use http_body_util::BodyExt;
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
@@ -410,4 +411,46 @@ async fn one_person_keeps_at_most_16_changes_under_way() {
         status(request("PUT", &uri, VIEWER, playing())).await,
         StatusCode::OK
     );
+}
+
+#[tokio::test]
+async fn one_person_keeps_at_most_64_large_files_streaming() {
+    let app = TestApp::new().await;
+    let dir = app.config.covers_dir().join("copy-1");
+    std::fs::create_dir_all(&dir).unwrap();
+    // Home Assistant streams answers over 4,194,000 bytes.
+    std::fs::write(dir.join("large.jpg"), vec![0u8; 4_194_001]).unwrap();
+    std::fs::write(dir.join("small.jpg"), vec![0u8; 4_194_000]).unwrap();
+    let router = app.router_from(SUPERVISOR);
+    let get = |path: &str, user: &str| {
+        let request = Request::get(path)
+            .header("x-remote-user-id", user)
+            .body(Body::empty())
+            .unwrap();
+        let router = router.clone();
+        async move { router.oneshot(request).await.unwrap() }
+    };
+
+    // Answers whose bodies nobody reads.
+    let mut open = Vec::new();
+    for _ in 0..64 {
+        let response = get("/covers/copy-1/large.jpg", VIEWER).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        open.push(response);
+    }
+    let refused = get("/covers/copy-1/large.jpg", VIEWER).await;
+    assert_eq!(refused.status(), StatusCode::TOO_MANY_REQUESTS);
+    for _ in 0..100 {
+        let small = get("/covers/copy-1/small.jpg", VIEWER).await;
+        assert_eq!(small.status(), StatusCode::OK);
+        open.push(small);
+    }
+    let other = get("/covers/copy-1/large.jpg", MANAGER).await;
+    assert_eq!(other.status(), StatusCode::OK);
+
+    open.truncate(63);
+    let read = get("/covers/copy-1/large.jpg", VIEWER).await;
+    assert_eq!(read.status(), StatusCode::OK);
+    let body = read.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(body.len(), 4_194_001);
 }

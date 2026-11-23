@@ -262,6 +262,7 @@
     "unsupported_media_type": "O arquivo foi enviado num formato que o app não aceita.",
     "too_large": "Foi enviado demais de uma vez. Divida o arquivo e tente de novo.",
     "too_many_writes": "Muitas alterações suas ainda estão sendo enviadas. Aguarde um momento e tente de novo.",
+    "too_many_downloads": "Muitos arquivos grandes ainda estão sendo baixados para você. Aguarde um momento e tente de novo.",
     "label_separator": "Etiquetas não podem ter vírgulas nem ponto e vírgula."
   },
   "import": {
