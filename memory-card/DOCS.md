@@ -63,7 +63,8 @@ covers and metadata, give it access to the IGDB API.
    - **OAuth Redirect URLs:** `http://localhost`
    - **Category:** Application Integration
    - **Client Type:** Confidential
-3. Copy the **Client ID** and generate a **Client Secret**.
+3. Open the application with **Manage**, copy the **Client ID** and click
+   **New Secret** to generate a **Client Secret**.
 4. In Home Assistant, open the Memory Card app, go to **Configuration**, fill
    in both fields and save. To keep them in Home Assistant's `secrets.yaml`
    instead, enter `!secret` and the key, such as `!secret igdb_client_secret`.

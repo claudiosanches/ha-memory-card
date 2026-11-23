@@ -20,11 +20,18 @@ configuration:
   igdb_client_id:
     name: ID do cliente IGDB
     description: >-
-      ID do cliente do seu aplicativo de desenvolvedor da Twitch. Deixe vazio
-      para usar o aplicativo sem informações e capas do IGDB.
+      Dá acesso ao IGDB por meio de um aplicativo de desenvolvedor da Twitch.
+      Para criar um, ative a autenticação em dois fatores na Twitch, abra
+      dev.twitch.tv/console/apps e registre um aplicativo com a URL de
+      redirecionamento OAuth http://localhost, a categoria Application
+      Integration e o tipo de cliente Confidential. Depois abra-o em Manage e
+      copie aqui o Client ID. Deixe vazio para usar o aplicativo sem
+      informações e capas do IGDB.
   igdb_client_secret:
     name: Segredo do cliente IGDB
-    description: Segredo do cliente do mesmo aplicativo da Twitch.
+    description: >-
+      No mesmo aplicativo da Twitch, clique em New Secret e cole aqui o Client
+      Secret. Salve e reinicie o aplicativo.
   sensors:
     name: Sensores do Home Assistant
     description: >-

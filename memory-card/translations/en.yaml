@@ -19,11 +19,18 @@ configuration:
   igdb_client_id:
     name: IGDB client ID
     description: >-
-      Client ID of your Twitch developer application. Leave empty to use the
-      app without IGDB metadata and covers.
+      Gives access to IGDB through a Twitch developer application. To create
+      one, turn on two-factor authentication on Twitch, open
+      dev.twitch.tv/console/apps and register an application with the OAuth
+      redirect URL http://localhost, the category Application Integration and
+      the client type Confidential. Then open it with Manage and copy its
+      Client ID here. Leave empty to use the app without IGDB metadata and
+      covers.
   igdb_client_secret:
     name: IGDB client secret
-    description: Client secret of the same Twitch application.
+    description: >-
+      On the same Twitch application, click New Secret and paste the Client
+      Secret here. Save and restart the app.
   sensors:
     name: Home Assistant sensors
     description: >-
