@@ -1,6 +1,7 @@
 //! Who is using the app, from the Supervisor's ingress headers, and what they may do.
 
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use axum::Json;
 use axum::extract::{FromRequestParts, MatchedPath, Request, State};
@@ -40,12 +41,19 @@ const PROGRESS_WRITES: [(Method, &str); 4] = [
     (Method::DELETE, "/api/sessions/{id}"),
 ];
 
+/// Changes one person may have under way at once. Home Assistant passes a
+/// body on as slowly as the person sends it, so without a limit one person
+/// could hold every connection.
+const WRITES_PER_PERSON: usize = 16;
+
 /// Who may do what, from the app options.
 #[derive(Debug)]
 pub struct Policy {
     /// Home Assistant user IDs; while empty, nobody can change anything.
     pub managers: Vec<String>,
     pub viewers_track_progress: bool,
+    /// Changes under way, by user ID.
+    writing: Mutex<HashMap<String, usize>>,
 }
 
 impl Policy {
@@ -53,6 +61,7 @@ impl Policy {
         Self {
             managers: config.managers.clone(),
             viewers_track_progress: config.viewers_track_progress,
+            writing: Mutex::default(),
         }
     }
 
@@ -125,6 +134,14 @@ pub async fn guard(
         tracing::debug!(method = %request.method(), path, "viewer denied");
         return deny(StatusCode::FORBIDDEN, "manager_required");
     }
+    let _writing = if is_read(request.method()) {
+        None
+    } else {
+        let Some(writing) = Writing::start(&policy, &user.id) else {
+            return deny(StatusCode::TOO_MANY_REQUESTS, "too_many_writes");
+        };
+        Some(writing)
+    };
 
     request.extensions_mut().insert(Access {
         role,
@@ -133,6 +150,46 @@ pub async fn guard(
         user,
     });
     next.run(request).await
+}
+
+/// A change under way, counted against its person until dropped.
+struct Writing {
+    policy: Arc<Policy>,
+    user: String,
+}
+
+impl Writing {
+    fn start(policy: &Arc<Policy>, user: &str) -> Option<Self> {
+        let mut writing = policy
+            .writing
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let count = writing.entry(user.to_owned()).or_default();
+        if *count == WRITES_PER_PERSON {
+            return None;
+        }
+        *count += 1;
+        Some(Self {
+            policy: policy.clone(),
+            user: user.to_owned(),
+        })
+    }
+}
+
+impl Drop for Writing {
+    fn drop(&mut self) {
+        let mut writing = self
+            .policy
+            .writing
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(count) = writing.get_mut(&self.user) {
+            *count -= 1;
+            if *count == 0 {
+                writing.remove(&self.user);
+            }
+        }
+    }
 }
 
 /// Keeps the names of users who change things. Runs after [`guard`].

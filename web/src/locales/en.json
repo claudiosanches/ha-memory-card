@@ -261,6 +261,7 @@
     "cross_site": "Another site tried to change your collection. Open Memory Card directly and try again.",
     "unsupported_media_type": "The file was sent in a form the app does not accept.",
     "too_large": "Too much was sent at once. Split the file and try again.",
+    "too_many_writes": "Too many of your changes are still being sent. Wait a moment and try again.",
     "label_separator": "Labels cannot contain commas or semicolons."
   },
   "import": {

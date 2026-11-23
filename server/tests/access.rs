@@ -4,6 +4,7 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use common::{MANAGER, SUPERVISOR, TestApp};
 use serde_json::{Value, json};
+use tower::ServiceExt;
 
 const VIEWER: &str = "fedcba9876543210fedcba9876543210";
 
@@ -347,4 +348,66 @@ async fn viewers_track_progress_when_the_option_allows_it() {
     )
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn one_person_keeps_at_most_16_changes_under_way() {
+    let app = TestApp::with_env(&[("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true")]).await;
+    let release = app.release("Tunic", "switch").await;
+    let game: i64 = sqlx::query_scalar("SELECT game_id FROM releases WHERE id = ?")
+        .bind(release)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+    // One router, as the app serves with.
+    let router = app.router_from(SUPERVISOR);
+    let uri = format!("/api/games/{game}/play-status");
+    let request = |method: &str, uri: &str, user: &str, body: Body| {
+        Request::builder()
+            .method(method)
+            .uri(uri)
+            .header("x-remote-user-id", user)
+            .header(memory_card::origin::WRITE_HEADER, "memory-card")
+            .header("content-type", "application/json")
+            .body(body)
+            .unwrap()
+    };
+    let playing = || Body::from(json!({ "play_status": "playing" }).to_string());
+    let status = |request: Request<Body>| {
+        let router = router.clone();
+        async move { router.oneshot(request).await.unwrap().status() }
+    };
+
+    // Bodies that never finish arriving.
+    let stalled: Vec<_> = (0..16)
+        .map(|_| {
+            let body = Body::from_stream(futures_util::stream::pending::<
+                Result<Vec<u8>, std::io::Error>,
+            >());
+            tokio::spawn(router.clone().oneshot(request("PUT", &uri, VIEWER, body)))
+        })
+        .collect();
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    assert_eq!(
+        status(request("PUT", &uri, VIEWER, playing())).await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+    assert_eq!(
+        status(request("GET", "/api/games", VIEWER, Body::empty())).await,
+        StatusCode::OK
+    );
+    assert_eq!(
+        status(request("PUT", &uri, MANAGER, playing())).await,
+        StatusCode::OK
+    );
+
+    for request in stalled {
+        request.abort();
+        let _ = request.await;
+    }
+    assert_eq!(
+        status(request("PUT", &uri, VIEWER, playing())).await,
+        StatusCode::OK
+    );
 }

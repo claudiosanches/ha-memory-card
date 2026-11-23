@@ -261,6 +261,7 @@
     "cross_site": "Otro sitio intentó cambiar tu colección. Abre Memory Card directamente e inténtalo de nuevo.",
     "unsupported_media_type": "El archivo se envió en un formato que la app no acepta.",
     "too_large": "Se envió demasiado de una vez. Divide el archivo e inténtalo de nuevo.",
+    "too_many_writes": "Todavía se están enviando demasiados cambios tuyos. Espera un momento e inténtalo de nuevo.",
     "label_separator": "Las categorías no pueden contener comas ni punto y coma."
   },
   "import": {
