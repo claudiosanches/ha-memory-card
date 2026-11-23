@@ -88,12 +88,16 @@ impl TestApp {
             .await
     }
 
-    /// Sends as [`MANAGER`] unless the request names a user.
+    /// Sends as [`MANAGER`] unless the request names a user, from the app's
+    /// own page.
     pub async fn request(&self, peer: &str, mut request: Request<Body>) -> (StatusCode, Vec<u8>) {
-        request
-            .headers_mut()
+        let headers = request.headers_mut();
+        headers
             .entry("x-remote-user-id")
             .or_insert(HeaderValue::from_static(MANAGER));
+        headers
+            .entry(memory_card::origin::WRITE_HEADER)
+            .or_insert(HeaderValue::from_static("memory-card"));
         self.raw(peer, request).await
     }
 

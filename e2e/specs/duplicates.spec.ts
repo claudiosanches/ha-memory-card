@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import en from '../../web/src/locales/en.json' with { type: 'json' };
-import { PREFIX, PROXY_ORIGIN } from '../constants.ts';
+import { PREFIX, PROXY_ORIGIN, WRITE_HEADERS } from '../constants.ts';
 
 test('lists a game owned twice and filters by label', async ({ page, request }, testInfo) => {
   // Desktop and mobile share one server, so titles carry the project.
@@ -8,7 +8,7 @@ test('lists a game owned twice and filters by label', async ({ page, request }, 
   const csv = ['game_title,platform,region,format', `${title},Switch,eu,physical`, `${title},Switch,eu,physical`].join('\n');
   const imported = await request.post(`${PROXY_ORIGIN}${PREFIX}/api/import`, {
     data: csv,
-    headers: { 'Content-Type': 'text/csv' },
+    headers: { ...WRITE_HEADERS, 'Content-Type': 'text/csv' },
   });
   expect(imported.ok()).toBe(true);
 

@@ -16,7 +16,10 @@ async fn send(
     user: Option<&str>,
     body: Option<Value>,
 ) -> (StatusCode, Value) {
-    let mut builder = Request::builder().method(method).uri(path);
+    let mut builder = Request::builder()
+        .method(method)
+        .uri(path)
+        .header(memory_card::origin::WRITE_HEADER, "memory-card");
     if let Some(user) = user {
         builder = builder
             .header("x-remote-user-id", user)

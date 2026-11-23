@@ -218,7 +218,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   const api = async (method, path, body, type = 'application/json') => {
-    const headers = { 'x-remote-user-id': user, 'x-remote-user-name': user, 'x-remote-user-display-name': user };
+    const headers = {
+      'x-remote-user-id': user,
+      'x-remote-user-name': user,
+      'x-remote-user-display-name': user,
+      'x-requested-with': 'memory-card',
+    };
     if (body !== undefined) headers['content-type'] = type;
     const response = await fetch(`${base}${path}`, {
       method,

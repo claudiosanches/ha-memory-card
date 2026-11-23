@@ -1,5 +1,16 @@
-import { describe, expect, it } from 'vitest';
-import { apiBaseUrl } from './client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { api, apiBaseUrl } from './client';
+
+describe('api', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('marks requests as coming from the app', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }));
+    await api.POST('/api/igdb/sync');
+    const request = fetch.mock.calls[0]?.[0] as Request;
+    expect(request.headers.get('X-Requested-With')).toBe('memory-card');
+  });
+});
 
 describe('apiBaseUrl', () => {
   it('keeps the ingress prefix', () => {

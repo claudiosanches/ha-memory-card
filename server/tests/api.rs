@@ -112,6 +112,17 @@ async fn cross_site_writes_and_untyped_bodies_are_refused() {
         .unwrap();
     assert_eq!(app.request(SUPERVISOR, request).await.0, StatusCode::OK);
 
+    // Plain HTTP: no Sec-Fetch-Site, and a form cannot add the header.
+    let form = Request::post("/api/igdb/sync")
+        .header("x-remote-user-id", MANAGER)
+        .header("content-type", "application/x-www-form-urlencoded")
+        .body(Body::empty())
+        .unwrap();
+    let (status, body) = app.raw(SUPERVISOR, form).await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["code"], "cross_site");
+
     for content_type in [
         "text/plain",
         "application/x-www-form-urlencoded",

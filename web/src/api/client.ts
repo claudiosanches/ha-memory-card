@@ -11,6 +11,8 @@ export function apiBaseUrl(baseURI: string = document.baseURI): string {
 
 export const api = createClient<paths>({
   baseUrl: apiBaseUrl(),
+  // The server refuses changes without it; another site cannot send it.
+  headers: { 'X-Requested-With': 'memory-card' },
   // Late-bound so tests can stub fetch.
   fetch: (request) => globalThis.fetch(request),
 });

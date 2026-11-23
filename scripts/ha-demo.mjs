@@ -244,7 +244,7 @@ async function ingress(ha) {
   const { ingress_entry: entry } = await ha.supervisor('get', `/addons/${APP}/info`);
   const { session } = await ha.call('supervisor/ingress/session', { slug: APP });
   const api = async (method, url, body, type = 'application/json') => {
-    const headers = { cookie: `ingress_session=${session}` };
+    const headers = { cookie: `ingress_session=${session}`, 'x-requested-with': 'memory-card' };
     if (body !== undefined) headers['content-type'] = type;
     const response = await fetch(`${base}${entry}${url}`, {
       method,

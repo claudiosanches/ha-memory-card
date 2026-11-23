@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import en from '../../web/src/locales/en.json' with { type: 'json' };
-import { PREFIX, PROXY_ORIGIN, VIEWER_ID } from '../constants.ts';
+import { PREFIX, PROXY_ORIGIN, VIEWER_ID, WRITE_HEADERS } from '../constants.ts';
 
 function signInAs(page: Page, user: string) {
   return page.context().addCookies([{ name: 'e2e_user', value: user, url: PROXY_ORIGIN }]);
@@ -14,7 +14,7 @@ async function openNav(page: Page) {
 test('a viewer browses the collection but cannot change it', async ({ page, request }, testInfo) => {
   // Desktop and mobile share one server, so the title carries the project.
   const title = `Viewer Quest ${testInfo.project.name}`;
-  const created = await request.post(`${PROXY_ORIGIN}${PREFIX}/api/games`, { data: { title } });
+  const created = await request.post(`${PROXY_ORIGIN}${PREFIX}/api/games`, { data: { title }, headers: WRITE_HEADERS });
   expect(created.ok()).toBe(true);
   const { id } = (await created.json()) as { id: number };
 
@@ -31,7 +31,7 @@ test('a viewer browses the collection but cannot change it', async ({ page, requ
   await expect(page.getByRole('link', { name: en.nav.settings })).toBeVisible();
   await expect(page.getByRole('link', { name: en.nav.manage })).toHaveCount(0);
 
-  const refused = await page.request.delete(`${PROXY_ORIGIN}${PREFIX}/api/games/${id}`);
+  const refused = await page.request.delete(`${PROXY_ORIGIN}${PREFIX}/api/games/${id}`, { headers: WRITE_HEADERS });
   expect(refused.status()).toBe(403);
   expect(await refused.json()).toEqual({ code: 'manager_required' });
 
