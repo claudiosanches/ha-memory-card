@@ -39,6 +39,9 @@ pub fn clean(bytes: &[u8]) -> Option<Cleaned> {
 const SOI: [u8; 2] = [0xFF, 0xD8];
 const EOI: [u8; 2] = [0xFF, 0xD9];
 
+/// JFIF's identifier, version, density and thumbnail size, before the thumbnail.
+const JFIF_HEADER: usize = 14;
+
 /// Walks the segments, keeping those that decode the image, and the image
 /// data of every scan; a progressive JPEG has several, with segments between
 /// them. Anything after the end marker, such as a second preview image, goes.
@@ -97,7 +100,15 @@ fn jpeg(bytes: &[u8]) -> Option<Vec<u8>> {
                 }
                 false
             }
-            0xE0 => data.starts_with(b"JFIF\0"),
+            // JFIF's header stays, without the thumbnail it may carry.
+            0xE0 => {
+                if data.starts_with(b"JFIF\0") && data.len() >= JFIF_HEADER {
+                    out.extend([0xFF, 0xE0, 0, 2 + JFIF_HEADER as u8]);
+                    out.extend(&data[..JFIF_HEADER - 2]);
+                    out.extend([0, 0]);
+                }
+                false
+            }
             0xE2 => data.starts_with(b"ICC_PROFILE\0"),
             // Says how to read the colors of some CMYK files.
             0xEE => data.starts_with(b"Adobe"),
@@ -308,6 +319,29 @@ mod tests {
         assert_eq!(scans(&cleaned), scans(photo));
         assert!(cleaned.ends_with(&EOI));
         assert_eq!(clean(&cleaned).unwrap().bytes, cleaned, "stable");
+    }
+
+    #[test]
+    fn a_jpeg_keeps_its_jfif_header_without_the_thumbnail() {
+        const SCAN: [u8; 8] = [0xFF, 0xDA, 0x00, 0x02, 0x12, 0x34, 0xFF, 0xD9];
+        let header = b"JFIF\0\x01\x02\x00\x00\x48\x00\x48";
+        let photo = [
+            &[0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x13][..],
+            header,
+            &[0x01, 0x01],
+            b"TMB",
+            &SCAN,
+        ]
+        .concat();
+        let cleaned = [
+            &[0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10][..],
+            header,
+            &[0x00, 0x00],
+            &SCAN,
+        ]
+        .concat();
+        assert_eq!(clean(&photo).unwrap().bytes, cleaned);
+        assert_eq!(clean(&cleaned).unwrap().bytes, cleaned);
     }
 
     #[test]
