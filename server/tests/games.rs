@@ -4,7 +4,10 @@ mod common;
 
 use axum::http::StatusCode;
 use common::TestApp;
+use memory_card::config::FinishedScan;
 use memory_card::db::library::{self, LibraryFilter};
+use memory_card::db::sessions;
+use memory_card::error::ApiError;
 use serde_json::{Value, json};
 
 async fn new_game(app: &TestApp, title: &str) -> i64 {
@@ -347,6 +350,33 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
     let (status, error) = log(game).await;
     assert_eq!(status, StatusCode::CONFLICT);
     assert_eq!(error["code"], "too_many_sessions");
+    // A tag scan logs a session too.
+    let switch = app.platform_id("switch").await;
+    let copy = |game: i64| async move {
+        add_copy(
+            app,
+            game,
+            json!({"platform_id": switch, "region": "eu", "format": "physical"}),
+        )
+        .await["releases"][0]["copies"][0]["id"]
+            .as_i64()
+            .unwrap()
+    };
+    let scan = |copy: i64| async move {
+        sessions::start_from_tag(
+            &app.pool,
+            copy,
+            "2026-11-21",
+            Some(common::MANAGER),
+            FinishedScan::Keep,
+        )
+        .await
+    };
+    let scanned = scan(copy(game).await).await;
+    assert!(
+        matches!(scanned, Err(ApiError::Conflict("too_many_sessions"))),
+        "{scanned:?}"
+    );
 
     sqlx::query(
         "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 198)
@@ -362,6 +392,12 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
     let (status, error) = log(other).await;
     assert_eq!(status, StatusCode::CONFLICT);
     assert_eq!(error["code"], "too_many_sessions_today");
+    let scanned = scan(copy(other).await).await;
+    assert!(
+        matches!(scanned, Err(ApiError::Conflict("too_many_sessions_today"))),
+        "{scanned:?}"
+    );
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 5199);
 }
 
 #[tokio::test]

@@ -74,22 +74,7 @@ pub async fn add(
         return Err(ApiError::NotFound);
     }
     ensure_game_copy(&mut tx, game_id, fields.copy_id).await?;
-    let logged = sqlx::query!(
-        r#"SELECT (SELECT COUNT(*) FROM play_sessions WHERE game_id = ?1) AS "game!: i64",
-                  (SELECT COUNT(*) FROM play_sessions WHERE created_by = ?2
-                     AND created_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day'))
-                    AS "today!: i64""#,
-        game_id,
-        by
-    )
-    .fetch_one(&mut *tx)
-    .await?;
-    if logged.game >= PER_GAME_MAX {
-        return Err(ApiError::Conflict("too_many_sessions"));
-    }
-    if logged.today >= PER_DAY_MAX {
-        return Err(ApiError::Conflict("too_many_sessions_today"));
-    }
+    room_for_one_more(&mut tx, game_id, Some(by)).await?;
     sqlx::query!(
         "INSERT INTO play_sessions (game_id, copy_id, played_on, minutes, notes, created_by)
          VALUES (?, ?, ?, ?, ?, ?)",
@@ -137,18 +122,27 @@ pub async fn start_from_tag(
             .execute(&mut *tx)
             .await?;
     }
-    sqlx::query!(
-        "INSERT INTO play_sessions (game_id, copy_id, played_on, created_by)
-         SELECT ?1, ?2, ?3, ?4
-         WHERE NOT EXISTS (SELECT 1 FROM play_sessions
-                           WHERE game_id = ?1 AND copy_id = ?2 AND played_on = ?3)",
+    let logged: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM play_sessions
+                          WHERE game_id = ?1 AND copy_id = ?2 AND played_on = ?3) AS "logged!: bool""#,
         copy.game_id,
         copy_id,
-        today,
-        user
+        today
     )
-    .execute(&mut *tx)
+    .fetch_one(&mut *tx)
     .await?;
+    if !logged {
+        room_for_one_more(&mut tx, copy.game_id, user).await?;
+        sqlx::query!(
+            "INSERT INTO play_sessions (game_id, copy_id, played_on, created_by) VALUES (?, ?, ?, ?)",
+            copy.game_id,
+            copy_id,
+            today,
+            user
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
     let keep = match copy.counts_as.as_deref() {
         Some("playing") => true,
         Some("finished") => finished == FinishedScan::Keep,
@@ -167,6 +161,32 @@ pub async fn start_from_tag(
     }
     tx.commit().await?;
     Ok(copy.game_id)
+}
+
+/// Refuses a session past the game's limit, or past the day's limit of the
+/// person logging it.
+async fn room_for_one_more(
+    conn: &mut SqliteConnection,
+    game_id: i64,
+    by: Option<&str>,
+) -> ApiResult<()> {
+    let logged = sqlx::query!(
+        r#"SELECT (SELECT COUNT(*) FROM play_sessions WHERE game_id = ?1) AS "game!: i64",
+                  (SELECT COUNT(*) FROM play_sessions WHERE created_by = ?2
+                     AND created_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day'))
+                    AS "today!: i64""#,
+        game_id,
+        by
+    )
+    .fetch_one(&mut *conn)
+    .await?;
+    if logged.game >= PER_GAME_MAX {
+        return Err(ApiError::Conflict("too_many_sessions"));
+    }
+    if logged.today >= PER_DAY_MAX {
+        return Err(ApiError::Conflict("too_many_sessions_today"));
+    }
+    Ok(())
 }
 
 /// Updates a session and returns its game id.

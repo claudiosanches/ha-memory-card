@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_sessions (game_id, copy_id, played_on, created_by) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "0e02640b3825ca5896392cde26c0b6491779e5124d0e0ffd7ac422df8caad123"
+}
