@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::{COLUMNS, MAX_ROWS, UTF8_BOM};
+use super::{COLUMNS, MAX_COLUMNS, MAX_ROWS, UTF8_BOM};
 use crate::domain::loose;
 
 /// Header names other spreadsheets use, compared loosely, for each column.
@@ -72,6 +72,7 @@ pub struct HeaderMatch {
 }
 
 /// The header row as read, and the separator, without reading the rows.
+/// `None` for a file [`parse`] refuses before its rows.
 pub fn headers(bytes: &[u8]) -> Option<(Vec<HeaderMatch>, char)> {
     let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
     let text = std::str::from_utf8(bytes).ok()?;
@@ -82,6 +83,9 @@ pub fn headers(bytes: &[u8]) -> Option<(Vec<HeaderMatch>, char)> {
         .trim(csv::Trim::All)
         .from_reader(text.as_bytes());
     let headers = reader.headers().ok()?;
+    if headers.len() > MAX_COLUMNS {
+        return None;
+    }
     let mut taken = Vec::new();
     let matches = headers
         .iter()
@@ -203,6 +207,9 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
         .headers()
         .map_err(|_| FileIssue::new("malformed"))?
         .clone();
+    if headers.len() > MAX_COLUMNS {
+        return Err(FileIssue::new("too_many_columns"));
+    }
     let index: HashMap<&'static str, usize> = COLUMNS
         .iter()
         .filter_map(|column| {
@@ -292,6 +299,16 @@ fn detect_delimiter(text: &str) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn refuses_more_columns_than_the_import_screen_lists() {
+        let csv = |columns: usize| format!("game_title{}\nZelda\n", ",".repeat(columns - 1));
+        assert!(parse(csv(MAX_COLUMNS).as_bytes()).is_ok());
+        assert!(headers(csv(MAX_COLUMNS).as_bytes()).is_some());
+        let wide = csv(MAX_COLUMNS + 1);
+        assert_eq!(parse(wide.as_bytes()).unwrap_err().code, "too_many_columns");
+        assert_eq!(headers(wide.as_bytes()), None);
+    }
 
     #[test]
     fn reads_rows_with_any_header_case_and_order() {

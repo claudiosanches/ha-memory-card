@@ -40,6 +40,9 @@ pub const UTF8_BOM: &[u8] = b"\xEF\xBB\xBF";
 /// Upper bound on rows per import.
 pub const MAX_ROWS: usize = 20_000;
 
+/// Upper bound on columns, each one a choice on the import screen.
+pub const MAX_COLUMNS: usize = 200;
+
 pub fn template() -> Vec<u8> {
     let mut out = UTF8_BOM.to_vec();
     out.extend_from_slice(COLUMNS.join(",").as_bytes());

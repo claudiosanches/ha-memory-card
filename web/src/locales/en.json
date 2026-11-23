@@ -356,7 +356,8 @@
     "empty_file": "The file has no rows.",
     "missing_column": "The file needs a {{column}} column.",
     "malformed": "The file could not be read as CSV near line {{line}}.",
-    "too_many_rows": "The file has more than 20,000 rows."
+    "too_many_rows": "The file has more than 20,000 rows.",
+    "too_many_columns": "The file has more than 200 columns."
   },
   "region": {
     "na": "North America",
