@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM suggestions\n         WHERE id <= (SELECT id FROM suggestions ORDER BY id DESC LIMIT 1 OFFSET ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "d957c40ac2214635527071192098f5a596cda6699fa987fb484b5c00d31f5273"
+}

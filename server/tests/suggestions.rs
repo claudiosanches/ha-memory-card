@@ -96,6 +96,31 @@ async fn returns_the_oldest_recent_pick_and_prunes_old_history() {
 }
 
 #[tokio::test]
+async fn keeps_only_the_newest_picks() {
+    let app = collection().await;
+    let tetris = game_id(&app, "Tetris").await;
+    sqlx::query(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1500)
+         INSERT INTO suggestions (game_id) SELECT ? FROM n",
+    )
+    .bind(tetris)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+
+    assert_eq!(title(&app, json!({})).await, "Hades");
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM suggestions").await,
+        memory_card::db::suggestions::KEPT_MAX
+    );
+    assert_eq!(
+        app.scalar("SELECT game_id FROM suggestions ORDER BY id DESC LIMIT 1")
+            .await,
+        game_id(&app, "Hades").await
+    );
+}
+
+#[tokio::test]
 async fn filters_match_one_owned_copy() {
     let app = collection().await;
     let switch = app.platform_id("switch").await;

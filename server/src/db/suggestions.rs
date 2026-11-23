@@ -10,6 +10,9 @@ use super::play_statuses;
 use crate::error::{ApiError, ApiResult};
 use crate::slug::Slug;
 
+/// Picks kept, newest first; only the last day's change what comes next.
+pub const KEPT_MAX: i64 = 1000;
+
 /// Values inside one filter are OR, filters are AND, and the copy filters
 /// apply to the same owned copy.
 #[derive(Debug, Default, Deserialize, ToSchema)]
@@ -95,6 +98,13 @@ pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<S
     sqlx::query!("INSERT INTO suggestions (game_id) VALUES (?)", game_id)
         .execute(&mut *tx)
         .await?;
+    sqlx::query!(
+        "DELETE FROM suggestions
+         WHERE id <= (SELECT id FROM suggestions ORDER BY id DESC LIMIT 1 OFFSET ?)",
+        KEPT_MAX
+    )
+    .execute(&mut *tx)
+    .await?;
 
     let mut copies = QueryBuilder::new(
         "SELECT c.id FROM copies c JOIN releases r ON r.id = c.release_id
