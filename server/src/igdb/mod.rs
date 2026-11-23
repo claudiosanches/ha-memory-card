@@ -52,12 +52,16 @@ pub enum IgdbError {
     Http(#[from] reqwest::Error),
     #[error("IGDB answered {0}")]
     Status(StatusCode),
-    #[error("the cover is larger than 10 MB")]
-    CoverTooLarge,
+    #[error("IGDB's answer is larger than expected")]
+    TooLarge,
+    #[error("IGDB's answer is not what was asked for: {0}")]
+    Json(#[from] serde_json::Error),
 }
 
 /// Covers are a few hundred KB; anything near this is not one.
 const COVER_MAX: usize = 10 * 1024 * 1024;
+/// 500 games with every field asked for come to a few MB.
+const ANSWER_MAX: usize = 16 * 1024 * 1024;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct SearchHit {
@@ -296,21 +300,10 @@ impl Igdb {
 
     pub async fn cover(&self, image_id: &str) -> Result<Vec<u8>, IgdbError> {
         let url = format!("{}/t_cover_big_2x/{image_id}.jpg", self.endpoints.image_url);
-        let mut response = self.http.get(url).send().await?.error_for_status()?;
-        if response
-            .content_length()
-            .is_some_and(|length| length > COVER_MAX as u64)
-        {
-            return Err(IgdbError::CoverTooLarge);
-        }
-        let mut bytes = Vec::new();
-        while let Some(chunk) = response.chunk().await? {
-            bytes.extend_from_slice(&chunk);
-            if bytes.len() > COVER_MAX {
-                return Err(IgdbError::CoverTooLarge);
-            }
-        }
-        Ok(bytes)
+        let response = self.http.get(url).send().await?.error_for_status()?;
+        crate::http::body(response, COVER_MAX)
+            .await?
+            .ok_or(IgdbError::TooLarge)
     }
 
     async fn post<T: DeserializeOwned>(&self, endpoint: &str, body: &str) -> Result<T, IgdbError> {
@@ -328,7 +321,7 @@ impl Igdb {
                 .await?;
             let status = response.status();
             if status.is_success() {
-                return Ok(response.json().await?);
+                return json(response).await;
             }
             let retryable = matches!(
                 status,
@@ -351,7 +344,7 @@ impl Igdb {
         if let Some(current) = token.as_ref().filter(|t| t.expires_at > Instant::now()) {
             return Ok(current.value.clone());
         }
-        let response: TokenResponse = self
+        let response = self
             .http
             .post(&self.endpoints.token_url)
             .form(&[
@@ -361,9 +354,8 @@ impl Igdb {
             ])
             .send()
             .await?
-            .error_for_status()?
-            .json()
-            .await?;
+            .error_for_status()?;
+        let response: TokenResponse = json(response).await?;
         let lifetime = Duration::from_secs(response.expires_in.saturating_sub(60));
         *token = Some(Token {
             value: response.access_token.clone(),
@@ -381,6 +373,13 @@ impl Igdb {
 
 /// Quotes and backslashes escaped; control characters, which could end
 /// the query line, dropped.
+async fn json<T: DeserializeOwned>(response: reqwest::Response) -> Result<T, IgdbError> {
+    let bytes = crate::http::body(response, ANSWER_MAX)
+        .await?
+        .ok_or(IgdbError::TooLarge)?;
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
 fn escape(text: &str) -> String {
     text.chars()
         .filter(|c| !c.is_control())

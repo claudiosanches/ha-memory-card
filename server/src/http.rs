@@ -24,3 +24,21 @@ fn builder() -> reqwest::ClientBuilder {
         .user_agent(concat!("memory-card/", env!("CARGO_PKG_VERSION")))
         .redirect(reqwest::redirect::Policy::none())
 }
+
+/// The body of `response`, or `None` once it passes `max` bytes.
+pub async fn body(mut response: reqwest::Response, max: usize) -> reqwest::Result<Option<Vec<u8>>> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > max as u64)
+    {
+        return Ok(None);
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        if bytes.len() + chunk.len() > max {
+            return Ok(None);
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    Ok(Some(bytes))
+}

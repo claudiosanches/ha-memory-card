@@ -129,3 +129,26 @@ async fn viewers_only_check_the_collection() {
     assert_eq!(body["lookup"], "not_in_collection");
     assert_eq!(body["product"], Value::Null);
 }
+
+#[tokio::test]
+async fn an_oversized_answer_is_refused() {
+    // Streamed, so no length says how much is coming.
+    let stub = Router::new().route(
+        "/lookup",
+        get(|| async {
+            let chunks = futures_util::stream::iter(
+                (0..64).map(|_| Ok::<_, std::convert::Infallible>(vec![b' '; 32 * 1024])),
+            );
+            Body::from_stream(chunks)
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}/lookup", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+
+    let result = memory_card::barcodes::lookup(&memory_card::http::shared(), &url, "1").await;
+    assert!(
+        matches!(result, Err(memory_card::barcodes::LookupError::TooLarge)),
+        "{result:?}"
+    );
+}

@@ -20,7 +20,14 @@ pub enum LookupError {
     Http(#[from] reqwest::Error),
     #[error("the barcode database answered {0}")]
     Status(StatusCode),
+    #[error("the barcode database's answer is larger than expected")]
+    TooLarge,
+    #[error("the barcode database's answer is not what was asked for: {0}")]
+    Json(#[from] serde_json::Error),
 }
+
+/// An answer lists a handful of products.
+const ANSWER_MAX: usize = 1024 * 1024;
 
 #[derive(Deserialize)]
 struct Answer {
@@ -53,7 +60,10 @@ pub async fn lookup(
         status if !status.is_success() => return Err(LookupError::Status(status)),
         _ => {}
     }
-    let answer: Answer = response.json().await?;
+    let bytes = crate::http::body(response, ANSWER_MAX)
+        .await?
+        .ok_or(LookupError::TooLarge)?;
+    let answer: Answer = serde_json::from_slice(&bytes)?;
     Ok(answer
         .items
         .into_iter()
