@@ -1,2 +1,2 @@
 #!/command/with-contenv sh
-exec /usr/bin/memory-card serve
+exec s6-setuidgid memory-card /usr/bin/memory-card serve

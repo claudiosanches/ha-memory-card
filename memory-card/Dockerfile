@@ -7,6 +7,11 @@ FROM ghcr.io/home-assistant/base:3.24@sha256:58422480a299b16b6ea376c2167463206d4
 ARG TARGETARCH
 ARG BUILD_VERSION=dev
 
+# The server runs as this user; a fixed id keeps the files in /data its own
+# across image updates.
+RUN addgroup -S -g 1000 memory-card \
+    && adduser -S -D -H -h /data -s /sbin/nologin -u 1000 -G memory-card memory-card
+
 COPY --chmod=755 dist/${TARGETARCH}/memory-card /usr/bin/memory-card
 COPY memory-card/rootfs /
 

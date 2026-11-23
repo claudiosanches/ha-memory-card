@@ -1,0 +1,13 @@
+#!/bin/sh
+# Runs as root before the server, which runs as memory-card. The Supervisor
+# creates /data as root and writes options.json there, readable by root only,
+# on every start.
+set -eu
+chown memory-card:memory-card /data
+# -h so a link in /data never hands over the file it points to.
+find /data -mindepth 1 ! -user memory-card ! -name options.json -exec chown -h memory-card:memory-card {} +
+# Not through a link: chmod would change the file it points to.
+if [ -f /data/options.json ] && [ ! -L /data/options.json ]; then
+    chgrp memory-card /data/options.json
+    chmod 0640 /data/options.json
+fi
