@@ -24,6 +24,9 @@ esac
 port=${HA_PORT:-7123}
 label=memory-card.ha-demo
 image=memory-card-haos:local
+# The VM's own network: other containers cannot reach Home Assistant before
+# it has an owner.
+network=$name-net
 os_version=18.4
 os_sha256=756ec485b1b153099ca53e88a5eebd63a801d56b791afe5c6d63ef94a35dc02d
 os_file=target/haos-image/haos_ova-$os_version.qcow2.xz
@@ -90,6 +93,10 @@ owned() {
 refuse_foreign() {
     if exists && ! labelled container Config. "$name"; then
         echo "A container named $name exists that this script did not create. Set HA_NAME." >&2
+        exit 1
+    fi
+    if docker network inspect "$network" >/dev/null 2>&1 && ! labelled network "" "$network"; then
+        echo "A network named $network exists that this script did not create. Set HA_NAME." >&2
         exit 1
     fi
 }
@@ -263,10 +270,13 @@ up() {
 
     bind=127.0.0.1
     [ -z "${HA_LAN:-}" ] || bind=0.0.0.0
-    # A new image or a different address needs a new container; the volume
-    # keeps the VM.
+    docker network inspect "$network" >/dev/null 2>&1 ||
+        docker network create --label "$label=1" "$network" >/dev/null
+    # A new image, a different address or another network needs a new
+    # container; the volume keeps the VM.
     if exists && { [ "$(docker container inspect -f '{{.Image}}' "$name")" != "$(docker image inspect -f '{{.Id}}' "$image")" ] ||
-        [ "$(docker container inspect -f '{{range (index .HostConfig.PortBindings "8080/tcp")}}{{.HostIp}}:{{.HostPort}}{{end}}' "$name")" != "$bind:$port" ]; }; then
+        [ "$(docker container inspect -f '{{range (index .HostConfig.PortBindings "8080/tcp")}}{{.HostIp}}:{{.HostPort}}{{end}}' "$name")" != "$bind:$port" ] ||
+        [ "$(docker container inspect -f '{{range $net, $_ := .NetworkSettings.Networks}}{{$net}} {{end}}' "$name")" != "$network " ]; }; then
         echo "Recreating the container"
         docker stop "$name" >/dev/null
         docker rm "$name" >/dev/null
@@ -284,7 +294,7 @@ up() {
         docker run -d --name "$name" --label "$label=1" --stop-timeout 180 \
             --device /dev/kvm --group-add "$(stat -c %g /dev/kvm)" \
             --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp \
-            -p "$bind:$port:8080" \
+            --network "$network" -p "$bind:$port:8080" \
             -v "$name-vm:/vm" \
             "$image" >/dev/null
         echo "Starting Home Assistant OS"
@@ -369,6 +379,9 @@ stop)
 destroy)
     refuse_foreign
     docker rm -f "$name" >/dev/null 2>&1 || true
+    if labelled network "" "$network"; then
+        docker network rm "$network" >/dev/null
+    fi
     if labelled volume "" "$name-vm"; then
         docker volume rm "$name-vm" >/dev/null
     fi
