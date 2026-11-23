@@ -16,9 +16,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ActionIcon, Button, ColorSwatch, Group, Input, Loader, Modal, Select, Stack, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Button, ColorSwatch, Group, Loader, Modal, Select, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconCheck, IconGripVertical, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconGripVertical, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,11 +28,11 @@ import { queryKeys } from '../../api/queries';
 import {
   type BuiltinStatus,
   type PlayStatusFields,
-  STATUS_COLORS,
   STATUS_GROUPS,
   type StatusColor,
   type StatusGroup,
 } from '../../api/types';
+import { ColorPicker } from '../../components/ColorPicker';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { type NamedStatus, usePlayStatusList } from '../../components/playStatuses';
@@ -232,28 +232,11 @@ function StatusForm({ status, onClose }: { status?: NamedStatus; onClose: () => 
         data-autofocus
         {...form.getInputProps('label')}
       />
-      <Input.Wrapper label={t('playStatuses.color')}>
-        <Group gap={8} mt={6} role="radiogroup" aria-label={t('playStatuses.color')}>
-          {STATUS_COLORS.map((color) => {
-            const selected = form.values.color === color;
-            return (
-              <ColorSwatch
-                key={color}
-                component="button"
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                aria-label={t(`playStatuses.colors.${color}`)}
-                color={`var(--mantine-color-${color}-filled)`}
-                onClick={() => form.setFieldValue('color', color)}
-                className={classes.swatch}
-              >
-                {selected && <IconCheck size={14} color="white" />}
-              </ColorSwatch>
-            );
-          })}
-        </Group>
-      </Input.Wrapper>
+      <ColorPicker
+        label={t('playStatuses.color')}
+        value={form.values.color}
+        onChange={(color) => form.setFieldValue('color', color)}
+      />
       <Select
         label={t('playStatuses.countsAs')}
         description={builtin ? t('playStatuses.builtinGroup') : t('playStatuses.countsAsHint')}

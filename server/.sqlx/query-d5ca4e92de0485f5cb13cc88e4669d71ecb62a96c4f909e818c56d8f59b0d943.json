@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT game_id, label_id FROM game_labels",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "game_labels",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "name": "label_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "game_labels",
+            "name": "label_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d5ca4e92de0485f5cb13cc88e4669d71ecb62a96c4f909e818c56d8f59b0d943"
+}

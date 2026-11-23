@@ -121,6 +121,15 @@
             }
           },
           {
+            "name": "label",
+            "in": "query",
+            "description": "Label slugs.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "play_status",
             "in": "query",
             "description": "Play statuses, plus `none` for games without one.",
@@ -809,6 +818,15 @@
             }
           },
           {
+            "name": "label",
+            "in": "query",
+            "description": "Label slugs.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "play_status",
             "in": "query",
             "description": "Play statuses, plus `none` for games without one.",
@@ -986,6 +1004,15 @@
             "name": "game_mode",
             "in": "query",
             "description": "Game mode slugs.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "label",
+            "in": "query",
+            "description": "Label slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2056,6 +2083,174 @@
               "text/csv": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/labels": {
+      "get": {
+        "tags": [
+          "labels"
+        ],
+        "operationId": "listLabels",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Label"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "labels"
+        ],
+        "operationId": "createLabel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Label"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`name_taken`, `slug_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Also `label_separator` for a comma or semicolon in the name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/labels/{id}": {
+      "put": {
+        "tags": [
+          "labels"
+        ],
+        "operationId": "updateLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Label"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`name_taken`, `slug_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "labels"
+        ],
+        "operationId": "deleteLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted; its games keep existing without it"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -4181,6 +4376,7 @@
           "publishers",
           "game_mode_ids",
           "genre_ids",
+          "labels",
           "created_at",
           "releases",
           "sessions",
@@ -4247,6 +4443,13 @@
               "null"
             ],
             "format": "int64"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameLabel"
+            },
+            "description": "By name."
           },
           "local_coop": {
             "type": [
@@ -4350,6 +4553,17 @@
               "format": "int64"
             }
           },
+          "label_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Left out, the current labels stay."
+          },
           "local_coop": {
             "type": [
               "boolean",
@@ -4400,6 +4614,31 @@
             ]
           },
           "title": {
+            "type": "string"
+          }
+        }
+      },
+      "GameLabel": {
+        "type": "object",
+        "description": "A label on a game.",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "color"
+        ],
+        "properties": {
+          "color": {
+            "$ref": "#/components/schemas/StatusColor"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
             "type": "string"
           }
         }
@@ -4586,6 +4825,7 @@
           "new_platforms",
           "new_devices",
           "new_stores",
+          "new_labels",
           "rows"
         ],
         "properties": {
@@ -4615,6 +4855,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NewDeviceReport"
+            }
+          },
+          "new_labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "new_platforms": {
@@ -4716,6 +4962,58 @@
           "warning_rows": {
             "type": "integer",
             "minimum": 0
+          }
+        }
+      },
+      "Label": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "color",
+          "game_count"
+        ],
+        "properties": {
+          "color": {
+            "$ref": "#/components/schemas/StatusColor"
+          },
+          "game_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Names the label in library links."
+          }
+        }
+      },
+      "LabelInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "color"
+        ],
+        "properties": {
+          "color": {
+            "$ref": "#/components/schemas/StatusColor"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Names it in library links. Blank makes one from the name for a new\none and keeps the current one on update."
           }
         }
       },

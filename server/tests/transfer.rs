@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 /// The columns most rows here use; imports read columns by name.
 const HEADER: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,device,store,condition,notes";
 /// Every column, in export order.
-const COLUMNS: &str = "copy_id,status,igdb_id,game_title,play_status,platform,region,release_title,product_code,format,edition,device,store,condition,purchased_on,price,currency,estimated_value,estimated_currency,barcode,notes,bundle_copy_id";
+const COLUMNS: &str = "copy_id,status,igdb_id,game_title,play_status,labels,platform,region,release_title,product_code,format,edition,device,store,condition,purchased_on,price,currency,estimated_value,estimated_currency,barcode,notes,bundle_copy_id";
 
 fn issues(preview: &Value, line: u64) -> Vec<(String, String)> {
     let row = preview["rows"]
@@ -53,7 +53,7 @@ async fn export_follows_the_library_filters() {
             .unwrap()
             .lines()
             .skip(1)
-            .map(|line| line.split(',').take(6).collect::<Vec<_>>().join(","))
+            .map(|line| line.split(',').take(7).collect::<Vec<_>>().join(","))
             .collect::<Vec<_>>()
     };
 
@@ -65,12 +65,12 @@ async fn export_follows_the_library_filters() {
     let rows = lines(body);
     assert_eq!(rows.len(), 1, "{rows:?}");
     assert!(
-        rows[0].ends_with("Mario Kart 8 Deluxe,playing,Wii U"),
+        rows[0].ends_with("Mario Kart 8 Deluxe,playing,,Wii U"),
         "{rows:?}"
     );
 
     let (_, body) = app.get("/api/export.csv?play_status=paused").await;
-    assert_eq!(lines(body), [",,,Zelda: Tears of the Kingdom,paused,"]);
+    assert_eq!(lines(body), [",,,Zelda: Tears of the Kingdom,paused,,"]);
 
     let (_, body) = app
         .get("/api/export.csv?ownership=owned&play_status=paused")
@@ -185,18 +185,18 @@ async fn import_then_export_round_trips() {
     assert_eq!(lines.len(), 4, "{exported}");
     // Same platform: rows sort by region, so eu comes before na.
     assert!(
-        lines[1].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,eu,Super Mario Odyssey (PAL),,digital,,,,,,,,,,,,"),
+        lines[1].ends_with(",owned,1234,Super Mario Odyssey,completed,,Nintendo Switch,eu,Super Mario Odyssey (PAL),,digital,,,,,,,,,,,,"),
         "{}",
         lines[1]
     );
     assert!(
-        lines[2].ends_with(",owned,1234,Super Mario Odyssey,completed,Nintendo Switch,na,,HAC-AAACA,physical,,Switch OLED,Amazon,cib,,,,,,,\"Gift, 2017\","),
+        lines[2].ends_with(",owned,1234,Super Mario Odyssey,completed,,Nintendo Switch,na,,HAC-AAACA,physical,,Switch OLED,Amazon,cib,,,,,,,\"Gift, 2017\","),
         "{}",
         lines[2]
     );
     assert_eq!(
         lines[3],
-        ",,,Zelda: Breath of the Wild,mastered,,,,,,,,,,,,,,,,,"
+        ",,,Zelda: Breath of the Wild,mastered,,,,,,,,,,,,,,,,,,"
     );
 
     // Importing the export again changes nothing.
@@ -463,9 +463,9 @@ async fn purchase_columns_import_and_export() {
     let app = TestApp::new().await;
     let csv = format!(
         "{COLUMNS}\n\
-         ,,,Hades,,PC,ww,,,digital,Deluxe,,Steam,,2024-09-17,\"R$ 1.299,90\",brl,,,,\n\
-         ,,,Tetris,,Switch,eu,,,physical,,,,,,5980,JPY,,,4902370536485,\n\
-         ,wanted,,Celeste,,Switch,eu,,,physical,Collector's,,,,,59.9,USD,,,,\n"
+         ,,,Hades,,,PC,ww,,,digital,Deluxe,,Steam,,2024-09-17,\"R$ 1.299,90\",brl,,,,\n\
+         ,,,Tetris,,,Switch,eu,,,physical,,,,,,5980,JPY,,,4902370536485,\n\
+         ,wanted,,Celeste,,,Switch,eu,,,physical,Collector's,,,,,59.9,USD,,,,\n"
     );
     let (status, result) = app.post_csv("/api/import", &csv).await;
     assert_eq!(status, StatusCode::OK, "{result}");
@@ -493,13 +493,13 @@ async fn purchase_columns_import_and_export() {
 
     let bad = format!(
         "{COLUMNS}\n\
-         ,,,A,,PC,ww,,,digital,,,,,yesterday,,,,,,\n\
-         ,,,B,,PC,ww,,,digital,,,,,,10,,,,,\n\
-         ,,,C,,PC,ww,,,digital,,,,,,ten,USD,,,,\n\
-         ,,,D,,PC,ww,,,digital,,,,,,10,dollars,,,,\n\
-         ,,,E,,PC,ww,,,digital,,,,,,,,,,123,\n\
-         ,,,F,,PC,ww,,,digital,,,,,,,,25,,,\n\
-         ,,,G,,PC,ww,,,digital,,,,,,,,lots,EUR,,\n"
+         ,,,A,,,PC,ww,,,digital,,,,,yesterday,,,,,,\n\
+         ,,,B,,,PC,ww,,,digital,,,,,,10,,,,,\n\
+         ,,,C,,,PC,ww,,,digital,,,,,,ten,USD,,,,\n\
+         ,,,D,,,PC,ww,,,digital,,,,,,10,dollars,,,,\n\
+         ,,,E,,,PC,ww,,,digital,,,,,,,,,,123,\n\
+         ,,,F,,,PC,ww,,,digital,,,,,,,,25,,,\n\
+         ,,,G,,,PC,ww,,,digital,,,,,,,,lots,EUR,,\n"
     );
     let (_, preview) = app.post_csv("/api/import/preview", &bad).await;
     assert_eq!(

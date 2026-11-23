@@ -1,6 +1,6 @@
 // Fills an empty collection with test data: games on many platforms, owned
 // and wanted copies, devices, stores, prices, play sessions, custom play
-// statuses and a bundle, then links what it can on IGDB.
+// statuses, labels and a bundle, then links what it can on IGDB.
 // Usage: node scripts/seed.mjs <url> [user id], for `make run` (user `dev`).
 // scripts/ha-demo.mjs runs it through Home Assistant's ingress.
 
@@ -17,6 +17,10 @@ export async function seed(api) {
   }
   for (const [label, color, counts_as] of STATUSES) {
     await api('POST', '/api/play-statuses', { label, color, counts_as });
+  }
+  // The import adds them to games by name.
+  for (const [name, color] of LABELS) {
+    await api('POST', '/api/labels', { name, color });
   }
   await api('POST', '/api/import', csv(), 'text/csv');
 
@@ -73,6 +77,22 @@ const STATUSES = [
   ['Replaying', 'violet', 'playing'],
   ['Collection only', 'gray', 'not_counted'],
 ];
+
+const LABELS = [
+  ['Couch co-op', 'teal'],
+  ['Favorites', 'yellow'],
+  ['Replay someday', 'grape'],
+];
+const GAME_LABELS = {
+  'Mario Kart 8 Deluxe': 'Couch co-op; Favorites',
+  'Super Smash Bros. Ultimate': 'Couch co-op',
+  'Stardew Valley': 'Couch co-op',
+  'Pikmin 4': 'Couch co-op',
+  'Hollow Knight': 'Favorites',
+  'Chrono Trigger': 'Favorites; Replay someday',
+  'Okami': 'Replay someday',
+  'Persona 5 Royal': 'Replay someday',
+};
 
 const BUNDLE = {
   title: 'Super Mario 3D All-Stars',
@@ -147,14 +167,14 @@ const SESSIONS = [
 ];
 const LAST_PLAYED = 'The Legend of Zelda: Tears of the Kingdom';
 
-const COLUMNS = ['status', 'game_title', 'play_status', 'platform', 'region', 'release_title', 'format', 'edition', 'device', 'store', 'condition', 'purchased_on', 'price', 'currency', 'estimated_value', 'barcode'];
+const COLUMNS = ['status', 'game_title', 'play_status', 'labels', 'platform', 'region', 'release_title', 'format', 'edition', 'device', 'store', 'condition', 'purchased_on', 'price', 'currency', 'estimated_value', 'barcode'];
 
 function csv() {
   const lines = [COLUMNS.join(',')];
   ROWS.forEach((row, n) => {
     const [title, play_status, platform, region, format, device, store, condition, purchased_on, price, currency, estimated, extra = {}] = row;
     const values = {
-      status: 'owned', game_title: title, play_status, platform, region, format, device, store, condition, purchased_on, price, currency,
+      status: 'owned', game_title: title, play_status, labels: GAME_LABELS[title], platform, region, format, device, store, condition, purchased_on, price, currency,
       estimated_value: estimated,
       barcode: format === 'physical' && n % 3 === 0 ? ean13(`789000${String(n).padStart(6, '0')}`) : '',
       ...extra,

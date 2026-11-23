@@ -62,6 +62,7 @@ function detail(id: number, title: string, copies: number): GameDetail {
     online_coop: null,
     game_mode_ids: [],
     genre_ids: [],
+    labels: [],
     created_at: '2026-11-01T10:00:00.000Z',
     sessions: [],
     versions: [],

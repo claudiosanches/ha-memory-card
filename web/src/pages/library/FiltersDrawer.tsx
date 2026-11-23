@@ -1,6 +1,6 @@
 import { Button, Drawer, MultiSelect, NumberInput, SegmentedControl, Select, Stack } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
-import { useDevices, useGameModes, useGenres, usePlatforms, useStores } from '../../api/queries';
+import { useDevices, useGameModes, useGenres, useLabels, usePlatforms, useStores } from '../../api/queries';
 import { FORMATS, type Format, REGIONS, type Region } from '../../api/types';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { type LibrarySearch, NO_STATUS, type StatusFilter } from './search';
@@ -23,6 +23,7 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
   const stores = useStores();
   const gameModes = useGameModes();
   const genres = useGenres();
+  const labels = useLabels();
 
   const platformOptions = (platforms.data ?? [])
     .filter((p) => p.active || p.game_count > 0 || search.platform?.includes(p.slug))
@@ -41,6 +42,16 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
             { value: 'any', label: t('library.filter.any') },
           ]}
         />
+        {(labels.data?.length ?? 0) > 0 && (
+          <MultiSelect
+            label={t('library.filter.label')}
+            data={(labels.data ?? []).map((l) => ({ value: l.slug, label: l.name }))}
+            value={search.label ?? []}
+            onChange={(values) => onChange({ label: orUndefined(values) })}
+            searchable
+            clearable
+          />
+        )}
         <MultiSelect
           label={t('library.filter.playStatus')}
           data={[...statuses.options, { value: NO_STATUS, label: t('common.notSet') }]}

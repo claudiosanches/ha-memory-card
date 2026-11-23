@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Device, Platform, Store } from '../../api/types';
+import type { Device, Label, Platform, Store } from '../../api/types';
 import en from '../../locales/en.json';
 import { json, mockApi } from '../../test/api';
 import { renderAt } from '../../test/render';
@@ -248,5 +248,54 @@ describe('Manage platforms', () => {
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ name: 'Dreamcast', active: true }),
     );
+  });
+});
+
+describe('Manage labels', () => {
+  const RETRO: Label = { id: 3, name: 'Retro', slug: 'retro', color: 'orange', game_count: 2 };
+
+  it('lists labels with how many games have them', async () => {
+    mockApi({ 'GET /api/labels': [RETRO] });
+    renderAt('/manage?tab=labels');
+
+    const row = await screen.findByTestId('label-Retro');
+    expect(within(row).getByText('2 games')).toBeInTheDocument();
+  });
+
+  it('creates a label with a color', async () => {
+    const calls = mockApi({
+      'GET /api/labels': [],
+      'POST /api/labels': (body: unknown) => json({ ...RETRO, ...(body as object), id: 4, game_count: 0 }, 201),
+    });
+    renderAt('/manage?tab=labels');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.labels.add }));
+    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Couch co-op' } });
+    fireEvent.click(screen.getByRole('radio', { name: en.playStatuses.colors.teal }));
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Couch co-op', slug: 'couch-co-op', color: 'teal' });
+  });
+
+  it('refuses commas and semicolons in a name before calling the API', async () => {
+    const calls = mockApi({ 'GET /api/labels': [] });
+    renderAt('/manage?tab=labels');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.labels.add }));
+    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Mario, Luigi' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+
+    expect(await screen.findByText(en.errors.label_separator)).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'POST')).toBe(false);
+  });
+
+  it('warns how many games lose the label on delete', async () => {
+    mockApi({ 'GET /api/labels': [RETRO] });
+    renderAt('/manage?tab=labels');
+
+    const row = await screen.findByTestId('label-Retro');
+    fireEvent.click(within(row).getByRole('button', { name: en.common.delete }));
+    expect(await screen.findByText('2 games have this label. They will be kept without it.')).toBeInTheDocument();
   });
 });

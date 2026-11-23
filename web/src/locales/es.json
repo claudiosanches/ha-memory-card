@@ -49,12 +49,13 @@
     "notBuilt": "Esta pantalla aún no está hecha."
   },
   "manage": {
-    "intro": "Organiza los dispositivos, tiendas, plataformas y estados de juego que usa tu colección.",
+    "intro": "Organiza los dispositivos, tiendas, plataformas, estados de juego y categorías que usa tu colección.",
     "tabs": {
       "devices": "Dispositivos",
       "stores": "Tiendas",
       "platforms": "Plataformas",
-      "playStatuses": "Estados de juego"
+      "playStatuses": "Estados de juego",
+      "labels": "Categorías"
     }
   },
   "devices": {
@@ -87,6 +88,17 @@
     "deleteTitle": "¿Eliminar {{name}}?",
     "deleteCopies_one": "{{count}} copia se compró aquí. Se conservará sin tienda.",
     "deleteCopies_other": "{{count}} copias se compraron aquí. Se conservarán sin tienda."
+  },
+  "labels": {
+    "add": "Añadir categoría",
+    "edit": "Editar categoría",
+    "empty": "Aún no hay categorías. Añade tus propios grupos para ordenar los juegos, como Cooperativo en el sofá o Volver a jugar.",
+    "color": "Color",
+    "deleteTitle": "¿Eliminar {{name}}?",
+    "deleteGames_one": "{{count}} juego tiene esta categoría. Se conservará sin ella.",
+    "deleteGames_other": "{{count}} juegos tienen esta categoría. Se conservarán sin ella.",
+    "gameCount_one": "{{count}} juego",
+    "gameCount_other": "{{count}} juegos"
   },
   "platforms": {
     "add": "Añadir plataforma personalizada",
@@ -243,7 +255,8 @@
     "not_your_session": "Solo puedes cambiar las sesiones que registraste.",
     "cross_site": "Otro sitio intentó cambiar tu colección. Abre Memory Card directamente e inténtalo de nuevo.",
     "unsupported_media_type": "El archivo se envió en un formato que la app no acepta.",
-    "too_large": "Se envió demasiado de una vez. Divide el archivo e inténtalo de nuevo."
+    "too_large": "Se envió demasiado de una vez. Divide el archivo e inténtalo de nuevo.",
+    "label_separator": "Las categorías no pueden contener comas ni punto y coma."
   },
   "import": {
     "intro": "Pasa tu colección entre Memory Card y una hoja de cálculo.",
@@ -279,6 +292,7 @@
     "newPlatforms": "Plataformas",
     "newDevices": "Dispositivos",
     "newStores": "Tiendas",
+    "newLabels": "Categorías",
     "newDevice": "{{name}} ({{kind}}): {{platforms}}",
     "issuesTitle": "Filas que revisar",
     "line": "Línea",
@@ -293,6 +307,7 @@
       "igdb_id": "Id opcional del juego en IGDB. Distingue juegos con el mismo título.",
       "game_title": "Obligatoria.",
       "play_status": "backlog, playing, paused, completed, dropped, mastered.",
+      "labels": "Nombres de categorías, separados por comas o punto y coma. Se añaden al juego, y las categorías que aún no existen se crean.",
       "platform": "Nombre, abreviatura o slug de la plataforma, como en la pantalla Gestionar. Los nombres desconocidos se crean.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial o sin región). También NTSC-U, PAL, NTSC-J.",
       "release_title": "Título en este lanzamiento, cuando difiere del título del juego.",
@@ -447,6 +462,7 @@
       "buyAt": "Comprar en",
       "region": "Región",
       "genre": "Género",
+      "label": "Categoría",
       "gameMode": "Modo de juego",
       "playStatus": "Estado de juego",
       "format": "Formato",
@@ -496,6 +512,8 @@
     "namesIgdb": "Pulsa Intro después de cada uno. IGDB también da: {{names}}.",
     "alsoKnownAs": "También conocido como",
     "summary": "Resumen",
+    "labels": "Categorías",
+    "labelsEmpty": "Añade categorías en Gestionar para agrupar los juegos a tu manera.",
     "edit": "Editar juego",
     "delete": "Eliminar juego",
     "deleteTitle": "¿Eliminar {{title}}?",

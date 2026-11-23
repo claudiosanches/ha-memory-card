@@ -24,6 +24,7 @@ const COLUMNS = [
   'igdb_id',
   'game_title',
   'play_status',
+  'labels',
   'platform',
   'region',
   'release_title',
@@ -261,7 +262,10 @@ function PreviewResult({
         ))}
       </SimpleGrid>
 
-      {(preview.new_platforms.length > 0 || preview.new_devices.length > 0 || preview.new_stores.length > 0) && (
+      {(preview.new_platforms.length > 0 ||
+        preview.new_devices.length > 0 ||
+        preview.new_stores.length > 0 ||
+        preview.new_labels.length > 0) && (
         <Stack gap={4}>
           <Text fw={600} size="sm">
             {t('import.willCreate')}
@@ -290,6 +294,11 @@ function PreviewResult({
           {preview.new_stores.length > 0 && (
             <Text size="sm">
               {t('import.newStores')}: {preview.new_stores.join(', ')}
+            </Text>
+          )}
+          {preview.new_labels.length > 0 && (
+            <Text size="sm">
+              {t('import.newLabels')}: {preview.new_labels.join(', ')}
             </Text>
           )}
         </Stack>

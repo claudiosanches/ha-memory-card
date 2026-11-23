@@ -480,6 +480,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listLabels"];
+        put?: never;
+        post: operations["createLabel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/labels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateLabel"];
+        post?: never;
+        delete: operations["deleteLabel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -1039,6 +1071,8 @@ export interface components {
             id: number;
             /** Format: int64 */
             igdb_id?: number | null;
+            /** @description By name. */
+            labels: components["schemas"]["GameLabel"][];
             local_coop?: boolean | null;
             /** Format: int64 */
             local_max_players?: number | null;
@@ -1062,6 +1096,8 @@ export interface components {
         };
         GameInput: {
             game_mode_ids?: number[];
+            /** @description Left out, the current labels stay. */
+            label_ids?: number[] | null;
             local_coop?: boolean | null;
             /** Format: int64 */
             local_max_players?: number | null;
@@ -1074,6 +1110,14 @@ export interface components {
             play_status?: string | null;
             summary?: string | null;
             title: string;
+        };
+        /** @description A label on a game. */
+        GameLabel: {
+            color: components["schemas"]["StatusColor"];
+            /** Format: int64 */
+            id: number;
+            name: string;
+            slug: string;
         };
         GameMode: {
             /** Format: int64 */
@@ -1139,6 +1183,7 @@ export interface components {
             /** @description How each header of the file was read, in file order. */
             headers: components["schemas"]["HeaderMatch"][];
             new_devices: components["schemas"]["NewDeviceReport"][];
+            new_labels: string[];
             new_platforms: string[];
             new_stores: string[];
             rows: components["schemas"]["RowReport"][];
@@ -1164,6 +1209,25 @@ export interface components {
             updated_games: number;
             updated_releases: number;
             warning_rows: number;
+        };
+        Label: {
+            color: components["schemas"]["StatusColor"];
+            /** Format: int64 */
+            game_count: number;
+            /** Format: int64 */
+            id: number;
+            name: string;
+            /** @description Names the label in library links. */
+            slug: string;
+        };
+        LabelInput: {
+            color: components["schemas"]["StatusColor"];
+            name: string;
+            /**
+             * @description Names it in library links. Blank makes one from the name for a new
+             *     one and keeps the current one on update.
+             */
+            slug?: string | null;
         };
         LinkInput: {
             /** Format: int64 */
@@ -1742,6 +1806,8 @@ export interface operations {
                 genre?: string;
                 /** @description Game mode slugs. */
                 game_mode?: string;
+                /** @description Label slugs. */
+                label?: string;
                 /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
                 format?: components["schemas"]["Format"];
@@ -2210,6 +2276,8 @@ export interface operations {
                 genre?: string;
                 /** @description Game mode slugs. */
                 game_mode?: string;
+                /** @description Label slugs. */
+                label?: string;
                 /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
                 format?: components["schemas"]["Format"];
@@ -2282,6 +2350,8 @@ export interface operations {
                 genre?: string;
                 /** @description Game mode slugs. */
                 game_mode?: string;
+                /** @description Label slugs. */
+                label?: string;
                 /** @description Play statuses, plus `none` for games without one. */
                 play_status?: string;
                 format?: components["schemas"]["Format"];
@@ -3079,6 +3149,144 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    listLabels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"][];
+                };
+            };
+        };
+    };
+    createLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelInput"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"];
+                };
+            };
+            /** @description `name_taken`, `slug_taken` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Also `label_separator` for a comma or semicolon in the name */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `name_taken`, `slug_taken` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted; its games keep existing without it */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

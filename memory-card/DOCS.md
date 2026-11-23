@@ -69,7 +69,7 @@ starts read-only. To name a manager:
 Everyone else is a viewer. Viewers browse the library, game pages, the
 backlog and duplicates. They cannot add, edit or delete anything, roll a
 random pick, change play progress, import or export CSV files, manage
-devices, stores, platforms and play statuses, or sync with IGDB. Requests
+devices, stores, platforms, play statuses and labels, or sync with IGDB. Requests
 that Home Assistant does not tie to a user are refused.
 
 To let viewers keep track of what they play, turn on
@@ -200,6 +200,7 @@ names for each game, to link with a click or mark as not on IGDB.
 | `igdb_id` | IGDB game id, optional |
 | `game_title` | Required |
 | `play_status` | `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write the key. |
+| `labels` | Label names, separated by commas or semicolons. The import adds them to the game and creates the ones you do not have yet, in gray; it never removes a label. Exports write them separated by `; `. |
 | `platform` | Platform name, abbreviation or slug |
 | `region` | `na`, `eu`, `au`, `nz`, `jp`, `cn`, `asia`, `kr`, `br`, `ww` (worldwide or region-free); also `NTSC-U`, `PAL`, `NTSC-J` |
 | `release_title` | Title on this release, when it differs |
@@ -231,6 +232,16 @@ on them. Statuses you add have a name, a color and a "counts as" group:
 - Not counted: left out of the Backlog page.
 
 Deleting a status moves its games to another status, or leaves them with none.
+
+## Labels
+
+Labels are your own groups for games, such as "Couch co-op" or "Replay
+someday". Manage > Labels lists them with how many games have each, and
+each has a name and a color. Set a game's labels in its edit form; the game
+page shows them after the summary, and selecting one opens the library
+filtered by it. The library's Label filter shows games with any of the
+labels you pick. Names cannot contain commas or semicolons, which separate
+labels in CSV files. Deleting a label keeps its games.
 
 ## Home Assistant sensors
 

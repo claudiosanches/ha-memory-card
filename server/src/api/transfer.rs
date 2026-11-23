@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use axum::Json;
 use axum::extract::rejection::QueryRejection;
 use axum::extract::{Query, State};
@@ -53,6 +55,7 @@ pub struct ImportPreview {
     pub new_platforms: Vec<String>,
     pub new_devices: Vec<NewDeviceReport>,
     pub new_stores: Vec<String>,
+    pub new_labels: Vec<String>,
     pub rows: Vec<RowReport>,
 }
 
@@ -68,7 +71,17 @@ fn summarize(plan: &Plan) -> ImportSummary {
     ImportSummary {
         rows: plan.rows.len(),
         new_games: plan.games.len(),
-        updated_games: plan.game_statuses.len() + plan.game_igdb_links.len(),
+        updated_games: plan
+            .game_statuses
+            .iter()
+            .map(|(id, _)| *id)
+            .chain(plan.game_igdb_links.iter().map(|(id, _)| *id))
+            .chain(plan.game_labels.iter().filter_map(|(game, _)| match game {
+                Ref::Existing(id) => Some(*id),
+                Ref::New(_) => None,
+            }))
+            .collect::<HashSet<_>>()
+            .len(),
         new_releases: plan.releases.len(),
         updated_releases: plan.release_titles.len(),
         new_copies: count(RowAction::NewCopy),
@@ -110,6 +123,7 @@ fn preview_of(plan: Plan, snapshot: &Snapshot) -> ImportPreview {
             .collect(),
         new_platforms: plan.platforms.clone(),
         new_stores: plan.stores.clone(),
+        new_labels: plan.labels.clone(),
         rows: plan.rows,
     }
 }
@@ -123,6 +137,7 @@ fn file_problem(issue: FileIssue) -> ImportPreview {
         new_platforms: Vec::new(),
         new_devices: Vec::new(),
         new_stores: Vec::new(),
+        new_labels: Vec::new(),
         rows: Vec::new(),
     }
 }

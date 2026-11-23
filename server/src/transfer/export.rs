@@ -12,6 +12,7 @@ struct ExportRow {
     igdb_id: Option<i64>,
     game_title: String,
     play_status: Option<String>,
+    labels: Option<String>,
     platform: Option<String>,
     region: Option<Region>,
     release_title: Option<String>,
@@ -35,7 +36,11 @@ struct ExportRow {
 /// with no copies get a row of their own.
 pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     let mut qb = QueryBuilder::new(
-        "SELECT copy_id, status, igdb_id, game_title, play_status, platform, region,
+        "SELECT copy_id, status, igdb_id, game_title, play_status,
+                (SELECT group_concat(l.name, '; ' ORDER BY l.name COLLATE NOCASE)
+                 FROM game_labels gl JOIN labels l ON l.id = gl.label_id
+                 WHERE gl.game_id = rows.game_id) AS labels,
+                platform, region,
                 release_title, product_code, format, device, store, condition, notes,
                 edition, purchased_on, price, currency, estimated_value, estimated_currency,
                 barcode, bundle_copy_id
@@ -70,7 +75,7 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         );
         library::push_game_filters(&mut qb, filter);
     }
-    qb.push(") ORDER BY sort_title, game_id, platform_order, region, copy_id");
+    qb.push(") AS rows ORDER BY sort_title, game_id, platform_order, region, copy_id");
     qb
 }
 
@@ -114,6 +119,7 @@ pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>
                 id(row.igdb_id),
                 plain(row.game_title),
                 text(row.play_status),
+                free(row.labels),
                 free(row.platform),
                 text(row.region.map(|v| v.as_str().to_owned())),
                 free(row.release_title),

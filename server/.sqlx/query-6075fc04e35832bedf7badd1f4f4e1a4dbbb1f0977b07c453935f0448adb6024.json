@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE labels\n         SET name = ?, slug = COALESCE(?, slug), color = ?,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "6075fc04e35832bedf7badd1f4f4e1a4dbbb1f0977b07c453935f0448adb6024"
+}

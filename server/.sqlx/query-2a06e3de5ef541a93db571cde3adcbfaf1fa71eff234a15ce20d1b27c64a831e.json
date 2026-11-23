@@ -1,0 +1,69 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT l.id AS \"id!\", l.name, l.slug, l.color AS \"color: StatusColor\",\n                  (SELECT COUNT(*) FROM game_labels gl WHERE gl.label_id = l.id) AS \"game_count!: i64\"\n           FROM labels l\n           WHERE l.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "labels",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "labels",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "slug",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "labels",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "name": "color: StatusColor",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "labels",
+            "name": "color"
+          }
+        }
+      },
+      {
+        "name": "game_count!: i64",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2a06e3de5ef541a93db571cde3adcbfaf1fa71eff234a15ce20d1b27c64a831e"
+}

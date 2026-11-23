@@ -55,6 +55,7 @@ describe('Import page', () => {
       new_platforms: [],
       new_devices: [{ name: 'Switch OLED', kind: 'console', platforms: ['Nintendo Switch'] }],
       new_stores: ['Amazon'],
+      new_labels: [],
       rows: [{ line: 2, game_title: 'Zelda', platform: 'Switch', action: 'new_copy', issues: [] }],
     };
     const calls = mockApi({
@@ -91,6 +92,7 @@ describe('Import page', () => {
         new_platforms: [],
         new_devices: [],
         new_stores: [],
+        new_labels: [],
         rows: [{ line: 2, game_title: 'Zelda', platform: 'Switch', action: 'new_copy', issues: [] }],
       },
       'POST /api/import': { summary: summary(), unlinked_games: 3 },
@@ -113,6 +115,7 @@ describe('Import page', () => {
         new_platforms: [],
         new_devices: [],
         new_stores: [],
+        new_labels: [],
         rows: [
           {
             line: 2,
@@ -143,6 +146,7 @@ describe('Import page', () => {
         new_platforms: [],
         new_devices: [],
         new_stores: [],
+        new_labels: [],
         rows: [],
       }),
     });
@@ -166,6 +170,7 @@ describe('Import page', () => {
         new_platforms: [],
         new_devices: [],
         new_stores: [],
+        new_labels: [],
         rows: [],
       },
     });

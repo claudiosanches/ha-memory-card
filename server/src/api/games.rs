@@ -6,7 +6,7 @@ use time::Date;
 use time::macros::format_description;
 use utoipa::ToSchema;
 
-use super::input::{NAME_MAX, NOTES_MAX, optional, required};
+use super::input::{IDS_MAX, NAME_MAX, NOTES_MAX, optional, required};
 use crate::AppState;
 use crate::access::Actor;
 use crate::covers::{self, Owner};
@@ -53,6 +53,9 @@ pub struct GameInput {
     /// Other names to search by. Left out, the current ones stay.
     #[serde(default)]
     pub names: Option<Vec<String>>,
+    /// Left out, the current labels stay.
+    #[serde(default)]
+    pub label_ids: Option<Vec<i64>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -216,6 +219,12 @@ impl GameInput {
             )?,
             game_mode_ids: self.game_mode_ids.clone(),
             names: self.names.as_deref().map(names).transpose()?,
+            label_ids: match &self.label_ids {
+                Some(ids) if ids.len() > IDS_MAX => {
+                    return Err(ApiError::invalid("too_many", "label_ids"));
+                }
+                ids => ids.clone(),
+            },
         })
     }
 }

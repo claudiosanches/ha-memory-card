@@ -18,7 +18,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call } from '../../api/errors';
-import { queryKeys, useDevices, useGameModes, usePlatforms, useStatus, useStores } from '../../api/queries';
+import { queryKeys, useDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
 import {
   CONDITIONS,
   type CopyDetail,
@@ -412,12 +412,15 @@ export function ReleaseForm({ release, onClose }: { release: ReleaseDetail; onCl
 export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => void }) {
   const { t } = useTranslation();
   const gameModes = useGameModes();
+  const labels = useLabels();
   const saved = useGameSaved();
+  const queryClient = useQueryClient();
   const form = useForm({
     initialValues: {
       title: game.title,
       summary: game.summary ?? '',
       game_mode_ids: game.game_mode_ids.map(String),
+      label_ids: game.labels.map((l) => String(l.id)),
       local_max: (game.local_max_players ?? '') as string | number,
       online_max: (game.online_max_players ?? '') as string | number,
       local_coop: game.local_coop === true,
@@ -443,11 +446,14 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
             local_coop: checkedOrNull(v.local_coop, game.local_coop),
             online_coop: checkedOrNull(v.online_coop, game.online_coop),
             names: v.names,
+            label_ids: v.label_ids.map(Number),
           },
         }),
       ),
     onSuccess: (updated) => {
       saved(updated);
+      // Manage counts games per label.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.labels });
       onClose();
     },
     onError: onApiError,
@@ -477,6 +483,15 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
         data={(gameModes.data ?? []).map((m) => ({ value: String(m.id), label: m.name }))}
         clearable
         {...form.getInputProps('game_mode_ids')}
+      />
+      <MultiSelect
+        label={t('game.labels')}
+        description={labels.data?.length === 0 ? t('game.labelsEmpty') : undefined}
+        data={(labels.data ?? []).map((l) => ({ value: String(l.id), label: l.name }))}
+        disabled={labels.data?.length === 0}
+        searchable
+        clearable
+        {...form.getInputProps('label_ids')}
       />
       <PlayerFields
         localMax={form.getInputProps('local_max')}

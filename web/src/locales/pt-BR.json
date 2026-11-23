@@ -49,12 +49,13 @@
     "notBuilt": "Esta tela ainda não foi feita."
   },
   "manage": {
-    "intro": "Organize os dispositivos, lojas, plataformas e status de jogo usados na sua coleção.",
+    "intro": "Organize os dispositivos, lojas, plataformas, status de jogo e etiquetas usados na sua coleção.",
     "tabs": {
       "devices": "Dispositivos",
       "stores": "Lojas",
       "platforms": "Plataformas",
-      "playStatuses": "Status de jogo"
+      "playStatuses": "Status de jogo",
+      "labels": "Etiquetas"
     }
   },
   "devices": {
@@ -87,6 +88,17 @@
     "deleteTitle": "Excluir {{name}}?",
     "deleteCopies_one": "{{count}} cópia foi comprada aqui. Ela será mantida sem loja.",
     "deleteCopies_other": "{{count}} cópias foram compradas aqui. Elas serão mantidas sem loja."
+  },
+  "labels": {
+    "add": "Adicionar etiqueta",
+    "edit": "Editar etiqueta",
+    "empty": "Nenhuma etiqueta ainda. Adicione seus próprios grupos para organizar os jogos, como Cooperativo no sofá ou Jogar de novo.",
+    "color": "Cor",
+    "deleteTitle": "Excluir {{name}}?",
+    "deleteGames_one": "{{count}} jogo tem esta etiqueta. Ele será mantido sem ela.",
+    "deleteGames_other": "{{count}} jogos têm esta etiqueta. Eles serão mantidos sem ela.",
+    "gameCount_one": "{{count}} jogo",
+    "gameCount_other": "{{count}} jogos"
   },
   "platforms": {
     "add": "Adicionar plataforma personalizada",
@@ -243,7 +255,8 @@
     "not_your_session": "Você só pode alterar as sessões que registrou.",
     "cross_site": "Outro site tentou alterar sua coleção. Abra o Memory Card diretamente e tente de novo.",
     "unsupported_media_type": "O arquivo foi enviado num formato que o app não aceita.",
-    "too_large": "Foi enviado demais de uma vez. Divida o arquivo e tente de novo."
+    "too_large": "Foi enviado demais de uma vez. Divida o arquivo e tente de novo.",
+    "label_separator": "Etiquetas não podem ter vírgulas nem ponto e vírgula."
   },
   "import": {
     "intro": "Leve sua coleção entre o Memory Card e uma planilha.",
@@ -279,6 +292,7 @@
     "newPlatforms": "Plataformas",
     "newDevices": "Dispositivos",
     "newStores": "Lojas",
+    "newLabels": "Etiquetas",
     "newDevice": "{{name}} ({{kind}}): {{platforms}}",
     "issuesTitle": "Linhas para conferir",
     "line": "Linha",
@@ -293,6 +307,7 @@
       "igdb_id": "Id do jogo no IGDB, opcional. Diferencia jogos com o mesmo título.",
       "game_title": "Obrigatória.",
       "play_status": "backlog, playing, paused, completed, dropped, mastered.",
+      "labels": "Nomes das etiquetas, separados por vírgulas ou ponto e vírgula. Elas são adicionadas ao jogo, e as que ainda não existem são criadas.",
       "platform": "Nome, abreviação ou slug da plataforma, como na tela Gerenciar. Nomes desconhecidos são criados.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial ou sem região). Também NTSC-U, PAL, NTSC-J.",
       "release_title": "Título neste lançamento, quando difere do título do jogo.",
@@ -447,6 +462,7 @@
       "buyAt": "Comprar em",
       "region": "Região",
       "genre": "Gênero",
+      "label": "Etiqueta",
       "gameMode": "Modo de jogo",
       "playStatus": "Status de jogo",
       "format": "Formato",
@@ -496,6 +512,8 @@
     "namesIgdb": "Pressione Enter depois de cada um. O IGDB também traz: {{names}}.",
     "alsoKnownAs": "Também conhecido como",
     "summary": "Resumo",
+    "labels": "Etiquetas",
+    "labelsEmpty": "Adicione etiquetas em Gerenciar para agrupar os jogos do seu jeito.",
     "edit": "Editar jogo",
     "delete": "Excluir jogo",
     "deleteTitle": "Excluir {{title}}?",

@@ -81,6 +81,10 @@ pub struct LibraryFilter {
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
     pub game_mode: Vec<Slug>,
+    /// Label slugs.
+    #[serde(default, deserialize_with = "comma_list")]
+    #[param(value_type = Option<String>)]
+    pub label: Vec<Slug>,
     /// Play statuses, plus `none` for games without one.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
@@ -300,6 +304,11 @@ pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) 
     if !filter.game_mode.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_game_modes gm WHERE gm.game_id = g.id");
         push_slugs(qb, "gm.game_mode_id", Table::GameModes, &filter.game_mode);
+        qb.push(")");
+    }
+    if !filter.label.is_empty() {
+        qb.push(" AND EXISTS (SELECT 1 FROM game_labels gl WHERE gl.game_id = g.id");
+        push_slugs(qb, "gl.label_id", Table::Labels, &filter.label);
         qb.push(")");
     }
     push_play_status(qb, &filter.play_status);

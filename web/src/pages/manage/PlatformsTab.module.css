@@ -8,7 +8,6 @@
 .handle { cursor: grab; touch-action: none; }
 .row[data-dragging] { position: relative; z-index: 1; cursor: grabbing; box-shadow: var(--mc-raised-shadow); }
 .actions { flex-shrink: 0; }
-.swatch { cursor: pointer; }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .groupTitle { letter-spacing: 0.06em; padding-top: 6px; }
 .empty { padding: 32px 24px; text-align: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: 12px; }

@@ -26,6 +26,7 @@ const GAME: GameDetail = {
   online_coop: null,
   game_mode_ids: [],
   genre_ids: [],
+  labels: [],
   created_at: '2026-11-01T10:00:00.000Z',
   sessions: [],
   versions: [],
@@ -184,6 +185,53 @@ describe('Game page', () => {
     await router.navigate({ to: '/games/$gameId', params: { gameId: '4' } });
     fireEvent.click(await screen.findByRole('link', { name: 'Platform' }));
     await waitFor(() => expect(router.state.location.searchStr).toBe('?genre=platform'));
+  });
+
+  it('shows labels after the summary only when the game has some, linked to the library', async () => {
+    const labels = [{ id: 2, name: 'Couch co-op', slug: 'couch-co-op', color: 'teal' as const }];
+    mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, summary: 'Samus returns.', labels }, 'GET /api/games': [] });
+    const { router } = renderAt('/games/4');
+
+    const row = await screen.findByTestId('labels');
+    expect(row).toHaveTextContent(`${en.game.labels}:Couch co-op`);
+    expect(screen.getByText('Samus returns.', { exact: false }).compareDocumentPosition(row)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    fireEvent.click(within(row).getByRole('link', { name: 'Couch co-op' }));
+    await waitFor(() => expect(router.state.location.searchStr).toBe('?label=couch-co-op'));
+  });
+
+  it('hides the labels row when the game has none', async () => {
+    mockApi({ ...SETUP, 'GET /api/games/4': GAME });
+    renderAt('/games/4');
+
+    await screen.findByRole('heading', { name: GAME.title });
+    expect(screen.queryByTestId('labels')).not.toBeInTheDocument();
+  });
+
+  it('sets labels in the edit form', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': GAME,
+      'GET /api/labels': [
+        { id: 2, name: 'Couch co-op', slug: 'couch-co-op', color: 'teal', game_count: 0 },
+        { id: 3, name: 'Retro', slug: 'retro', color: 'orange', game_count: 0 },
+      ],
+      'PUT /api/games/4': GAME,
+    });
+    renderAt('/games/4');
+
+    await screen.findByRole('heading', { name: GAME.title });
+    fireEvent.click(screen.getByRole('button', { name: en.common.edit }));
+    const dialog = await screen.findByRole('dialog');
+    const labels = within(dialog).getByRole('combobox', { name: en.game.labels });
+    await waitFor(() => expect(labels).toBeEnabled());
+    fireEvent.click(labels);
+    fireEvent.click(await screen.findByRole('option', { name: 'Retro', hidden: true }));
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ label_ids: [3] });
   });
 
   it('lists each copy with its edition, purchase and where it came from', async () => {

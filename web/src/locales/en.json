@@ -49,12 +49,13 @@
     "notBuilt": "This screen is not built yet."
   },
   "manage": {
-    "intro": "Organize the devices, stores, platforms, and play statuses used in your collection.",
+    "intro": "Organize the devices, stores, platforms, play statuses, and labels used in your collection.",
     "tabs": {
       "devices": "Devices",
       "stores": "Stores",
       "platforms": "Platforms",
-      "playStatuses": "Play statuses"
+      "playStatuses": "Play statuses",
+      "labels": "Labels"
     }
   },
   "devices": {
@@ -87,6 +88,17 @@
     "deleteTitle": "Delete {{name}}?",
     "deleteCopies_one": "{{count}} copy was bought here. It will be kept with no store.",
     "deleteCopies_other": "{{count}} copies were bought here. They will be kept with no store."
+  },
+  "labels": {
+    "add": "Add label",
+    "edit": "Edit label",
+    "empty": "No labels yet. Add your own groups to sort games by, such as Couch co-op or Replay someday.",
+    "color": "Color",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteGames_one": "{{count}} game has this label. It will be kept without it.",
+    "deleteGames_other": "{{count}} games have this label. They will be kept without it.",
+    "gameCount_one": "{{count}} game",
+    "gameCount_other": "{{count}} games"
   },
   "platforms": {
     "add": "Add custom platform",
@@ -243,7 +255,8 @@
     "not_your_session": "You can only change sessions you logged.",
     "cross_site": "Another site tried to change your collection. Open Memory Card directly and try again.",
     "unsupported_media_type": "The file was sent in a form the app does not accept.",
-    "too_large": "Too much was sent at once. Split the file and try again."
+    "too_large": "Too much was sent at once. Split the file and try again.",
+    "label_separator": "Labels cannot contain commas or semicolons."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -279,6 +292,7 @@
     "newPlatforms": "Platforms",
     "newDevices": "Devices",
     "newStores": "Stores",
+    "newLabels": "Labels",
     "newDevice": "{{name}} ({{kind}}): {{platforms}}",
     "issuesTitle": "Rows to check",
     "line": "Line",
@@ -293,6 +307,7 @@
       "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
       "game_title": "Required.",
       "play_status": "backlog, playing, paused, completed, dropped, mastered.",
+      "labels": "Label names, separated by commas or semicolons. The game gets them added, and labels that do not exist yet are created.",
       "platform": "Platform name, abbreviation or slug, as on the Manage screen. Unknown names are created.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",
       "release_title": "Title on this release, when it differs from the game title.",
@@ -447,6 +462,7 @@
       "buyAt": "Buy at",
       "region": "Region",
       "genre": "Genre",
+      "label": "Label",
       "gameMode": "Game mode",
       "playStatus": "Play status",
       "format": "Format",
@@ -496,6 +512,8 @@
     "namesIgdb": "Press Enter after each. IGDB also gives: {{names}}.",
     "alsoKnownAs": "Also known as",
     "summary": "Summary",
+    "labels": "Labels",
+    "labelsEmpty": "Add labels in Manage to group games your own way.",
     "edit": "Edit game",
     "delete": "Delete game",
     "deleteTitle": "Delete {{title}}?",

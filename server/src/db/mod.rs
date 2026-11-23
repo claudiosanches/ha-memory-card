@@ -1,6 +1,7 @@
 pub mod devices;
 pub mod duplicates;
 pub mod games;
+pub mod labels;
 pub mod library;
 pub mod missing;
 pub mod photos;

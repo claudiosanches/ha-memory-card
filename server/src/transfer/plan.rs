@@ -1,7 +1,7 @@
 //! Turns parsed rows into a plan of creates and updates, without touching the
 //! database. The preview shows the plan; the import applies it.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 use super::parse::RawRow;
 use super::snapshot::{CopyRow, Snapshot};
 use crate::db::devices::DeviceKind;
+use crate::db::labels::SEPARATORS;
 use crate::db::play_statuses;
 use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::money;
@@ -111,6 +112,10 @@ pub struct Plan {
     pub game_igdb_links: Vec<(i64, i64)>,
     /// Existing releases whose title changes.
     pub release_titles: Vec<(i64, String)>,
+    /// Label names to create.
+    pub labels: Vec<String>,
+    /// Games and the labels they gain.
+    pub game_labels: Vec<(Ref, Ref)>,
     pub copies: Vec<CopyWrite>,
     pub rows: Vec<RowReport>,
 }
@@ -162,6 +167,8 @@ struct Planner<'a> {
     devices: HashMap<String, Ref>,
     device_platforms: HashMap<i64, Vec<i64>>,
     stores: HashMap<String, Ref>,
+    labels: HashMap<String, Ref>,
+    game_labels: HashSet<(Ref, Ref)>,
     games_by_igdb: HashMap<i64, Ref>,
     games_by_title: HashMap<String, Vec<Ref>>,
     releases: HashMap<(Ref, Ref, Region, String), Ref>,
@@ -227,6 +234,16 @@ impl<'a> Planner<'a> {
                 .stores
                 .iter()
                 .map(|s| (key(&s.name), Ref::Existing(s.id)))
+                .collect(),
+            labels: snapshot
+                .labels
+                .iter()
+                .map(|l| (key(&l.name), Ref::Existing(l.id)))
+                .collect(),
+            game_labels: snapshot
+                .game_labels
+                .iter()
+                .map(|&(game, label)| (Ref::Existing(game), Ref::Existing(label)))
                 .collect(),
             games_by_igdb,
             games_by_title,
@@ -310,6 +327,7 @@ impl<'a> Planner<'a> {
             }
             found
         });
+        let labels = label_names(raw.labels.as_deref(), &mut issues);
 
         let has_copy = raw.has_copy_columns();
         let copy_id = issues.id(&raw.copy_id, "copy_id");
@@ -474,6 +492,7 @@ impl<'a> Planner<'a> {
 
         // ---- commit the row to the plan ----
         let game = self.ensure_game(game, igdb_id, &title, play_status);
+        self.add_labels(game, &labels);
         if !has_copy {
             self.plan.rows.push(report(RowAction::GameOnly, issues));
             return;
@@ -727,6 +746,25 @@ impl<'a> Planner<'a> {
         device
     }
 
+    /// Adds labels to a game, creating the ones that do not exist. Labels
+    /// the game already has are left alone, and none are removed.
+    fn add_labels(&mut self, game: Ref, names: &[String]) {
+        for name in names {
+            let label = match self.labels.get(&key(name)) {
+                Some(found) => *found,
+                None => {
+                    let label = Ref::New(self.plan.labels.len());
+                    self.plan.labels.push(name.clone());
+                    self.labels.insert(key(name), label);
+                    label
+                }
+            };
+            if self.game_labels.insert((game, label)) {
+                self.plan.game_labels.push((game, label));
+            }
+        }
+    }
+
     fn ensure_store(&mut self, name: &str) -> Ref {
         if let Some(found) = self.stores.get(&key(name)) {
             return *found;
@@ -736,6 +774,24 @@ impl<'a> Planner<'a> {
         self.stores.insert(key(name), store);
         store
     }
+}
+
+/// The names in a labels cell, once each.
+fn label_names(cell: Option<&str>, issues: &mut Issues) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    for name in cell
+        .unwrap_or_default()
+        .split(SEPARATORS)
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+    {
+        if name.chars().count() > NAME_MAX {
+            issues.error("labels", "too_long");
+        } else if !names.iter().any(|n| key(n) == key(name)) {
+            names.push(name.to_owned());
+        }
+    }
+    names
 }
 
 fn same_copy(copy: &CopyRow, write: &CopyWrite) -> bool {

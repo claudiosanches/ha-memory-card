@@ -26,6 +26,7 @@ export type LibrarySearch = {
   store?: string[];
   genre?: string[];
   game_mode?: string[];
+  label?: string[];
   region?: Region[];
   play_status?: StatusFilter[];
   format?: Format;
@@ -35,7 +36,7 @@ export type LibrarySearch = {
   sort?: 'added' | 'played';
 };
 
-const SLUG_LISTS = ['platform', 'device', 'store', 'genre', 'game_mode'] as const;
+const SLUG_LISTS = ['platform', 'device', 'store', 'genre', 'game_mode', 'label'] as const;
 
 function slugs(value: unknown): string[] | undefined {
   const list = listParam(value)

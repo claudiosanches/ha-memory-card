@@ -86,6 +86,30 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
         .await?;
         games.push(id);
     }
+    let mut labels = Vec::with_capacity(plan.labels.len());
+    for name in &plan.labels {
+        let slug = slug::free(conn, Table::Labels, name).await?;
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO labels (name, slug) VALUES (?, ?) RETURNING id AS "id!""#,
+            name,
+            slug
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        labels.push(id);
+    }
+    for (game, label) in &plan.game_labels {
+        let game_id = resolve(*game, &games);
+        let label_id = resolve(*label, &labels);
+        sqlx::query!(
+            "INSERT OR IGNORE INTO game_labels (game_id, label_id) VALUES (?, ?)",
+            game_id,
+            label_id
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+
     for (id, status) in &plan.game_statuses {
         sqlx::query!(
             "UPDATE games SET play_status = ?, updated_by = ?,

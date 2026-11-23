@@ -8,12 +8,13 @@ pub mod plan;
 pub mod snapshot;
 
 /// Column order for export and the blank template.
-pub const COLUMNS: [&str; 22] = [
+pub const COLUMNS: [&str; 23] = [
     "copy_id",
     "status",
     "igdb_id",
     "game_title",
     "play_status",
+    "labels",
     "platform",
     "region",
     "release_title",

@@ -73,6 +73,9 @@ pub struct Snapshot {
     pub releases: Vec<ReleaseRow>,
     pub copies: Vec<CopyRow>,
     pub play_statuses: Vec<StatusName>,
+    pub labels: Vec<NamedRow>,
+    /// Game and label ids.
+    pub game_labels: Vec<(i64, i64)>,
 }
 
 pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
@@ -131,6 +134,16 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
 
     let play_statuses = play_statuses::names(&mut *conn).await?;
 
+    let labels = sqlx::query_as!(NamedRow, r#"SELECT id AS "id!", name FROM labels"#)
+        .fetch_all(&mut *conn)
+        .await?;
+    let game_labels = sqlx::query!("SELECT game_id, label_id FROM game_labels")
+        .fetch_all(&mut *conn)
+        .await?
+        .into_iter()
+        .map(|row| (row.game_id, row.label_id))
+        .collect();
+
     Ok(Snapshot {
         platforms,
         devices,
@@ -139,5 +152,7 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
         releases,
         copies,
         play_statuses,
+        labels,
+        game_labels,
     })
 }

@@ -7,7 +7,7 @@ use super::{COLUMNS, MAX_ROWS, UTF8_BOM};
 use crate::domain::loose;
 
 /// Header names other spreadsheets use, compared loosely, for each column.
-const ALIASES: [(&str, &[&str]); 17] = [
+const ALIASES: [(&str, &[&str]); 18] = [
     ("game_title", &["title", "name", "game", "gamename"]),
     ("igdb_id", &["igdb"]),
     ("platform", &["system", "console", "platformname"]),
@@ -18,6 +18,10 @@ const ALIASES: [(&str, &[&str]); 17] = [
     (
         "play_status",
         &["progress", "completion", "completionstatus", "playstate"],
+    ),
+    (
+        "labels",
+        &["label", "tags", "tag", "categories", "category"],
     ),
     ("device", &["account"]),
     (
@@ -104,6 +108,8 @@ pub struct RawRow {
     pub igdb_id: Option<String>,
     pub game_title: Option<String>,
     pub play_status: Option<String>,
+    /// Label names, separated by commas or semicolons.
+    pub labels: Option<String>,
     pub platform: Option<String>,
     pub region: Option<String>,
     pub release_title: Option<String>,
@@ -235,6 +241,7 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             igdb_id: cell("igdb_id"),
             game_title: cell("game_title"),
             play_status: cell("play_status"),
+            labels: cell("labels"),
             platform: cell("platform"),
             region: cell("region"),
             release_title: cell("release_title"),
@@ -257,6 +264,7 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             && row.igdb_id.is_none()
             && !row.has_copy_columns()
             && row.play_status.is_none()
+            && row.labels.is_none()
         {
             continue;
         }

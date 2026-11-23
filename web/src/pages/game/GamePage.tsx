@@ -430,6 +430,24 @@ function GameView({ game }: { game: GameDetail }) {
                 <strong>{t('game.summary')}:</strong> {game.summary}
               </Text>
             )}
+            {game.labels.length > 0 && (
+              <Group gap="xs" className={classes.tagRow} data-testid="labels">
+                <Text size="sm"><strong>{t('game.labels')}:</strong></Text>
+                {game.labels.map((label) => (
+                  <Badge
+                    key={label.id}
+                    size="sm"
+                    variant="light"
+                    color={label.color}
+                    tt="none"
+                    className={classes.tagLink}
+                    renderRoot={(props) => <Link to="/" search={{ label: [label.slug] }} {...props} />}
+                  >
+                    {label.name}
+                  </Badge>
+                ))}
+              </Group>
+            )}
           </Stack>
         </Card>
       </Stack>

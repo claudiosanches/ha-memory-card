@@ -96,6 +96,8 @@ pub struct GameDetail {
     pub online_coop: Option<bool>,
     pub game_mode_ids: Vec<i64>,
     pub genre_ids: Vec<i64>,
+    /// By name.
+    pub labels: Vec<super::labels::GameLabel>,
     pub created_at: String,
     pub created_by: Option<Person>,
     /// The last person to edit the game itself; copies record their own.
@@ -202,6 +204,8 @@ pub struct GameFields {
     pub game_mode_ids: Vec<i64>,
     /// Names added by hand; `None` keeps them.
     pub names: Option<Vec<String>>,
+    /// `None` keeps them.
+    pub label_ids: Option<Vec<i64>>,
 }
 
 pub struct CopyFields {
@@ -444,6 +448,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         online_coop: game.online_coop,
         game_mode_ids,
         genre_ids,
+        labels: super::labels::for_game(pool, id).await?,
         created_at: game.created_at,
         created_by: Person::from_columns(game.created_by, game.created_by_name),
         updated_by: Person::from_columns(game.updated_by, game.updated_by_name),
@@ -522,6 +527,10 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
     )
     .execute(&mut *tx)
     .await?;
+
+    if let Some(ids) = &fields.label_ids {
+        super::labels::set_for_game(&mut tx, id, ids).await?;
+    }
 
     if let Some(names) = &fields.names {
         sqlx::query!(

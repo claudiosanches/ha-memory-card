@@ -39,6 +39,7 @@ describe('library search', () => {
       toApiQuery({ q: 'mario', platform: ['switch', 'ps5'], region: ['eu', 'jp'], format: 'digital', ownership: 'any' }),
     ).toEqual({ q: 'mario', platform: 'switch,ps5', region: 'eu,jp', format: 'digital', ownership: 'any' });
     expect(toApiQuery({})).toEqual({});
+    expect(toApiQuery(validateLibrarySearch({ label: 'Retro,couch-co-op' }))).toEqual({ label: 'retro,couch-co-op' });
   });
 
   it('counts filters but not search, ownership or sort', () => {

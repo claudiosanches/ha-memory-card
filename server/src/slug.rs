@@ -1,4 +1,4 @@
-//! URL names for platforms, devices, stores, genres and game modes: lowercase
+//! URL names for platforms, devices, stores, genres, game modes and labels: lowercase
 //! ASCII letters, digits and hyphens, starting and ending with a letter or digit.
 
 use serde::{Deserialize, Deserializer};
@@ -16,6 +16,7 @@ pub enum Table {
     Stores,
     Genres,
     GameModes,
+    Labels,
 }
 
 impl Table {
@@ -26,6 +27,7 @@ impl Table {
             Self::Stores => "stores",
             Self::Genres => "genres",
             Self::GameModes => "game_modes",
+            Self::Labels => "labels",
         }
     }
 
@@ -37,6 +39,7 @@ impl Table {
             Self::Stores => "store",
             Self::Genres => "genre",
             Self::GameModes => "game-mode",
+            Self::Labels => "label",
         }
     }
 }

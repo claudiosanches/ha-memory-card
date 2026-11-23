@@ -9,6 +9,7 @@ export const queryKeys = {
   platforms: ['platforms'],
   devices: ['devices'],
   stores: ['stores'],
+  labels: ['labels'],
   playStatuses: ['play-statuses'],
   games: ['games'],
   game: (id: number) => ['game', id] as const,
@@ -56,6 +57,10 @@ export function useDevices() {
 
 export function useStores() {
   return useQuery({ queryKey: queryKeys.stores, queryFn: () => call(api.GET('/api/stores')) });
+}
+
+export function useLabels() {
+  return useQuery({ queryKey: queryKeys.labels, queryFn: () => call(api.GET('/api/labels')) });
 }
 
 export function usePlayStatuses() {
