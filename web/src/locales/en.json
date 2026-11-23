@@ -256,6 +256,8 @@
     "invalid_barcode": "Not a valid UPC or EAN. Check the digits under the bars.",
     "home_assistant_unavailable": "Memory Card cannot hear Home Assistant tag scans right now.",
     "not_your_session": "You can only change sessions you logged.",
+    "too_many_sessions": "A game can have up to 5,000 sessions.",
+    "too_many_sessions_today": "You can log up to 200 sessions a day.",
     "cross_site": "Another site tried to change your collection. Open Memory Card directly and try again.",
     "unsupported_media_type": "The file was sent in a form the app does not accept.",
     "too_large": "Too much was sent at once. Split the file and try again.",

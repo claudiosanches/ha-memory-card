@@ -256,6 +256,8 @@
     "invalid_barcode": "No es un UPC o EAN válido. Revisa los dígitos bajo las barras.",
     "home_assistant_unavailable": "Memory Card no puede recibir ahora las lecturas de etiquetas de Home Assistant.",
     "not_your_session": "Solo puedes cambiar las sesiones que registraste.",
+    "too_many_sessions": "Un juego puede tener hasta 5000 sesiones.",
+    "too_many_sessions_today": "Puedes registrar hasta 200 sesiones al día.",
     "cross_site": "Otro sitio intentó cambiar tu colección. Abre Memory Card directamente e inténtalo de nuevo.",
     "unsupported_media_type": "El archivo se envió en un formato que la app no acepta.",
     "too_large": "Se envió demasiado de una vez. Divide el archivo e inténtalo de nuevo.",

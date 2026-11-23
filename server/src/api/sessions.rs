@@ -55,6 +55,7 @@ impl SessionInput {
     responses(
         (status = CREATED, description = "The game with the new session", body = GameDetail),
         (status = NOT_FOUND, body = ErrorBody),
+        (status = CONFLICT, description = "`too_many_sessions`: 5000 per game; `too_many_sessions_today`: 200 a day per person", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]

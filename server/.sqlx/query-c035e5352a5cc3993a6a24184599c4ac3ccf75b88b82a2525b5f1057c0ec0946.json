@@ -1,0 +1,28 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT (SELECT COUNT(*) FROM play_sessions WHERE game_id = ?1) AS \"game!: i64\",\n                  (SELECT COUNT(*) FROM play_sessions WHERE created_by = ?2\n                     AND created_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day'))\n                    AS \"today!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "game!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "today!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c035e5352a5cc3993a6a24184599c4ac3ccf75b88b82a2525b5f1057c0ec0946"
+}

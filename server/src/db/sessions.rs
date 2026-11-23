@@ -6,6 +6,11 @@ use super::users::Person;
 use crate::config::FinishedScan;
 use crate::error::{ApiError, ApiResult};
 
+/// Most sessions one game keeps; years of daily play stay below it.
+pub const PER_GAME_MAX: i64 = 5000;
+/// Most sessions one person logs in a day.
+pub const PER_DAY_MAX: i64 = 200;
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct PlaySession {
     pub id: i64,
@@ -69,6 +74,22 @@ pub async fn add(
         return Err(ApiError::NotFound);
     }
     ensure_game_copy(&mut tx, game_id, fields.copy_id).await?;
+    let logged = sqlx::query!(
+        r#"SELECT (SELECT COUNT(*) FROM play_sessions WHERE game_id = ?1) AS "game!: i64",
+                  (SELECT COUNT(*) FROM play_sessions WHERE created_by = ?2
+                     AND created_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day'))
+                    AS "today!: i64""#,
+        game_id,
+        by
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    if logged.game >= PER_GAME_MAX {
+        return Err(ApiError::Conflict("too_many_sessions"));
+    }
+    if logged.today >= PER_DAY_MAX {
+        return Err(ApiError::Conflict("too_many_sessions_today"));
+    }
     sqlx::query!(
         "INSERT INTO play_sessions (game_id, copy_id, played_on, minutes, notes, created_by)
          VALUES (?, ?, ?, ?, ?, ?)",

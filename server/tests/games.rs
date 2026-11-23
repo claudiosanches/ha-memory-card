@@ -321,6 +321,50 @@ async fn sessions_log_play_and_the_latest_is_last_played() {
 }
 
 #[tokio::test]
+async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
+    let app = TestApp::new().await;
+    let game = new_game(&app, "Animal Crossing").await;
+    let other = new_game(&app, "Tetris").await;
+    sqlx::query(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 4999)
+         INSERT INTO play_sessions (game_id, played_on, created_at)
+         SELECT ?, '2020-01-01', '2020-01-01T00:00:00.000Z' FROM n",
+    )
+    .bind(game)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    let app = &app;
+    let log = |game: i64| async move {
+        app.json(
+            "POST",
+            &format!("/api/games/{game}/sessions"),
+            Some(json!({"played_on": "2026-11-20"})),
+        )
+        .await
+    };
+    assert_eq!(log(game).await.0, StatusCode::CREATED);
+    let (status, error) = log(game).await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(error["code"], "too_many_sessions");
+
+    sqlx::query(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 198)
+         INSERT INTO play_sessions (game_id, played_on, created_by)
+         SELECT ?, '2026-11-20', ? FROM n",
+    )
+    .bind(other)
+    .bind(common::MANAGER)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    assert_eq!(log(other).await.0, StatusCode::CREATED);
+    let (status, error) = log(other).await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(error["code"], "too_many_sessions_today");
+}
+
+#[tokio::test]
 async fn release_details_and_conflicts() {
     let app = TestApp::new().await;
     let wii = app.platform_id("wii").await;
