@@ -398,6 +398,29 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
         "{scanned:?}"
     );
     assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 5199);
+
+    // Scans with no person share one day's limit.
+    sqlx::query(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 199)
+         INSERT INTO play_sessions (game_id, played_on) SELECT ?, '2026-11-20' FROM n",
+    )
+    .bind(other)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    let anonymous = |copy: i64| async move {
+        sessions::start_from_tag(&app.pool, copy, "2026-11-21", None, FinishedScan::Keep).await
+    };
+    assert!(
+        anonymous(copy(new_game(app, "Hades").await).await)
+            .await
+            .is_ok()
+    );
+    let scanned = anonymous(copy(new_game(app, "Okami").await).await).await;
+    assert!(
+        matches!(scanned, Err(ApiError::Conflict("too_many_sessions_today"))),
+        "{scanned:?}"
+    );
 }
 
 #[tokio::test]

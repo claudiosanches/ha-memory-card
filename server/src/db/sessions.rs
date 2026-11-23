@@ -164,7 +164,7 @@ pub async fn start_from_tag(
 }
 
 /// Refuses a session past the game's limit, or past the day's limit of the
-/// person logging it.
+/// person logging it. Scans with no person share one day's limit.
 async fn room_for_one_more(
     conn: &mut SqliteConnection,
     game_id: i64,
@@ -172,7 +172,7 @@ async fn room_for_one_more(
 ) -> ApiResult<()> {
     let logged = sqlx::query!(
         r#"SELECT (SELECT COUNT(*) FROM play_sessions WHERE game_id = ?1) AS "game!: i64",
-                  (SELECT COUNT(*) FROM play_sessions WHERE created_by = ?2
+                  (SELECT COUNT(*) FROM play_sessions WHERE created_by IS ?2
                      AND created_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day'))
                     AS "today!: i64""#,
         game_id,
