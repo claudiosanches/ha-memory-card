@@ -21,9 +21,7 @@ use tokio::task::JoinHandle;
 use utoipa::ToSchema;
 
 use self::broker::Broker;
-use self::discovery::{
-    AVAILABILITY_TOPIC, DISCOVERY_TOPIC, HA_STATUS_TOPIC, PICK_TOPIC, STATE_TOPIC,
-};
+use self::discovery::{AVAILABILITY_TOPIC, DISCOVERY_TOPIC, PICK_TOPIC, STATE_TOPIC};
 use crate::AppState;
 use crate::changes::Changes;
 use crate::config::{Config, MqttBroker, SensorsMode};
@@ -112,7 +110,6 @@ impl Sensors {
 
 enum Signal {
     Connected,
-    HomeAssistantOnline,
     /// Someone pressed Roll a pick, or an automation sent filters.
     Roll(Vec<u8>),
     /// The broker still holds a device an earlier run published.
@@ -198,11 +195,6 @@ async fn poll(mut eventloop: EventLoop, signals: mpsc::Sender<Signal>) {
                 failures = 0;
                 Signal::Connected
             }
-            Ok(Event::Incoming(Packet::Publish(message)))
-                if message.topic == HA_STATUS_TOPIC && message.payload.as_ref() == b"online" =>
-            {
-                Signal::HomeAssistantOnline
-            }
             // Only a press made now, not one the broker kept.
             Ok(Event::Incoming(Packet::Publish(message)))
                 if message.topic == PICK_TOPIC && !message.retain =>
@@ -270,18 +262,15 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     }
                     connected = true;
                     set_status(state, SensorsStatus::Connected);
-                    let _ = client.try_subscribe(HA_STATUS_TOPIC, QoS::AtLeastOnce);
                     // A message someone left retained here would come back on
                     // every connect; one too large for the client would end
                     // each connection.
                     send(&client, PICK_TOPIC, Vec::new());
                     let _ = client.try_subscribe(PICK_TOPIC, QoS::AtLeastOnce);
+                    // Kept by the broker, so Home Assistant reads them again
+                    // when it restarts.
                     send(&client, DISCOVERY_TOPIC, config.clone());
                     send(&client, AVAILABILITY_TOPIC, "online");
-                    sent = send_state(&client, state, None).await;
-                }
-                Some(Signal::HomeAssistantOnline) => {
-                    send(&client, DISCOVERY_TOPIC, config.clone());
                     sent = send_state(&client, state, None).await;
                 }
                 Some(Signal::Roll(payload)) => {

@@ -5,8 +5,6 @@ use serde_json::{Map, Value, json};
 use super::entities::{self, ENTITIES, Entity, PICK_PRESS, Platform};
 
 pub const DISCOVERY_TOPIC: &str = "homeassistant/device/memory_card/config";
-/// Home Assistant publishes `online` here when it starts.
-pub const HA_STATUS_TOPIC: &str = "homeassistant/status";
 pub const STATE_TOPIC: &str = "memory_card/state";
 pub const AVAILABILITY_TOPIC: &str = "memory_card/availability";
 /// The Roll a pick button publishes here; automations may send filters as JSON.
