@@ -1,5 +1,7 @@
 //! IGDB candidates for games without a link, scored by how close the names are.
 
+use std::collections::HashMap;
+
 use serde::Serialize;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
@@ -97,26 +99,27 @@ pub async fn next(
 
 /// Dice similarity of the names' letter pairs, after folding case and accents.
 pub fn similarity(a: &str, b: &str) -> u8 {
-    let pairs = |text: &str| -> Vec<(char, char)> {
+    let pairs = |text: &str| -> HashMap<(char, char), usize> {
         let chars: Vec<char> = search_key(text)
             .chars()
             .filter(|c| c.is_alphanumeric())
             .collect();
-        chars.windows(2).map(|w| (w[0], w[1])).collect()
+        let mut counts = HashMap::new();
+        for w in chars.windows(2) {
+            *counts.entry((w[0], w[1])).or_default() += 1;
+        }
+        counts
     };
     let (a, b) = (pairs(a), pairs(b));
     if a.is_empty() || b.is_empty() {
         return 0;
     }
-    let mut rest = b.clone();
-    let mut shared = 0usize;
-    for pair in &a {
-        if let Some(at) = rest.iter().position(|p| p == pair) {
-            rest.swap_remove(at);
-            shared += 1;
-        }
-    }
-    u8::try_from(shared * 200 / (a.len() + b.len())).unwrap_or(100)
+    let shared: usize = a
+        .iter()
+        .map(|(pair, n)| (*n).min(b.get(pair).copied().unwrap_or(0)))
+        .sum();
+    let total: usize = a.values().chain(b.values()).sum();
+    u8::try_from(shared * 200 / total).unwrap_or(100)
 }
 
 #[cfg(test)]
