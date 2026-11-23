@@ -90,7 +90,7 @@ one.
 | `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials below. |
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
-| `sensors` | `off` (the default), `integration` for the Memory Card integration from HACS, or `mqtt` for the MQTT broker (does nothing without one). See [Home Assistant sensors](#home-assistant-sensors). Going back to `off` removes them. |
+| `sensors` | `off` (the default), `integration` for the Memory Card integration from the Marketplace or HACS, or `mqtt` for the MQTT broker (does nothing without one). See [Home Assistant sensors](#home-assistant-sensors). Going back to `off` removes them. |
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
 | `date_format` | How dates are written: `language` (default) as the app's language writes them, `dmy` as 23/11/2026, `mdy` as 11/23/2026 or `ymd` as 2026-11-23. |
@@ -282,11 +282,13 @@ sensors and button below. Pick one of two ways with the `sensors` option and
 restart Memory Card. The Status section under Settings in Memory Card says
 whether the sensors are connected.
 
-- **`integration`**: the Memory Card integration, installed from HACS. No
-  broker is needed.
-  1. In HACS, add the
-     [Memory Card integration](https://my.home-assistant.io/redirect/hacs_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
-     as a custom repository, download it and restart Home Assistant.
+- **`integration`**: the Memory Card integration, installed from the
+  Marketplace, or from HACS before Home Assistant 2026.11. No broker is
+  needed.
+  1. Add the
+     [Memory Card integration](https://my.home-assistant.io/redirect/marketplace_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
+     as a custom repository, download it and restart Home Assistant. In the
+     Marketplace, custom repositories need it connected to GitHub.
   2. Set `sensors` to `integration` and restart Memory Card.
   3. Under **Settings > Devices & services**, Home Assistant shows Memory
      Card as discovered. Select **Add**.
