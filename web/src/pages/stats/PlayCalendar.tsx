@@ -8,6 +8,8 @@ import classes from './PlayCalendar.module.css';
 const WEEKS = 53;
 
 type Day = { date: Date; iso: string; sessions: number; minutes: number };
+/** The day under the pointer and its cell, which the tooltip points at. */
+type Active = { day: Day; cell: HTMLElement };
 
 function iso(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -61,7 +63,7 @@ export function PlayCalendar({
 }) {
   const { t } = useTranslation();
   const scroller = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState<Day | null>(null);
+  const [active, setActive] = useState<Active | null>(null);
 
   const played = new Map(
     stats.play_days.map((d) => {
@@ -109,17 +111,17 @@ export function PlayCalendar({
     <div className={classes.calendar}>
       <Text size="sm" c="dimmed">{t('stats.lastYear')}{t('common.separator')}{summary}</Text>
       <div className={classes.scroller} ref={scroller}>
-        <Tooltip.Floating label={active ? describe(active) : ''} disabled={!active}>
-          <div className={classes.grid} role="img" aria-label={summary} onMouseLeave={() => setActive(null)}>
-            <span />
-            {months.map((label, index) => (
-              <span key={index} className={classes.month}>{label}</span>
-            ))}
-            {Array.from({ length: 7 }, (_, row) => (
-              <Row key={row} row={row} label={row % 2 === 1 ? weekday(row) : ''} weeks={weeks} onActive={setActive} />
-            ))}
-          </div>
-        </Tooltip.Floating>
+        <div className={classes.grid} role="img" aria-label={summary} onMouseLeave={() => setActive(null)}>
+          <span />
+          {months.map((label, index) => (
+            <span key={index} className={classes.month}>{label}</span>
+          ))}
+          {Array.from({ length: 7 }, (_, row) => (
+            <Row key={row} row={row} label={row % 2 === 1 ? weekday(row) : ''} weeks={weeks} onActive={setActive} />
+          ))}
+        </div>
+        {/* Over the day rather than beside the pointer, so it flips and shifts to stay in the window. */}
+        {active && <Tooltip label={describe(active.day)} target={active.cell} opened withArrow />}
       </div>
       <div className={classes.scale} aria-hidden>
         {t('stats.less')}
@@ -141,7 +143,7 @@ function Row({
   row: number;
   label: string;
   weeks: (Day | null)[][];
-  onActive: (day: Day | null) => void;
+  onActive: (active: Active | null) => void;
 }) {
   return (
     <>
@@ -149,7 +151,12 @@ function Row({
       {weeks.map((week, w) => {
         const day = week[row];
         return day ? (
-          <span key={w} className={classes.cell} data-level={level(day.sessions)} onMouseEnter={() => onActive(day)} />
+          <span
+            key={w}
+            className={classes.cell}
+            data-level={level(day.sessions)}
+            onMouseEnter={(event) => onActive({ day, cell: event.currentTarget })}
+          />
         ) : (
           <span key={w} className={classes.cell} data-future="" onMouseEnter={() => onActive(null)} />
         );

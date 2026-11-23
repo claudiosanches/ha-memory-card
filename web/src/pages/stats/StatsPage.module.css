@@ -22,9 +22,10 @@
 @container (width < 46rem) { .grid { grid-template-columns: minmax(0, 1fr); } }
 .activity { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--mantine-spacing-card); }
 @container (min-width: 70rem) {
-  .activity { grid-template-columns: minmax(14rem, 1fr) auto; }
-  .activity > .tiles { grid-auto-flow: row; grid-template-rows: repeat(2, 1fr); }
-  .activity > .panel { justify-content: center; }
+  /* The calendar first; narrower, the tiles stay on top. */
+  .activity { grid-template-columns: auto minmax(14rem, 1fr); }
+  .activity > .tiles { grid-column: 2; grid-auto-flow: row; grid-template-rows: repeat(2, 1fr); }
+  .activity > .panel { grid-column: 1; grid-row: 1; justify-content: center; }
 }
 .panel { min-width: 0; }
 
