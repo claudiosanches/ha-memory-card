@@ -95,6 +95,43 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
 }
 
 #[tokio::test]
+async fn a_pick_lists_at_most_50_platforms() {
+    let app = TestApp::new().await;
+    let (_, game) = app
+        .json("POST", "/api/games", Some(json!({"title": "Tetris"})))
+        .await;
+    sqlx::query(
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 60)
+         INSERT INTO platforms (name, slug, active, custom, sort_order)
+         SELECT 'Console ' || i, 'console-' || i, 1, 1, 1000 + i FROM n",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO releases (game_id, platform_id, region)
+         SELECT ?, id, 'eu' FROM platforms WHERE slug LIKE 'console-%'",
+    )
+    .bind(game["id"].as_i64())
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO copies (release_id, status, format) SELECT id, 'owned', 'digital' FROM releases",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
+
+    let platforms =
+        memory_card::db::sensors::owned_platforms(&app.pool, game["id"].as_i64().unwrap())
+            .await
+            .unwrap();
+    assert_eq!(platforms.len(), 50);
+    assert_eq!(platforms[0], "Console 1");
+}
+
+#[tokio::test]
 async fn successful_writes_wake_the_sensors() {
     let app = TestApp::new().await;
     let woken = || {

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.name FROM platforms p\n           WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                         WHERE r.platform_id = p.id AND r.game_id = ? AND c.status = 'owned')\n           ORDER BY p.sort_order, p.name\n           LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "platforms",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c49bd080e9229e33eaf29c89167d1bde87c579a777d4834d67c989b2f4abe906"
+}

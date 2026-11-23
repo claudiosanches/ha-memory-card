@@ -4,6 +4,8 @@ use sqlx::SqlitePool;
 
 /// Titles listed in the Playing sensor's attributes.
 const PLAYING_LIMIT: i64 = 50;
+/// Platforms listed for the pick, as many as the integration keeps.
+pub const PLATFORMS_LIMIT: i64 = 50;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Snapshot {
@@ -48,8 +50,10 @@ pub async fn owned_platforms(pool: &SqlitePool, game_id: i64) -> sqlx::Result<Ve
         r#"SELECT p.name FROM platforms p
            WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
                          WHERE r.platform_id = p.id AND r.game_id = ? AND c.status = 'owned')
-           ORDER BY p.sort_order, p.name"#,
-        game_id
+           ORDER BY p.sort_order, p.name
+           LIMIT ?"#,
+        game_id,
+        PLATFORMS_LIMIT
     )
     .fetch_all(pool)
     .await
