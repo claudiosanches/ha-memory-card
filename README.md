@@ -95,6 +95,11 @@ minutes. It also:
   manager, and adds a `viewer` regular user. Their passwords are printed and
   kept in `target/haos/demo.json`.
 - installs Mosquitto and the MQTT integration, for the sensors.
+- copies the Memory Card integration from `../ha-memory-card-integration`
+  (`HA_INTEGRATION` names another folder), when it is there, and restarts
+  Home Assistant when it changed. `HA_SENSORS=integration` switches the
+  app's `sensors` option and adds the integration once it is discovered;
+  `HA_SENSORS=mqtt` switches back.
 - copies the IGDB credentials from `.data/options.json`, if set, again on
   every run when they change.
 - the first time, fills the collection with test data (`scripts/seed.mjs`):

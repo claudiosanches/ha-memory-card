@@ -6,7 +6,9 @@
 # HA_HTTPS=1 serves HTTPS with a certificate from a test CA. HA_LAN=1 opens
 # the port to the network instead of this machine only. HA_DUCKDNS=<name>
 # does both as <name>.duckdns.org, with a Let's Encrypt certificate, the
-# DuckDNS token read from .data/duckdns-token.
+# DuckDNS token read from .data/duckdns-token. HA_SENSORS=mqtt|integration|off
+# sets the app's sensors option. The Memory Card integration is copied from
+# HA_INTEGRATION (default ../ha-memory-card-integration) when it exists.
 set -eu
 cd "$(dirname "$0")/.."
 
@@ -22,6 +24,14 @@ apps=$state/local
 # Outside the VM's state, so a rebuilt VM reuses the certificate.
 certs=target/haos-cert
 token_file=.data/duckdns-token
+integration=${HA_INTEGRATION:-../ha-memory-card-integration}
+case ${HA_SENSORS:-} in
+'' | mqtt | integration | off) ;;
+*)
+    echo "HA_SENSORS takes mqtt, integration or off" >&2
+    exit 1
+    ;;
+esac
 duckdns=
 if [ -n "${HA_DUCKDNS:-}" ]; then
     case $HA_DUCKDNS in
@@ -180,6 +190,30 @@ stage() {
     cp dist/amd64/memory-card "$app/dist/amd64/"
 }
 
+# Puts the integration into Home Assistant's config folder. Home Assistant
+# only loads a changed integration after a restart, which ha-demo.mjs does.
+copy_integration() {
+    HA_INTEGRATION_CHANGED=
+    source=$integration/custom_components
+    [ -d "$source/memory_card" ] || return 0
+    sum=$(tar -C "$source" --exclude=__pycache__ --sort=name --mtime=@0 --owner=0 --group=0 \
+        -cf - memory_card | sha256sum | cut -c1-64)
+    if [ "$(cat "$state/integration.sha256" 2>/dev/null)" = "$sum" ] &&
+        vm_ssh test -d /mnt/data/supervisor/homeassistant/custom_components/memory_card </dev/null; then
+        return 0
+    fi
+    echo "Copying the Memory Card integration from $integration"
+    tar -C "$source" --exclude=__pycache__ -cf - memory_card | vm_ssh '
+        set -e
+        mkdir -p /mnt/data/supervisor/homeassistant/custom_components
+        cd /mnt/data/supervisor/homeassistant/custom_components
+        rm -rf memory_card
+        tar -xf -'
+    mkdir -p "$state"
+    echo "$sum" >"$state/integration.sha256"
+    HA_INTEGRATION_CHANGED=1
+}
+
 up() {
     if [ "$(uname -m)" != x86_64 ] || [ ! -e /dev/kvm ]; then
         echo "make ha-up needs an x86-64 Linux machine with KVM" >&2
@@ -243,6 +277,7 @@ up() {
         cd /mnt/data/supervisor/apps/local
         rm -rf memory-card
         tar -xf -'
+    copy_integration
 
     certificate=
     if [ -n "$duckdns" ]; then
@@ -256,7 +291,7 @@ up() {
     fi
     HA_NEW_CERTIFICATE=
     [ "$certificate" != changed ] || HA_NEW_CERTIFICATE=1
-    export HA_URL HA_NEW_CERTIFICATE
+    export HA_URL HA_NEW_CERTIFICATE HA_INTEGRATION_CHANGED
 
     tries=0
     until current=$(current_url); do

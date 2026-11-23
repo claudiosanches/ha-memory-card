@@ -1,8 +1,9 @@
 // Sets up the Home Assistant that scripts/ha-demo.sh runs: finishes
 // onboarding, adds a non-admin user, installs Mosquitto and the MQTT
-// integration, installs or updates the app from the staged folder, and the
-// first time fills it with test data and adds a dashboard for its sensors.
-// Logins and a token are kept in the state file.
+// integration, installs or updates the app from the staged folder, adds the
+// Memory Card integration in that sensors mode, and the first time fills it
+// with test data and adds a dashboard for its sensors. Logins and a token
+// are kept in the state file.
 // Usage: node scripts/ha-demo.mjs <url> <state file>
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -18,6 +19,8 @@ const CLIENT_ID = `${base}/`;
 const APP = 'local_memory_card';
 const MOSQUITTO = 'core_mosquitto';
 const LONG = 1800;
+/** The app's sensors option when set; the first run defaults to mqtt. */
+const SENSORS = process.env.HA_SENSORS || undefined;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const newPassword = () => randomBytes(12).toString('base64url');
@@ -221,14 +224,16 @@ async function app(ha, state, igdb) {
       state.configured = false;
     }
   }
-  // Managers and the sensors are set once; IGDB follows .data/options.json.
+  // Managers are set once; IGDB follows .data/options.json and the sensors HA_SENSORS.
   const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
   const igdbChanged = Object.entries(igdb).some(([key, value]) => options[key] !== value);
-  if (!state.configured || igdbChanged) {
+  const sensorsChanged = SENSORS !== undefined && options.sensors !== SENSORS;
+  if (!state.configured || igdbChanged || sensorsChanged) {
     // The Supervisor replaces all options at once.
     const first = state.configured ? {} : { managers: [state.owner.id], sensors: 'mqtt' };
+    const sensors = SENSORS ? { sensors: SENSORS } : {};
     await ha.supervisor('post', `/addons/${APP}/options`, {
-      options: { ...options, ...first, ...igdb },
+      options: { ...options, ...first, ...sensors, ...igdb },
       ingress_panel: true,
     });
     state.configured = true;
@@ -236,7 +241,37 @@ async function app(ha, state, igdb) {
   }
   const info = await ha.supervisor('get', `/addons/${APP}/info`);
   if (info.state !== 'started') await ha.supervisor('post', `/addons/${APP}/start`, undefined, 300);
-  else if (igdbChanged) await ha.supervisor('post', `/addons/${APP}/restart`, undefined, 300);
+  else if (igdbChanged || sensorsChanged) await ha.supervisor('post', `/addons/${APP}/restart`, undefined, 300);
+}
+
+/** Adds the Memory Card integration once the app announces it. */
+async function integration(ha, token) {
+  const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
+  if (options.sensors !== 'integration') return;
+  if ((await ha.call('config_entries/get', { domain: 'memory_card' })).length > 0) return;
+  for (let tries = 0; tries < 60; tries++) {
+    const flows = await ha.call('config_entries/flow/progress');
+    const flow = flows.find((f) => f.handler === 'memory_card');
+    if (flow) {
+      console.log('Adding the Memory Card integration');
+      await request('POST', `/api/config/config_entries/flow/${flow.flow_id}`, { json: {}, token });
+      return;
+    }
+    await sleep(2000);
+  }
+  console.warn('The Memory Card integration was not discovered. Check that it is in custom_components.');
+}
+
+/** Restarts Home Assistant so it loads a changed integration. */
+async function reloadIntegration(ha, token) {
+  if (process.env.HA_INTEGRATION_CHANGED !== '1') return ha;
+  console.log('Restarting Home Assistant for the Memory Card integration');
+  await ha.call('call_service', { domain: 'homeassistant', service: 'restart' }).catch(() => {});
+  ha.close();
+  await restarted(base);
+  const next = await connect(token);
+  await waitForSupervisor(next);
+  return next;
 }
 
 /** Calls the app's API through ingress, as the owner. */
@@ -428,7 +463,7 @@ async function main() {
     }
   }
 
-  const ha = await connect(state.token);
+  let ha = await connect(state.token);
   let url = base;
   try {
     await waitForSupervisor(ha);
@@ -437,7 +472,9 @@ async function main() {
       await saveState(state);
     }
     await mosquitto(ha, state.token);
+    ha = await reloadIntegration(ha, state.token);
     await app(ha, state, igdb);
+    await integration(ha, state.token);
     if (!state.seeded) {
       await seed(await ingress(ha));
       state.seeded = true;
