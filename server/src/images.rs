@@ -152,7 +152,9 @@ fn exif_orientation(data: &[u8]) -> Option<u16> {
         })
     };
     let ifd = usize::try_from(u32_at(4)?).ok()?;
-    let entries = usize::from(u16_at(ifd)?);
+    // No more entries than the segment holds, whatever the count says.
+    let room = tiff.len().saturating_sub(ifd + 2) / 12;
+    let entries = usize::from(u16_at(ifd)?).min(room);
     (0..entries).find_map(|n| {
         let entry = ifd + 2 + n * 12;
         // A SHORT value sits at the start of the entry's value field.
@@ -334,5 +336,13 @@ mod tests {
         assert_eq!(exif_orientation(little), Some(3));
         assert_eq!(exif_orientation(&orientation_segment(8)[4..]), Some(8));
         assert_eq!(exif_orientation(b"Exif\0\0MM\0*\0\0\0\xFF"), None);
+    }
+
+    #[test]
+    fn an_entry_count_past_the_segment_reads_only_what_is_there() {
+        // Says 65,535 entries, holds one.
+        let short = b"Exif\0\0MM\0*\0\0\0\x08\xFF\xFF\x01\x12\0\x03\0\0\0\x01\0\x06\0\0";
+        assert_eq!(exif_orientation(short), Some(6));
+        assert_eq!(exif_orientation(&short[..short.len() - 1]), None);
     }
 }
