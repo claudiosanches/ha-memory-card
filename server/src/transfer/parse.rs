@@ -220,7 +220,11 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
     }
 
     let mut rows = Vec::new();
-    for record in reader.records() {
+    // Blank rows count too, or a file of them would be read to its end.
+    for (read, record) in reader.records().enumerate() {
+        if read == MAX_ROWS {
+            return Err(FileIssue::new("too_many_rows"));
+        }
         let record = record.map_err(|err| FileIssue {
             line: err.position().map(|p| p.line()),
             ..FileIssue::new("malformed")
@@ -268,9 +272,6 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             continue;
         }
         rows.push(row);
-        if rows.len() > MAX_ROWS {
-            return Err(FileIssue::new("too_many_rows"));
-        }
     }
 
     if rows.is_empty() {
@@ -334,6 +335,16 @@ mod tests {
         assert_eq!(headers(row.as_bytes()), None);
         let quoted = format!("game_title,notes\nZelda,\"{}\"\n", ",".repeat(1000));
         assert_eq!(parse(quoted.as_bytes()).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn counts_blank_rows_toward_the_row_limit() {
+        let csv = |blank: usize| format!("game_title,notes\nZelda,\n{}", ",\n".repeat(blank));
+        assert_eq!(parse(csv(MAX_ROWS - 1).as_bytes()).unwrap().len(), 1);
+        assert_eq!(
+            parse(csv(MAX_ROWS).as_bytes()).unwrap_err().code,
+            "too_many_rows"
+        );
     }
 
     #[test]
