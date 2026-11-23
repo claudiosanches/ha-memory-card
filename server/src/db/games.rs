@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Serialize;
 use sqlx::types::Json;
 use sqlx::{SqliteConnection, SqlitePool};
@@ -279,7 +281,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     .fetch_all(pool)
     .await?;
 
-    let mut copies = sqlx::query!(
+    let copies = sqlx::query!(
         r#"SELECT c.id AS "id!", c.release_id, c.status AS "status: CopyStatus",
                   c.format AS "format: Format", c.device_id, c.store_id,
                   c.condition AS "condition: Condition", c.notes, c.edition, c.purchased_on,
@@ -319,17 +321,14 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     )
     .fetch_all(pool)
     .await?;
-    let photos_of = |copy_id: i64| {
-        photos
-            .iter()
-            .filter(|p| p.copy_id == copy_id)
-            .map(|p| CopyPhoto {
-                id: p.id,
-                path: p.path.clone(),
-                created_at: p.created_at.clone(),
-            })
-            .collect()
-    };
+    let mut photos_of: HashMap<i64, Vec<CopyPhoto>> = HashMap::new();
+    for p in photos {
+        photos_of.entry(p.copy_id).or_default().push(CopyPhoto {
+            id: p.id,
+            path: p.path,
+            created_at: p.created_at,
+        });
+    }
     let tags = sqlx::query!(
         r#"SELECT t.tag_id AS "tag_id!", t.copy_id, t.created_at
            FROM nfc_tags t JOIN copies c ON c.id = t.copy_id
@@ -339,43 +338,43 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     )
     .fetch_all(pool)
     .await?;
-    let tags_of = |copy_id: i64| {
-        tags.iter()
-            .filter(|t| t.copy_id == copy_id)
-            .map(|t| CopyTag {
-                tag_id: t.tag_id.clone(),
-                created_at: t.created_at.clone(),
-            })
-            .collect()
-    };
-    let bundle_of = |copy_id: i64| {
-        links
-            .iter()
-            .find(|l| l.copy_id == copy_id && l.game_id == id)
-            .map(|l| CopyLink {
+    let mut tags_of: HashMap<i64, Vec<CopyTag>> = HashMap::new();
+    for t in tags {
+        tags_of.entry(t.copy_id).or_default().push(CopyTag {
+            tag_id: t.tag_id,
+            created_at: t.created_at,
+        });
+    }
+    let mut bundle_of: HashMap<i64, CopyLink> = HashMap::new();
+    let mut contents_of: HashMap<i64, Vec<CopyLink>> = HashMap::new();
+    for l in links {
+        if l.game_id == id {
+            bundle_of.entry(l.copy_id).or_insert_with(|| CopyLink {
                 copy_id: l.bundle_copy_id,
                 game_id: l.bundle_game_id,
                 title: l.bundle_title.clone(),
-            })
-    };
-    let contents_of = |copy_id: i64| {
-        links
-            .iter()
-            .filter(|l| l.bundle_copy_id == copy_id && l.bundle_game_id == id)
-            .map(|l| CopyLink {
-                copy_id: l.copy_id,
-                game_id: l.game_id,
-                title: l.title.clone(),
-            })
-            .collect()
-    };
+            });
+        }
+        if l.bundle_game_id == id {
+            contents_of
+                .entry(l.bundle_copy_id)
+                .or_default()
+                .push(CopyLink {
+                    copy_id: l.copy_id,
+                    game_id: l.game_id,
+                    title: l.title,
+                });
+        }
+    }
+    let mut copies_of: HashMap<i64, Vec<_>> = HashMap::new();
+    for c in copies {
+        copies_of.entry(c.release_id).or_default().push(c);
+    }
 
     let releases = releases
         .into_iter()
         .map(|r| {
-            let (mine, rest): (Vec<_>, Vec<_>) =
-                copies.drain(..).partition(|c| c.release_id == r.id);
-            copies = rest;
+            let mine = copies_of.remove(&r.id).unwrap_or_default();
             ReleaseDetail {
                 id: r.id,
                 platform_id: r.platform_id,
@@ -413,10 +412,10 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
                         estimated_currency: c.estimated_currency,
                         barcode: c.barcode,
                         source: c.source,
-                        bundle: bundle_of(c.id),
-                        contents: contents_of(c.id),
-                        photos: photos_of(c.id),
-                        tags: tags_of(c.id),
+                        bundle: bundle_of.remove(&c.id),
+                        contents: contents_of.remove(&c.id).unwrap_or_default(),
+                        photos: photos_of.remove(&c.id).unwrap_or_default(),
+                        tags: tags_of.remove(&c.id).unwrap_or_default(),
                         created_at: c.created_at,
                         created_by: Person::from_columns(c.created_by, c.created_by_name),
                         updated_by: Person::from_columns(c.updated_by, c.updated_by_name),
