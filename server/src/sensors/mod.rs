@@ -233,7 +233,20 @@ async fn poll(mut eventloop: EventLoop, signals: mpsc::Sender<Signal>) {
                 continue;
             }
         };
-        if signals.send(signal).await.is_err() {
+        // Rolls and repeated notices may be dropped while the publisher is
+        // busy; waiting for it would stop the polling it may be waiting on.
+        let delivered = match signal {
+            Signal::Connected => signals.send(signal).await.is_ok(),
+            signal => match signals.try_send(signal) {
+                Err(mpsc::error::TrySendError::Closed(_)) => false,
+                Err(mpsc::error::TrySendError::Full(_)) => {
+                    tracing::debug!("dropped an MQTT message while busy");
+                    true
+                }
+                Ok(()) => true,
+            },
+        };
+        if !delivered {
             return;
         }
     }
@@ -257,18 +270,18 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     }
                     connected = true;
                     set_status(state, SensorsStatus::Connected);
-                    let _ = client.subscribe(HA_STATUS_TOPIC, QoS::AtLeastOnce).await;
+                    let _ = client.try_subscribe(HA_STATUS_TOPIC, QoS::AtLeastOnce);
                     // A message someone left retained here would come back on
                     // every connect; one too large for the client would end
                     // each connection.
-                    send(&client, PICK_TOPIC, Vec::new()).await;
-                    let _ = client.subscribe(PICK_TOPIC, QoS::AtLeastOnce).await;
-                    send(&client, DISCOVERY_TOPIC, config.clone()).await;
-                    send(&client, AVAILABILITY_TOPIC, "online").await;
+                    send(&client, PICK_TOPIC, Vec::new());
+                    let _ = client.try_subscribe(PICK_TOPIC, QoS::AtLeastOnce);
+                    send(&client, DISCOVERY_TOPIC, config.clone());
+                    send(&client, AVAILABILITY_TOPIC, "online");
                     sent = send_state(&client, state, None).await;
                 }
                 Some(Signal::HomeAssistantOnline) => {
-                    send(&client, DISCOVERY_TOPIC, config.clone()).await;
+                    send(&client, DISCOVERY_TOPIC, config.clone());
                     sent = send_state(&client, state, None).await;
                 }
                 Some(Signal::Roll(payload)) => {
@@ -295,8 +308,8 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     }
 
     if connected {
-        send(&client, AVAILABILITY_TOPIC, "offline").await;
-        let _ = client.disconnect().await;
+        send(&client, AVAILABILITY_TOPIC, "offline");
+        let _ = client.try_disconnect();
         closed(&mut events).await;
     }
     poller.abort();
@@ -335,12 +348,15 @@ async fn closed(events: &mut mpsc::Receiver<Signal>) {
     .await;
 }
 
-async fn send(client: &AsyncClient, topic: &str, payload: impl Into<Vec<u8>>) {
-    if let Err(err) = client
-        .publish(topic, QoS::AtLeastOnce, true, payload.into())
-        .await
-    {
-        tracing::warn!(error = %err, topic, "cannot publish to MQTT");
+/// Queues a message without waiting, since the poller that sends it may be
+/// waiting on this task; a full queue drops it. Returns whether it was queued.
+fn send(client: &AsyncClient, topic: &str, payload: impl Into<Vec<u8>>) -> bool {
+    match client.try_publish(topic, QoS::AtLeastOnce, true, payload.into()) {
+        Ok(()) => true,
+        Err(err) => {
+            tracing::debug!(error = %err, topic, "cannot publish to MQTT");
+            false
+        }
     }
 }
 
@@ -361,8 +377,11 @@ async fn send_state(
     if sent.as_deref() == Some(payload.as_str()) {
         return sent;
     }
-    send(client, STATE_TOPIC, payload.clone()).await;
-    Some(payload)
+    if send(client, STATE_TOPIC, payload.clone()) {
+        Some(payload)
+    } else {
+        sent
+    }
 }
 
 /// Waits for a signal `wanted` picks, until the connection ends or `wait` passes.
@@ -397,7 +416,7 @@ pub(crate) async fn remove(broker: &MqttBroker) {
     })
     .await
     {
-        let _ = client.subscribe(DISCOVERY_TOPIC, QoS::AtLeastOnce).await;
+        let _ = client.try_subscribe(DISCOVERY_TOPIC, QoS::AtLeastOnce);
         // The broker sends a kept message right after the subscription.
         if until(&mut events, LOOK_TIMEOUT, |s| {
             matches!(s, Signal::Published)
@@ -405,10 +424,10 @@ pub(crate) async fn remove(broker: &MqttBroker) {
         .await
         {
             for topic in [DISCOVERY_TOPIC, STATE_TOPIC, AVAILABILITY_TOPIC] {
-                send(&client, topic, Vec::new()).await;
+                send(&client, topic, Vec::new());
             }
         }
-        let _ = client.disconnect().await;
+        let _ = client.try_disconnect();
         closed(&mut events).await;
     }
     poller.abort();
