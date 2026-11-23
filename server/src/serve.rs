@@ -41,6 +41,7 @@ pub async fn serve(
     let (stop, stopping) = watch::channel(false);
     let mut shutdown = std::pin::pin!(shutdown);
     let mut warned = false;
+    let port = listener.local_addr().map_or(0, |address| address.port());
 
     loop {
         let place = tokio::select! {
@@ -63,9 +64,9 @@ pub async fn serve(
             && !peers.contains(&ip)
         {
             if warned {
-                tracing::debug!(%ip, "closed a connection from an untrusted peer");
+                tracing::debug!(%ip, port, "closed a connection from an untrusted peer");
             } else {
-                tracing::warn!(%ip, "closed a connection from an untrusted peer; only Home Assistant's ingress may connect");
+                tracing::warn!(%ip, port, "closed a connection from an untrusted peer; only Home Assistant may connect");
                 warned = true;
             }
             continue;

@@ -157,8 +157,10 @@ async fn authorize(State(feed): State<Arc<Feed>>, request: Request, next: Next) 
     if bool::from(sent.as_bytes().ct_eq(feed.token.expose().as_bytes())) {
         next.run(request).await
     } else {
+        // Closing keeps a refused client from holding its connection open.
         (
             StatusCode::UNAUTHORIZED,
+            [(header::CONNECTION, "close")],
             Json(json!({ "code": "unauthorized" })),
         )
             .into_response()
@@ -322,7 +324,8 @@ pub async fn run(state: &AppState, stop: &Notify) {
     let limits = Limits {
         connections: CONNECTIONS_MAX,
         header_timeout: HEADER_TIMEOUT,
-        peers: None,
+        // Other apps on the Supervisor's network could otherwise take every place.
+        peers: Some(state.config.integration_peers.clone().into()),
     };
     let server = tokio::spawn(serve(listener, router(feed.clone()), limits, async move {
         let _ = closed.wait_for(|closed| *closed).await;

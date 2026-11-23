@@ -82,6 +82,7 @@ async fn the_feed_needs_the_token() {
     for token in [None, Some("wrong"), Some(&TOKEN[..63])] {
         let response = router.clone().oneshot(get_feed(token)).await.unwrap();
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED, "{token:?}");
+        assert_eq!(response.headers()["connection"], "close");
     }
     let roll = Request::post("/integration/v1/roll")
         .body(Body::empty())
@@ -326,6 +327,7 @@ async fn the_app_announces_the_feed_and_takes_it_back_when_the_mode_changes() {
             ("SUPERVISOR_TOKEN", "token-1"),
             ("MEMORY_CARD_SUPERVISOR_URL", base.as_str()),
             ("MEMORY_CARD_INTEGRATION_LISTEN", "127.0.0.1:0"),
+            ("MEMORY_CARD_INTEGRATION_PEER", "127.0.0.1"),
         ]
     };
     let app = TestApp::with_env(&env("integration")).await;
@@ -386,5 +388,36 @@ async fn the_app_announces_the_feed_and_takes_it_back_when_the_mode_changes() {
     assert_eq!(calls.lock().unwrap().withdrawn, [UUID]);
     let saved = off.config.integration_discovery_path();
     until("the id removed", || !saved.exists()).await;
+    sensors.stop().await;
+}
+
+#[tokio::test]
+async fn the_feed_closes_connections_from_anyone_but_home_assistant() {
+    let calls = Arc::new(Mutex::new(Calls::default()));
+    let base = supervisor(calls.clone()).await;
+    let app = TestApp::with_env(&[
+        ("MEMORY_CARD_SENSORS", "integration"),
+        ("SUPERVISOR_TOKEN", "token-1"),
+        ("MEMORY_CARD_SUPERVISOR_URL", base.as_str()),
+        ("MEMORY_CARD_INTEGRATION_LISTEN", "127.0.0.1:0"),
+    ])
+    .await;
+    let sensors = Sensors::start(app.state.clone());
+    until("the announcement", || {
+        !calls.lock().unwrap().announced.is_empty()
+    })
+    .await;
+    let port = calls.lock().unwrap().announced[0]["config"]["port"]
+        .as_u64()
+        .unwrap();
+    let token = std::fs::read_to_string(app.config.integration_token_path()).unwrap();
+    let answer = app
+        .state
+        .http
+        .get(format!("http://127.0.0.1:{port}/integration/v1/feed"))
+        .bearer_auth(&token)
+        .send()
+        .await;
+    assert!(answer.is_err(), "closed unanswered: {answer:?}");
     sensors.stop().await;
 }

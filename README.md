@@ -71,6 +71,7 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_VIEWERS_TRACK_PROGRESS` | from `options.json` | `true` or `false`; overrides `viewers_track_progress` |
 | `MEMORY_CARD_SENSORS` | from `options.json` | `mqtt`, `integration` or `off`; overrides `sensors` |
 | `MEMORY_CARD_INTEGRATION_LISTEN` | `0.0.0.0:8100` | Address of the feed the Memory Card integration reads |
+| `MEMORY_CARD_INTEGRATION_PEER` | `172.30.32.1, fd0c:ac1e:2100::1` | Comma-separated peers allowed to read that feed |
 | `MEMORY_CARD_TAG_SCAN_FINISHED` | from `options.json` | `playing` or `keep`; overrides `tag_scan_finished` |
 | `MEMORY_CARD_CURRENCY` | from `options.json` | Three-letter code; overrides `currency` |
 | `MEMORY_CARD_DATE_FORMAT` | from `options.json` | `language`, `dmy`, `mdy` or `ymd`; overrides `date_format` |

@@ -1,5 +1,5 @@
 use std::fmt;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -7,6 +7,12 @@ use serde::Deserialize;
 
 /// Address the Supervisor uses to proxy ingress traffic.
 pub const SUPERVISOR_IP: IpAddr = IpAddr::V4(Ipv4Addr::new(172, 30, 32, 2));
+/// Home Assistant runs on the host network, so it reaches the app's feed from
+/// the gateway of the Supervisor's network.
+pub const HOME_ASSISTANT_IPS: [IpAddr; 2] = [
+    IpAddr::V4(Ipv4Addr::new(172, 30, 32, 1)),
+    IpAddr::V6(Ipv6Addr::new(0xfd0c, 0xac1e, 0x2100, 0, 0, 0, 0, 1)),
+];
 
 const DEFAULT_DATA_DIR: &str = "/data";
 const DEFAULT_LISTEN: &str = "0.0.0.0:8099";
@@ -215,7 +221,10 @@ pub struct Config {
     pub listen: SocketAddr,
     /// Where the integration reads the sensors, in `integration` mode.
     pub integration_listen: SocketAddr,
+    /// Who may connect to `listen`: the Supervisor, which proxies ingress.
     pub trusted_peers: Vec<IpAddr>,
+    /// Who may connect to `integration_listen`.
+    pub integration_peers: Vec<IpAddr>,
     pub log_level: LogLevel,
     /// `None` without credentials or with external services off.
     pub igdb: Option<IgdbCredentials>,
@@ -310,18 +319,9 @@ impl Config {
                 value: integration_raw.clone(),
             })?;
 
-        let trusted_peers = match env("MEMORY_CARD_TRUSTED_PEER") {
-            None => vec![SUPERVISOR_IP],
-            Some(raw) => raw
-                .split(',')
-                .map(|part| {
-                    part.trim().parse().map_err(|_| ConfigError::InvalidEnv {
-                        name: "MEMORY_CARD_TRUSTED_PEER",
-                        value: raw.clone(),
-                    })
-                })
-                .collect::<Result<_, _>>()?,
-        };
+        let trusted_peers = peers(&env, "MEMORY_CARD_TRUSTED_PEER", &[SUPERVISOR_IP])?;
+        let integration_peers =
+            peers(&env, "MEMORY_CARD_INTEGRATION_PEER", &HOME_ASSISTANT_IPS)?;
 
         let log_level = match env("MEMORY_CARD_LOG_LEVEL") {
             None => options.log_level.unwrap_or_default(),
@@ -430,6 +430,7 @@ impl Config {
             listen,
             integration_listen,
             trusted_peers,
+            integration_peers,
             log_level,
             igdb,
             managers,
@@ -498,6 +499,25 @@ fn flag(
     }
 }
 
+/// Comma-separated addresses from `name`, or `default` when it is unset.
+fn peers(
+    env: impl Fn(&str) -> Option<String>,
+    name: &'static str,
+    default: &[IpAddr],
+) -> Result<Vec<IpAddr>, ConfigError> {
+    let Some(raw) = env(name) else {
+        return Ok(default.to_vec());
+    };
+    raw.split(',')
+        .map(|part| {
+            part.trim().parse().map_err(|_| ConfigError::InvalidEnv {
+                name,
+                value: raw.clone(),
+            })
+        })
+        .collect()
+}
+
 fn non_empty(value: Option<String>) -> Option<String> {
     value.map(|v| v.trim().to_owned()).filter(|v| !v.is_empty())
 }
@@ -545,6 +565,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
         assert_eq!(config.trusted_peers, vec![SUPERVISOR_IP]);
+        assert_eq!(config.integration_peers, HOME_ASSISTANT_IPS);
         assert_eq!(config.listen, "0.0.0.0:8099".parse().unwrap());
         assert_eq!(config.log_level, LogLevel::Info);
         assert!(config.igdb.is_none());
@@ -606,6 +627,7 @@ mod tests {
             &[
                 ("MEMORY_CARD_LOG_LEVEL", "debug"),
                 ("MEMORY_CARD_TRUSTED_PEER", "127.0.0.1, ::1"),
+                ("MEMORY_CARD_INTEGRATION_PEER", "10.0.0.5"),
                 ("MEMORY_CARD_LISTEN", "127.0.0.1:18099"),
                 ("MEMORY_CARD_MANAGERS", "one, two,"),
                 ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "1"),
@@ -614,6 +636,7 @@ mod tests {
         .unwrap();
         assert_eq!(config.log_level, LogLevel::Debug);
         assert_eq!(config.trusted_peers.len(), 2);
+        assert_eq!(config.integration_peers, ["10.0.0.5".parse::<IpAddr>().unwrap()]);
         assert_eq!(config.managers, vec!["one", "two"]);
         assert!(config.viewers_track_progress);
         assert!(config.igdb.is_none(), "empty secret disables IGDB");
@@ -684,6 +707,8 @@ mod tests {
     fn rejects_bad_env() {
         let dir = tempfile::tempdir().unwrap();
         let err = load_with(dir.path(), &[("MEMORY_CARD_TRUSTED_PEER", "nope")]).unwrap_err();
+        assert!(matches!(err, ConfigError::InvalidEnv { .. }));
+        let err = load_with(dir.path(), &[("MEMORY_CARD_INTEGRATION_PEER", "1.2.3.4,")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
         let err = load_with(dir.path(), &[("MEMORY_CARD_EXTERNAL_SERVICES", "maybe")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
