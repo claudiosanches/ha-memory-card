@@ -6,6 +6,7 @@ import {
   Button,
   Code,
   CopyButton,
+  Divider,
   Group,
   Loader,
   Select,
@@ -194,10 +195,11 @@ function Status() {
           <div>
             <dt>{t('settings.donations')}</dt>
             <dd>
-              <Group gap="md">
+              <Group gap="sm">
                 <Anchor href="https://github.com/sponsors/claudiosanches" target="_blank" rel="noreferrer">
                   {t('settings.githubSponsors')}
                 </Anchor>
+                <Divider orientation="vertical" />
                 <Anchor href="https://ko-fi.com/claudiosanches" target="_blank" rel="noreferrer">
                   {t('settings.kofi')}
                 </Anchor>
