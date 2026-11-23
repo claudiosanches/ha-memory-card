@@ -7,7 +7,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use super::parse::RawRow;
-use super::snapshot::{CopyRow, Snapshot};
+use super::snapshot::{CopyRow, GameRow, ReleaseRow, Snapshot};
 use crate::db::devices::DeviceKind;
 use crate::db::labels::SEPARATORS;
 use crate::db::play_statuses;
@@ -173,6 +173,12 @@ struct Planner<'a> {
     game_labels: HashSet<(Ref, Ref)>,
     games_by_igdb: HashMap<i64, Ref>,
     games_by_title: HashMap<String, Vec<Ref>>,
+    games_by_id: HashMap<i64, &'a GameRow>,
+    releases_by_id: HashMap<i64, &'a ReleaseRow>,
+    /// Games without an IGDB id, by title.
+    unlinked_by_title: HashMap<String, Vec<Ref>>,
+    /// Existing games this import sets a play status on.
+    statuses_set: HashSet<i64>,
     releases: HashMap<(Ref, Ref, Region, String), Ref>,
     copies: HashMap<i64, &'a CopyRow>,
     seen_copies: HashMap<i64, u64>,
@@ -221,6 +227,19 @@ impl<'a> Planner<'a> {
         Self {
             snapshot,
             plan: Plan::default(),
+            games_by_id: snapshot.games.iter().map(|g| (g.id, g)).collect(),
+            releases_by_id: snapshot.releases.iter().map(|r| (r.id, r)).collect(),
+            unlinked_by_title: snapshot.games.iter().filter(|g| g.igdb_id.is_none()).fold(
+                HashMap::new(),
+                |mut unlinked, g| {
+                    unlinked
+                        .entry(key(&g.title))
+                        .or_insert_with(Vec::new)
+                        .push(Ref::Existing(g.id));
+                    unlinked
+                },
+            ),
+            statuses_set: HashSet::new(),
             platforms,
             devices: snapshot
                 .devices
@@ -562,18 +581,12 @@ impl<'a> Planner<'a> {
                 return Ok(Some((*found, false)));
             }
             // A game imported earlier without an IGDB id gets linked.
-            let unlinked: Vec<Ref> = self
-                .games_by_title
-                .get(&key(title))
-                .into_iter()
-                .flatten()
-                .copied()
-                .filter(|r| !self.has_igdb_id(*r))
-                .collect();
-            return Ok(match unlinked.as_slice() {
-                [only] => Some((*only, true)),
-                _ => None,
-            });
+            return Ok(
+                match self.unlinked_by_title.get(&key(title)).map(Vec::as_slice) {
+                    Some([only]) => Some((*only, true)),
+                    _ => None,
+                },
+            );
         }
 
         // The copy's current game wins when the title still matches.
@@ -591,26 +604,9 @@ impl<'a> Planner<'a> {
         }
     }
 
-    fn has_igdb_id(&self, game: Ref) -> bool {
-        match game {
-            Ref::Existing(id) => {
-                self.snapshot
-                    .games
-                    .iter()
-                    .any(|g| g.id == id && g.igdb_id.is_some())
-                    || self.plan.game_igdb_links.iter().any(|(g, _)| *g == id)
-            }
-            Ref::New(i) => self.plan.games[i].igdb_id.is_some(),
-        }
-    }
-
-    fn copy_game(&self, copy: &CopyRow) -> Option<&'a crate::transfer::snapshot::GameRow> {
-        let release = self
-            .snapshot
-            .releases
-            .iter()
-            .find(|r| r.id == copy.release_id)?;
-        self.snapshot.games.iter().find(|g| g.id == release.game_id)
+    fn copy_game(&self, copy: &CopyRow) -> Option<&'a GameRow> {
+        let release = self.releases_by_id.get(&copy.release_id)?;
+        self.games_by_id.get(&release.game_id).copied()
     }
 
     /// True when an earlier row of this import set the game's status, as
@@ -618,7 +614,7 @@ impl<'a> Planner<'a> {
     fn status_set_by_import(&self, game: Ref) -> bool {
         match game {
             Ref::New(_) => true,
-            Ref::Existing(id) => self.plan.game_statuses.iter().any(|(g, _)| *g == id),
+            Ref::Existing(id) => self.statuses_set.contains(&id),
         }
     }
 
@@ -631,6 +627,9 @@ impl<'a> Planner<'a> {
     ) -> Ref {
         let game = match found {
             Some((game, link)) => {
+                if link && let Some(unlinked) = self.unlinked_by_title.get_mut(&key(title)) {
+                    unlinked.retain(|g| *g != game);
+                }
                 if let (true, Some(igdb_id), Ref::Existing(id)) = (link, igdb_id, game) {
                     self.plan.game_igdb_links.push((id, igdb_id));
                     self.games_by_igdb.insert(igdb_id, game);
@@ -654,6 +653,11 @@ impl<'a> Planner<'a> {
                     .push(game);
                 if let Some(igdb_id) = igdb_id {
                     self.games_by_igdb.insert(igdb_id, game);
+                } else {
+                    self.unlinked_by_title
+                        .entry(key(title))
+                        .or_default()
+                        .push(game);
                 }
                 game
             }
@@ -665,7 +669,10 @@ impl<'a> Planner<'a> {
             self.game_statuses.insert(game, status.clone());
             match game {
                 Ref::New(i) => self.plan.games[i].play_status = Some(status),
-                Ref::Existing(id) => self.plan.game_statuses.push((id, status)),
+                Ref::Existing(id) => {
+                    self.statuses_set.insert(id);
+                    self.plan.game_statuses.push((id, status));
+                }
             }
         }
         game

@@ -616,3 +616,22 @@ async fn formulas_export_as_text_and_import_back_unchanged() {
         ("=HYPERLINK(\"http://x\")", "+1 spare")
     );
 }
+
+#[tokio::test]
+async fn many_games_that_share_a_title_plan_quickly() {
+    let app = TestApp::new().await;
+    let csv = |from: usize| -> String {
+        let rows: String = (from..from + 1500)
+            .map(|igdb_id| format!("{igdb_id},Tetris,Switch,eu,digital\n"))
+            .collect();
+        format!("igdb_id,game_title,platform,region,format\n{rows}")
+    };
+    let (status, result) = app.post_csv("/api/import", &csv(1)).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+
+    let started = std::time::Instant::now();
+    let (status, result) = app.post_csv("/api/import", &csv(100_001)).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert!(started.elapsed().as_secs() < 10, "{:?}", started.elapsed());
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM games").await, 3000);
+}
