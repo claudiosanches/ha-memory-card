@@ -38,6 +38,8 @@ const HANDOVER: Duration = Duration::from_secs(5);
 const RETRY: Duration = Duration::from_secs(15);
 const STOP_TIMEOUT: Duration = Duration::from_millis(500);
 const REMOVE_TIMEOUT: Duration = Duration::from_secs(10);
+/// How long the broker gets to hand back a device it kept.
+const LOOK_TIMEOUT: Duration = Duration::from_secs(2);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -113,6 +115,8 @@ enum Signal {
     HomeAssistantOnline,
     /// Someone pressed Roll a pick, or an automation sent filters.
     Roll(Vec<u8>),
+    /// The broker still holds a device an earlier run published.
+    Published,
     Lost,
     /// Our own disconnect went out.
     Closed,
@@ -205,6 +209,11 @@ async fn poll(mut eventloop: EventLoop, signals: mpsc::Sender<Signal>) {
             {
                 Signal::Roll(message.payload.to_vec())
             }
+            Ok(Event::Incoming(Packet::Publish(message)))
+                if message.topic == DISCOVERY_TOPIC && !message.payload.is_empty() =>
+            {
+                Signal::Published
+            }
             Ok(Event::Outgoing(Outgoing::Disconnect)) => {
                 let _ = signals.send(Signal::Closed).await;
                 return;
@@ -268,6 +277,8 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                         sent = send_state(&client, state, sent).await;
                     }
                 }
+                // Only `remove` listens for the device.
+                Some(Signal::Published) => {}
                 Some(Signal::Lost) => {
                     connected = false;
                     set_status(state, SensorsStatus::Disconnected);
@@ -348,27 +359,48 @@ async fn send_state(
     Some(payload)
 }
 
-/// Clears what an earlier run published, so turning sensors off removes the device.
+/// Waits for a signal `wanted` picks, until the connection ends or `wait` passes.
+async fn until(
+    events: &mut mpsc::Receiver<Signal>,
+    wait: Duration,
+    wanted: fn(&Signal) -> bool,
+) -> bool {
+    tokio::time::timeout(wait, async {
+        loop {
+            match events.recv().await {
+                Some(signal) if wanted(&signal) => break true,
+                Some(Signal::Lost | Signal::Closed) | None => break false,
+                Some(_) => {}
+            }
+        }
+    })
+    .await
+    .unwrap_or(false)
+}
+
+/// Clears what an earlier run published, so turning sensors off removes the
+/// device. A broker holding nothing of ours is left alone, since clearing it
+/// makes Home Assistant log a warning.
 pub(crate) async fn remove(broker: &MqttBroker) {
     let (client, eventloop) = AsyncClient::new(options(broker, false), 8);
     let (signals, mut events) = mpsc::channel(8);
     let poller = tokio::spawn(poll(eventloop, signals));
 
-    let removed = tokio::time::timeout(REMOVE_TIMEOUT, async {
-        loop {
-            match events.recv().await {
-                Some(Signal::Connected) => break true,
-                Some(Signal::Lost | Signal::Closed) | None => break false,
-                Some(Signal::HomeAssistantOnline | Signal::Roll(_)) => {}
-            }
-        }
+    if until(&mut events, REMOVE_TIMEOUT, |s| {
+        matches!(s, Signal::Connected)
     })
     .await
-    .unwrap_or(false);
-
-    if removed {
-        for topic in [DISCOVERY_TOPIC, STATE_TOPIC, AVAILABILITY_TOPIC] {
-            send(&client, topic, Vec::new()).await;
+    {
+        let _ = client.subscribe(DISCOVERY_TOPIC, QoS::AtLeastOnce).await;
+        // The broker sends a kept message right after the subscription.
+        if until(&mut events, LOOK_TIMEOUT, |s| {
+            matches!(s, Signal::Published)
+        })
+        .await
+        {
+            for topic in [DISCOVERY_TOPIC, STATE_TOPIC, AVAILABILITY_TOPIC] {
+                send(&client, topic, Vec::new()).await;
+            }
         }
         let _ = client.disconnect().await;
         closed(&mut events).await;
