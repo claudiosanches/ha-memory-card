@@ -64,6 +64,8 @@ pub enum IgdbError {
 const COVER_MAX: usize = 10 * 1024 * 1024;
 /// 500 games with every field asked for come to a few MB.
 const ANSWER_MAX: usize = 16 * 1024 * 1024;
+/// Twitch's tokens last about 60 days; a longer lifetime is not believed.
+const TOKEN_LIFETIME_MAX: u64 = 90 * 24 * 60 * 60;
 /// Items kept from each list about a game; real games stay far below it,
 /// and each item costs a write.
 const LIST_MAX: usize = 500;
@@ -409,7 +411,12 @@ impl Igdb {
             .await?
             .error_for_status()?;
         let response: TokenResponse = json(response).await?;
-        let lifetime = Duration::from_secs(response.expires_in.saturating_sub(60));
+        let lifetime = Duration::from_secs(
+            response
+                .expires_in
+                .saturating_sub(60)
+                .min(TOKEN_LIFETIME_MAX),
+        );
         *token = Some(Token {
             value: response.access_token.clone(),
             expires_at: Instant::now() + lifetime,

@@ -47,8 +47,15 @@ pub fn start(state: &AppState) -> ApiResult<SyncStatus> {
     };
     let state = state.clone();
     tokio::spawn(async move {
-        if let Err(err) = run(&state, &igdb).await {
-            tracing::error!(error = %err, "IGDB sync stopped");
+        // Its own task, so a panic still ends the run below.
+        let sync = tokio::spawn({
+            let state = state.clone();
+            async move { run(&state, &igdb).await }
+        });
+        match sync.await {
+            Ok(Ok(())) => {}
+            Ok(Err(err)) => tracing::error!(error = %err, "IGDB sync stopped"),
+            Err(err) => tracing::error!(error = %err, "IGDB sync failed"),
         }
         state.changes.announce();
         let mut status = state.sync.lock().expect("sync status lock");

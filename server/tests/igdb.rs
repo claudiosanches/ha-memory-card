@@ -142,6 +142,34 @@ async fn a_redirect_never_carries_the_secret_elsewhere() {
 }
 
 #[tokio::test]
+async fn a_token_lifetime_past_any_clock_still_searches() {
+    let stub = Router::new()
+        .route(
+            "/token",
+            post(|| async {
+                axum::Json(json!({"access_token": "token-1", "expires_in": u64::MAX}))
+            }),
+        )
+        .route("/v4/games", post(|| async { axum::Json(json!([])) }));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+    let igdb = Igdb::new(
+        IgdbCredentials {
+            client_id: "client".into(),
+            client_secret: "secret".into(),
+        },
+        Endpoints {
+            token_url: format!("{base}/token"),
+            api_url: format!("{base}/v4"),
+            image_url: format!("{base}/img"),
+        },
+    );
+
+    assert!(igdb.search("zelda").await.unwrap().is_empty());
+}
+
+#[tokio::test]
 async fn without_credentials_igdb_is_unavailable() {
     let app = TestApp::new().await;
     let (status, body) = app.json("GET", "/api/igdb/search?q=zelda", None).await;
