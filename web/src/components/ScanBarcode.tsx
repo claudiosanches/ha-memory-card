@@ -333,13 +333,16 @@ function ScannedCopy({ lookup, target, status, onClose }: { lookup: BarcodeLooku
     let current = true;
     void import('./barcode').then(({ platformInTitle, regionFromBarcode }) => {
       const active = (platforms.data ?? []).filter((p) => p.active);
-      const platform = lookup.product ? platformInTitle(lookup.product.title, active) : null;
+      // The product name first; else IGDB's platforms, when only one of them is in use.
+      const onIgdb = active.filter((p) => p.igdb_platform_id != null && target.igdbPlatforms?.includes(p.igdb_platform_id));
+      const platform =
+        (lookup.product ? platformInTitle(lookup.product.title, active) : null) ?? (onIgdb.length === 1 ? onIgdb[0] : null);
       if (current) setGuess({ platform_id: platform?.id, region: regionFromBarcode(lookup.barcode) });
     });
     return () => {
       current = false;
     };
-  }, [platforms.data, lookup]);
+  }, [platforms.data, lookup, target]);
 
   if (guess === null) return null;
 

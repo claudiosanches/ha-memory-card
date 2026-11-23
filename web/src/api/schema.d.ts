@@ -1413,6 +1413,8 @@ export interface components {
             /** Format: int64 */
             igdb_id: number;
             name: string;
+            /** @description IGDB's ids for the same platforms. */
+            platform_ids: number[];
             /** @description Abbreviations where IGDB has them. */
             platforms: string[];
             /** Format: int32 */

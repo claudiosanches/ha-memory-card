@@ -5,7 +5,7 @@ import en from '../locales/en.json';
 import { mockApi } from '../test/api';
 import { renderAt } from '../test/render';
 
-const hit = (igdb_id: number, name: string, score: number) => ({ igdb_id, name, year: 2017, platforms: ['Switch'], game_id: null, score });
+const hit = (igdb_id: number, name: string, score: number) => ({ igdb_id, name, year: 2017, platforms: ['Switch'], platform_ids: [130], game_id: null, score });
 
 const GROUPS: MatchGroup[] = [
   {

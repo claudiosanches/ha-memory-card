@@ -66,6 +66,8 @@ pub struct SearchHit {
     pub year: Option<i32>,
     /// Abbreviations where IGDB has them.
     pub platforms: Vec<String>,
+    /// IGDB's ids for the same platforms.
+    pub platform_ids: Vec<i64>,
     /// The game in the collection already linked to this IGDB game.
     pub game_id: Option<i64>,
 }
@@ -194,6 +196,7 @@ struct RawHit {
 
 #[derive(Deserialize)]
 struct PlatformName {
+    id: Option<i64>,
     name: String,
     abbreviation: Option<String>,
 }
@@ -256,6 +259,7 @@ fn search_hits(hits: Vec<RawHit>) -> Vec<SearchHit> {
             igdb_id: hit.id,
             name: hit.name,
             year: hit.first_release_date.and_then(year),
+            platform_ids: hit.platforms.iter().filter_map(|p| p.id).collect(),
             platforms: hit
                 .platforms
                 .into_iter()

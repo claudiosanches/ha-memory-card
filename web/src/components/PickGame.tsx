@@ -12,7 +12,10 @@ import { FormModal } from './FormModal';
 import { notifyError } from './notify';
 
 /** A game in the collection, or one to create. */
-export type Target = { kind: 'existing'; id: number; title: string } | { kind: 'new'; title: string; igdbId: number | null };
+export type Target = ({ kind: 'existing'; id: number; title: string } | { kind: 'new'; title: string; igdbId: number | null }) & {
+  /** IGDB's ids of the platforms the game came out on, when it was picked from IGDB. */
+  igdbPlatforms?: number[];
+};
 
 /** Creates a new target's game and links it to IGDB when picked from there. */
 export async function createGame(target: Extract<Target, { kind: 'new' }>, t: TFunction): Promise<number> {
@@ -64,9 +67,10 @@ export function PickGameModal({
     : (games.data ?? []).find((game) => game.title.trim().toLocaleLowerCase() === typed);
 
   const target = (title: string): Target => {
-    if (picked?.game_id != null) return { kind: 'existing', id: picked.game_id, title: picked.name };
-    if (existing) return { kind: 'existing', id: existing.id, title: existing.title };
-    return { kind: 'new', title: title.trim(), igdbId: picked?.igdb_id ?? null };
+    const igdbPlatforms = picked?.platform_ids ?? [];
+    if (picked?.game_id != null) return { kind: 'existing', id: picked.game_id, title: picked.name, igdbPlatforms };
+    if (existing) return { kind: 'existing', id: existing.id, title: existing.title, igdbPlatforms };
+    return { kind: 'new', title: title.trim(), igdbId: picked?.igdb_id ?? null, igdbPlatforms };
   };
 
   const pick = (hit: IgdbHit) => {

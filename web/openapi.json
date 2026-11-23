@@ -5549,7 +5549,8 @@
         "required": [
           "igdb_id",
           "name",
-          "platforms"
+          "platforms",
+          "platform_ids"
         ],
         "properties": {
           "game_id": {
@@ -5566,6 +5567,14 @@
           },
           "name": {
             "type": "string"
+          },
+          "platform_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "IGDB's ids for the same platforms."
           },
           "platforms": {
             "type": "array",

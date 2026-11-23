@@ -79,6 +79,39 @@ describe('Scanning a barcode', () => {
     });
   });
 
+  it.each([
+    ['the only one of its IGDB platforms in use', [41, 999], 'Wii U'],
+    ['none when more than one is in use', [41, 130], ''],
+  ])('picks the platform from IGDB when the product does not name one: %s', async (_, platformIds, platform) => {
+    const WII_U = { ...SWITCH, id: 2, name: 'Wii U', slug: 'wii-u', abbreviation: 'Wii U', igdb_platform_id: 41 };
+    mockApi({
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, sensors: 'off' },
+      'GET /api/games': [],
+      'GET /api/platforms': [SWITCH, WII_U],
+      'GET /api/devices': [],
+      'GET /api/stores': [],
+      'GET /api/barcodes/4902370536485': {
+        barcode: '4902370536485',
+        copies: [],
+        product: { title: "Yoshi's Woolly World (Nintendo)", brand: 'Nintendo' },
+        lookup: 'found',
+      },
+      'GET /api/igdb/search': [{ igdb_id: 77, name: "Yoshi's Woolly World", year: 2015, platforms: [], platform_ids: platformIds, game_id: null }],
+    });
+    renderAt('/');
+
+    await screen.findByRole('button', { name: en.scan.button });
+    scanPhoto();
+    fireEvent.click(within(await screen.findByTestId('scan-result')).getByRole('button', { name: en.scan.addIt }));
+    const pick = await screen.findByRole('dialog', { name: en.scan.whichGame });
+    fireEvent.click(within(pick).getByRole('button', { name: en.igdb.search }));
+    fireEvent.click(await within(pick).findByTestId('igdb-hit-77'));
+    fireEvent.click(within(pick).getByRole('button', { name: en.wishlist.next }));
+
+    const form = await screen.findByRole('dialog', { name: "Add Yoshi's Woolly World" });
+    expect(within(form).getByRole('combobox', { name: en.game.platform })).toHaveValue(platform);
+  });
+
   it('says when the box is already in the collection', async () => {
     mockApi({
       'GET /api/games': [],
