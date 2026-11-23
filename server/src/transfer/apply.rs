@@ -19,14 +19,20 @@ fn resolve(r: Ref, created: &[i64]) -> i64 {
 pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::Result<()> {
     let mut platforms = Vec::with_capacity(plan.platforms.len());
     let mut slugs = slug::Allocator::new(Table::Platforms);
+    let mut sort_order =
+        sqlx::query_scalar!(r#"SELECT COALESCE(MAX(sort_order), 0) AS "max!: i64" FROM platforms"#)
+            .fetch_one(&mut *conn)
+            .await?;
     for name in &plan.platforms {
         let slug = slugs.free(conn, name).await?;
+        sort_order += 10;
         let id = sqlx::query_scalar!(
             r#"INSERT INTO platforms (name, slug, active, custom, sort_order)
-               VALUES (?, ?, 1, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
+               VALUES (?, ?, 1, 1, ?)
                RETURNING id AS "id!""#,
             name,
-            slug
+            slug,
+            sort_order
         )
         .fetch_one(&mut *conn)
         .await?;

@@ -165,7 +165,9 @@ struct Planner<'a> {
     plan: Plan,
     platforms: PlatformIndex,
     devices: HashMap<String, Ref>,
-    device_platforms: HashMap<i64, Vec<i64>>,
+    device_platforms: HashMap<i64, HashSet<i64>>,
+    /// The platforms each new device plays, by its index in the plan.
+    new_device_platforms: HashSet<(usize, Ref)>,
     stores: HashMap<String, Ref>,
     labels: HashMap<String, Ref>,
     game_labels: HashSet<(Ref, Ref)>,
@@ -248,8 +250,9 @@ impl<'a> Planner<'a> {
             device_platforms: snapshot
                 .devices
                 .iter()
-                .map(|d| (d.id, d.platform_ids.clone()))
+                .map(|d| (d.id, d.platform_ids.iter().copied().collect()))
                 .collect(),
+            new_device_platforms: HashSet::new(),
             stores: snapshot
                 .stores
                 .iter()
@@ -756,7 +759,7 @@ impl<'a> Planner<'a> {
             device
         });
         if let Ref::New(i) = device {
-            if !self.plan.devices[i].platforms.contains(&platform) {
+            if self.new_device_platforms.insert((i, platform)) {
                 self.plan.devices[i].platforms.push(platform);
             }
             if format == Format::Physical {
