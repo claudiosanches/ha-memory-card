@@ -17,6 +17,7 @@ use tokio::sync::Mutex;
 use tokio::time::Instant;
 use utoipa::ToSchema;
 
+use crate::api::input::{NAME_MAX, SUMMARY_MAX, TITLE_MAX};
 use crate::config::IgdbCredentials;
 
 const INTERVAL: Duration = Duration::from_millis(250);
@@ -86,7 +87,9 @@ pub struct SearchHit {
 #[derive(Debug, Deserialize)]
 pub struct GameData {
     pub id: i64,
+    #[serde(deserialize_with = "text::<TITLE_MAX, _>")]
     pub name: String,
+    #[serde(default, deserialize_with = "optional_text::<SUMMARY_MAX, _>")]
     pub summary: Option<String>,
     pub first_release_date: Option<i64>,
     #[serde(default, deserialize_with = "capped")]
@@ -118,7 +121,9 @@ pub struct GameData {
 
 #[derive(Debug, Deserialize)]
 pub struct AlternativeName {
+    #[serde(deserialize_with = "text::<TITLE_MAX, _>")]
     pub name: String,
+    #[serde(default, deserialize_with = "optional_text::<NAME_MAX, _>")]
     pub comment: Option<String>,
 }
 
@@ -185,6 +190,24 @@ impl<'de, T: Deserialize<'de>, const N: usize> Visitor<'de> for Capped<T, N> {
     }
 }
 
+/// Text cut to `N` characters, the most the API takes for the same field.
+fn text<'de, const N: usize, D: Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
+    String::deserialize(deserializer).map(cut::<N>)
+}
+
+fn optional_text<'de, const N: usize, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<String>, D::Error> {
+    Option::<String>::deserialize(deserializer).map(|text| text.map(cut::<N>))
+}
+
+fn cut<const N: usize>(mut text: String) -> String {
+    if let Some((at, _)) = text.char_indices().nth(N) {
+        text.truncate(at);
+    }
+    text
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ReleaseDate {
     pub platform: Option<i64>,
@@ -196,6 +219,7 @@ pub struct ReleaseDate {
 /// A regional title and cover. IGDB has them for Korea (2), Japan (3) and Europe (4).
 #[derive(Debug, Deserialize)]
 pub struct Localization {
+    #[serde(default, deserialize_with = "optional_text::<TITLE_MAX, _>")]
     pub name: Option<String>,
     pub region: Option<i64>,
     pub cover: Option<Cover>,
@@ -204,7 +228,9 @@ pub struct Localization {
 #[derive(Debug, Deserialize)]
 pub struct Named {
     pub id: i64,
+    #[serde(deserialize_with = "text::<NAME_MAX, _>")]
     pub name: String,
+    #[serde(default, deserialize_with = "optional_text::<NAME_MAX, _>")]
     pub slug: Option<String>,
 }
 
@@ -219,6 +245,7 @@ pub struct InvolvedCompany {
 
 #[derive(Debug, Deserialize)]
 pub struct Company {
+    #[serde(deserialize_with = "text::<NAME_MAX, _>")]
     pub name: String,
 }
 
@@ -241,6 +268,7 @@ pub struct MultiplayerMode {
 #[derive(Deserialize)]
 struct RawHit {
     id: i64,
+    #[serde(deserialize_with = "text::<TITLE_MAX, _>")]
     name: String,
     first_release_date: Option<i64>,
     #[serde(default, deserialize_with = "capped")]
@@ -251,7 +279,9 @@ struct RawHit {
 #[derive(Deserialize)]
 struct PlatformName {
     id: Option<i64>,
+    #[serde(deserialize_with = "text::<NAME_MAX, _>")]
     name: String,
+    #[serde(default, deserialize_with = "optional_text::<NAME_MAX, _>")]
     abbreviation: Option<String>,
 }
 
@@ -491,5 +521,22 @@ mod tests {
         let Answer(games) =
             serde_json::from_value::<Answer<GameData, 3>>(serde_json::Value::from(games)).unwrap();
         assert_eq!(games.iter().map(|g| g.id).collect::<Vec<_>>(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn text_is_cut_to_what_the_api_takes() {
+        let game: GameData = serde_json::from_value(serde_json::json!({
+            "id": 1,
+            "name": "é".repeat(300),
+            "summary": "s".repeat(6000),
+            "genres": [{ "id": 1, "name": "g".repeat(150) }],
+            "alternative_names": [{ "name": "Short", "comment": null }],
+        }))
+        .unwrap();
+        assert_eq!(game.name, "é".repeat(TITLE_MAX));
+        assert_eq!(game.summary.unwrap().len(), SUMMARY_MAX);
+        assert_eq!(game.genres[0].name.len(), NAME_MAX);
+        assert_eq!(game.alternative_names[0].name, "Short");
+        assert_eq!(game.alternative_names[0].comment, None);
     }
 }

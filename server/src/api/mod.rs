@@ -6,7 +6,7 @@ pub mod duplicates;
 pub mod events;
 pub mod games;
 pub mod igdb;
-mod input;
+pub(crate) mod input;
 pub mod labels;
 pub mod me;
 pub mod missing;

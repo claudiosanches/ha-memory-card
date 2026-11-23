@@ -6,7 +6,7 @@ use time::Date;
 use time::macros::format_description;
 use utoipa::ToSchema;
 
-use super::input::{NAME_MAX, NOTES_MAX, optional, required};
+use super::input::{NAME_MAX, NOTES_MAX, SUMMARY_MAX, TITLE_MAX, optional, required};
 use crate::AppState;
 use crate::access::Actor;
 use crate::covers::{self, Owner};
@@ -19,8 +19,6 @@ use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 use crate::money;
 
-const TITLE_MAX: usize = 200;
-const SUMMARY_MAX: usize = 5000;
 const CODE_MAX: usize = 40;
 const PLAYERS_MAX: i64 = 99;
 const NAMES_MAX: usize = 50;

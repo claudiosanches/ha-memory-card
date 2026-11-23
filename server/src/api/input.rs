@@ -3,6 +3,8 @@
 
 use crate::error::ApiError;
 
+pub const TITLE_MAX: usize = 200;
+pub const SUMMARY_MAX: usize = 5000;
 pub const NAME_MAX: usize = 100;
 pub const SHORT_MAX: usize = 20;
 pub const NOTES_MAX: usize = 2000;
