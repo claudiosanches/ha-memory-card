@@ -2,6 +2,13 @@
 
 Track your video game collection across consoles.
 
+[![GitHub Release][releases-shield]][releases]
+![Project Stage][project-stage-shield]
+[![License][license-shield]][license]
+
+[![GitHub Actions][github-actions-shield]][github-actions]
+![Project Maintenance][maintenance-shield]
+
 ![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield]
 
 ![The library in Memory Card][library]
@@ -33,3 +40,11 @@ The **Documentation** tab explains the setup and every feature.
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
 [library]: https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/library.webp
 [phone]: https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/phone.webp
+[releases-shield]: https://img.shields.io/github/v/release/claudiosanches/ha-memory-card.svg
+[releases]: https://github.com/claudiosanches/ha-memory-card/releases
+[project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
+[license-shield]: https://img.shields.io/github/license/claudiosanches/ha-memory-card.svg
+[github-actions-shield]: https://github.com/claudiosanches/ha-memory-card/actions/workflows/ci.yml/badge.svg
+[github-actions]: https://github.com/claudiosanches/ha-memory-card/actions/workflows/ci.yml
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
+[license]: https://github.com/claudiosanches/ha-memory-card/blob/main/LICENSE

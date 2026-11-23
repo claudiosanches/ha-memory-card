@@ -1,5 +1,12 @@
 # Memory Card
 
+[![GitHub Release][releases-shield]][releases]
+![Project Stage][project-stage-shield]
+[![License][license-shield]](LICENSE)
+
+[![GitHub Actions][github-actions-shield]][github-actions]
+![Project Maintenance][maintenance-shield]
+
 A video game collection manager that runs as a Home Assistant app. It tracks
 the games you own across consoles, the platform and region releases of each
 game, and every copy you have, physical or digital.
@@ -168,3 +175,11 @@ pulls the image with that tag, so the image must exist before `main` changes.
 ## License
 
 Memory Card is licensed under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE).
+
+[releases-shield]: https://img.shields.io/github/v/release/claudiosanches/ha-memory-card.svg
+[releases]: https://github.com/claudiosanches/ha-memory-card/releases
+[project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
+[license-shield]: https://img.shields.io/github/license/claudiosanches/ha-memory-card.svg
+[github-actions-shield]: https://github.com/claudiosanches/ha-memory-card/actions/workflows/ci.yml/badge.svg
+[github-actions]: https://github.com/claudiosanches/ha-memory-card/actions/workflows/ci.yml
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
