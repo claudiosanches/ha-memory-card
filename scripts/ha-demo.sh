@@ -10,6 +10,7 @@
 # sets the app's sensors option. The Memory Card integration is copied from
 # HA_INTEGRATION (default ../ha-memory-card-integration) when it exists.
 set -eu
+self=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
 cd "$(dirname "$0")/.."
 
 name=${HA_NAME:-memory-card-haos}
@@ -220,6 +221,12 @@ up() {
         exit 1
     fi
     refuse_foreign
+    # A fresh Home Assistant gives its first account to whoever onboards it,
+    # so it only opens to the network once ha-demo.mjs made the owner.
+    if [ -n "${HA_LAN:-}" ] && [ ! -f "$state/demo.json" ]; then
+        echo "Making the owner account before Home Assistant is reachable from the network"
+        HA_LAN='' HA_HTTPS='' HA_DUCKDNS='' "$self" up
+    fi
     stage
     # Without provenance an unchanged build keeps its image ID.
     docker build -q --provenance=false -t "$image" --label "$label=1" scripts/haos >/dev/null
