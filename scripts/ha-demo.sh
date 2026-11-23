@@ -6,7 +6,8 @@
 # HA_HTTPS=1 serves HTTPS with a certificate from a test CA. HA_LAN=1 opens
 # the port to the network instead of this machine only. HA_DUCKDNS=<name>
 # does both as <name>.duckdns.org, with a Let's Encrypt certificate, the
-# DuckDNS token read from .data/duckdns-token. HA_SENSORS=mqtt|integration|off
+# DuckDNS token read from .data/duckdns-token; a later run without it brings
+# Home Assistant back to this machine. HA_SENSORS=mqtt|integration|off
 # sets the app's sensors option. The Memory Card integration is copied from
 # HA_INTEGRATION (default ../ha-memory-card-integration) when it exists.
 # HA_NAME runs another VM, with its own disk and logins.
@@ -144,10 +145,9 @@ issue_certificate() {
     docker exec "$name" cat tls/ca.pem >"$state/ca.pem"
 }
 
-# Points the DuckDNS name at this machine, renews its certificate when it is
-# due and puts it in Home Assistant's ssl folder. Prints whether it changed.
-# The token never reaches a command line.
-duckdns_certificate() {
+# Points the DuckDNS name at this machine. The token never reaches a command
+# line.
+duckdns_update() {
     if [ ! -s "$token_file" ]; then
         echo "Put the DuckDNS token in $token_file" >&2
         exit 1
@@ -158,6 +158,12 @@ duckdns_certificate() {
         echo "DuckDNS refused the update. Check the name and $token_file." >&2
         exit 1
     fi
+}
+
+# Points the DuckDNS name at this machine, renews its certificate when it is
+# due and puts it in Home Assistant's ssl folder. Prints whether it changed.
+duckdns_certificate() {
+    duckdns_update
     mkdir -p "$certs"
     [ -f "$certs/config" ] || printf 'BASEDIR=/certs\nKEY_ALGO=prime256v1\n' >"$certs/config"
     if ! log=$(DUCKDNS_TOKEN=$(cat "$token_file") docker run --rm --user "$(id -u):$(id -g)" \
@@ -264,12 +270,12 @@ up() {
         exit 1
     fi
     refuse_foreign
-    # Home Assistant then serves a certificate only that name can check, so
-    # this script could not reach it without the name.
+    # A disk set up for DuckDNS serves a certificate only that name can check,
+    # so Home Assistant goes back to plain HTTP through the name first.
     if [ -z "$duckdns" ] && [ -z "${HA_PRIVATE:-}" ] && before=$(duckdns_before); then
-        echo "This Home Assistant serves HTTPS for $before.duckdns.org." >&2
-        echo "Run with HA_DUCKDNS=$before, or make ha-destroy to start over." >&2
-        exit 1
+        echo "Bringing Home Assistant back from $before.duckdns.org to this machine"
+        HA_DUCKDNS=$before HA_LOCAL=1 "$self" up
+        rm "$state/duckdns"
     fi
     # A fresh Home Assistant gives its first account to whoever onboards it,
     # so it only opens to the network once ha-demo.mjs made the owner.
@@ -345,7 +351,10 @@ up() {
     copy_integration
 
     certificate=
-    if [ -n "$duckdns" ]; then
+    if [ -n "${HA_LOCAL:-}" ]; then
+        duckdns_update
+        HA_URL=http://127.0.0.1:$port
+    elif [ -n "$duckdns" ]; then
         certificate=$(duckdns_certificate)
         mkdir -p "$state"
         echo "$HA_DUCKDNS" >"$state/duckdns"
