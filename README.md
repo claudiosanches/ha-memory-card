@@ -15,6 +15,8 @@ game, and every copy you have, physical or digital.
 
 ## Install
 
+Memory Card needs Home Assistant 2026.11 or newer.
+
 1. In Home Assistant, go to **Settings > Apps > Install app**.
 2. Open the ⋮ menu, choose **Repositories** and add
    `https://github.com/claudiosanches/ha-memory-card`.

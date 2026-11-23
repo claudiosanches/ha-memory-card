@@ -3,6 +3,7 @@ version: "0.1.0"
 slug: memory_card
 description: Track your video game collection across consoles
 url: https://github.com/claudiosanches/ha-memory-card
+homeassistant: "2026.11.0"
 arch:
   - aarch64
   - amd64
