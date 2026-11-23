@@ -166,8 +166,10 @@
       "connected": "Connected",
       "connecting": "Connecting to the MQTT broker.",
       "disconnected": "Cannot reach the MQTT broker. Retrying.",
+      "failed": "The feed for the Memory Card integration could not start. The app's log says why.",
       "no_broker": "No MQTT broker. Install the Mosquitto broker app, then restart Memory Card.",
-      "off": "Off in the app configuration."
+      "off": "Off in the app configuration.",
+      "waiting": "Waiting for the Memory Card integration. Install it in Home Assistant, then add it when it shows as discovered."
     },
     "tags": "NFC tag scans",
     "tagsStatus": {

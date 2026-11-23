@@ -133,6 +133,10 @@ async fn status_says_why_sensors_are_not_published() {
     .await;
     let (_, status) = app.json("GET", "/api/status", None).await;
     assert_eq!(status["sensors"], "connecting");
+
+    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "integration")]).await;
+    let (_, status) = app.json("GET", "/api/status", None).await;
+    assert_eq!(status["sensors"], "waiting");
 }
 
 /// A Supervisor stand-in answering `/services/mqtt` with `mqtt`.
@@ -153,7 +157,7 @@ async fn supervisor(mqtt: (StatusCode, Value)) -> String {
         )
         .route(
             "/addons/self/info",
-            get(|| async { axum::Json(json!({"data": {"slug": "abc123_memory_card"}})) }),
+            get(|| async { axum::Json(json!({"data": {"slug": "abc123_memory_card", "hostname": "abc123-memory-card"}})) }),
         );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());

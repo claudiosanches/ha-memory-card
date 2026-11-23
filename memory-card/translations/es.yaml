@@ -38,7 +38,8 @@ configuration:
       Publicar recuentos de la colección, a qué estás jugando y lo último que
       añadiste como sensores de Home Assistant, con un botón que sortea un
       juego. "mqtt" los publica a través de la aplicación Mosquitto broker y
-      la integración MQTT; "off" los elimina.
+      la integración MQTT; "integration", a través de la integración Memory
+      Card de HACS, sin broker; "off" los elimina.
   tag_scan_finished:
     name: Etiqueta leída en un juego terminado
     description: >-

@@ -166,8 +166,10 @@
       "connected": "Conectado",
       "connecting": "Conectando ao broker MQTT.",
       "disconnected": "Não foi possível alcançar o broker MQTT. Tentando de novo.",
+      "failed": "Não foi possível iniciar a conexão para a integração Memory Card. O log do aplicativo mostra o motivo.",
       "no_broker": "Nenhum broker MQTT. Instale o aplicativo Mosquitto broker e reinicie o Memory Card.",
-      "off": "Desligado na configuração do aplicativo."
+      "off": "Desligado na configuração do aplicativo.",
+      "waiting": "Aguardando a integração Memory Card. Instale-a no Home Assistant e adicione-a quando ela aparecer como descoberta."
     },
     "tags": "Leitura de tags NFC",
     "tagsStatus": {

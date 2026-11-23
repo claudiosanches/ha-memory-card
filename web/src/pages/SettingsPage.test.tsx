@@ -82,6 +82,12 @@ describe('Settings sensors', () => {
     renderAt('/settings');
     expect(await screen.findByTestId('sensors-status')).toHaveTextContent(en.settings.sensorsStatus.no_broker);
   });
+
+  it('says the integration still has to be added', async () => {
+    mockApi({ 'GET /api/me': VIEWER, 'GET /api/status': { ...STATUS, sensors: 'waiting' } });
+    renderAt('/settings');
+    expect(await screen.findByTestId('sensors-status')).toHaveTextContent(en.settings.sensorsStatus.waiting);
+  });
 });
 
 describe('Settings titles', () => {

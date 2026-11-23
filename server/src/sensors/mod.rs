@@ -1,7 +1,11 @@
-//! Home Assistant sensors, created through MQTT discovery and refreshed after each change.
+//! Home Assistant sensors, created through MQTT discovery or read by the
+//! Memory Card integration, and refreshed after each change.
 
 pub mod broker;
 pub mod discovery;
+pub mod entities;
+pub mod integration;
+pub mod supervisor;
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -28,6 +32,9 @@ use crate::db;
 const CLIENT_ID: &str = "memory_card";
 /// Changes arriving within this window go out as one update.
 const DEBOUNCE: Duration = Duration::from_secs(1);
+/// After removing the integration, Home Assistant needs a moment to free its
+/// entity IDs for the MQTT ones.
+const HANDOVER: Duration = Duration::from_secs(5);
 const RETRY: Duration = Duration::from_secs(15);
 const STOP_TIMEOUT: Duration = Duration::from_millis(500);
 const REMOVE_TIMEOUT: Duration = Duration::from_secs(10);
@@ -43,12 +50,18 @@ pub enum SensorsStatus {
     Connected,
     /// The connection failed or dropped; retrying.
     Disconnected,
+    /// Ready for the Memory Card integration, which has not connected.
+    Waiting,
+    /// The integration feed could not start; the log says why.
+    Failed,
 }
 
 impl SensorsStatus {
     pub fn initial(config: &Config) -> Self {
         if config.sensors == SensorsMode::Off {
             Self::Off
+        } else if config.sensors == SensorsMode::Integration {
+            Self::Waiting
         } else if config.mqtt.is_none() && config.supervisor_token.is_none() {
             Self::NoBroker
         } else {
@@ -110,6 +123,11 @@ fn set_status(state: &AppState, status: SensorsStatus) {
 }
 
 async fn run(state: AppState, stop: Arc<Notify>) {
+    if state.config.sensors == SensorsMode::Integration {
+        integration::run(&state, &stop).await;
+        return;
+    }
+    let handed_over = integration::withdraw(&state).await;
     let broker = loop {
         tokio::select! {
             () = stop.notified() => return,
@@ -133,8 +151,17 @@ async fn run(state: AppState, stop: Arc<Notify>) {
         return;
     };
     match state.config.sensors {
-        SensorsMode::Mqtt => publish(&state, &stop, broker).await,
+        SensorsMode::Mqtt => {
+            if handed_over {
+                tokio::select! {
+                    () = stop.notified() => return,
+                    () = tokio::time::sleep(HANDOVER) => {}
+                }
+            }
+            publish(&state, &stop, broker).await;
+        }
         SensorsMode::Off => remove(&broker.mqtt).await,
+        SensorsMode::Integration => {}
     }
 }
 
@@ -266,7 +293,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
 
 /// Picks a game the way the app's Roll button does; the sensors show it.
 async fn roll(state: &AppState, payload: &[u8]) {
-    let filter = match discovery::pick_filter(payload) {
+    let filter = match entities::pick_filter(payload) {
         Ok(filter) => filter,
         Err(err) => {
             tracing::warn!(error = %err, "ignored a pick request with unreadable filters");
@@ -313,7 +340,7 @@ async fn send_state(
             return sent;
         }
     };
-    let payload = discovery::state(&snapshot).to_string();
+    let payload = entities::state(&snapshot).to_string();
     if sent.as_deref() == Some(payload.as_str()) {
         return sent;
     }
@@ -322,7 +349,7 @@ async fn send_state(
 }
 
 /// Clears what an earlier run published, so turning sensors off removes the device.
-async fn remove(broker: &MqttBroker) {
+pub(crate) async fn remove(broker: &MqttBroker) {
     let (client, eventloop) = AsyncClient::new(options(broker, false), 8);
     let (signals, mut events) = mpsc::channel(8);
     let poller = tokio::spawn(poll(eventloop, signals));

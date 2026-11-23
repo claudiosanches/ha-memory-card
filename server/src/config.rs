@@ -10,6 +10,8 @@ pub const SUPERVISOR_IP: IpAddr = IpAddr::V4(Ipv4Addr::new(172, 30, 32, 2));
 
 const DEFAULT_DATA_DIR: &str = "/data";
 const DEFAULT_LISTEN: &str = "0.0.0.0:8099";
+/// Not published to the host, so only the Supervisor's network reaches it.
+const DEFAULT_INTEGRATION_LISTEN: &str = "0.0.0.0:8100";
 const DEFAULT_SUPERVISOR_URL: &str = "http://supervisor";
 const DEFAULT_BARCODE_URL: &str = "https://api.upcitemdb.com/prod/trial/lookup";
 const DEFAULT_MQTT_PORT: u16 = 1883;
@@ -128,6 +130,8 @@ impl FromStr for DateFormat {
 pub enum SensorsMode {
     /// MQTT discovery through the broker.
     Mqtt,
+    /// The Memory Card integration, found through Supervisor discovery.
+    Integration,
     /// Not published, and removed from the broker.
     #[default]
     Off,
@@ -139,6 +143,7 @@ impl FromStr for SensorsMode {
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value.trim().to_ascii_lowercase().as_str() {
             "mqtt" => Ok(Self::Mqtt),
+            "integration" => Ok(Self::Integration),
             "off" => Ok(Self::Off),
             _ => Err(()),
         }
@@ -208,6 +213,8 @@ pub struct Config {
     pub data_dir: PathBuf,
     pub tmp_dir: PathBuf,
     pub listen: SocketAddr,
+    /// Where the integration reads the sensors, in `integration` mode.
+    pub integration_listen: SocketAddr,
     pub trusted_peers: Vec<IpAddr>,
     pub log_level: LogLevel,
     /// `None` without credentials or with external services off.
@@ -293,6 +300,15 @@ impl Config {
             name: "MEMORY_CARD_LISTEN",
             value: listen_raw.clone(),
         })?;
+
+        let integration_raw =
+            env("MEMORY_CARD_INTEGRATION_LISTEN").unwrap_or(DEFAULT_INTEGRATION_LISTEN.into());
+        let integration_listen = integration_raw
+            .parse()
+            .map_err(|_| ConfigError::InvalidEnv {
+                name: "MEMORY_CARD_INTEGRATION_LISTEN",
+                value: integration_raw.clone(),
+            })?;
 
         let trusted_peers = match env("MEMORY_CARD_TRUSTED_PEER") {
             None => vec![SUPERVISOR_IP],
@@ -412,6 +428,7 @@ impl Config {
             data_dir,
             tmp_dir,
             listen,
+            integration_listen,
             trusted_peers,
             log_level,
             igdb,
@@ -437,6 +454,16 @@ impl Config {
 
     pub fn covers_dir(&self) -> PathBuf {
         self.data_dir.join("covers")
+    }
+
+    /// What the integration must send to read the sensors.
+    pub fn integration_token_path(&self) -> PathBuf {
+        self.data_dir.join("integration_token")
+    }
+
+    /// The Supervisor discovery message announcing the integration feed.
+    pub fn integration_discovery_path(&self) -> PathBuf {
+        self.data_dir.join("integration_discovery")
     }
 }
 
@@ -629,6 +656,14 @@ mod tests {
         .unwrap();
         assert_eq!(config.sensors, SensorsMode::Mqtt);
         assert!(load_with(dir.path(), &[("MEMORY_CARD_SENSORS", "true")]).is_err());
+        std::fs::write(
+            dir.path().join("options.json"),
+            r#"{"sensors":"integration"}"#,
+        )
+        .unwrap();
+        let integration = load_with(dir.path(), &[]).unwrap();
+        assert_eq!(integration.sensors, SensorsMode::Integration);
+        assert_eq!(integration.integration_listen.port(), 8100);
         assert_eq!(config.supervisor_token.unwrap().expose(), "token-1");
         let mqtt = config.mqtt.unwrap();
         assert_eq!((mqtt.host.as_str(), mqtt.port), ("localhost", 1883));
@@ -654,6 +689,8 @@ mod tests {
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
         let err =
             load_with(dir.path(), &[("MEMORY_CARD_TAG_SCAN_FINISHED", "paused")]).unwrap_err();
+        assert!(matches!(err, ConfigError::InvalidEnv { .. }));
+        let err = load_with(dir.path(), &[("MEMORY_CARD_INTEGRATION_LISTEN", "8100")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
         let err = load_with(dir.path(), &[("MEMORY_CARD_DATE_FORMAT", "dd/mm")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));

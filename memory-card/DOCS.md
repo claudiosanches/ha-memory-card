@@ -90,7 +90,7 @@ one.
 | `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials below. |
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
-| `sensors` | `off` (the default) or `mqtt`, which publishes Home Assistant sensors through the MQTT broker and does nothing without one. Going back to `off` removes them. |
+| `sensors` | `off` (the default), `integration` for the Memory Card integration from HACS, or `mqtt` for the MQTT broker (does nothing without one). See [Home Assistant sensors](#home-assistant-sensors). Going back to `off` removes them. |
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
 | `date_format` | How dates are written: `language` (default) as the app's language writes them, `dmy` as 23/11/2026, `mdy` as 11/23/2026 or `ymd` as 2026-11-23. |
@@ -276,12 +276,25 @@ store, and what you paid next to what your copies are worth now.
 
 ## Home Assistant sensors
 
-Memory Card can add a **Memory Card** device to Home Assistant through MQTT
-discovery. It needs the **Mosquitto broker** app and the **MQTT**
-integration, which Home Assistant offers to set up once the broker runs.
-Then set the `sensors` option to `mqtt` and restart Memory Card. Start it
-after the broker so it finds it; the Status section under Settings in Memory
-Card says whether the sensors are connected.
+Memory Card can add a **Memory Card** device to Home Assistant with the
+sensors and button below. Pick one of two ways with the `sensors` option and
+restart Memory Card. The Status section under Settings in Memory Card says
+whether the sensors are connected.
+
+- **`integration`**: the Memory Card integration, installed from HACS. No
+  broker is needed.
+  1. In HACS, add the
+     [Memory Card integration](https://my.home-assistant.io/redirect/hacs_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
+     as a custom repository, download it and restart Home Assistant.
+  2. Set `sensors` to `integration` and restart Memory Card.
+  3. Under **Settings > Devices & services**, Home Assistant shows Memory
+     Card as discovered. Select **Add**.
+- **`mqtt`**: MQTT discovery. It needs the **Mosquitto broker** app and the
+  **MQTT** integration, which Home Assistant offers to set up once the broker
+  runs. Start Memory Card after the broker so it finds it.
+
+Both create the same entities with the same IDs. Switching from one to the
+other removes the old ones on the next start, so history graphs carry on.
 
 | Entity | State | Attributes |
 |---|---|---|
@@ -295,13 +308,19 @@ Card says whether the sensors are connected.
 | `sensor.memory_card_pick` | Title of the latest random pick, from Memory Card or Home Assistant | `suggested_at`, `platforms` of its owned copies |
 | `button.memory_card_roll_pick` | Picks a random owned game from the backlog, as **Pick for me** on the Backlog page does | |
 
-An automation can roll with filters by publishing JSON to
-`memory_card/pick/roll` with the `mqtt.publish` action, for example
-`{"device": ["switch"], "min_local_players": 2}` for a game for two on the
-Switch. The fields match the Backlog page's picker: `play_status` (a list of
-play status keys), `platform`, `device`, `genre`, `game_mode` (lists of
-slugs) and `min_local_players`. Each platform, device and store shows its
-slug in its Manage form, and library links use the same slugs.
+An automation can roll with filters, for example a game for two on the
+Switch:
+
+- with the integration, the `memory_card.roll_pick` action with
+  `device: [switch]` and `min_local_players: 2`. It responds with the
+  picked game's `title` and `platforms`.
+- with MQTT, the `mqtt.publish` action sending
+  `{"device": ["switch"], "min_local_players": 2}` to `memory_card/pick/roll`.
+
+The fields match the Backlog page's picker: `play_status` (a list of play
+status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs)
+and `min_local_players`. Each platform, device and store shows its slug in
+its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
 collection grows. Sensors update a second after each change and show as

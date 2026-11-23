@@ -19,6 +19,9 @@ timeout: 20
 homeassistant_api: true
 services:
   - mqtt:want
+# Points the Memory Card integration at the sensors feed.
+discovery:
+  - memory_card
 options:
   managers: []
   viewers_track_progress: false
@@ -36,7 +39,7 @@ schema:
   external_services: bool
   igdb_client_id: "str?"
   igdb_client_secret: "password?"
-  sensors: "list(mqtt|off)"
+  sensors: "list(mqtt|integration|off)"
   tag_scan_finished: "list(playing|keep)"
   currency: "match(^[A-Za-z]{3}$)?"
   date_format: "list(language|dmy|mdy|ymd)"

@@ -1,13 +1,10 @@
 //! Where the MQTT broker is: `MEMORY_CARD_MQTT_*`, or the Supervisor's MQTT service.
 
-use std::time::Duration;
-
-use reqwest::StatusCode;
+use reqwest::Method;
 use serde::Deserialize;
 
+use super::supervisor::{self, Reply, SupervisorError};
 use crate::config::{Config, MqttBroker, Secret};
-
-const TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Debug, Clone)]
 pub struct Broker {
@@ -16,18 +13,7 @@ pub struct Broker {
     pub ingress_slug: Option<String>,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum BrokerError {
-    #[error("cannot reach the Supervisor: {0}")]
-    Http(#[from] reqwest::Error),
-    #[error("the Supervisor answered {0}")]
-    Status(StatusCode),
-}
-
-#[derive(Deserialize)]
-struct Reply<T> {
-    data: T,
-}
+pub type BrokerError = SupervisorError;
 
 #[derive(Deserialize)]
 struct MqttService {
@@ -37,11 +23,6 @@ struct MqttService {
     ssl: bool,
     username: Option<String>,
     password: Option<String>,
-}
-
-#[derive(Deserialize)]
-struct SelfInfo {
-    slug: String,
 }
 
 /// `Ok(None)` outside Home Assistant, or when no broker app provides MQTT.
@@ -55,18 +36,14 @@ pub async fn find(config: &Config, http: &reqwest::Client) -> Result<Option<Brok
     let Some(token) = &config.supervisor_token else {
         return Ok(None);
     };
-    let get = |path: &str| {
-        http.get(format!("{}{path}", config.supervisor_url))
-            .timeout(TIMEOUT)
-            .bearer_auth(token.expose())
-    };
-
-    let response = get("/services/mqtt").send().await?;
+    let response = supervisor::request(config, http, token, Method::GET, "/services/mqtt")
+        .send()
+        .await?;
     match response.status() {
         status if status.is_success() => {}
         // The Supervisor answers 400 while no app provides the service.
         status if status.is_client_error() => return Ok(None),
-        status => return Err(BrokerError::Status(status)),
+        status => return Err(SupervisorError::Status(status)),
     }
     let service = response.json::<Reply<MqttService>>().await?.data;
     if service.ssl {
@@ -74,14 +51,11 @@ pub async fn find(config: &Config, http: &reqwest::Client) -> Result<Option<Brok
         return Ok(None);
     }
 
-    let ingress_slug = match get("/addons/self/info").send().await {
-        Ok(response) if response.status().is_success() => response
-            .json::<Reply<SelfInfo>>()
-            .await
-            .ok()
-            .map(|info| info.data.slug),
-        _ => None,
-    };
+    let ingress_slug = supervisor::self_info(config, http)
+        .await
+        .ok()
+        .flatten()
+        .map(|info| info.slug);
 
     Ok(Some(Broker {
         mqtt: MqttBroker {

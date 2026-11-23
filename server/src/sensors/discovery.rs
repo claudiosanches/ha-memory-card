@@ -1,9 +1,8 @@
-//! The MQTT discovery message that creates the sensors, and the state they read.
+//! The MQTT discovery message that creates the entities.
 
 use serde_json::{Map, Value, json};
 
-use crate::db::sensors::Snapshot;
-use crate::db::suggestions::SuggestionFilter;
+use super::entities::{self, ENTITIES, Entity, PICK_PRESS, Platform};
 
 pub const DISCOVERY_TOPIC: &str = "homeassistant/device/memory_card/config";
 /// Home Assistant publishes `online` here when it starts.
@@ -12,121 +11,17 @@ pub const STATE_TOPIC: &str = "memory_card/state";
 pub const AVAILABILITY_TOPIC: &str = "memory_card/availability";
 /// The Roll a pick button publishes here; automations may send filters as JSON.
 pub const PICK_TOPIC: &str = "memory_card/pick/roll";
-const PICK_PRESS: &str = "roll";
 
-/// Home Assistant drops longer states.
-const MAX_STATE: usize = 255;
-
-struct Sensor {
-    key: &'static str,
-    name: &'static str,
-    icon: &'static str,
-    /// Counts get a unit and long-term statistics.
-    unit: Option<&'static str>,
-    attributes: bool,
-}
-
-const SENSORS: [Sensor; 8] = [
-    Sensor {
-        key: "games",
-        name: "Games",
-        icon: "mdi:gamepad-variant",
-        unit: Some("games"),
-        attributes: false,
-    },
-    Sensor {
-        key: "copies",
-        name: "Copies",
-        icon: "mdi:disc",
-        unit: Some("copies"),
-        attributes: false,
-    },
-    Sensor {
-        key: "wishlist",
-        name: "Wishlist",
-        icon: "mdi:heart",
-        unit: Some("copies"),
-        attributes: false,
-    },
-    Sensor {
-        key: "backlog",
-        name: "Backlog",
-        icon: "mdi:bookshelf",
-        unit: Some("games"),
-        attributes: false,
-    },
-    Sensor {
-        key: "playing",
-        name: "Playing",
-        icon: "mdi:controller",
-        unit: Some("games"),
-        attributes: true,
-    },
-    Sensor {
-        key: "last_played",
-        name: "Last played",
-        icon: "mdi:history",
-        unit: None,
-        attributes: true,
-    },
-    Sensor {
-        key: "last_added",
-        name: "Last added",
-        icon: "mdi:new-box",
-        unit: None,
-        attributes: true,
-    },
-    Sensor {
-        key: "pick",
-        name: "Current pick",
-        icon: "mdi:dice-5",
-        unit: None,
-        attributes: true,
-    },
-];
-
-/// The button that rolls a new pick.
-fn roll_button() -> Value {
-    json!({
-        "platform": "button",
-        "name": "Roll a pick",
-        "unique_id": "memory_card_roll_pick",
-        "default_entity_id": "button.memory_card_roll_pick",
-        "icon": "mdi:dice-5",
-        "command_topic": PICK_TOPIC,
-        "payload_press": PICK_PRESS,
-        "availability_topic": AVAILABILITY_TOPIC,
-    })
-}
-
-/// The filters a message on [`PICK_TOPIC`] asks for: the button's press means
-/// the defaults, anything else must be a suggestion filter as JSON.
-pub fn pick_filter(payload: &[u8]) -> Result<SuggestionFilter, serde_json::Error> {
-    let trimmed = payload.trim_ascii();
-    if trimmed.is_empty() || trimmed == PICK_PRESS.as_bytes() {
-        return Ok(SuggestionFilter::default());
-    }
-    serde_json::from_slice(trimmed)
-}
-
-/// One device with every sensor. `ingress_slug` links the device page to the app.
+/// One device with every entity. `ingress_slug` links the device page to the app.
 pub fn device_config(ingress_slug: Option<&str>) -> Value {
     let version = env!("CARGO_PKG_VERSION");
-    let mut device = json!({
-        "identifiers": ["memory_card"],
-        "name": "Memory Card",
-        "model": "Video game collection",
-        "sw_version": version,
-    });
-    if let Some(slug) = ingress_slug {
-        device["configuration_url"] = json!(format!("homeassistant://hassio/ingress/{slug}"));
-    }
+    let mut device = entities::device(ingress_slug);
+    device["identifiers"] = json!(["memory_card"]);
 
-    let mut components: Map<String, Value> = SENSORS
+    let components: Map<String, Value> = ENTITIES
         .iter()
-        .map(|sensor| (sensor.key.to_owned(), component(sensor)))
+        .map(|entity| (entity.key.to_owned(), component(entity)))
         .collect();
-    components.insert("roll_pick".to_owned(), roll_button());
 
     json!({
         "device": device,
@@ -140,71 +35,41 @@ pub fn device_config(ingress_slug: Option<&str>) -> Value {
     })
 }
 
-fn component(sensor: &Sensor) -> Value {
+fn component(entity: &Entity) -> Value {
     let mut config = json!({
-        "platform": "sensor",
-        "name": sensor.name,
-        "unique_id": format!("memory_card_{}", sensor.key),
-        "default_entity_id": format!("sensor.memory_card_{}", sensor.key),
-        "icon": sensor.icon,
-        "state_topic": STATE_TOPIC,
-        "value_template": format!("{{{{ value_json.{} }}}}", sensor.key),
+        "platform": entity.platform.as_str(),
+        "name": entity.name,
+        "unique_id": entity.unique_id(),
+        "default_entity_id": entity.entity_id(),
+        "icon": entity.icon,
         "availability_topic": AVAILABILITY_TOPIC,
     });
-    if let Some(unit) = sensor.unit {
-        config["unit_of_measurement"] = json!(unit);
-        config["state_class"] = json!("measurement");
+    if entity.platform == Platform::Button {
+        config["command_topic"] = json!(PICK_TOPIC);
+        config["payload_press"] = json!(PICK_PRESS);
+        return config;
     }
-    if sensor.attributes {
+    config["state_topic"] = json!(STATE_TOPIC);
+    config["value_template"] = json!(format!("{{{{ value_json.{} }}}}", entity.key));
+    if let Some(unit) = entity.unit {
+        config["unit_of_measurement"] = json!(unit);
+    }
+    if let Some(state_class) = entity.state_class {
+        config["state_class"] = json!(state_class);
+    }
+    if entity.attributes {
         config["json_attributes_topic"] = json!(STATE_TOPIC);
         config["json_attributes_template"] = json!(format!(
             "{{{{ value_json.attributes.{} | tojson }}}}",
-            sensor.key
+            entity.key
         ));
     }
     config
 }
 
-/// The message on [`STATE_TOPIC`]. Missing titles are `null`, which Home Assistant shows as unknown.
-pub fn state(snapshot: &Snapshot) -> Value {
-    let last_played = snapshot.last_played.as_ref();
-    let last_added = snapshot.last_added.as_ref();
-    let pick = snapshot.pick.as_ref();
-    json!({
-        "games": snapshot.games,
-        "copies": snapshot.copies,
-        "wishlist": snapshot.wishlist,
-        "backlog": snapshot.backlog,
-        "playing": snapshot.playing_count,
-        "last_played": last_played.map(|game| fit(&game.title)),
-        "last_added": last_added.map(|game| fit(&game.title)),
-        "pick": pick.map(|game| fit(&game.title)),
-        "attributes": {
-            "playing": { "games": snapshot.playing },
-            "last_played": last_played.map_or_else(
-                || json!({}),
-                |game| json!({ "date": game.date, "platform": game.platform }),
-            ),
-            "last_added": last_added.map_or_else(
-                || json!({}),
-                |game| json!({ "added_at": game.added_at, "platform": game.platform }),
-            ),
-            "pick": pick.map_or_else(
-                || json!({}),
-                |game| json!({ "suggested_at": game.suggested_at, "platforms": game.platforms }),
-            ),
-        },
-    })
-}
-
-fn fit(title: &str) -> String {
-    title.chars().take(MAX_STATE).collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::sensors::{LastAdded, LastPlayed};
 
     #[test]
     fn every_sensor_reads_the_state_topic_under_its_own_id() {
@@ -213,12 +78,19 @@ mod tests {
             config["device"]["configuration_url"],
             "homeassistant://hassio/ingress/abc123_memory_card"
         );
+        assert_eq!(config["device"]["identifiers"], json!(["memory_card"]));
         assert_eq!(config["origin"]["name"], "Memory Card");
 
         let components = config["components"].as_object().unwrap();
-        assert_eq!(components.len(), SENSORS.len() + 1);
-        assert_eq!(components["roll_pick"]["platform"], "button");
-        assert_eq!(components["roll_pick"]["command_topic"], PICK_TOPIC);
+        assert_eq!(components.len(), ENTITIES.len());
+        let roll = &components["roll_pick"];
+        assert_eq!(roll["platform"], "button");
+        assert_eq!(roll["command_topic"], PICK_TOPIC);
+        assert_eq!(roll["payload_press"], "roll");
+        assert_eq!(roll["unique_id"], "memory_card_roll_pick");
+        assert_eq!(roll["default_entity_id"], "button.memory_card_roll_pick");
+        assert!(roll.get("state_topic").is_none());
+
         let games = &components["games"];
         assert_eq!(games["platform"], "sensor");
         assert_eq!(games["unique_id"], "memory_card_games");
@@ -237,56 +109,6 @@ mod tests {
             device_config(None)["device"]
                 .get("configuration_url")
                 .is_none()
-        );
-    }
-
-    #[test]
-    fn the_button_rolls_with_defaults_and_automations_send_filters() {
-        assert!(pick_filter(b"roll").unwrap().platform.is_empty());
-        assert!(pick_filter(b"").unwrap().device.is_empty());
-        let filter = pick_filter(br#"{"device": ["switch"], "min_local_players": 2}"#).unwrap();
-        assert_eq!(filter.device, ["switch".into()]);
-        assert_eq!(filter.min_local_players, Some(2));
-        assert!(pick_filter(b"{\"colour\": 1}").is_err());
-    }
-
-    #[test]
-    fn state_carries_counts_titles_and_attributes() {
-        let snapshot = Snapshot {
-            games: 3,
-            copies: 4,
-            wishlist: 1,
-            backlog: 2,
-            playing: vec!["Celeste".into()],
-            playing_count: 1,
-            last_played: Some(LastPlayed {
-                title: "x".repeat(300),
-                date: "2026-11-20".into(),
-                platform: None,
-            }),
-            last_added: None,
-            pick: None,
-        };
-        let state = state(&snapshot);
-        assert_eq!(state["games"], 3);
-        assert_eq!(state["playing"], 1);
-        assert_eq!(state["attributes"]["playing"]["games"], json!(["Celeste"]));
-        assert_eq!(state["last_played"].as_str().unwrap().len(), MAX_STATE);
-        assert_eq!(state["attributes"]["last_played"]["date"], "2026-11-20");
-        assert!(state["last_added"].is_null());
-        assert_eq!(state["attributes"]["last_added"], json!({}));
-
-        let added = Snapshot {
-            last_added: Some(LastAdded {
-                title: "Hades".into(),
-                added_at: "2026-11-21T10:00:00.000Z".into(),
-                platform: "PC".into(),
-            }),
-            ..snapshot
-        };
-        assert_eq!(
-            super::state(&added)["attributes"]["last_added"]["platform"],
-            "PC"
         );
     }
 }

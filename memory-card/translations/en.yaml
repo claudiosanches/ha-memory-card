@@ -37,7 +37,8 @@ configuration:
       Publish collection counts, what you are playing and what you added last
       as Home Assistant sensors, with a button that picks a random game. "mqtt"
       publishes them through the Mosquitto broker app and the MQTT
-      integration; "off" removes them.
+      integration; "integration" through the Memory Card integration from
+      HACS, with no broker; "off" removes them.
   tag_scan_finished:
     name: Tag scan on a finished game
     description: >-

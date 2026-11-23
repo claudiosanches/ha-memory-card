@@ -1510,7 +1510,7 @@ export interface components {
             year?: number | null;
         };
         /** @enum {string} */
-        SensorsStatus: "off" | "no_broker" | "connecting" | "connected" | "disconnected";
+        SensorsStatus: "off" | "no_broker" | "connecting" | "connected" | "disconnected" | "waiting" | "failed";
         SessionInput: {
             /**
              * Format: int64
