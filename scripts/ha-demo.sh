@@ -188,6 +188,20 @@ duckdns_certificate() {
     echo changed
 }
 
+# Restarts Home Assistant once the Supervisor started it, so it reads its
+# certificate again.
+restart_core() {
+    # shellcheck disable=SC2016
+    vm_ssh '
+        tries=0
+        until [ "$(docker inspect -f "{{.State.Running}}" homeassistant 2>/dev/null)" = true ]; do
+            tries=$((tries + 1))
+            [ "$tries" -le 300 ] || exit 1
+            sleep 2
+        done
+        docker restart homeassistant >/dev/null' </dev/null
+}
+
 # Where Home Assistant answers now: plainly, with the test CA, or with the
 # DuckDNS certificate. Nothing while it installs or restarts.
 current_url() {
@@ -270,13 +284,6 @@ up() {
         exit 1
     fi
     refuse_foreign
-    # A disk set up for DuckDNS serves a certificate only that name can check,
-    # so Home Assistant goes back to plain HTTP through the name first.
-    if [ -z "$duckdns" ] && [ -z "${HA_PRIVATE:-}" ] && before=$(duckdns_before); then
-        echo "Bringing Home Assistant back from $before.duckdns.org to this machine"
-        HA_DUCKDNS=$before HA_LOCAL=1 "$self" up
-        rm "$state/duckdns"
-    fi
     # A fresh Home Assistant gives its first account to whoever onboards it,
     # so it only opens to the network once ha-demo.mjs made the owner.
     if [ -n "${HA_LAN:-}" ] && ! owned; then
@@ -351,19 +358,26 @@ up() {
     copy_integration
 
     certificate=
-    if [ -n "${HA_LOCAL:-}" ]; then
-        duckdns_update
-        HA_URL=http://127.0.0.1:$port
-    elif [ -n "$duckdns" ]; then
+    if [ -n "$duckdns" ]; then
         certificate=$(duckdns_certificate)
         mkdir -p "$state"
         echo "$HA_DUCKDNS" >"$state/duckdns"
         HA_URL=https://$duckdns:$port
-    elif [ -n "${HA_HTTPS:-}" ]; then
-        certificate=$(issue_certificate)
-        HA_URL=https://127.0.0.1:$port
     else
-        HA_URL=http://127.0.0.1:$port
+        if before=$(duckdns_before); then
+            # That certificate only checks through the name, so one from the
+            # test CA takes its place while Home Assistant moves to HA_URL.
+            echo "Bringing Home Assistant back from $before.duckdns.org to this machine"
+            issue_certificate >/dev/null
+            restart_core
+            rm -f "$state/duckdns" "$state/certificate"
+        fi
+        if [ -n "${HA_HTTPS:-}" ]; then
+            certificate=$(issue_certificate)
+            HA_URL=https://127.0.0.1:$port
+        else
+            HA_URL=http://127.0.0.1:$port
+        fi
     fi
     HA_NEW_CERTIFICATE=
     [ "$certificate" != changed ] || HA_NEW_CERTIFICATE=1
