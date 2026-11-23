@@ -113,16 +113,17 @@ pub async fn guard(
         Some(matched) => matched.as_str(),
         None => request.uri().path(),
     };
-    if role < required_role(request.method(), path, policy.viewers_track_progress) {
+    let viewers_track_progress = policy.can_track_progress(None);
+    if role < required_role(request.method(), path, viewers_track_progress) {
         tracing::debug!(method = %request.method(), path, "viewer denied");
         return deny(StatusCode::FORBIDDEN, "manager_required");
     }
 
     request.extensions_mut().insert(Access {
-        user,
         role,
         managers_configured: !policy.managers.is_empty(),
-        can_track_progress: role == Role::Manager || policy.viewers_track_progress,
+        can_track_progress: policy.can_track_progress(Some(&user.id)),
+        user,
     });
     next.run(request).await
 }

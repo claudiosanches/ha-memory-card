@@ -60,6 +60,47 @@ async fn nobody_manages_until_managers_are_configured() {
 }
 
 #[tokio::test]
+async fn nobody_tracks_progress_until_managers_are_configured() {
+    let app = TestApp::with_env(&[
+        ("MEMORY_CARD_MANAGERS", ""),
+        ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true"),
+    ])
+    .await;
+    let release = app.release("Tunic", "switch").await;
+    let game: i64 = sqlx::query_scalar("SELECT game_id FROM releases WHERE id = ?")
+        .bind(release)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+
+    let (_, me) = send(&app, SUPERVISOR, "GET", "/api/me", Some(VIEWER), None).await;
+    assert_eq!(me["can_track_progress"], false);
+
+    let writes = [
+        (
+            "PUT",
+            format!("/api/games/{game}/play-status"),
+            Some(json!({ "play_status": "playing" })),
+        ),
+        (
+            "POST",
+            format!("/api/games/{game}/sessions"),
+            Some(json!({ "played_on": "2026-11-21" })),
+        ),
+        (
+            "PUT",
+            "/api/sessions/1".to_owned(),
+            Some(json!({ "played_on": "2026-11-20" })),
+        ),
+        ("DELETE", "/api/sessions/1".to_owned(), None),
+    ];
+    for (method, uri, body) in writes {
+        let (status, reply) = send(&app, SUPERVISOR, method, &uri, Some(VIEWER), body).await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "{method} {uri}: {reply}");
+    }
+}
+
+#[tokio::test]
 async fn me_names_the_user_and_role() {
     let app = TestApp::new().await;
 
