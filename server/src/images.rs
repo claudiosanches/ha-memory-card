@@ -225,46 +225,72 @@ fn png(bytes: &[u8]) -> Option<Vec<u8>> {
 const WEBP_KEPT: [&[u8; 4]; 7] = [
     b"VP8 ", b"VP8L", b"VP8X", b"ALPH", b"ANIM", b"ANMF", b"ICCP",
 ];
+/// Chunks that draw an animation frame; others may sit in it too.
+const WEBP_FRAME_KEPT: [&[u8; 4]; 3] = [b"ALPH", b"VP8 ", b"VP8L"];
+/// A frame's position, size, duration and flags, before its chunks.
+const ANMF_HEADER: usize = 16;
 /// VP8X flags for the EXIF and XMP chunks.
 const VP8X_METADATA: u8 = 0x08 | 0x04;
 
 fn webp(bytes: &[u8]) -> Option<Vec<u8>> {
     let size = usize::try_from(u32::from_le_bytes(bytes.get(4..8)?.try_into().ok()?)).ok()?;
     let end = size.checked_add(8)?.min(bytes.len());
-    let mut chunks = Vec::new();
-    let mut at = 12;
-    while at + 8 <= end {
-        let kind: &[u8; 4] = bytes.get(at..at + 4)?.try_into().ok()?;
-        let length = usize::try_from(u32::from_le_bytes(
-            bytes.get(at + 4..at + 8)?.try_into().ok()?,
-        ))
-        .ok()?;
-        let data_end = at.checked_add(8)?.checked_add(length)?;
-        let chunk = bytes.get(at..data_end)?;
-        if chunks.is_empty() && !matches!(kind, b"VP8 " | b"VP8L" | b"VP8X") {
-            return None;
-        }
-        if WEBP_KEPT.contains(&kind) {
-            let start = chunks.len();
-            chunks.extend(chunk);
-            if kind == b"VP8X" {
-                *chunks.get_mut(start + 8)? &= !VP8X_METADATA;
-            }
-            // Chunks are padded to an even length.
-            if length % 2 == 1 {
-                chunks.push(0);
-            }
-        }
-        at = data_end + length % 2;
-    }
-    if chunks.is_empty() {
+    let chunks = riff_chunks(bytes.get(12..end)?)?;
+    if !matches!(chunks.first()?.0, b"VP8 " | b"VP8L" | b"VP8X") {
         return None;
     }
     let mut out = b"RIFF".to_vec();
-    out.extend(u32::try_from(chunks.len() + 4).ok()?.to_le_bytes());
+    out.extend([0; 4]);
     out.extend(b"WEBP");
-    out.extend(chunks);
+    for (kind, data) in chunks {
+        match kind {
+            b"VP8X" => {
+                let mut data = data.to_vec();
+                *data.first_mut()? &= !VP8X_METADATA;
+                push_chunk(&mut out, kind, &data)?;
+            }
+            b"ANMF" => {
+                let mut frame = data.get(..ANMF_HEADER)?.to_vec();
+                for (kind, data) in riff_chunks(&data[ANMF_HEADER..])? {
+                    if WEBP_FRAME_KEPT.contains(&kind) {
+                        push_chunk(&mut frame, kind, data)?;
+                    }
+                }
+                push_chunk(&mut out, kind, &frame)?;
+            }
+            _ if WEBP_KEPT.contains(&kind) => push_chunk(&mut out, kind, data)?,
+            _ => {}
+        }
+    }
+    let riff_size = u32::try_from(out.len() - 8).ok()?;
+    out[4..8].copy_from_slice(&riff_size.to_le_bytes());
     Some(out)
+}
+
+/// A RIFF body's chunks, as kind and data; `None` when one runs past the end.
+fn riff_chunks(bytes: &[u8]) -> Option<Vec<(&[u8; 4], &[u8])>> {
+    let mut chunks = Vec::new();
+    let mut at = 0;
+    while at + 8 <= bytes.len() {
+        let kind: &[u8; 4] = bytes[at..at + 4].try_into().ok()?;
+        let length =
+            usize::try_from(u32::from_le_bytes(bytes[at + 4..at + 8].try_into().ok()?)).ok()?;
+        let data_end = at.checked_add(8)?.checked_add(length)?;
+        chunks.push((kind, bytes.get(at + 8..data_end)?));
+        // Chunks are padded to an even length.
+        at = data_end + length % 2;
+    }
+    Some(chunks)
+}
+
+fn push_chunk(out: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) -> Option<()> {
+    out.extend(kind);
+    out.extend(u32::try_from(data.len()).ok()?.to_le_bytes());
+    out.extend(data);
+    if data.len() % 2 == 1 {
+        out.push(0);
+    }
+    Some(())
 }
 
 #[cfg(test)]
@@ -360,6 +386,41 @@ mod tests {
         }
         let size = u32::from_le_bytes(cleaned[4..8].try_into().unwrap()) as usize;
         assert_eq!(size + 8, cleaned.len());
+    }
+
+    fn chunk(kind: &[u8; 4], data: &[u8]) -> Vec<u8> {
+        let mut out = Vec::new();
+        push_chunk(&mut out, kind, data).unwrap();
+        out
+    }
+
+    fn riff(chunks: &[Vec<u8>]) -> Vec<u8> {
+        let body = chunks.concat();
+        let size = u32::try_from(body.len() + 4).unwrap().to_le_bytes();
+        [&b"RIFF"[..], &size, b"WEBP", &body].concat()
+    }
+
+    fn vp8x(width: u32, height: u32, flags: u8) -> Vec<u8> {
+        let mut data = vec![flags, 0, 0, 0];
+        data.extend(&(width - 1).to_le_bytes()[..3]);
+        data.extend(&(height - 1).to_le_bytes()[..3]);
+        chunk(b"VP8X", &data)
+    }
+
+    #[test]
+    fn an_animation_frame_keeps_only_what_draws_it() {
+        let lossless = chunk(b"VP8L", &[0x2F, 0, 0, 0, 0, 0x10]);
+        let header = [0u8; ANMF_HEADER];
+        let frame = |inside: &[Vec<u8>]| chunk(b"ANMF", &[&header[..], &inside.concat()].concat());
+        let anim = chunk(b"ANIM", &[0; 6]);
+        let photo = riff(&[
+            vp8x(1, 1, 0x02 | VP8X_METADATA),
+            anim.clone(),
+            frame(&[chunk(b"PRIV", b"secret place"), lossless.clone()]),
+        ]);
+        let cleaned = clean(&photo).unwrap().bytes;
+        assert_eq!(cleaned, riff(&[vp8x(1, 1, 0x02), anim, frame(&[lossless])]));
+        assert_eq!(clean(&cleaned).unwrap().bytes, cleaned, "stable");
     }
 
     #[test]
