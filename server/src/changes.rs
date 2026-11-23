@@ -3,13 +3,17 @@
 
 use std::sync::Arc;
 
-use tokio::sync::{Notify, watch};
+use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore, watch};
+
+/// Most pages listening at once; every open tab is one.
+pub const LISTENERS_MAX: usize = 64;
 
 #[derive(Clone)]
 pub struct Changes {
     sensors: Arc<Notify>,
     /// How many changes so far, and whether the server is stopping.
     pages: Arc<watch::Sender<(u64, bool)>>,
+    listeners: Arc<Semaphore>,
 }
 
 impl Default for Changes {
@@ -17,8 +21,15 @@ impl Default for Changes {
         Self {
             sensors: Arc::default(),
             pages: Arc::new(watch::Sender::new((0, false))),
+            listeners: Arc::new(Semaphore::new(LISTENERS_MAX)),
         }
     }
+}
+
+/// A page's place among the listeners, given back when it is dropped.
+pub struct Listener {
+    pub changes: watch::Receiver<(u64, bool)>,
+    _place: OwnedSemaphorePermit,
 }
 
 impl Changes {
@@ -32,8 +43,13 @@ impl Changes {
         self.sensors.notified().await;
     }
 
-    pub fn subscribe(&self) -> watch::Receiver<(u64, bool)> {
-        self.pages.subscribe()
+    /// `None` while [`LISTENERS_MAX`] pages listen already.
+    pub fn subscribe(&self) -> Option<Listener> {
+        let place = self.listeners.clone().try_acquire_owned().ok()?;
+        Some(Listener {
+            changes: self.pages.subscribe(),
+            _place: place,
+        })
     }
 
     /// Ends what pages are listening to, so stopping does not wait on them.

@@ -742,6 +742,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "`too_many_listeners`: too many pages are open",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
           }
         }
       }

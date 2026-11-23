@@ -41,3 +41,25 @@ async fn pages_hear_about_changes_until_the_server_stops() {
         .expect("the stream ends when the server stops");
     assert!(end.is_none());
 }
+
+#[tokio::test]
+async fn only_so_many_pages_listen_at_once() {
+    let app = TestApp::new().await;
+    let listen = || async {
+        let request = Request::get("/api/events")
+            .header("x-remote-user-id", "viewer")
+            .body(Body::empty())
+            .unwrap();
+        app.router_from(SUPERVISOR).oneshot(request).await.unwrap()
+    };
+    let mut open = Vec::new();
+    for _ in 0..memory_card::changes::LISTENERS_MAX {
+        let response = listen().await;
+        assert_eq!(response.status(), StatusCode::OK);
+        open.push(response);
+    }
+    assert_eq!(listen().await.status(), StatusCode::TOO_MANY_REQUESTS);
+    // A closed page gives its place back.
+    open.pop();
+    assert_eq!(listen().await.status(), StatusCode::OK);
+}

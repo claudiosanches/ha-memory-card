@@ -36,6 +36,9 @@ pub enum ApiError {
     /// A feature that needs setup, such as IGDB credentials.
     #[error("unavailable: {0}")]
     Unavailable(&'static str),
+    /// Too much of something at once; worth trying again later.
+    #[error("busy: {0}")]
+    Busy(&'static str),
     #[error("IGDB request failed: {0}")]
     Upstream(String),
     #[error(transparent)]
@@ -71,6 +74,7 @@ impl IntoResponse for ApiError {
             Self::TooLarge => (StatusCode::PAYLOAD_TOO_LARGE, "too_large", None),
             Self::Invalid { code, field } => (StatusCode::UNPROCESSABLE_ENTITY, code, field),
             Self::Unavailable(code) => (StatusCode::SERVICE_UNAVAILABLE, code, None),
+            Self::Busy(code) => (StatusCode::TOO_MANY_REQUESTS, code, None),
             Self::Upstream(err) => {
                 tracing::warn!(error = %err, "IGDB request failed");
                 (StatusCode::BAD_GATEWAY, "igdb_failed", None)

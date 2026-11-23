@@ -2257,6 +2257,15 @@ export interface operations {
                     "text/event-stream": string;
                 };
             };
+            /** @description `too_many_listeners`: too many pages are open */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     exportCsv: {
