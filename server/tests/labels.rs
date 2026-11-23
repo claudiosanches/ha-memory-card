@@ -257,3 +257,33 @@ async fn an_import_row_names_at_most_fifty_labels() {
         json!([{"column": "labels", "code": "too_many_labels", "error": true}])
     );
 }
+
+#[tokio::test]
+async fn many_imported_labels_that_share_a_slug_each_get_their_own_quickly() {
+    let app = TestApp::new().await;
+    let marks = ['!', '?', '#', '*', '+', '=', '~', '^'];
+    let name = |n: usize| -> String {
+        let tail: String = (0..4).map(|d| marks[(n >> (3 * d)) & 7]).collect();
+        format!("x{tail}")
+    };
+    let rows: String = (0..40)
+        .map(|row| {
+            let names: Vec<String> = (0..50).map(|n| name(row * 50 + n)).collect();
+            format!("Game {row},\"{}\",Switch,eu,digital\n", names.join(", "))
+        })
+        .collect();
+    let csv = format!("game_title,labels,platform,region,format\n{rows}");
+
+    let started = std::time::Instant::now();
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert!(started.elapsed().as_secs() < 10, "{:?}", started.elapsed());
+
+    let slugs: Vec<String> = sqlx::query_scalar("SELECT slug FROM labels ORDER BY id")
+        .fetch_all(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(slugs.len(), 2000);
+    assert_eq!(&slugs[..3], ["x", "x-2", "x-3"]);
+    assert_eq!(slugs.last().unwrap(), "x-2000");
+}

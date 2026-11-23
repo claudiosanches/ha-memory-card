@@ -1,6 +1,8 @@
 //! URL names for platforms, devices, stores, genres, game modes and labels: lowercase
 //! ASCII letters, digits and hyphens, starting and ending with a letter or digit.
 
+use std::collections::{HashMap, HashSet};
+
 use serde::{Deserialize, Deserializer};
 use sqlx::{AssertSqlSafe, SqliteConnection};
 
@@ -73,18 +75,71 @@ pub fn slugify(text: &str) -> String {
 
 /// `base`, or `base-2`, `base-3`... the first one not in `taken`.
 pub fn unique(base: &str, taken: &[String]) -> String {
-    let free = |candidate: &str| !taken.iter().any(|s| s.eq_ignore_ascii_case(candidate));
-    if free(base) {
-        return base.to_owned();
+    let taken: HashSet<String> = taken.iter().map(|s| s.to_ascii_lowercase()).collect();
+    first_free(base, &taken, 2).0
+}
+
+/// The first of `base`, then `base-{from}`, `base-{from + 1}`... not in
+/// `taken` (lowercase), with the counter to try next.
+fn first_free(base: &str, taken: &HashSet<String>, from: u64) -> (String, u64) {
+    if !taken.contains(&base.to_ascii_lowercase()) {
+        return (base.to_owned(), from);
     }
-    (2..)
+    (from..)
         .map(|n| {
             let suffix = format!("-{n}");
             let head = &base[..base.len().min(MAX_LEN - suffix.len())];
-            format!("{}{suffix}", head.trim_end_matches('-'))
+            (format!("{}{suffix}", head.trim_end_matches('-')), n + 1)
         })
-        .find(|candidate| free(candidate))
+        .find(|(candidate, _)| !taken.contains(candidate))
         .expect("unbounded range")
+}
+
+/// Hands out free slugs for many new rows of one table, as an import adds
+/// them, reading the table once. Names that share a slug get the next
+/// counter without trying the ones already handed out.
+pub struct Allocator {
+    table: Table,
+    taken: Option<HashSet<String>>,
+    next: HashMap<String, u64>,
+}
+
+impl Allocator {
+    pub fn new(table: Table) -> Self {
+        Self {
+            table,
+            taken: None,
+            next: HashMap::new(),
+        }
+    }
+
+    pub async fn free(&mut self, conn: &mut SqliteConnection, text: &str) -> sqlx::Result<String> {
+        let taken = match &mut self.taken {
+            Some(taken) => taken,
+            None => {
+                let slugs: Vec<String> = sqlx::query_scalar(AssertSqlSafe(format!(
+                    "SELECT slug FROM {}",
+                    self.table.name()
+                )))
+                .fetch_all(conn)
+                .await?;
+                self.taken
+                    .insert(slugs.iter().map(|s| s.to_ascii_lowercase()).collect())
+            }
+        };
+        let base = base(self.table, text);
+        let from = self.next.get(&base).copied().unwrap_or(2);
+        let (slug, next) = first_free(&base, taken, from);
+        taken.insert(slug.to_ascii_lowercase());
+        self.next.insert(base, next);
+        Ok(slug)
+    }
+}
+
+fn base(table: Table, text: &str) -> String {
+    Some(slugify(text))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| table.fallback().to_owned())
 }
 
 /// A slug from user input: trimmed and lowercased, `None` when blank.
@@ -104,9 +159,7 @@ pub fn input(value: Option<&str>) -> ApiResult<Option<String>> {
 
 /// A slug for `text` that no row of `table` has yet.
 pub async fn free(conn: &mut SqliteConnection, table: Table, text: &str) -> sqlx::Result<String> {
-    let base = Some(slugify(text))
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| table.fallback().to_owned());
+    let base = base(table, text);
     let taken: Vec<String> = sqlx::query_scalar(AssertSqlSafe(format!(
         "SELECT slug FROM {} WHERE slug = ?1 OR slug LIKE ?1 || '-%'",
         table.name()

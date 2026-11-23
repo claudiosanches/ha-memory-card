@@ -18,8 +18,9 @@ fn resolve(r: Ref, created: &[i64]) -> i64 {
 /// plan that has errors.
 pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::Result<()> {
     let mut platforms = Vec::with_capacity(plan.platforms.len());
+    let mut slugs = slug::Allocator::new(Table::Platforms);
     for name in &plan.platforms {
-        let slug = slug::free(conn, Table::Platforms, name).await?;
+        let slug = slugs.free(conn, name).await?;
         let id = sqlx::query_scalar!(
             r#"INSERT INTO platforms (name, slug, active, custom, sort_order)
                VALUES (?, ?, 1, 1, (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM platforms))
@@ -33,8 +34,9 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
     }
 
     let mut stores = Vec::with_capacity(plan.stores.len());
+    let mut slugs = slug::Allocator::new(Table::Stores);
     for name in &plan.stores {
-        let slug = slug::free(conn, Table::Stores, name).await?;
+        let slug = slugs.free(conn, name).await?;
         let id = sqlx::query_scalar!(
             r#"INSERT INTO stores (name, slug) VALUES (?, ?) RETURNING id AS "id!""#,
             name,
@@ -46,8 +48,9 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
     }
 
     let mut devices = Vec::with_capacity(plan.devices.len());
+    let mut slugs = slug::Allocator::new(Table::Devices);
     for device in &plan.devices {
-        let slug = slug::free(conn, Table::Devices, &device.name).await?;
+        let slug = slugs.free(conn, &device.name).await?;
         let id = sqlx::query_scalar!(
             r#"INSERT INTO devices (name, slug, kind) VALUES (?, ?, ?) RETURNING id AS "id!""#,
             device.name,
@@ -87,8 +90,9 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
         games.push(id);
     }
     let mut labels = Vec::with_capacity(plan.labels.len());
+    let mut slugs = slug::Allocator::new(Table::Labels);
     for name in &plan.labels {
-        let slug = slug::free(conn, Table::Labels, name).await?;
+        let slug = slugs.free(conn, name).await?;
         let id = sqlx::query_scalar!(
             r#"INSERT INTO labels (name, slug) VALUES (?, ?) RETURNING id AS "id!""#,
             name,
