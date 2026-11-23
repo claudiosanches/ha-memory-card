@@ -172,7 +172,10 @@ async fn poll(mut eventloop: EventLoop, signals: mpsc::Sender<Signal>) {
             {
                 Signal::HomeAssistantOnline
             }
-            Ok(Event::Incoming(Packet::Publish(message))) if message.topic == PICK_TOPIC => {
+            // Only a press made now, not one the broker kept.
+            Ok(Event::Incoming(Packet::Publish(message)))
+                if message.topic == PICK_TOPIC && !message.retain =>
+            {
                 Signal::Roll(message.payload.to_vec())
             }
             Ok(Event::Outgoing(Outgoing::Disconnect)) => {
@@ -219,6 +222,10 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     connected = true;
                     set_status(state, SensorsStatus::Connected);
                     let _ = client.subscribe(HA_STATUS_TOPIC, QoS::AtLeastOnce).await;
+                    // A message someone left retained here would come back on
+                    // every connect; one too large for the client would end
+                    // each connection.
+                    send(&client, PICK_TOPIC, Vec::new()).await;
                     let _ = client.subscribe(PICK_TOPIC, QoS::AtLeastOnce).await;
                     send(&client, DISCOVERY_TOPIC, config.clone()).await;
                     send(&client, AVAILABILITY_TOPIC, "online").await;
