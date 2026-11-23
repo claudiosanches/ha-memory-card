@@ -102,6 +102,46 @@ async fn with_igdb() -> TestApp {
 }
 
 #[tokio::test]
+async fn a_redirect_never_carries_the_secret_elsewhere() {
+    let stolen = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let hit = stolen.clone();
+    let stub = Router::new()
+        .route(
+            "/token",
+            post(|| async {
+                (
+                    StatusCode::TEMPORARY_REDIRECT,
+                    [(axum::http::header::LOCATION, "/elsewhere")],
+                )
+            }),
+        )
+        .route(
+            "/elsewhere",
+            post(move || async move {
+                hit.store(true, std::sync::atomic::Ordering::SeqCst);
+                axum::Json(json!({"access_token": "token-1", "expires_in": 3600}))
+            }),
+        );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+    let igdb = Igdb::new(
+        IgdbCredentials {
+            client_id: "client".into(),
+            client_secret: "secret".into(),
+        },
+        Endpoints {
+            token_url: format!("{base}/token"),
+            api_url: format!("{base}/v4"),
+            image_url: format!("{base}/img"),
+        },
+    );
+
+    assert!(igdb.search("zelda").await.is_err());
+    assert!(!stolen.load(std::sync::atomic::Ordering::SeqCst));
+}
+
+#[tokio::test]
 async fn without_credentials_igdb_is_unavailable() {
     let app = TestApp::new().await;
     let (status, body) = app.json("GET", "/api/igdb/search?q=zelda", None).await;
