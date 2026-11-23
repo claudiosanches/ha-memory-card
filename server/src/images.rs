@@ -39,12 +39,13 @@ pub fn clean(bytes: &[u8]) -> Option<Cleaned> {
 const SOI: [u8; 2] = [0xFF, 0xD8];
 const EOI: [u8; 2] = [0xFF, 0xD9];
 
-/// Walks the segments up to the first scan, keeping those that decode the
-/// image, then keeps the image data up to its end marker. Anything after it,
-/// such as a second preview image, goes.
+/// Walks the segments, keeping those that decode the image, and the image
+/// data of every scan; a progressive JPEG has several, with segments between
+/// them. Anything after the end marker, such as a second preview image, goes.
 fn jpeg(bytes: &[u8]) -> Option<Vec<u8>> {
     let mut out = SOI.to_vec();
     let mut at = 2;
+    let mut scanned = false;
     loop {
         if *bytes.get(at)? != 0xFF {
             return None;
@@ -56,6 +57,10 @@ fn jpeg(bytes: &[u8]) -> Option<Vec<u8>> {
         let marker = *bytes.get(at)?;
         at += 1;
         match marker {
+            0xD9 if scanned => {
+                out.extend(EOI);
+                return Some(out);
+            }
             // A file that ends before any image data.
             0xD9 => return None,
             // Markers without a length.
@@ -75,16 +80,16 @@ fn jpeg(bytes: &[u8]) -> Option<Vec<u8>> {
             0xDA => {
                 out.extend([0xFF, marker]);
                 out.extend(segment);
-                let rest = &bytes[at..];
-                match rest.windows(2).position(|pair| pair == EOI) {
-                    Some(end) => out.extend(&rest[..end + 2]),
-                    // Some cameras leave off the end marker.
-                    None => {
-                        out.extend(rest);
-                        out.extend(EOI);
-                    }
+                let end = at + scan_length(&bytes[at..]);
+                out.extend(&bytes[at..end]);
+                at = end;
+                scanned = true;
+                // Some cameras leave off the end marker.
+                if at == bytes.len() {
+                    out.extend(EOI);
+                    return Some(out);
                 }
-                return Some(out);
+                continue;
             }
             0xE1 => {
                 if let Some(orientation) = exif_orientation(data).filter(|o| *o != 1) {
@@ -105,6 +110,21 @@ fn jpeg(bytes: &[u8]) -> Option<Vec<u8>> {
             out.extend(segment);
         }
     }
+}
+
+/// How long the image data that starts `bytes` runs: up to the next marker.
+/// In the data, 0xFF00 stands for 0xFF and restart markers belong to it.
+fn scan_length(bytes: &[u8]) -> usize {
+    let mut at = 0;
+    while let Some(offset) = bytes[at..].iter().position(|&b| b == 0xFF) {
+        let ff = at + offset;
+        match bytes.get(ff + 1) {
+            Some(0x00 | 0xD0..=0xD7) => at = ff + 2,
+            Some(_) => return ff,
+            None => break,
+        }
+    }
+    bytes.len()
 }
 
 /// The EXIF orientation, 1 to 8, from an APP1 segment.
@@ -274,6 +294,18 @@ mod tests {
                 "{extension} is stable"
             );
         }
+    }
+
+    #[test]
+    fn a_progressive_jpeg_keeps_every_scan_and_drops_what_sits_between() {
+        let photo = include_bytes!("../tests/fixtures/images/progressive.jpg");
+        let cleaned = clean(photo).unwrap().bytes;
+        let text = String::from_utf8_lossy(&cleaned);
+        assert!(!text.contains("shot at home") && !text.contains("PhoneCo"));
+        let scans = |b: &[u8]| b.windows(2).filter(|w| *w == [0xFF, 0xDA]).count();
+        assert_eq!(scans(&cleaned), scans(photo));
+        assert!(cleaned.ends_with(&EOI));
+        assert_eq!(clean(&cleaned).unwrap().bytes, cleaned, "stable");
     }
 
     #[test]
