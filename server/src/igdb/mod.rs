@@ -5,11 +5,13 @@ pub mod matches;
 pub mod store;
 pub mod sync;
 
+use std::fmt;
+use std::marker::PhantomData;
 use std::time::Duration;
 
 use reqwest::StatusCode;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::de::{DeserializeOwned, IgnoredAny, SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 use time::OffsetDateTime;
 use tokio::sync::Mutex;
 use tokio::time::Instant;
@@ -62,6 +64,9 @@ pub enum IgdbError {
 const COVER_MAX: usize = 10 * 1024 * 1024;
 /// 500 games with every field asked for come to a few MB.
 const ANSWER_MAX: usize = 16 * 1024 * 1024;
+/// Items kept from each list about a game; real games stay far below it,
+/// and each item costs a write.
+const LIST_MAX: usize = 500;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct SearchHit {
@@ -82,30 +87,30 @@ pub struct GameData {
     pub name: String,
     pub summary: Option<String>,
     pub first_release_date: Option<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub platforms: Vec<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub genres: Vec<Named>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub game_modes: Vec<Named>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub involved_companies: Vec<InvolvedCompany>,
     pub cover: Option<Cover>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub multiplayer_modes: Vec<MultiplayerMode>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub release_dates: Vec<ReleaseDate>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub game_localizations: Vec<Localization>,
     /// The main game when this one is an edition or other version of it.
     pub version_parent: Option<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub remasters: Vec<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub remakes: Vec<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub ports: Vec<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     pub alternative_names: Vec<AlternativeName>,
 }
 
@@ -131,8 +136,41 @@ impl GameData {
             links.extend(ids.iter().map(|id| (*id, kind)));
         }
         links.retain(|(id, _)| *id != self.id);
+        links.sort_unstable();
+        links.dedup();
         links
     }
+}
+
+/// A list of at most [`LIST_MAX`] items; the rest are read and dropped.
+fn capped<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    struct Capped<T>(PhantomData<T>);
+
+    impl<'de, T: Deserialize<'de>> Visitor<'de> for Capped<T> {
+        type Value = Vec<T>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a list")
+        }
+
+        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Vec<T>, A::Error> {
+            let mut items = Vec::new();
+            while items.len() < LIST_MAX {
+                match seq.next_element()? {
+                    Some(item) => items.push(item),
+                    None => return Ok(items),
+                }
+            }
+            while seq.next_element::<IgnoredAny>()?.is_some() {}
+            Ok(items)
+        }
+    }
+
+    deserializer.deserialize_seq(Capped(PhantomData))
 }
 
 #[derive(Debug, Deserialize)]
@@ -402,5 +440,24 @@ mod tests {
     fn escapes_quotes_and_backslashes() {
         assert_eq!(escape(r#"Say "hi" \o/"#), r#"Say \"hi\" \\o/"#);
         assert_eq!(escape("Zelda\n; where id = 1;\r\0"), "Zelda; where id = 1;");
+    }
+
+    #[test]
+    fn long_lists_about_a_game_are_cut_and_links_counted_once() {
+        let ports: Vec<i64> = (0..100_000).map(|n| n % 3).collect();
+        let names: Vec<_> = (0..1000)
+            .map(|n| serde_json::json!({ "name": format!("Name {n}") }))
+            .collect();
+        let game: GameData = serde_json::from_value(serde_json::json!({
+            "id": 1,
+            "name": "Tetris",
+            "ports": ports,
+            "remakes": [2, 2],
+            "alternative_names": names,
+        }))
+        .unwrap();
+        assert_eq!(game.ports.len(), LIST_MAX);
+        assert_eq!(game.alternative_names.len(), LIST_MAX);
+        assert_eq!(game.links(), [(0, "port"), (2, "port"), (2, "remake")]);
     }
 }
