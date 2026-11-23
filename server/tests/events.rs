@@ -73,7 +73,7 @@ async fn only_so_many_pages_listen_at_once() {
 }
 
 #[tokio::test]
-async fn one_person_listens_with_at_most_8_pages() {
+async fn one_person_listens_with_at_most_16_pages() {
     let app = TestApp::new().await;
     let mut open = Vec::new();
     for _ in 0..LISTENERS_PER_PERSON {

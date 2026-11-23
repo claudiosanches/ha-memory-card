@@ -744,7 +744,7 @@
             }
           },
           "429": {
-            "description": "`too_many_listeners`: too many pages are open, or this person's 8 are",
+            "description": "`too_many_listeners`: too many pages are open, or this person's 16 are",
             "content": {
               "application/json": {
                 "schema": {

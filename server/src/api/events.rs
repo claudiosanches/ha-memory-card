@@ -17,7 +17,7 @@ use crate::error::{ApiError, ErrorBody};
     tag = "status",
     responses(
         (status = OK, description = "Server-sent events: `changed`, with how many changes so far, after every change to the collection", content_type = "text/event-stream", body = String),
-        (status = TOO_MANY_REQUESTS, description = "`too_many_listeners`: too many pages are open, or this person's 8 are", body = ErrorBody),
+        (status = TOO_MANY_REQUESTS, description = "`too_many_listeners`: too many pages are open, or this person's 16 are", body = ErrorBody),
     )
 )]
 pub async fn stream(

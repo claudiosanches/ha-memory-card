@@ -10,7 +10,7 @@ use crate::access::{PerPerson, Place};
 /// Most pages listening at once; every open tab is one.
 pub const LISTENERS_MAX: usize = 64;
 /// Most pages one person listens with.
-pub const LISTENERS_PER_PERSON: usize = 8;
+pub const LISTENERS_PER_PERSON: usize = 16;
 
 #[derive(Clone)]
 pub struct Changes {
