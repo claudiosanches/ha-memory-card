@@ -135,6 +135,17 @@ async fn games_keep_labels_unless_the_update_names_them() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(body["code"], "unknown_id");
 
+    let many: Vec<i64> = (1..=51).collect();
+    let (status, body) = app
+        .json(
+            "PUT",
+            &path,
+            Some(json!({"title": "Okami", "label_ids": many})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body["code"], "too_many", "at most 50 labels a game");
+
     let (status, _) = app
         .json("DELETE", &format!("/api/labels/{retro}"), None)
         .await;

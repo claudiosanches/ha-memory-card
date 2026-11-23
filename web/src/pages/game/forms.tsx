@@ -491,6 +491,7 @@ export function GameForm({ game, onClose }: { game: GameDetail; onClose: () => v
         disabled={labels.data?.length === 0}
         searchable
         clearable
+        maxValues={50}
         {...form.getInputProps('label_ids')}
       />
       <PlayerFields

@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 use super::parse::RawRow;
 use super::snapshot::{CopyRow, GameRow, ReleaseRow, Snapshot};
 use crate::db::devices::DeviceKind;
-use crate::db::labels::SEPARATORS;
+use crate::db::labels::{PER_GAME_MAX, SEPARATORS};
 use crate::db::play_statuses;
 use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::money;
@@ -18,8 +18,6 @@ const TITLE_MAX: usize = 200;
 const NAME_MAX: usize = 100;
 const CODE_MAX: usize = 40;
 const NOTES_MAX: usize = 2000;
-/// Most labels one row can name.
-const LABELS_MAX: usize = 50;
 
 /// A row that already exists, or the n-th row the plan creates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -171,6 +169,7 @@ struct Planner<'a> {
     stores: HashMap<String, Ref>,
     labels: HashMap<String, Ref>,
     game_labels: HashSet<(Ref, Ref)>,
+    label_counts: HashMap<Ref, usize>,
     games_by_igdb: HashMap<i64, Ref>,
     games_by_title: HashMap<String, Vec<Ref>>,
     games_by_id: HashMap<i64, &'a GameRow>,
@@ -266,6 +265,13 @@ impl<'a> Planner<'a> {
                 .iter()
                 .map(|&(game, label)| (Ref::Existing(game), Ref::Existing(label)))
                 .collect(),
+            label_counts: snapshot.game_labels.iter().fold(
+                HashMap::new(),
+                |mut counts, &(game, _)| {
+                    *counts.entry(Ref::Existing(game)).or_default() += 1;
+                    counts
+                },
+            ),
             games_by_igdb,
             games_by_title,
             releases: snapshot
@@ -464,6 +470,11 @@ impl<'a> Planner<'a> {
                 None
             }
         };
+        if let Some((game, _)) = game
+            && self.label_count(game, &labels) > PER_GAME_MAX
+        {
+            issues.error("labels", "too_many_labels");
+        }
         if let (Some(bundle), Some((Ref::Existing(game), _))) = (bundle, game)
             && self.copy_game(bundle).is_some_and(|g| g.id == game)
         {
@@ -755,6 +766,19 @@ impl<'a> Planner<'a> {
         device
     }
 
+    /// How many labels the game would have with `names` added.
+    fn label_count(&self, game: Ref, names: &[String]) -> usize {
+        let new = names
+            .iter()
+            .filter(|name| {
+                self.labels
+                    .get(&key(name))
+                    .is_none_or(|label| !self.game_labels.contains(&(game, *label)))
+            })
+            .count();
+        self.label_counts.get(&game).copied().unwrap_or(0) + new
+    }
+
     /// Adds labels to a game, creating the ones that do not exist. Labels
     /// the game already has are left alone, and none are removed.
     fn add_labels(&mut self, game: Ref, names: &[String]) {
@@ -770,6 +794,7 @@ impl<'a> Planner<'a> {
             };
             if self.game_labels.insert((game, label)) {
                 self.plan.game_labels.push((game, label));
+                *self.label_counts.entry(game).or_default() += 1;
             }
         }
     }
@@ -800,7 +825,7 @@ fn label_names(cell: Option<&str>, issues: &mut Issues) -> Vec<String> {
             break;
         }
         if seen.insert(key(name)) {
-            if names.len() == LABELS_MAX {
+            if names.len() == PER_GAME_MAX {
                 issues.error("labels", "too_many_labels");
                 break;
             }

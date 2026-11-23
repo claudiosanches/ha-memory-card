@@ -661,3 +661,36 @@ async fn formulas_after_a_semicolon_or_line_break_export_as_text() {
         ("Zelda;=1+1", "Box\n- manual")
     );
 }
+
+#[tokio::test]
+async fn a_game_gets_at_most_50_labels_across_rows_and_imports() {
+    let app = TestApp::new().await;
+    let labels =
+        |range: std::ops::Range<u32>| range.map(|n| format!("l{n}")).collect::<Vec<_>>().join(";");
+    let csv = format!(
+        "game_title,labels\nOkami,{}\nOkami,{}\nOkami,{}\n",
+        labels(0..30),
+        labels(20..45),
+        labels(45..55)
+    );
+    let (_, preview) = app.post_csv("/api/import/preview", &csv).await;
+    assert_eq!(preview["summary"]["error_rows"], 1, "{preview}");
+    assert_eq!(
+        issues(&preview, 4),
+        [("labels".into(), "too_many_labels".into())]
+    );
+
+    let csv = format!("game_title,labels\nOkami,{}\n", labels(0..45));
+    let (status, _) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK);
+    let csv = format!("game_title,labels\nOkami,{}\n", labels(40..46));
+    let (_, preview) = app.post_csv("/api/import/preview", &csv).await;
+    assert_eq!(preview["summary"]["error_rows"], 0, "{preview}");
+    let csv = format!("game_title,labels\nOkami,{}\n", labels(40..51));
+    let (_, preview) = app.post_csv("/api/import/preview", &csv).await;
+    assert_eq!(
+        issues(&preview, 2),
+        [("labels".into(), "too_many_labels".into())],
+        "counts the labels the game has"
+    );
+}

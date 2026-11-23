@@ -9,6 +9,8 @@ use crate::slug::{self, Table};
 
 /// Separate labels in a CSV cell, so names cannot hold them.
 pub const SEPARATORS: [char; 2] = [',', ';'];
+/// Most labels one game can have. The export repeats them on every copy.
+pub const PER_GAME_MAX: usize = 50;
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Label {

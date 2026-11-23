@@ -1101,7 +1101,7 @@ export interface components {
         };
         GameInput: {
             game_mode_ids?: number[];
-            /** @description Left out, the current labels stay. */
+            /** @description Left out, the current labels stay. At most 50. */
             label_ids?: number[] | null;
             local_coop?: boolean | null;
             /** Format: int64 */
