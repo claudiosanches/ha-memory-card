@@ -294,9 +294,7 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
 /// field, since the csv reader holds a whole record, at 8 bytes a field,
 /// before its width can be checked.
 fn too_wide(bytes: &[u8], delimiter: u8) -> bool {
-    let mut reader = csv_core::ReaderBuilder::new()
-        .delimiter(delimiter)
-        .build();
+    let mut reader = csv_core::ReaderBuilder::new().delimiter(delimiter).build();
     let mut output = [0u8; 1024];
     let mut input = bytes;
     let mut fields = 0;
