@@ -71,9 +71,7 @@ The server reads these variables; `make run` sets the first four and
 
 The connection to `MEMORY_CARD_MQTT_HOST` has no TLS, so the broker password
 and messages cross the network in the clear. Use a broker on the same machine
-or a network you trust. TLS is planned once the MQTT library,
-[rumqttc](https://github.com/bytebeamio/rumqtt), supports it without crates
-that have open security advisories. Inside Home Assistant this does not
+or a network you trust. TLS support is planned. Inside Home Assistant this does not
 apply: the Mosquitto app is reached over Home Assistant's internal network,
 and it offers no TLS there.
 
