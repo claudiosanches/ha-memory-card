@@ -148,29 +148,39 @@ where
     D: Deserializer<'de>,
     T: Deserialize<'de>,
 {
-    struct Capped<T>(PhantomData<T>);
+    Answer::<T, LIST_MAX>::deserialize(deserializer).map(|answer| answer.0)
+}
 
-    impl<'de, T: Deserialize<'de>> Visitor<'de> for Capped<T> {
-        type Value = Vec<T>;
+/// A list of at most `N` items, such as an answer to a query with `limit N`;
+/// the rest are read and dropped.
+struct Answer<T, const N: usize>(Vec<T>);
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a list")
-        }
+impl<'de, T: Deserialize<'de>, const N: usize> Deserialize<'de> for Answer<T, N> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        deserializer.deserialize_seq(Capped::<T, N>(PhantomData))
+    }
+}
 
-        fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Vec<T>, A::Error> {
-            let mut items = Vec::new();
-            while items.len() < LIST_MAX {
-                match seq.next_element()? {
-                    Some(item) => items.push(item),
-                    None => return Ok(items),
-                }
-            }
-            while seq.next_element::<IgnoredAny>()?.is_some() {}
-            Ok(items)
-        }
+struct Capped<T, const N: usize>(PhantomData<T>);
+
+impl<'de, T: Deserialize<'de>, const N: usize> Visitor<'de> for Capped<T, N> {
+    type Value = Answer<T, N>;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a list")
     }
 
-    deserializer.deserialize_seq(Capped(PhantomData))
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+        let mut items = Vec::new();
+        while items.len() < N {
+            match seq.next_element()? {
+                Some(item) => items.push(item),
+                None => return Ok(Answer(items)),
+            }
+        }
+        while seq.next_element::<IgnoredAny>()?.is_some() {}
+        Ok(Answer(items))
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -231,7 +241,7 @@ struct RawHit {
     id: i64,
     name: String,
     first_release_date: Option<i64>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "capped")]
     platforms: Vec<PlatformName>,
     total_rating_count: Option<i64>,
 }
@@ -275,11 +285,12 @@ impl Igdb {
     }
 
     pub async fn search(&self, text: &str) -> Result<Vec<SearchHit>, IgdbError> {
+        const LIMIT: usize = 20;
         let body = format!(
-            "search \"{}\"; fields name,first_release_date,platforms.name,platforms.abbreviation,total_rating_count; limit 20;",
+            "search \"{}\"; fields name,first_release_date,platforms.name,platforms.abbreviation,total_rating_count; limit {LIMIT};",
             escape(text)
         );
-        let mut hits: Vec<RawHit> = self.post("games", &body).await?;
+        let Answer(mut hits) = self.post::<Answer<RawHit, LIMIT>>("games", &body).await?;
         // IGDB ranks fan hacks next to the real game; rated games come first.
         hits.sort_by_key(|hit| std::cmp::Reverse(hit.total_rating_count.unwrap_or(0)));
         Ok(search_hits(hits))
@@ -287,10 +298,11 @@ impl Igdb {
 
     /// The games IGDB lists inside a bundle, by name.
     pub async fn bundle_contents(&self, bundle: i64) -> Result<Vec<SearchHit>, IgdbError> {
+        const LIMIT: usize = 100;
         let body = format!(
-            "fields name,first_release_date,platforms.name,platforms.abbreviation,total_rating_count; where bundles = ({bundle}); sort name asc; limit 100;"
+            "fields name,first_release_date,platforms.name,platforms.abbreviation,total_rating_count; where bundles = ({bundle}); sort name asc; limit {LIMIT};"
         );
-        let hits: Vec<RawHit> = self.post("games", &body).await?;
+        let Answer(hits) = self.post::<Answer<RawHit, LIMIT>>("games", &body).await?;
         Ok(search_hits(hits))
     }
 }
@@ -314,21 +326,24 @@ fn search_hits(hits: Vec<RawHit>) -> Vec<SearchHit> {
 
 impl Igdb {
     pub async fn games(&self, ids: &[i64]) -> Result<Vec<GameData>, IgdbError> {
+        const LIMIT: usize = 500;
         let ids: Vec<String> = ids.iter().map(i64::to_string).collect();
         let body = format!(
-            "fields {GAME_FIELDS}; where id = ({}); limit 500;",
+            "fields {GAME_FIELDS}; where id = ({}); limit {LIMIT};",
             ids.join(",")
         );
-        self.post("games", &body).await
+        let Answer(games) = self.post::<Answer<GameData, LIMIT>>("games", &body).await?;
+        Ok(games)
     }
 
     /// Games named exactly `name`, ignoring case.
     pub async fn named(&self, name: &str) -> Result<Vec<GameData>, IgdbError> {
+        const LIMIT: usize = 50;
         let body = format!(
-            "fields {GAME_FIELDS}; where name ~ \"{}\"; limit 50;",
+            "fields {GAME_FIELDS}; where name ~ \"{}\"; limit {LIMIT};",
             escape(name)
         );
-        let games: Vec<GameData> = self.post("games", &body).await?;
+        let Answer(games) = self.post::<Answer<GameData, LIMIT>>("games", &body).await?;
         let name = name.to_lowercase();
         Ok(games
             .into_iter()
@@ -459,5 +474,15 @@ mod tests {
         assert_eq!(game.ports.len(), LIST_MAX);
         assert_eq!(game.alternative_names.len(), LIST_MAX);
         assert_eq!(game.links(), [(0, "port"), (2, "port"), (2, "remake")]);
+    }
+
+    #[test]
+    fn answers_keep_only_as_many_games_as_asked_for() {
+        let games: Vec<_> = (0..10)
+            .map(|n| serde_json::json!({ "id": n, "name": "" }))
+            .collect();
+        let Answer(games) =
+            serde_json::from_value::<Answer<GameData, 3>>(serde_json::Value::from(games)).unwrap();
+        assert_eq!(games.iter().map(|g| g.id).collect::<Vec<_>>(), [0, 1, 2]);
     }
 }
