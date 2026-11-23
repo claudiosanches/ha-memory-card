@@ -90,6 +90,13 @@ owned() {
     running && has_owner
 }
 
+# The DuckDNS name this VM's disk was set up with, if any.
+duckdns_before() {
+    disk=$(disk_id)
+    [ -n "$disk" ] && [ "$(cat "$state/disk" 2>/dev/null)" = "$disk" ] &&
+        [ -s "$state/duckdns" ] && cat "$state/duckdns"
+}
+
 refuse_foreign() {
     if exists && ! labelled container Config. "$name"; then
         echo "A container named $name exists that this script did not create. Set HA_NAME." >&2
@@ -257,6 +264,13 @@ up() {
         exit 1
     fi
     refuse_foreign
+    # Home Assistant then serves a certificate only that name can check, so
+    # this script could not reach it without the name.
+    if [ -z "$duckdns" ] && [ -z "${HA_PRIVATE:-}" ] && before=$(duckdns_before); then
+        echo "This Home Assistant serves HTTPS for $before.duckdns.org." >&2
+        echo "Run with HA_DUCKDNS=$before, or make ha-destroy to start over." >&2
+        exit 1
+    fi
     # A fresh Home Assistant gives its first account to whoever onboards it,
     # so it only opens to the network once ha-demo.mjs made the owner.
     if [ -n "${HA_LAN:-}" ] && ! owned; then
@@ -333,6 +347,8 @@ up() {
     certificate=
     if [ -n "$duckdns" ]; then
         certificate=$(duckdns_certificate)
+        mkdir -p "$state"
+        echo "$HA_DUCKDNS" >"$state/duckdns"
         HA_URL=https://$duckdns:$port
     elif [ -n "${HA_HTTPS:-}" ]; then
         certificate=$(issue_certificate)
