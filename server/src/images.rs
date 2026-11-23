@@ -104,8 +104,12 @@ fn jpeg(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
             .filter(|_| length >= 2)?;
         let data = &segment[2..];
         at += length;
-        // Start of frame: precision, then height and width.
+        // Start of frame: precision, then height and width. Browsers size the
+        // image from the first, so a second one is refused.
         if matches!(marker, 0xC0..=0xC3 | 0xC5..=0xC7 | 0xC9..=0xCB | 0xCD..=0xCF) {
+            if size.is_some() {
+                return None;
+            }
             let height = u16::from_be_bytes([*data.get(1)?, *data.get(2)?]);
             let width = u16::from_be_bytes([*data.get(3)?, *data.get(4)?]);
             size = Some((u32::from(width), u32::from(height)));
@@ -239,7 +243,7 @@ fn png(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
         let length =
             usize::try_from(u32::from_be_bytes(bytes.get(at..at + 4)?.try_into().ok()?)).ok()?;
         let kind: &[u8; 4] = bytes.get(at + 4..at + 8)?.try_into().ok()?;
-        if at == 8 && kind != b"IHDR" {
+        if (at == 8) != (kind == b"IHDR") {
             return None;
         }
         // Length, type, data and CRC.
@@ -527,6 +531,15 @@ mod tests {
         };
         assert!(clean(&lossy(640, 480)).is_ok());
         assert_eq!(clean(&lossy(16_383, 16_383)), Err(Rejected::TooLarge));
+
+        // A small second header cannot stand in for a huge first one.
+        let huge = frame(23_000, 23_000);
+        assert_eq!(
+            clean(&[&SOI[..], &huge[..huge.len() - 2], &frame(1, 1)].concat()),
+            Err(Rejected::Invalid)
+        );
+        let twice = [&PHOTOS[1].0[..8], &ihdr(1, 1), &ihdr(1, 1), &iend].concat();
+        assert_eq!(clean(&twice), Err(Rejected::Invalid));
     }
 
     #[test]
