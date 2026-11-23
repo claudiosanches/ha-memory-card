@@ -304,6 +304,12 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
 
 /// Picks a game the way the app's Roll button does; the sensors show it.
 async fn roll(state: &AppState, payload: &[u8]) {
+    // MQTT carries no user, so anyone who can press the button rolls once
+    // managers are set.
+    if !crate::access::Policy::from_config(&state.config).can_roll(None) {
+        tracing::info!("ignored a roll from Home Assistant: no managers are set");
+        return;
+    }
     let filter = match entities::pick_filter(payload) {
         Ok(filter) => filter,
         Err(err) => {

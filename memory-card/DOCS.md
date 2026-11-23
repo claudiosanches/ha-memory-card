@@ -317,6 +317,10 @@ Switch:
 - with MQTT, the `mqtt.publish` action sending
   `{"device": ["switch"], "min_local_players": 2}` to `memory_card/pick/roll`.
 
+Rolls need managers set in the options. With the integration, a person who
+rolls must also be one of them; an automation needs nothing more. MQTT can't
+tell who pressed the button, so there anyone who can press it rolls.
+
 The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs)
 and `min_local_players`. Each platform, device and store shows its slug in

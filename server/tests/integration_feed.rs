@@ -166,11 +166,17 @@ async fn only_a_few_feeds_open_at_once() {
 }
 
 async fn roll(router: &Router, body: &str) -> (StatusCode, Value) {
-    let request = Request::post("/integration/v1/roll")
+    roll_as(router, None, body).await
+}
+
+async fn roll_as(router: &Router, user: Option<&str>, body: &str) -> (StatusCode, Value) {
+    let mut request = Request::post("/integration/v1/roll")
         .header("authorization", format!("Bearer {TOKEN}"))
-        .header("content-type", "application/json")
-        .body(Body::from(body.to_owned()))
-        .unwrap();
+        .header("content-type", "application/json");
+    if let Some(user) = user {
+        request = request.header(integration::USER_HEADER, user);
+    }
+    let request = request.body(Body::from(body.to_owned())).unwrap();
     let response = router.clone().oneshot(request).await.unwrap();
     let status = response.status();
     let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -208,6 +214,39 @@ async fn a_roll_picks_from_the_backlog_with_the_same_filters_as_mqtt() {
     assert_eq!(error["code"], "invalid_filters");
     let (status, _) = roll(&router, &" ".repeat(5000)).await;
     assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn only_managers_and_automations_roll_and_only_once_managers_are_set() {
+    let app = TestApp::new().await;
+    let (status, result) = app
+        .post_csv(
+            "/api/import",
+            "game_title,play_status,platform,region,format,status\n\
+             Tetris,backlog,Switch,eu,physical,owned\n",
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let router = integration::router(feed(&app));
+    assert_eq!(
+        roll_as(&router, Some(common::MANAGER), "").await.0,
+        StatusCode::OK
+    );
+    assert_eq!(
+        roll_as(&router, None, "").await.0,
+        StatusCode::OK,
+        "an automation"
+    );
+    let (status, error) = roll_as(&router, Some("someone_else"), "").await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert_eq!(error["code"], "manager_required");
+    let (status, error) = roll_as(&router, Some("bad id!"), "").await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(error["code"], "invalid_user");
+
+    let nobody = TestApp::with_env(&[("MEMORY_CARD_MANAGERS", "")]).await;
+    let router = integration::router(feed(&nobody));
+    assert_eq!(roll_as(&router, None, "").await.0, StatusCode::FORBIDDEN);
 }
 
 #[derive(Default)]

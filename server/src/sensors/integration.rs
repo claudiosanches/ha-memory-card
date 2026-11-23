@@ -15,7 +15,7 @@ use axum::Json;
 use axum::Router;
 use axum::body::{Body, Bytes};
 use axum::extract::{DefaultBodyLimit, Request, State};
-use axum::http::{StatusCode, header};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -26,10 +26,13 @@ use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore, watch};
 use super::entities::{self, ENTITIES};
 use super::{SensorsStatus, broker, set_status, supervisor};
 use crate::AppState;
+use crate::access::{self, Policy};
 use crate::config::Secret;
 use crate::db;
 use crate::error::ApiError;
 
+/// The Home Assistant user behind a roll; absent for automations.
+pub const USER_HEADER: &str = "x-home-assistant-user";
 /// Bumped when the integration could misread a message.
 pub const API_VERSION: u32 = 1;
 pub const FEEDS_MAX: usize = 4;
@@ -253,20 +256,37 @@ async fn stream(State(feed): State<Arc<Feed>>) -> Result<Response, ApiError> {
         .into_response())
 }
 
-/// Picks a game the way the app's Roll button does, with optional filters.
-async fn roll(State(feed): State<Arc<Feed>>, body: Bytes) -> Result<Response, ApiError> {
+/// Picks a game the way the app's Roll button does, with optional filters,
+/// for the Home Assistant user named in [`USER_HEADER`] or an automation.
+async fn roll(
+    State(feed): State<Arc<Feed>>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<Response, ApiError> {
+    let user = match headers.get(USER_HEADER) {
+        None => None,
+        Some(value) => Some(
+            value
+                .to_str()
+                .ok()
+                .filter(|id| access::valid_user_id(id))
+                .ok_or(ApiError::Invalid {
+                    code: "invalid_user",
+                    field: None,
+                })?,
+        ),
+    };
+    if !Policy::from_config(&feed.state.config).can_roll(user) {
+        return Err(ApiError::Forbidden("manager_required"));
+    }
     let filter = entities::pick_filter(&body).map_err(|_| ApiError::Invalid {
         code: "invalid_filters",
         field: None,
     })?;
-    db::suggestions::suggest(&feed.state.db, filter).await?;
+    let game = db::suggestions::suggest(&feed.state.db, filter).await?.game;
     feed.state.changes.announce();
-    let pick = db::sensors::snapshot(&feed.state.db).await?.pick;
-    Ok(Json(json!({
-        "title": pick.as_ref().map(|pick| pick.title.clone()),
-        "platforms": pick.map(|pick| pick.platforms).unwrap_or_default(),
-    }))
-    .into_response())
+    let platforms = db::sensors::owned_platforms(&feed.state.db, game.id).await?;
+    Ok(Json(json!({ "title": game.title, "platforms": platforms })).into_response())
 }
 
 /// Serves the feed until `stop`, after clearing what MQTT published and

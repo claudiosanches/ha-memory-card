@@ -64,6 +64,13 @@ impl Policy {
         }
         user.is_some_and(|id| self.managers.iter().any(|m| m == id)) || self.viewers_track_progress
     }
+
+    /// Whether a roll from Home Assistant may record a pick, as Pick for me
+    /// does for managers. A roll with no user comes from an automation,
+    /// which only Home Assistant administrators can write.
+    pub fn can_roll(&self, user: Option<&str>) -> bool {
+        !self.managers.is_empty() && user.is_none_or(|id| self.managers.iter().any(|m| m == id))
+    }
 }
 
 /// The Home Assistant user behind a request.

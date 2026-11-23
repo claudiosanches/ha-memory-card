@@ -42,6 +42,19 @@ pub struct LastAdded {
     pub platform: String,
 }
 
+/// Platforms of a game's owned copies, in platform list order.
+pub async fn owned_platforms(pool: &SqlitePool, game_id: i64) -> sqlx::Result<Vec<String>> {
+    sqlx::query_scalar!(
+        r#"SELECT p.name FROM platforms p
+           WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
+                         WHERE r.platform_id = p.id AND r.game_id = ? AND c.status = 'owned')
+           ORDER BY p.sort_order, p.name"#,
+        game_id
+    )
+    .fetch_all(pool)
+    .await
+}
+
 pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
     let counts = sqlx::query!(
         r#"SELECT
@@ -120,15 +133,7 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
     {
         None => None,
         Some(row) => Some(Pick {
-            platforms: sqlx::query_scalar!(
-                r#"SELECT p.name FROM platforms p
-                   WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
-                                 WHERE r.platform_id = p.id AND r.game_id = ? AND c.status = 'owned')
-                   ORDER BY p.sort_order, p.name"#,
-                row.id
-            )
-            .fetch_all(pool)
-            .await?,
+            platforms: owned_platforms(pool, row.id).await?,
             title: row.title,
             suggested_at: row.suggested_at,
         }),
