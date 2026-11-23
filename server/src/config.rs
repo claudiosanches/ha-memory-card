@@ -91,6 +91,37 @@ impl FromStr for FinishedScan {
     }
 }
 
+/// How the app writes dates.
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, serde::Serialize, utoipa::ToSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum DateFormat {
+    /// As the app's language writes them.
+    #[default]
+    Language,
+    /// 23/11/2026
+    Dmy,
+    /// 11/23/2026
+    Mdy,
+    /// 2026-11-23
+    Ymd,
+}
+
+impl FromStr for DateFormat {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "language" => Ok(Self::Language),
+            "dmy" => Ok(Self::Dmy),
+            "mdy" => Ok(Self::Mdy),
+            "ymd" => Ok(Self::Ymd),
+            _ => Err(()),
+        }
+    }
+}
+
 /// Where Home Assistant sensors are published.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -169,6 +200,7 @@ struct Options {
     sensors: Option<SensorsMode>,
     tag_scan_finished: Option<FinishedScan>,
     currency: Option<String>,
+    date_format: Option<DateFormat>,
 }
 
 #[derive(Debug, Clone)]
@@ -191,6 +223,7 @@ pub struct Config {
     pub tag_scan_finished: FinishedScan,
     /// ISO 4217 code new prices start with, ahead of Home Assistant's.
     pub currency: Option<String>,
+    pub date_format: DateFormat,
     /// Broker named by `MEMORY_CARD_MQTT_*`, used instead of asking the Supervisor.
     pub mqtt: Option<MqttBroker>,
     pub supervisor_url: String,
@@ -354,6 +387,14 @@ impl Config {
             })?,
         };
 
+        let date_format = match env("MEMORY_CARD_DATE_FORMAT") {
+            None => options.date_format.unwrap_or_default(),
+            Some(raw) => raw.parse().map_err(|()| ConfigError::InvalidEnv {
+                name: "MEMORY_CARD_DATE_FORMAT",
+                value: raw.clone(),
+            })?,
+        };
+
         let currency = match env("MEMORY_CARD_CURRENCY").map(|raw| ("MEMORY_CARD_CURRENCY", raw)) {
             Some(found) => Some(found),
             None => options.currency.map(|raw| ("currency", raw)),
@@ -367,6 +408,7 @@ impl Config {
         Ok(Self {
             home_assistant,
             currency,
+            date_format,
             data_dir,
             tmp_dir,
             listen,
@@ -483,6 +525,7 @@ mod tests {
         assert!(!config.viewers_track_progress);
         assert!(config.external_services);
         assert_eq!(config.tag_scan_finished, FinishedScan::Playing);
+        assert_eq!(config.date_format, DateFormat::Language);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
         assert_eq!(config.tmp_dir, dir.path().join("tmp"));
         assert_eq!(config.currency, None);
@@ -508,7 +551,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("options.json"),
-            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true,"tag_scan_finished":"keep"}"#,
+            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true,"tag_scan_finished":"keep","date_format":"dmy"}"#,
         )
         .unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
@@ -517,6 +560,7 @@ mod tests {
         assert_eq!(config.managers, vec!["abc123"]);
         assert!(config.viewers_track_progress);
         assert_eq!(config.tag_scan_finished, FinishedScan::Keep);
+        assert_eq!(config.date_format, DateFormat::Dmy);
         let igdb = config.igdb.unwrap();
         assert_eq!(igdb.client_id, "id");
         assert!(!format!("{igdb:?}").contains("secret\""));
@@ -611,6 +655,10 @@ mod tests {
         let err =
             load_with(dir.path(), &[("MEMORY_CARD_TAG_SCAN_FINISHED", "paused")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
+        let err = load_with(dir.path(), &[("MEMORY_CARD_DATE_FORMAT", "dd/mm")]).unwrap_err();
+        assert!(matches!(err, ConfigError::InvalidEnv { .. }));
+        let config = load_with(dir.path(), &[("MEMORY_CARD_DATE_FORMAT", "YMD")]).unwrap();
+        assert_eq!(config.date_format, DateFormat::Ymd);
     }
 
     #[test]

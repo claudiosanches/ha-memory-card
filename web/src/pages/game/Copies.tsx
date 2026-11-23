@@ -10,7 +10,7 @@ import type { CopyDetail, GameDetail } from '../../api/types';
 import { history } from '../../components/history';
 import { formatMoney } from '../../components/money';
 import { notifyError } from '../../components/notify';
-import { formatDate } from '../../components/status';
+import { useFormatDate } from '../../hooks/useFormatDate';
 import classes from './Copies.module.css';
 import { useGameSaved } from './forms';
 import { PhotoViewer } from './PhotoViewer';
@@ -64,6 +64,7 @@ export function Copies(props: Props) {
 
 function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddContents, onLinkTag }: Props & { copy: CopyDetail }) {
   const { t, i18n } = useTranslation();
+  const formatDate = useFormatDate();
   const saved = useGameSaved();
   const input = useRef<HTMLInputElement>(null);
   const [viewing, setViewing] = useState<number | null>(null);
@@ -106,7 +107,7 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
   const where = [
     copy.device_id ? devices.get(copy.device_id) : null,
     store && (wanted ? t('wishlist.store', { store }) : store),
-    copy.purchased_on && t('game.boughtOn', { date: formatDate(copy.purchased_on, i18n.language) }),
+    copy.purchased_on && t('game.boughtOn', { date: formatDate(copy.purchased_on) }),
     copy.price && copy.currency && formatMoney(copy.price, copy.currency, i18n.language),
     copy.estimated_value &&
       copy.estimated_currency &&
@@ -172,7 +173,7 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
           </div>
         )}
         <Text size="xs" c="dimmed" className={classes.history}>
-          {history(copy, t, i18n.language)}
+          {history(copy, t, formatDate)}
           {copy.source === 'csv' && ` ${t('history.fromCsv')}`}
         </Text>
       </div>

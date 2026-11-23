@@ -20,6 +20,8 @@ pub struct Status {
     pub default_currency: Option<String>,
     /// Home Assistant's language, for browsers where nobody picked one.
     pub home_assistant_language: Option<String>,
+    /// How dates are written, from the app options.
+    pub date_format: crate::config::DateFormat,
     /// Whether Home Assistant sensors are being published.
     pub sensors: SensorsStatus,
     /// Whether Memory Card hears Home Assistant tag scans.
@@ -58,6 +60,7 @@ pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, A
         external_services: state.config.external_services,
         default_currency,
         home_assistant_language: regional.language,
+        date_format: state.config.date_format,
         sensors: *state.sensors.lock().expect("sensors status lock"),
         tags: *state.tag_status.lock().expect("tag status lock"),
     }))

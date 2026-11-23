@@ -604,6 +604,19 @@ describe('Game page', () => {
     expect(within(screen.getByTestId('session-1')).getByText(/Nintendo Switch/)).toBeInTheDocument();
   });
 
+  it('writes dates in the format the app options name', async () => {
+    const session = { id: 5, played_on: '2026-11-02', copy_id: 21, minutes: null, notes: null, created_at: '2026-11-02T20:00:00Z' };
+    mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, sensors: 'off', date_format: 'dmy' },
+      'GET /api/games/4': { ...GAME, sessions: [session] },
+    });
+    renderAt('/games/4');
+
+    const row = await screen.findByTestId('session-5');
+    expect(await within(row).findByText('02/11/2026')).toBeInTheDocument();
+  });
+
   it('logs and edits a session with minutes and notes', async () => {
     const session = {
       id: 5,

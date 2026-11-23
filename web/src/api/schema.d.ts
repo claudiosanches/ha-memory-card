@@ -972,6 +972,11 @@ export interface components {
             created_at: string;
             tag_id: string;
         };
+        /**
+         * @description How the app writes dates.
+         * @enum {string}
+         */
+        DateFormat: "language" | "dmy" | "mdy" | "ymd";
         DayPlay: {
             day: string;
             /** Format: int64 */
@@ -1587,6 +1592,8 @@ export interface components {
             wishlist_value: components["schemas"]["Amount"][];
         };
         Status: {
+            /** @description How dates are written, from the app options. */
+            date_format: components["schemas"]["DateFormat"];
             /**
              * @description Where new prices start: the `currency` option, else the currency of
              *     the copy priced last, else Home Assistant's.

@@ -11,7 +11,8 @@ import type { GameDetail, PlaySession } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { FormModal } from '../../components/FormModal';
 import { notifyError } from '../../components/notify';
-import { formatDate, today } from '../../components/status';
+import { today } from '../../components/status';
+import { useFormatDate } from '../../hooks/useFormatDate';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
 import { numberOrNull, useGameSaved } from './forms';
 import classes from './Sessions.module.css';
@@ -29,7 +30,8 @@ type Props = {
 type Dialog = { kind: 'edit'; session?: PlaySession } | { kind: 'delete'; session: PlaySession } | null;
 
 export function Sessions({ game, copies, canTrack }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const formatDate = useFormatDate();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [all, setAll] = useState(false);
   const close = () => setDialog(null);
@@ -80,7 +82,7 @@ export function Sessions({ game, copies, canTrack }: Props) {
             <li key={session.id} className={classes.session} data-testid={`session-${session.id}`}>
               <div className={classes.details}>
                 <Text size="sm" fw={500}>
-                  {formatDate(session.played_on, i18n.language)}
+                  {formatDate(session.played_on)}
                 </Text>
                 {describe(session) && (
                   <Text size="xs" c="dimmed">

@@ -52,7 +52,8 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { history } from '../../components/history';
-import { formatDate, today } from '../../components/status';
+import { today } from '../../components/status';
+import { useFormatDate } from '../../hooks/useFormatDate';
 import { BundleContentsModal } from './BundleContents';
 import { Copies } from './Copies';
 import { TagLinkModal } from './TagLink';
@@ -118,7 +119,8 @@ function BackLink() {
 }
 
 function GameView({ game }: { game: GameDetail }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const formatDate = useFormatDate();
   const statuses = usePlayStatusList();
   const [dialog, setDialog] = useState<Dialog>(null);
   const phone = useMediaQuery('(max-width: 48em)');
@@ -258,7 +260,7 @@ function GameView({ game }: { game: GameDetail }) {
               </Group>
               {game.first_release_date && (
                 <Text size="sm" c="dimmed">
-                  {t('game.firstRelease')}: {formatDate(game.first_release_date, i18n.language)}
+                  {t('game.firstRelease')}: {formatDate(game.first_release_date)}
                 </Text>
               )}
               {game.developers.length > 0 && (
@@ -272,7 +274,7 @@ function GameView({ game }: { game: GameDetail }) {
                 </Text>
               )}
               <Text size="xs" c="dimmed" data-testid="game-history">
-                {history(game, t, i18n.language)}
+                {history(game, t, formatDate)}
               </Text>
             </Stack>
           </Group>
@@ -344,7 +346,7 @@ function GameView({ game }: { game: GameDetail }) {
             </Group>
             <div className={classes.lastPlayed} data-testid="last-played">
               <Text size="xs" c="dimmed">{t('game.lastPlayed')}</Text>
-              <Text size="sm" fw={600}>{lastSession ? formatDate(lastSession.played_on, i18n.language) : t('game.never')}</Text>
+              <Text size="sm" fw={600}>{lastSession ? formatDate(lastSession.played_on) : t('game.never')}</Text>
             </div>
             <Sessions game={game} copies={copyNames} canTrack={canTrack} />
           </Stack>

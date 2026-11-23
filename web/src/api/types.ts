@@ -27,6 +27,7 @@ export type LabelInput = Schemas['LabelInput'];
 export type GameLabel = Schemas['GameLabel'];
 export type Person = Schemas['Person'];
 export type Platform = Schemas['Platform'];
+export type DateFormat = Schemas['DateFormat'];
 export type PlatformCategory = Schemas['PlatformCategory'];
 export type PlatformInput = Schemas['PlatformInput'];
 export type MatchGroup = Schemas['MatchGroup'];

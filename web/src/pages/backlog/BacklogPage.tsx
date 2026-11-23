@@ -17,7 +17,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
 import { usePlayStatusList } from '../../components/playStatuses';
-import { formatDate } from '../../components/status';
+import { useFormatDate } from '../../hooks/useFormatDate';
 import classes from './BacklogPage.module.css';
 import { Picker } from './Picker';
 import { SortModal } from './SortModal';
@@ -207,7 +207,8 @@ function GameRow({
   platformNames: Map<number, string>;
   actions: Action[];
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const formatDate = useFormatDate();
   const setStatus = useSetPlayStatus();
   return (
     <li className={classes.row} data-testid={`row-${game.id}`}>
@@ -221,7 +222,7 @@ function GameRow({
           <Text size="xs" c="dimmed">
             {platformList(game, platformNames).join(t('common.separator'))}
             {game.last_played_at &&
-              t('common.separator') + t('backlog.lastPlayed', { date: formatDate(game.last_played_at, i18n.language) })}
+              t('common.separator') + t('backlog.lastPlayed', { date: formatDate(game.last_played_at) })}
           </Text>
         </div>
       </Link>

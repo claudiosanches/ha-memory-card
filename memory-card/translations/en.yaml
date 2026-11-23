@@ -43,6 +43,11 @@ configuration:
       Three-letter code, such as EUR or BRL, that new prices start with.
       Empty uses the currency of the copy priced last, then Home Assistant's
       currency.
+  date_format:
+    name: Date format
+    description: >-
+      How dates are written. "language" follows the app's language; "dmy"
+      writes 23/11/2026, "mdy" 11/23/2026 and "ymd" 2026-11-23.
   log_level:
     name: Log level
     description: How much the app writes to its log.

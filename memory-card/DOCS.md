@@ -92,6 +92,7 @@ one.
 | `sensors` | `off` (the default) or `mqtt`, which publishes Home Assistant sensors through the MQTT broker and does nothing without one. Going back to `off` removes them. |
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
+| `date_format` | How dates are written: `language` (default) as the app's language writes them, `dmy` as 23/11/2026, `mdy` as 11/23/2026 or `ymd` as 2026-11-23. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 
 ## Library and games
@@ -336,6 +337,9 @@ Home Assistant's language, or your browser's when Home Assistant uses one
 the app does not have. To pick one, go to **Settings > Appearance >
 Language**; the choice is saved in that browser. The app's options in Home
 Assistant are translated too.
+
+Dates follow the language, so English writes 11/23/2026. To write them
+another way in every language, set the `date_format` option.
 
 New prices start in the `currency` option when it is set, else in the
 currency of the copy priced last, else in Home Assistant's currency.

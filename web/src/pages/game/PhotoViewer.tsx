@@ -10,12 +10,14 @@ import type { CopyPhoto } from '../../api/types';
 import { notifyError } from '../../components/notify';
 import { useGameSaved } from './forms';
 import classes from './Copies.module.css';
+import { useFormatDate } from '../../hooks/useFormatDate';
 
 type Props = { photos: CopyPhoto[]; start: number; canDelete: boolean; onClose: () => void };
 
 /** One copy's photos, full size, one at a time. */
 export function PhotoViewer({ photos, start, canDelete, onClose }: Props) {
   const { t } = useTranslation();
+  const formatDate = useFormatDate();
   const phone = useMediaQuery('(max-width: 48em)');
   const saved = useGameSaved();
   const [index, setIndex] = useState(start);
@@ -44,7 +46,7 @@ export function PhotoViewer({ photos, start, canDelete, onClose }: Props) {
             <IconChevronRight size={16} />
           </ActionIcon>
           <Text size="xs" c="dimmed" ml="xs">
-            {new Date(photo.created_at).toLocaleDateString()}
+            {formatDate(photo.created_at)}
           </Text>
         </Group>
         {canDelete && (

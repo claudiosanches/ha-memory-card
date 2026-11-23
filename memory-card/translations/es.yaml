@@ -44,6 +44,12 @@ configuration:
       Código de tres letras, como EUR o MXN, con el que empiezan los precios
       nuevos. Vacío usa la moneda de la última copia con precio y después la
       de Home Assistant.
+  date_format:
+    name: Formato de fecha
+    description: >-
+      Cómo se escriben las fechas. "language" sigue el idioma de la
+      aplicación; "dmy" escribe 23/11/2026, "mdy" 11/23/2026 e "ymd"
+      2026-11-23.
   log_level:
     name: Nivel de registro
     description: Cuánto escribe la aplicación en su registro.

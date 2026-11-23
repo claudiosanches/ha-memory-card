@@ -98,3 +98,11 @@ async fn outside_home_assistant_there_are_no_defaults() {
     status(&app).await;
     assert_eq!(calls.load(Ordering::SeqCst), 1);
 }
+
+#[tokio::test]
+async fn dates_follow_the_language_unless_the_option_names_a_format() {
+    let app = TestApp::new().await;
+    assert_eq!(status(&app).await["date_format"], "language");
+    let app = TestApp::with_env(&[("MEMORY_CARD_DATE_FORMAT", "dmy")]).await;
+    assert_eq!(status(&app).await["date_format"], "dmy");
+}

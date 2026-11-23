@@ -4082,6 +4082,16 @@
           }
         }
       },
+      "DateFormat": {
+        "type": "string",
+        "description": "How the app writes dates.",
+        "enum": [
+          "language",
+          "dmy",
+          "mdy",
+          "ymd"
+        ]
+      },
       "DayPlay": {
         "type": "object",
         "required": [
@@ -6147,10 +6157,15 @@
           "version",
           "igdb_configured",
           "external_services",
+          "date_format",
           "sensors",
           "tags"
         ],
         "properties": {
+          "date_format": {
+            "$ref": "#/components/schemas/DateFormat",
+            "description": "How dates are written, from the app options."
+          },
           "default_currency": {
             "type": [
               "string",
