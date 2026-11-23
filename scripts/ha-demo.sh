@@ -9,11 +9,18 @@
 # DuckDNS token read from .data/duckdns-token. HA_SENSORS=mqtt|integration|off
 # sets the app's sensors option. The Memory Card integration is copied from
 # HA_INTEGRATION (default ../ha-memory-card-integration) when it exists.
+# HA_NAME runs another VM, with its own disk and logins.
 set -eu
 self=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
 cd "$(dirname "$0")/.."
 
 name=${HA_NAME:-memory-card-haos}
+case $name in
+-* | *[!a-z0-9-]*)
+    echo "HA_NAME takes lowercase letters, digits and dashes" >&2
+    exit 1
+    ;;
+esac
 port=${HA_PORT:-7123}
 label=memory-card.ha-demo
 image=memory-card-haos:local
@@ -21,6 +28,7 @@ os_version=18.4
 os_sha256=756ec485b1b153099ca53e88a5eebd63a801d56b791afe5c6d63ef94a35dc02d
 os_file=target/haos-image/haos_ova-$os_version.qcow2.xz
 state=target/haos
+[ "$name" = memory-card-haos ] || state=target/haos-$name
 apps=$state/local
 # Outside the VM's state, so a rebuilt VM reuses the certificate.
 certs=target/haos-cert
@@ -56,6 +64,17 @@ exists() {
 
 running() {
     [ "$(docker container inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" = true ]
+}
+
+# When the VM's disk was made, or nothing without one.
+disk_id() {
+    docker volume inspect -f '{{.CreatedAt}}' "$name-vm" 2>/dev/null || true
+}
+
+# Whether ha-demo.mjs made the owner on the disk the VM has now.
+owned() {
+    disk=$(disk_id)
+    [ -n "$disk" ] && [ -f "$state/demo.json" ] && [ "$(cat "$state/disk" 2>/dev/null)" = "$disk" ]
 }
 
 refuse_foreign() {
@@ -223,7 +242,7 @@ up() {
     refuse_foreign
     # A fresh Home Assistant gives its first account to whoever onboards it,
     # so it only opens to the network once ha-demo.mjs made the owner.
-    if [ -n "${HA_LAN:-}" ] && [ ! -f "$state/demo.json" ]; then
+    if [ -n "${HA_LAN:-}" ] && ! owned; then
         echo "Making the owner account before Home Assistant is reachable from the network"
         HA_LAN='' HA_HTTPS='' HA_DUCKDNS='' "$self" up
     fi
@@ -315,6 +334,7 @@ up() {
     else
         node scripts/ha-demo.mjs "$current" "$state/demo.json"
     fi
+    disk_id >"$state/disk"
 
     if [ -n "${HA_LAN:-}" ] && [ -z "$duckdns" ]; then
         echo "On the network it is at ${HA_URL%%://*}://$(lan_ip):$port"
@@ -337,8 +357,9 @@ destroy)
     if labelled volume "" "$name-vm"; then
         docker volume rm "$name-vm" >/dev/null
     fi
+    # Another VM may still use the image.
     if labelled image Config. "$image"; then
-        docker image rm "$image" >/dev/null
+        docker image rm "$image" >/dev/null 2>&1 || true
     fi
     docker image prune -f --filter "label=$label=1" >/dev/null
     rm -rf "$state"
