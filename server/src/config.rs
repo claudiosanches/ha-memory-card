@@ -320,8 +320,7 @@ impl Config {
             })?;
 
         let trusted_peers = peers(&env, "MEMORY_CARD_TRUSTED_PEER", &[SUPERVISOR_IP])?;
-        let integration_peers =
-            peers(&env, "MEMORY_CARD_INTEGRATION_PEER", &HOME_ASSISTANT_IPS)?;
+        let integration_peers = peers(&env, "MEMORY_CARD_INTEGRATION_PEER", &HOME_ASSISTANT_IPS)?;
 
         let log_level = match env("MEMORY_CARD_LOG_LEVEL") {
             None => options.log_level.unwrap_or_default(),
@@ -636,7 +635,10 @@ mod tests {
         .unwrap();
         assert_eq!(config.log_level, LogLevel::Debug);
         assert_eq!(config.trusted_peers.len(), 2);
-        assert_eq!(config.integration_peers, ["10.0.0.5".parse::<IpAddr>().unwrap()]);
+        assert_eq!(
+            config.integration_peers,
+            ["10.0.0.5".parse::<IpAddr>().unwrap()]
+        );
         assert_eq!(config.managers, vec!["one", "two"]);
         assert!(config.viewers_track_progress);
         assert!(config.igdb.is_none(), "empty secret disables IGDB");
@@ -708,7 +710,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let err = load_with(dir.path(), &[("MEMORY_CARD_TRUSTED_PEER", "nope")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
-        let err = load_with(dir.path(), &[("MEMORY_CARD_INTEGRATION_PEER", "1.2.3.4,")]).unwrap_err();
+        let err =
+            load_with(dir.path(), &[("MEMORY_CARD_INTEGRATION_PEER", "1.2.3.4,")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
         let err = load_with(dir.path(), &[("MEMORY_CARD_EXTERNAL_SERVICES", "maybe")]).unwrap_err();
         assert!(matches!(err, ConfigError::InvalidEnv { .. }));
