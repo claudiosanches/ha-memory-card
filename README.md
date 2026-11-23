@@ -4,14 +4,18 @@ A video game collection manager that runs as a Home Assistant app. It tracks
 the games you own across consoles, the platform and region releases of each
 game, and every copy you have, physical or digital.
 
+![The library in Memory Card](docs/images/library.webp)
+
 ## Install
 
-1. In Home Assistant, go to **Settings > Apps > App store**.
-2. Open the menu, choose **Repositories** and add
+1. In Home Assistant, go to **Settings > Apps > Install app**.
+2. Open the ⋮ menu, choose **Repositories** and add
    `https://github.com/claudiosanches/ha-memory-card`.
 3. Install **Memory Card** and start it. It appears in the sidebar.
 
-See [DOCS.md](memory-card/DOCS.md) for configuration.
+See [DOCS.md](memory-card/DOCS.md) for configuration and every feature.
+Questions and bug reports go to
+[GitHub issues](https://github.com/claudiosanches/ha-memory-card/issues).
 
 ## Development
 

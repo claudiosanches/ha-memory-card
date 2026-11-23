@@ -1,48 +1,20 @@
 # Memory Card
 
-Memory Card keeps track of the video games you own across consoles. It opens
-from the Home Assistant sidebar and needs no login of its own.
+Memory Card keeps track of the video games you own across consoles, physical
+or digital. It opens from the Home Assistant sidebar.
 
-## IGDB metadata and covers
+![The library, with covers from IGDB](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/library.webp)
 
-The app works without IGDB: you can enter games by hand. To fetch titles,
-covers and metadata, give it access to the IGDB API.
+## Installation
 
-1. Enable two-factor authentication on your Twitch account (Twitch requires
-   it to register applications).
-2. Open the [Twitch developer console](https://dev.twitch.tv/console/apps)
-   and register an application:
-   - **OAuth Redirect URLs:** `http://localhost`
-   - **Category:** Application Integration
-   - **Client Type:** Confidential
-3. Copy the **Client ID** and generate a **Client Secret**.
-4. In Home Assistant, open the Memory Card app, go to **Configuration**, fill
-   in both fields and save. To keep them in Home Assistant's `secrets.yaml`
-   instead, enter `!secret` and the key, such as `!secret igdb_client_secret`.
-5. Restart the app. Options are read only at startup.
+1. In Home Assistant, go to **Settings > Apps > Install app**.
+2. Open the ⋮ menu, choose **Repositories** and add
+   `https://github.com/claudiosanches/ha-memory-card`.
+3. Find **Memory Card** in the list, select it and choose **Install**.
+4. Start the app. It shows in the sidebar.
 
-Releases for Japan, Korea and Europe get their regional cover when IGDB has
-one. **Settings > Sync with IGDB** refreshes every linked game.
-
-When IGDB says two linked games in your collection are versions of each
-other, such as a game and its remaster, remake, port or another edition,
-each game page lists the other under **Other versions**. They stay separate
-games with their own copies and progress. Run a sync to fill this in for
-games linked before this was added.
-
-The library search finds a game by its title, its release titles and its
-other names, ignoring case and accents, so `pokemon` finds `Pokémon`.
-Linking fills in IGDB's alternative names, such as Japanese titles and
-acronyms. Add your own under **Also known as** when editing a game.
-
-To use your own cover, click the cover of a game or a release on its page and
-upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
-uploaded cover. Removing it brings back IGDB's.
-
-To keep Memory Card from contacting the internet, turn off
-`external_services`. The IGDB credentials are then ignored, games, covers
-and details are entered by hand, and barcode scans only check your own
-copies.
+A new install is read-only until you name a manager, so do that first. IGDB
+credentials are optional; without them you enter games by hand.
 
 ## Managers and viewers
 
@@ -79,21 +51,36 @@ sessions and start games from the backlog, but nothing else.
 Memory Card keeps the name of each user who adds or changes a game or a
 copy, and the game page shows who added it and who changed it last.
 
-## Language
+## IGDB metadata and covers
 
-Memory Card comes in English, Spanish and Brazilian Portuguese. It follows
-Home Assistant's language, or your browser's when Home Assistant uses one
-the app does not have. To pick one, go to **Settings > Appearance >
-Language**; the choice is saved in that browser. The app's options in Home
-Assistant are translated too.
+The app works without IGDB: you can enter games by hand. To fetch titles,
+covers and metadata, give it access to the IGDB API.
 
-New prices start in the `currency` option when it is set, else in the
-currency of the copy priced last, else in Home Assistant's currency.
+1. Enable two-factor authentication on your Twitch account (Twitch requires
+   it to register applications).
+2. Open the [Twitch developer console](https://dev.twitch.tv/console/apps)
+   and register an application:
+   - **OAuth Redirect URLs:** `http://localhost`
+   - **Category:** Application Integration
+   - **Client Type:** Confidential
+3. Copy the **Client ID** and generate a **Client Secret**.
+4. In Home Assistant, open the Memory Card app, go to **Configuration**, fill
+   in both fields and save. To keep them in Home Assistant's `secrets.yaml`
+   instead, enter `!secret` and the key, such as `!secret igdb_client_secret`.
+5. Restart the app. Options are read only at startup.
 
-Memory Card reads Home Assistant's language and currency once after it
-starts. Restart the app after changing either of them in Home Assistant.
+Releases for Japan, Korea and Europe get their regional cover when IGDB has
+one. **Settings > Sync with IGDB** refreshes every linked game.
+
+To keep Memory Card from contacting the internet, turn off
+`external_services`. The IGDB credentials are then ignored, games, covers
+and details are entered by hand, and barcode scans only check your own
+copies.
 
 ## Options
+
+Memory Card reads its options when it starts, so restart it after changing
+one.
 
 | Option | Description |
 |---|---|
@@ -106,6 +93,63 @@ starts. Restart the app after changing either of them in Home Assistant.
 | `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
+
+## Library and games
+
+![A game page with its progress, details and labels](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/game.webp)
+
+The library shows your games as a grid of covers, a list or a table. The
+filters narrow it by platform, play status, label, genre, game mode, device,
+store, region, format and players on the same screen, and they stay in the
+address, so a filtered library can be bookmarked. **Show** picks between the
+games you own, the wishlist and both.
+
+The library search finds a game by its title, its release titles and its
+other names, ignoring case and accents, so `pokemon` finds `Pokémon`.
+Linking fills in IGDB's alternative names, such as Japanese titles and
+acronyms. Add your own under **Also known as** when editing a game.
+
+When IGDB says two linked games in your collection are versions of each
+other, such as a game and its remaster, remake, port or another edition,
+each game page lists the other under **Other versions**. They stay separate
+games with their own copies and progress. Run a sync to fill this in for
+games linked before this was added.
+
+To use your own cover, click the cover of a game or a release on its page and
+upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
+uploaded cover. Removing it brings back IGDB's.
+
+## Backlog and play statuses
+
+![The backlog with a random pick](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/backlog.webp)
+
+**Backlog** in the sidebar shows what you are playing, what is on hold and
+the games waiting for you, with how many you have cleared. **Pick for me**
+rolls a random game from the backlog, for one device if you choose one, and
+skips games picked in the last day. Games with no play status wait under
+**Not sorted yet** until you give them one.
+
+Manage > Play statuses lists the statuses in the order the app shows them.
+The six built-in statuses can be renamed, recolored and reordered, but not
+deleted, and their keys never change, so CSV files and integrations can rely
+on them. Statuses you add have a name, a color and a "counts as" group:
+
+- Backlog: shown in the backlog grid and picked by "Pick for me".
+- Playing and On hold: shown in those sections of the Backlog page.
+- Finished: counted as cleared in the backlog progress.
+- Not counted: left out of the Backlog page.
+
+Deleting a status moves its games to another status, or leaves them with none.
+
+## Labels
+
+Labels are your own groups for games, such as "Couch co-op" or "Replay
+someday". Manage > Labels lists them with how many games have each, and
+each has a name and a color. Set a game's labels in its edit form; the game
+page shows them after the summary, and selecting one opens the library
+filtered by it. The library's Label filter shows games with any of the
+labels you pick. Names cannot contain commas or semicolons, which separate
+labels in CSV files. Deleting a label keeps its games.
 
 ## Wishlist
 
@@ -219,29 +263,14 @@ names for each game, to link with a click or mark as not on IGDB.
 | `notes` | Free text |
 | `bundle_copy_id` | `copy_id` of the bundle copy this copy came in. Its platform, region, format, device, store, condition and status then follow that copy, and its own price, estimated value and purchase date are left out. Empty takes the copy out of a bundle. |
 
-## Play statuses
+## Stats
 
-Manage > Play statuses lists the statuses in the order the app shows them.
-The six built-in statuses can be renamed, recolored and reordered, but not
-deleted, and their keys never change, so CSV files and integrations can rely
-on them. Statuses you add have a name, a color and a "counts as" group:
+![Stats in the dark theme](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/stats.webp)
 
-- Backlog: shown in the backlog grid and picked by "Pick for me".
-- Playing and On hold: shown in those sections of the Backlog page.
-- Finished: counted as cleared in the backlog progress.
-- Not counted: left out of the Backlog page.
-
-Deleting a status moves its games to another status, or leaves them with none.
-
-## Labels
-
-Labels are your own groups for games, such as "Couch co-op" or "Replay
-someday". Manage > Labels lists them with how many games have each, and
-each has a name and a color. Set a game's labels in its edit form; the game
-page shows them after the summary, and selecting one opens the library
-filtered by it. The library's Label filter shows games with any of the
-labels you pick. Names cannot contain commas or semicolons, which separate
-labels in CSV files. Deleting a label keeps its games.
+**Stats** in the sidebar sums up the collection: how many games, copies and
+wishlist copies you have, your backlog progress and games by play status, the
+most played games and a calendar of play activity, copies by platform and by
+store, and what you paid next to what your copies are worth now.
 
 ## Home Assistant sensors
 
@@ -300,6 +329,20 @@ Memory Card hears scans through the Home Assistant API, which is why the app
 asks for access to it; the Status section under Settings says whether it is
 listening. **Unlink NFC tags** in the same menu removes a copy's tags.
 
+## Language and currency
+
+Memory Card comes in English, Spanish and Brazilian Portuguese. It follows
+Home Assistant's language, or your browser's when Home Assistant uses one
+the app does not have. To pick one, go to **Settings > Appearance >
+Language**; the choice is saved in that browser. The app's options in Home
+Assistant are translated too.
+
+New prices start in the `currency` option when it is set, else in the
+currency of the copy priced last, else in Home Assistant's currency.
+
+Memory Card reads Home Assistant's language and currency once after it
+starts. Restart the app after changing either of them in Home Assistant.
+
 ## Data and backups
 
 Everything the app stores lives in the app's data folder, which Home Assistant
@@ -308,7 +351,18 @@ includes in its backups:
 - `db/memory-card.sqlite`: your collection.
 - `db/pre-migration/`: a copy of the database taken before each upgrade that
   changes its structure. The last five are kept.
-- `covers/`: downloaded and uploaded cover images.
+- `covers/`: downloaded and uploaded covers, and photos of copies.
 
 Backups stop the app for a moment so the database is copied in a consistent
 state. The app starts again on its own when the backup finishes.
+
+## Support
+
+Questions, ideas and bug reports go to
+[GitHub issues](https://github.com/claudiosanches/ha-memory-card/issues).
+For a bug, say which version of Memory Card you run and add the lines around
+the problem from the app's **Log** tab.
+
+To support development, use
+[GitHub Sponsors](https://github.com/sponsors/claudiosanches) or
+[Ko-fi](https://ko-fi.com/claudiosanches).
