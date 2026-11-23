@@ -152,3 +152,23 @@ async fn an_oversized_answer_is_refused() {
         "{result:?}"
     );
 }
+
+#[tokio::test]
+async fn product_text_is_cut_to_what_the_api_takes() {
+    let stub = Router::new().route(
+        "/lookup",
+        get(|| async {
+            axum::Json(json!({"items": [{"title": "(".repeat(5000), "brand": "b".repeat(300)}]}))
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}/lookup", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+
+    let product = memory_card::barcodes::lookup(&memory_card::http::shared(), &url, "1")
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(product.title, "(".repeat(200));
+    assert_eq!(product.brand.as_deref(), Some("b".repeat(100).as_str()));
+}

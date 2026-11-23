@@ -17,7 +17,7 @@ use tokio::sync::Mutex;
 use tokio::time::Instant;
 use utoipa::ToSchema;
 
-use crate::api::input::{NAME_MAX, SUMMARY_MAX, TITLE_MAX};
+use crate::api::input::{NAME_MAX, SUMMARY_MAX, TITLE_MAX, cut};
 use crate::config::IgdbCredentials;
 
 const INTERVAL: Duration = Duration::from_millis(250);
@@ -199,13 +199,6 @@ fn optional_text<'de, const N: usize, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<String>, D::Error> {
     Option::<String>::deserialize(deserializer).map(|text| text.map(cut::<N>))
-}
-
-fn cut<const N: usize>(mut text: String) -> String {
-    if let Some((at, _)) = text.char_indices().nth(N) {
-        text.truncate(at);
-    }
-    text
 }
 
 #[derive(Debug, Deserialize)]

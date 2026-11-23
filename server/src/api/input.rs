@@ -11,6 +11,15 @@ pub const NOTES_MAX: usize = 2000;
 /// Most IDs one request lists.
 pub const IDS_MAX: usize = 1000;
 
+/// Text from another service cut to `N` characters, the most the API takes
+/// for the same field.
+pub fn cut<const N: usize>(mut text: String) -> String {
+    if let Some((at, _)) = text.char_indices().nth(N) {
+        text.truncate(at);
+    }
+    text
+}
+
 /// A JSON list of at most [`IDS_MAX`] IDs.
 pub fn id_list<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Vec<i64>, D::Error> {
     let ids: Vec<i64> = serde::Deserialize::deserialize(deserializer)?;

@@ -6,6 +6,8 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::api::input::{NAME_MAX, TITLE_MAX, cut};
+
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct Product {
     /// As the database lists it, often with the platform, such as
@@ -69,10 +71,10 @@ pub async fn lookup(
         .into_iter()
         .find(|item| !item.title.trim().is_empty())
         .map(|item| Product {
-            title: item.title.trim().to_owned(),
+            title: cut::<TITLE_MAX>(item.title.trim().to_owned()),
             brand: item
                 .brand
-                .map(|b| b.trim().to_owned())
+                .map(|b| cut::<NAME_MAX>(b.trim().to_owned()))
                 .filter(|b| !b.is_empty()),
         }))
 }
