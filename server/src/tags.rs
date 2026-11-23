@@ -229,7 +229,7 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
         Ok(scan) => {
             if scan != Scan::Unknown {
                 tracing::info!(?scan, "handled a tag scan");
-                state.changes.notify_one();
+                state.changes.announce();
             }
             scan
         }

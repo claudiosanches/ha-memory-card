@@ -97,7 +97,12 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
 #[tokio::test]
 async fn successful_writes_wake_the_sensors() {
     let app = TestApp::new().await;
-    let woken = || tokio::time::timeout(Duration::from_millis(50), app.state.changes.notified());
+    let woken = || {
+        tokio::time::timeout(
+            Duration::from_millis(50),
+            app.state.changes.next_for_sensors(),
+        )
+    };
 
     let (status, _) = app
         .json("POST", "/api/games", Some(json!({"title": "Celeste"})))

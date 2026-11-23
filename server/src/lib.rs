@@ -2,6 +2,7 @@ pub mod access;
 pub mod api;
 pub mod assets;
 pub mod barcodes;
+pub mod changes;
 pub mod config;
 pub mod covers;
 pub mod db;
@@ -29,11 +30,11 @@ use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderName, HeaderValue, header};
 use axum::middleware;
 use sqlx::SqlitePool;
-use tokio::sync::Notify;
 use tower_http::services::ServeDir;
 use tower_http::set_header::{SetResponseHeader, SetResponseHeaderLayer};
 use tower_http::trace::TraceLayer;
 
+use crate::changes::Changes;
 use crate::config::Config;
 use crate::igdb::sync::SyncStatus;
 use crate::igdb::{Endpoints, Igdb};
@@ -47,8 +48,8 @@ pub struct AppState {
     /// `None` without credentials.
     pub igdb: Option<Arc<Igdb>>,
     pub sync: Arc<Mutex<SyncStatus>>,
-    /// Signalled after anything the sensors report may have changed.
-    pub changes: Arc<Notify>,
+    /// Announced after every change to the collection.
+    pub changes: Changes,
     pub sensors: Arc<Mutex<SensorsStatus>>,
     pub tag_status: Arc<Mutex<TagsStatus>>,
     /// The copy waiting for the next tag scan.
@@ -71,7 +72,7 @@ impl AppState {
             config,
             igdb,
             sync: Arc::default(),
-            changes: Arc::default(),
+            changes: Changes::default(),
             sensors: Arc::new(Mutex::new(sensors)),
             tag_status: Arc::new(Mutex::new(tags)),
             tag_link: Arc::default(),

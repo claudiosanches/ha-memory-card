@@ -3,6 +3,7 @@ pub mod body;
 pub mod covers;
 pub mod devices;
 pub mod duplicates;
+pub mod events;
 pub mod games;
 pub mod igdb;
 mod input;
@@ -35,6 +36,7 @@ struct ApiDoc;
 pub fn router() -> OpenApiRouter<AppState> {
     let api = OpenApiRouter::new()
         .routes(routes!(status::get_status))
+        .routes(routes!(events::stream))
         .routes(routes!(stats::get))
         .routes(routes!(barcodes::look_up))
         .routes(routes!(me::get_me))

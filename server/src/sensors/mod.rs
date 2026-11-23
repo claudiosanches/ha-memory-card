@@ -21,6 +21,7 @@ use self::discovery::{
     AVAILABILITY_TOPIC, DISCOVERY_TOPIC, HA_STATUS_TOPIC, PICK_TOPIC, STATE_TOPIC,
 };
 use crate::AppState;
+use crate::changes::Changes;
 use crate::config::{Config, MqttBroker, SensorsMode};
 use crate::db;
 
@@ -58,7 +59,7 @@ impl SensorsStatus {
 
 /// Wakes the publisher after any successful write.
 pub async fn track_changes(
-    State(changes): State<Arc<Notify>>,
+    State(changes): State<Changes>,
     request: Request,
     next: Next,
 ) -> Response {
@@ -68,7 +69,7 @@ pub async fn track_changes(
     );
     let response = next.run(request).await;
     if writes && response.status().is_success() {
-        changes.notify_one();
+        changes.announce();
     }
     response
 }
@@ -239,7 +240,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                 }
                 Some(Signal::Closed) | None => break,
             },
-            () = state.changes.notified() => {
+            () = state.changes.next_for_sensors() => {
                 tokio::time::sleep(DEBOUNCE).await;
                 if connected {
                     sent = send_state(&client, state, sent).await;

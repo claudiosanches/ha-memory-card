@@ -716,6 +716,27 @@
         }
       }
     },
+    "/api/events": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "summary": "Pages open in a browser refetch on these, so a tag scan or another\nuser's change shows without a reload.",
+        "operationId": "stream",
+        "responses": {
+          "200": {
+            "description": "Server-sent events: `changed`, with how many changes so far, after every change to the collection",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/export.csv": {
       "get": {
         "tags": [

@@ -185,6 +185,8 @@ async fn every_route_checks_the_role() {
         "/api/missing-details",
     ];
 
+    // The event stream only ends when the server stops; this ends it at once.
+    app.state.changes.close();
     let openapi = memory_card::openapi();
     let mut checked = 0;
     for (path, item) in &openapi.paths.paths {

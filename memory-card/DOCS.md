@@ -279,7 +279,9 @@ is on. A reader with no Home Assistant user, such as an ESPHome NFC reader,
 counts as a viewer, and nothing is logged while no managers are set. A link
 waits for a scan by the manager who started it or by a reader with no user.
 
-Scanning the same tag again on the same day does not add another session.
+Pages open in Memory Card show a scan within a second, like any change
+someone else makes. Scanning the same tag again on the same day does not add
+another session.
 A game whose status counts as finished goes back to playing too, unless the
 `tag_scan_finished` option is set to `keep`.
 Memory Card hears scans through the Home Assistant API, which is why the app

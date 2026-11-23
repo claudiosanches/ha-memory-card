@@ -18,6 +18,7 @@ import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { type ComponentType, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, errorMessage } from '../api/errors';
+import { useLiveUpdates } from '../api/events';
 import { useMe, useStatus } from '../api/queries';
 import { followHomeAssistant } from '../i18n';
 import { ColorSchemePicker } from './ColorSchemePicker';
@@ -48,6 +49,7 @@ export function Layout() {
   const me = useMe();
   const canManage = me.data?.role === 'manager';
   const status = useStatus();
+  useLiveUpdates();
   const homeAssistantLanguage = status.data?.home_assistant_language;
   useEffect(() => {
     if (homeAssistantLanguage !== undefined) followHomeAssistant(homeAssistantLanguage);

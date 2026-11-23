@@ -74,6 +74,7 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::new(pool.clone(), Arc::new(config));
     let sensors = Sensors::start(state.clone());
     let tags = Tags::start(state.clone());
+    let changes = state.changes.clone();
     let app = memory_card::app(state);
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
@@ -94,6 +95,7 @@ async fn serve() -> Result<(), Box<dyn std::error::Error>> {
         result = &mut server => result?,
         () = shutdown::signal() => {
             tracing::info!("shutting down");
+            changes.close();
             stop.notify_one();
             if tokio::time::timeout(DRAIN_TIMEOUT, &mut server).await.is_err() {
                 tracing::warn!("in-flight requests did not finish in time");
