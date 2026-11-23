@@ -118,8 +118,8 @@ games with their own copies and progress. Run a sync to fill this in for
 games linked before this was added.
 
 To use your own cover, click the cover of a game or a release on its page and
-upload a JPEG, PNG or WebP image of up to 10 MB. IGDB never replaces an
-uploaded cover. Removing it brings back IGDB's.
+upload a JPEG, PNG or WebP image of up to 10 MB and 100 megapixels. IGDB
+never replaces an uploaded cover. Removing it brings back IGDB's.
 
 ## Backlog and play statuses
 
@@ -185,11 +185,11 @@ If the photo cannot be read, type the digits under the bars instead.
 To keep photos of a copy, such as the box, the cartridge or the manual,
 choose **Add photos** from the copy's **⋯** menu on the game page. On a
 phone this offers the camera. Each copy takes up to 20 JPEG, PNG or WebP
-photos of up to 10 MB each. They are stored with the app's data, so Home
-Assistant backups include them. Memory Card removes the location, camera
-details, thumbnails and other metadata a phone stores in a photo, and keeps
-only which way up it goes and its color profile. Uploaded covers are cleaned
-the same way.
+photos of up to 10 MB and 100 megapixels each. They are stored with the
+app's data, so Home Assistant backups include them. Memory Card removes the
+location, camera details, thumbnails and other metadata a phone stores in a
+photo, and keeps only which way up it goes and its color profile. Uploaded
+covers are cleaned the same way.
 
 ## Bundles
 

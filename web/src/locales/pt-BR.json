@@ -241,7 +241,7 @@
     "platform_builtin": "Plataformas que vêm com o aplicativo não podem ser excluídas. Remova-a das suas plataformas.",
     "invalid_image": "Use uma imagem JPEG, PNG ou WebP.",
     "no_candidates": "Nada no seu backlog corresponde.",
-    "image_too_large": "Use uma imagem de até 10 MB.",
+    "image_too_large": "Use uma imagem de até 10 MB e 100 megapixels.",
     "unknown_play_status": "Esse status de jogo não existe mais. Recarregue a página.",
     "builtin_status": "Status de jogo nativos não podem ser excluídos nem mudar de grupo.",
     "manager_required": "Só gestores podem alterar a coleção.",

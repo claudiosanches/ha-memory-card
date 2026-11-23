@@ -241,7 +241,7 @@
     "platform_builtin": "Platforms that come with the app cannot be deleted. Remove it from your platforms instead.",
     "invalid_image": "Use a JPEG, PNG or WebP image.",
     "no_candidates": "Nothing in your backlog matches.",
-    "image_too_large": "Use an image of 10 MB or less.",
+    "image_too_large": "Use an image of up to 10 MB and 100 megapixels.",
     "unknown_play_status": "That play status no longer exists. Reload the page.",
     "builtin_status": "Built-in play statuses cannot be deleted or moved to another group.",
     "manager_required": "Only managers can change the collection.",

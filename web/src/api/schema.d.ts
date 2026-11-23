@@ -1178,7 +1178,7 @@ export interface components {
         };
         /**
          * Format: binary
-         * @description A JPEG, PNG or WebP image, at most 10 MB.
+         * @description A JPEG, PNG or WebP image, at most 10 MB and 100 megapixels.
          */
         Image: string;
         ImportPreview: {

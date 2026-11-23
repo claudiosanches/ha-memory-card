@@ -45,8 +45,11 @@ pub async fn add(
             field: None,
         });
     }
-    let image = images::clean(&body).ok_or(ApiError::Invalid {
-        code: "invalid_image",
+    let image = images::clean(&body).map_err(|rejected| ApiError::Invalid {
+        code: match rejected {
+            images::Rejected::Invalid => "invalid_image",
+            images::Rejected::TooLarge => "image_too_large",
+        },
         field: None,
     })?;
     // Checked again when the row is added; this spares writing a file.

@@ -241,7 +241,7 @@
     "platform_builtin": "Las plataformas que vienen con la aplicación no se pueden eliminar. Quítala de tus plataformas en su lugar.",
     "invalid_image": "Usa una imagen JPEG, PNG o WebP.",
     "no_candidates": "Nada en tus pendientes coincide.",
-    "image_too_large": "Usa una imagen de 10 MB o menos.",
+    "image_too_large": "Usa una imagen de hasta 10 MB y 100 megapíxeles.",
     "unknown_play_status": "Ese estado de juego ya no existe. Vuelve a cargar la página.",
     "builtin_status": "Los estados de juego predefinidos no se pueden eliminar ni mover a otro grupo.",
     "manager_required": "Solo los gestores pueden cambiar la colección.",

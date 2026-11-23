@@ -20,7 +20,7 @@ const MAX_BYTES: usize = 10 * 1024 * 1024;
 /// Keeps file names apart when uploads land in the same millisecond.
 static UPLOADS: AtomicU64 = AtomicU64::new(0);
 
-/// A JPEG, PNG or WebP image, at most 10 MB.
+/// A JPEG, PNG or WebP image, at most 10 MB and 100 megapixels.
 #[derive(ToSchema)]
 #[schema(value_type = String, format = Binary)]
 pub struct Image(#[allow(dead_code)] Vec<u8>);
@@ -98,8 +98,11 @@ async fn upload(state: &AppState, owner: Owner, bytes: &[u8]) -> ApiResult<Json<
             field: None,
         });
     }
-    let image = images::clean(bytes).ok_or(ApiError::Invalid {
-        code: "invalid_image",
+    let image = images::clean(bytes).map_err(|rejected| ApiError::Invalid {
+        code: match rejected {
+            images::Rejected::Invalid => "invalid_image",
+            images::Rejected::TooLarge => "image_too_large",
+        },
         field: None,
     })?;
     let game_id = games::cover_game(&state.db, owner).await?;
