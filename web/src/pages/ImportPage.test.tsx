@@ -136,6 +136,19 @@ describe('Import page', () => {
     expect(screen.getByRole('button', { name: en.import.confirm })).toBeDisabled();
   });
 
+  it('refuses a file larger than the server reads without reading it', async () => {
+    const calls = mockApi({});
+    renderAt('/import');
+    await screen.findByRole('heading', { name: en.import.importTitle });
+    const file = new File([CSV], 'games.csv', { type: 'text/csv' });
+    Object.defineProperty(file, 'size', { value: 16 * 1024 * 1024 + 1 });
+    file.text = () => Promise.reject(new Error('read'));
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
+
+    expect(await screen.findByText(en.errors.too_large)).toBeInTheDocument();
+    expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(0);
+  });
+
   it('explains a file it cannot read and lets its columns be picked', async () => {
     const calls = mockApi({
       'POST /api/import/preview': json({

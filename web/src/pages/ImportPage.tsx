@@ -18,6 +18,9 @@ type Preview = components['schemas']['ImportPreview'];
 type Summary = components['schemas']['ImportSummary'];
 type Result = components['schemas']['ImportResult'];
 
+/** The most the server reads of an import. */
+const FILE_MAX = 16 * 1024 * 1024;
+
 const COLUMNS = [
   'copy_id',
   'status',
@@ -88,6 +91,12 @@ export function ImportPage() {
     preview.reset();
     if (!chosen) {
       setText(null);
+      return;
+    }
+    if (chosen.size > FILE_MAX) {
+      setFile(null);
+      setText(null);
+      notifyError(t('errors.too_large'));
       return;
     }
     const content = await chosen.text();
