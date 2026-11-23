@@ -193,7 +193,16 @@ function Status() {
           </div>
           <div>
             <dt>{t('settings.donations')}</dt>
-            <dd><Anchor href="https://github.com/sponsors/claudiosanches" target="_blank" rel="noreferrer">{t('settings.githubSponsors')}</Anchor></dd>
+            <dd>
+              <Group gap="md">
+                <Anchor href="https://github.com/sponsors/claudiosanches" target="_blank" rel="noreferrer">
+                  {t('settings.githubSponsors')}
+                </Anchor>
+                <Anchor href="https://ko-fi.com/claudiosanches" target="_blank" rel="noreferrer">
+                  {t('settings.kofi')}
+                </Anchor>
+              </Group>
+            </dd>
           </div>
         </dl>
       </ToolSection>

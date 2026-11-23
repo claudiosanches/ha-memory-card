@@ -58,6 +58,18 @@ describe('Settings access', () => {
   });
 });
 
+describe('Settings about', () => {
+  it('links both ways to support development', async () => {
+    mockApi({});
+    renderAt('/settings');
+    expect(await screen.findByRole('link', { name: en.settings.githubSponsors })).toHaveAttribute(
+      'href',
+      'https://github.com/sponsors/claudiosanches',
+    );
+    expect(screen.getByRole('link', { name: en.settings.kofi })).toHaveAttribute('href', 'https://ko-fi.com/claudiosanches');
+  });
+});
+
 describe('Settings sensors', () => {
   it('shows whether Home Assistant sensors are published', async () => {
     mockApi({ 'GET /api/me': VIEWER, 'GET /api/status': STATUS });
