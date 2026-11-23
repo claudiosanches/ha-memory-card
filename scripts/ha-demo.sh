@@ -71,10 +71,20 @@ disk_id() {
     docker volume inspect -f '{{.CreatedAt}}' "$name-vm" 2>/dev/null || true
 }
 
-# Whether ha-demo.mjs made the owner on the disk the VM has now.
+# Whether Home Assistant onboarding made its owner, asked of the running VM.
+has_owner() {
+    vm_ssh grep -q '"user"' /mnt/data/supervisor/homeassistant/.storage/onboarding </dev/null 2>/dev/null
+}
+
+# Whether Home Assistant on the VM's disk has its owner: ha-demo.mjs made it
+# there, or the running VM says so.
 owned() {
     disk=$(disk_id)
-    [ -n "$disk" ] && [ -f "$state/demo.json" ] && [ "$(cat "$state/disk" 2>/dev/null)" = "$disk" ]
+    [ -n "$disk" ] || return 1
+    if [ -f "$state/demo.json" ] && [ "$(cat "$state/disk" 2>/dev/null)" = "$disk" ]; then
+        return 0
+    fi
+    running && has_owner
 }
 
 refuse_foreign() {
@@ -244,7 +254,7 @@ up() {
     # so it only opens to the network once ha-demo.mjs made the owner.
     if [ -n "${HA_LAN:-}" ] && ! owned; then
         echo "Making the owner account before Home Assistant is reachable from the network"
-        HA_LAN='' HA_HTTPS='' HA_DUCKDNS='' "$self" up
+        HA_PRIVATE=1 HA_LAN='' HA_HTTPS='' HA_DUCKDNS='' "$self" up
     fi
     stage
     # Without provenance an unchanged build keeps its image ID.
@@ -296,6 +306,11 @@ up() {
         fi
         sleep 5
     done
+    # The private start only makes the owner, which a stopped VM may have.
+    if [ -n "${HA_PRIVATE:-}" ] && has_owner; then
+        disk_id >"$state/disk"
+        return
+    fi
 
     tar -C "$apps" -cf - memory-card | vm_ssh '
         set -e
