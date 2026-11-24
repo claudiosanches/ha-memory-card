@@ -19,5 +19,6 @@ export const sharedTheme = createTheme({
     },
     Button: { defaultProps: { fw: 600 } },
     Card: { defaultProps: { padding: 'lg' } },
+    SegmentedControl: { defaultProps: { withItemsBorders: false } },
   },
 });

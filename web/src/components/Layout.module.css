@@ -4,6 +4,7 @@
 .navbar { background: var(--mc-nav-image, none) center bottom 76px / auto no-repeat var(--mc-surface); border-color: var(--mc-border); }
 .sectionLabel { margin: 16px 12px 10px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mc-muted); }
 .navLink { border-radius: 8px; padding: 12px; margin-bottom: 4px; color: var(--mc-muted); }
+.navLink:where(:not([data-active])):hover { color: var(--mantine-color-text); }
 .navLink[data-active], .navLink[data-active]:hover { background: var(--mc-selected); color: var(--mc-selected-text); font-weight: 650; }
 /* In the rail, section labels become a thin divider. */
 .navbar[data-rail] .sectionLabel { height: 1px; margin: 12px 8px !important; overflow: hidden; color: transparent; background: var(--mc-border); }

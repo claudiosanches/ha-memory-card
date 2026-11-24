@@ -9,6 +9,7 @@ export const retro = {
     autoContrast: true,
     colors: {
       brand: ['#fff3df', '#ffe3b9', '#ffcc8a', '#fcb269', '#ef934c', '#d97635', '#c35e28', '#a74821', '#8c391e', '#722c19'],
+      gray: ['#f3e7cf', '#e7d7b8', '#d7c4a0', '#c7b79a', '#b39f7e', '#968264', '#7a6950', '#665742', '#4d4031', '#352b24'],
       dark: ['#f4ead6', '#dac9ab', '#b5a994', '#938470', '#685e50', '#50483e', '#3b352e', '#2d2924', '#221f1b', '#191714'],
     },
   } satisfies MantineThemeOverride,

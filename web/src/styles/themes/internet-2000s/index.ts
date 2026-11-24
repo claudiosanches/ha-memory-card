@@ -14,6 +14,7 @@ export const internet2000s = {
     autoContrast: true,
     colors: {
       brand: ['#f1f2ff', '#dfe4ff', '#c6d0ff', '#aabaff', '#92a4ff', '#788cfb', '#6275ea', '#4d5dcd', '#3948af', '#303b8a'],
+      gray: ['#dce6f6', '#ccd9f0', '#bccbe7', '#acbadd', '#8f9fc7', '#7183ae', '#5c6e98', '#4c5d81', '#354368', '#202c51'],
       dark: ['#eaf0ff', '#ced9f7', '#aab7da', '#828faf', '#536187', '#39476c', '#283655', '#1d2947', '#141d36', '#10172b'],
     },
   } satisfies MantineThemeOverride,

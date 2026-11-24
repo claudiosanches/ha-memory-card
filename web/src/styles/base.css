@@ -19,6 +19,30 @@ body { background: var(--mc-background); }
 .mc-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .mc-cover svg { width: 32%; height: auto; opacity: 0.6; }
 
+.mantine-SegmentedControl-root {
+  --sc-color: var(--mantine-primary-color-light);
+  --sc-label-color: var(--mantine-primary-color-light-color);
+  --sc-shadow: none;
+  padding: 3px;
+  border: 1px solid var(--mc-border);
+  background-color: var(--mc-surface);
+}
+
+.mantine-SegmentedControl-label {
+  color: var(--mc-muted);
+  font-weight: 550;
+}
+
+.mantine-SegmentedControl-label[data-active] {
+  font-weight: 650;
+}
+
+@media (hover: hover) {
+  .mantine-SegmentedControl-label:not([data-disabled], [data-active], [data-read-only]):hover {
+    color: var(--mantine-color-text);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
