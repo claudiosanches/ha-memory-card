@@ -242,14 +242,17 @@ async function app(ha, state, igdb) {
   const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
   const igdbChanged = Object.entries(igdb).some(([key, value]) => options[key] !== value);
   const sensorsChanged = SENSORS !== undefined && options.sensors !== SENSORS;
-  if (!state.configured || igdbChanged || sensorsChanged) {
+  // Seeding the viewer's play needs it, also on a VM set up before that seeding.
+  const play = state.viewerPlayed ? {} : { viewers_track_progress: true };
+  const playChanged = Object.entries(play).some(([key, value]) => options[key] !== value);
+  if (!state.configured || igdbChanged || sensorsChanged || playChanged) {
     // The Supervisor replaces all options at once.
     const first = state.configured
       ? {}
       : { managers: [state.owner.id], viewers_track_progress: true, sensors: 'mqtt' };
     const sensors = SENSORS ? { sensors: SENSORS } : {};
     await ha.supervisor('post', `/addons/${APP}/options`, {
-      options: { ...options, ...first, ...sensors, ...igdb },
+      options: { ...options, ...first, ...play, ...sensors, ...igdb },
       ingress_panel: true,
     });
     state.configured = true;
@@ -257,7 +260,7 @@ async function app(ha, state, igdb) {
   }
   const info = await ha.supervisor('get', `/addons/${APP}/info`);
   if (info.state !== 'started') await ha.supervisor('post', `/addons/${APP}/start`, undefined, 300);
-  else if (igdbChanged || sensorsChanged) await ha.supervisor('post', `/addons/${APP}/restart`, undefined, 300);
+  else if (igdbChanged || sensorsChanged || playChanged) await ha.supervisor('post', `/addons/${APP}/restart`, undefined, 300);
 }
 
 /** Adds the Memory Card integration once the app announces it. */
