@@ -194,7 +194,6 @@
 
 .topGame :global(.mc-cover) {
   border-radius: 5px;
-  box-shadow: var(--mc-cover-shadow);
 }
 
 @media (hover: hover) {
