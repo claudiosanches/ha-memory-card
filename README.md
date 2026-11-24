@@ -75,6 +75,7 @@ The server reads these variables; `make run` sets the first four and
 | `MEMORY_CARD_INTEGRATION_LISTEN` | `0.0.0.0:8100` | Address of the feed the Memory Card integration reads |
 | `MEMORY_CARD_INTEGRATION_PEER` | `172.30.32.1, fd0c:ac1e:2100::1` | Comma-separated peers allowed to read that feed |
 | `MEMORY_CARD_TAG_SCAN_FINISHED` | from `options.json` | `playing` or `keep`; overrides `tag_scan_finished` |
+| `MEMORY_CARD_TAG_READERS` | from `options.json` | `device=person,...` pairs of Home Assistant device and user IDs; overrides `tag_readers` |
 | `MEMORY_CARD_CURRENCY` | from `options.json` | Three-letter code; overrides `currency` |
 | `MEMORY_CARD_DATE_FORMAT` | from `options.json` | `language`, `dmy`, `mdy` or `ymd`; overrides `date_format` |
 | `MEMORY_CARD_MQTT_HOST` | unset | MQTT broker for the sensors, instead of asking the Supervisor |

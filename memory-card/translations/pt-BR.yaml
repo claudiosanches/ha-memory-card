@@ -9,8 +9,9 @@ configuration:
   viewers_track_progress:
     name: Visualizadores registram progresso
     description: >-
-      Permitir que usuários que não são gestores mudem o status de jogo e
-      registrem sessões. O resto continua somente leitura para eles.
+      Permitir que usuários que não são gestores mantenham as próprias
+      partidas: o status de cada jogo, as sessões e os sorteios. O resto
+      continua somente leitura para eles.
   external_services:
     name: Usar serviços externos
     description: >-
@@ -43,9 +44,16 @@ configuration:
   tag_scan_finished:
     name: Tag lida em um jogo terminado
     description: >-
-      O que a leitura da tag NFC de uma cópia faz quando o jogo está zerado,
-      abandonado ou em 100%. "playing" volta o jogo para jogando; "keep"
+      O que a leitura da tag NFC de uma cópia faz quando o seu status do jogo
+      é zerado, abandonado ou em 100%. "playing" volta para jogando; "keep"
       mantém o status e só registra a sessão.
+  tag_readers:
+    name: Leitores NFC
+    description: >-
+      Leitores sem usuário do Home Assistant, como os do ESPHome, e de quem
+      são as partidas que as leituras registram: o ID do dispositivo do leitor
+      e o ID de usuário da pessoa. Uma leitura de um leitor fora da lista não
+      registra nada.
   currency:
     name: Moeda padrão
     description: >-

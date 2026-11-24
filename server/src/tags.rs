@@ -129,6 +129,9 @@ struct TagEvent {
 #[derive(Deserialize)]
 struct TagData {
     tag_id: String,
+    /// The phone or reader that scanned, as a Home Assistant device ID.
+    #[serde(default)]
+    device_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -166,7 +169,8 @@ async fn subscribe(state: &AppState, api: &HomeAssistantApi) -> Result<(), Liste
             "event" => {
                 if let Some(event) = incoming.event {
                     let user = event.context.and_then(|c| c.user_id);
-                    scanned(state, &event.data.tag_id, user.as_deref()).await;
+                    let reader = event.data.device_id.as_deref();
+                    scanned(state, &event.data.tag_id, user.as_deref(), reader).await;
                 }
             }
             _ => {}
@@ -188,8 +192,14 @@ pub enum Scan {
 
 /// Handles one scan. Public so tests can scan without Home Assistant.
 /// `user` is the Home Assistant user who scanned, `None` for a reader with
-/// no user.
-pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan {
+/// no user; `reader` is the scanning device, which `tag_readers` may tie to
+/// a person.
+pub async fn scanned(
+    state: &AppState,
+    tag_id: &str,
+    user: Option<&str>,
+    reader: Option<&str>,
+) -> Scan {
     let tag_id = tag_id.trim();
     if tag_id.is_empty()
         || tag_id.len() > TAG_ID_MAX
@@ -197,6 +207,15 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
     {
         return Scan::Unknown;
     }
+    let reader = reader.filter(|id| access::valid_user_id(id));
+    let person = user.or_else(|| {
+        state
+            .config
+            .tag_readers
+            .iter()
+            .find(|tag_reader| Some(tag_reader.device.as_str()) == reader)
+            .map(|tag_reader| tag_reader.person.as_str())
+    });
     let pending = take_link(state, user);
     let result = match pending {
         Some(link) => db::tags::link(&state.db, tag_id, link.copy_id, &link.by)
@@ -205,7 +224,7 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
                 copy_id: link.copy_id,
             }),
         None => match db::tags::copy_for(&state.db, tag_id).await {
-            Ok(Some(copy_id)) => match user {
+            Ok(Some(copy_id)) => match person {
                 Some(person) if Policy::from_config(&state.config).can_track_progress(person) => {
                     let today = local_date(state).await;
                     db::sessions::start_from_tag(
@@ -223,7 +242,10 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
                     Ok(Scan::Unknown)
                 }
                 None => {
-                    tracing::info!("ignored a tag scan with no person to play");
+                    tracing::info!(
+                        reader = reader.unwrap_or("unknown"),
+                        "ignored a tag scan with no person; map its reader in tag_readers"
+                    );
                     Ok(Scan::Unknown)
                 }
             },

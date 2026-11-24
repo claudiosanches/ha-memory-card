@@ -8,8 +8,9 @@ configuration:
   viewers_track_progress:
     name: Viewers track play progress
     description: >-
-      Let users who are not managers change play status and log play sessions.
-      Everything else stays read only for them.
+      Let users who are not managers keep their own play: their play status
+      for each game, their sessions and their picks. Everything else stays
+      read only for them.
   external_services:
     name: Use external services
     description: >-
@@ -42,9 +43,15 @@ configuration:
   tag_scan_finished:
     name: Tag scan on a finished game
     description: >-
-      What scanning a copy's NFC tag does when its game is completed, dropped
-      or mastered. "playing" sets the game back to playing; "keep" keeps its
-      status and only logs the session.
+      What scanning a copy's NFC tag does when your status for its game is
+      completed, dropped or mastered. "playing" sets it back to playing;
+      "keep" keeps it and only logs the session.
+  tag_readers:
+    name: NFC readers
+    description: >-
+      Readers with no Home Assistant user, such as ESPHome ones, and whose
+      play their scans log: the reader's device ID and the person's user ID.
+      A scan from a reader not listed logs nothing.
   currency:
     name: Default currency
     description: >-

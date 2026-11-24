@@ -31,6 +31,7 @@ options:
   igdb_client_secret: ""
   sensors: "off"
   tag_scan_finished: playing
+  tag_readers: []
   date_format: language
   log_level: info
 schema:
@@ -42,6 +43,9 @@ schema:
   igdb_client_secret: "password?"
   sensors: "list(mqtt|integration|off)"
   tag_scan_finished: "list(playing|keep)"
+  tag_readers:
+    - device: str
+      person: str
   currency: "match(^[A-Za-z]{3}$)?"
   date_format: "list(language|dmy|mdy|ymd)"
   log_level: "list(trace|debug|info|warning|error)"

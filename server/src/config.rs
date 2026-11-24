@@ -36,6 +36,18 @@ pub enum ConfigError {
     },
     #[error("invalid value for {name}: {value:?}")]
     InvalidEnv { name: &'static str, value: String },
+    #[error("invalid value in the {name} option: {value:?}")]
+    InvalidOption { name: &'static str, value: String },
+}
+
+/// An NFC reader with no Home Assistant user, such as an ESPHome one, and the
+/// person its scans log play for.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct TagReader {
+    /// Home Assistant device ID.
+    pub device: String,
+    /// Home Assistant user ID.
+    pub person: String,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
@@ -210,6 +222,7 @@ struct Options {
     external_services: Option<bool>,
     sensors: Option<SensorsMode>,
     tag_scan_finished: Option<FinishedScan>,
+    tag_readers: Option<Vec<TagReader>>,
     currency: Option<String>,
     date_format: Option<DateFormat>,
 }
@@ -231,12 +244,13 @@ pub struct Config {
     /// Home Assistant user IDs allowed to change the collection. While empty,
     /// nobody can.
     pub managers: Vec<String>,
-    /// Lets viewers change play status and last played.
+    /// Lets viewers keep their own play.
     pub viewers_track_progress: bool,
     /// False keeps the app from contacting IGDB or anything else online.
     pub external_services: bool,
     pub sensors: SensorsMode,
     pub tag_scan_finished: FinishedScan,
+    pub tag_readers: Vec<TagReader>,
     /// ISO 4217 code new prices start with, ahead of Home Assistant's.
     pub currency: Option<String>,
     pub date_format: DateFormat,
@@ -402,6 +416,35 @@ impl Config {
             })?,
         };
 
+        let tag_readers = match env("MEMORY_CARD_TAG_READERS") {
+            None => options.tag_readers.unwrap_or_default(),
+            Some(raw) => raw
+                .split(',')
+                .filter(|pair| !pair.trim().is_empty())
+                .map(|pair| {
+                    let (device, person) =
+                        pair.split_once('=')
+                            .ok_or_else(|| ConfigError::InvalidEnv {
+                                name: "MEMORY_CARD_TAG_READERS",
+                                value: raw.clone(),
+                            })?;
+                    Ok(TagReader {
+                        device: device.trim().to_owned(),
+                        person: person.trim().to_owned(),
+                    })
+                })
+                .collect::<Result<_, ConfigError>>()?,
+        };
+        if let Some(bad) = tag_readers.iter().find(|reader| {
+            !crate::access::valid_user_id(&reader.device)
+                || !crate::access::valid_user_id(&reader.person)
+        }) {
+            return Err(ConfigError::InvalidOption {
+                name: "tag_readers",
+                value: format!("{}={}", bad.device, bad.person),
+            });
+        }
+
         let date_format = match env("MEMORY_CARD_DATE_FORMAT") {
             None => options.date_format.unwrap_or_default(),
             Some(raw) => raw.parse().map_err(|()| ConfigError::InvalidEnv {
@@ -437,6 +480,7 @@ impl Config {
             external_services,
             sensors,
             tag_scan_finished,
+            tag_readers,
             mqtt,
             supervisor_url,
             barcode_url: env("MEMORY_CARD_BARCODE_URL").unwrap_or(DEFAULT_BARCODE_URL.into()),
@@ -642,6 +686,38 @@ mod tests {
         assert_eq!(config.managers, vec!["one", "two"]);
         assert!(config.viewers_track_progress);
         assert!(config.igdb.is_none(), "empty secret disables IGDB");
+    }
+
+    #[test]
+    fn tag_readers_name_a_device_and_a_person() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("options.json"),
+            r#"{"tag_readers":[{"device":"abc123","person":"ana"}]}"#,
+        )
+        .unwrap();
+        let reader = |device: &str, person: &str| TagReader {
+            device: device.into(),
+            person: person.into(),
+        };
+        let config = load_with(dir.path(), &[]).unwrap();
+        assert_eq!(config.tag_readers, [reader("abc123", "ana")]);
+
+        let config = load_with(
+            dir.path(),
+            &[("MEMORY_CARD_TAG_READERS", "one=ana, two=bo,")],
+        )
+        .unwrap();
+        assert_eq!(
+            config.tag_readers,
+            [reader("one", "ana"), reader("two", "bo")]
+        );
+        for bad in ["one", "one=", "o ne=ana"] {
+            assert!(
+                load_with(dir.path(), &[("MEMORY_CARD_TAG_READERS", bad)]).is_err(),
+                "{bad}"
+            );
+        }
     }
 
     #[test]

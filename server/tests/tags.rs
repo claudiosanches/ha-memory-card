@@ -83,7 +83,7 @@ async fn a_scanned_tag_starts_its_copy() {
     assert!(body["expires_at"].as_str().is_some());
 
     assert_eq!(
-        tags::scanned(&app.state, "04-a1-b2", Some(MANAGER)).await,
+        tags::scanned(&app.state, "04-a1-b2", Some(MANAGER), None).await,
         Scan::Linked { copy_id: copy }
     );
     let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
@@ -98,7 +98,7 @@ async fn a_scanned_tag_starts_its_copy() {
 
     for _ in 0..2 {
         assert_eq!(
-            tags::scanned(&app.state, "04-a1-b2", Some(MANAGER)).await,
+            tags::scanned(&app.state, "04-a1-b2", Some(MANAGER), None).await,
             Scan::Played { game_id: game }
         );
     }
@@ -113,7 +113,7 @@ async fn a_scanned_tag_starts_its_copy() {
     assert_eq!(detail["play_status"], "playing");
 
     assert_eq!(
-        tags::scanned(&app.state, "unknown", None).await,
+        tags::scanned(&app.state, "unknown", None, None).await,
         Scan::Unknown
     );
 
@@ -121,7 +121,7 @@ async fn a_scanned_tag_starts_its_copy() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(detail["releases"][0]["copies"][0]["tags"], json!([]));
     assert_eq!(
-        tags::scanned(&app.state, "04-a1-b2", None).await,
+        tags::scanned(&app.state, "04-a1-b2", None, None).await,
         Scan::Unknown
     );
 }
@@ -136,16 +136,22 @@ async fn links_expire_and_cancel_and_wishes_do_not_play() {
     app.json("POST", &path, None).await;
     let (status, _) = app.json("DELETE", &path, None).await;
     assert_eq!(status, StatusCode::NO_CONTENT);
-    assert_eq!(tags::scanned(&app.state, "t1", None).await, Scan::Unknown);
+    assert_eq!(
+        tags::scanned(&app.state, "t1", None, None).await,
+        Scan::Unknown
+    );
 
     app.json("POST", &path, None).await;
     app.state.tag_link.lock().unwrap().as_mut().unwrap().until =
         time::OffsetDateTime::now_utc() - time::Duration::seconds(1);
-    assert_eq!(tags::scanned(&app.state, "t1", None).await, Scan::Unknown);
+    assert_eq!(
+        tags::scanned(&app.state, "t1", None, None).await,
+        Scan::Unknown
+    );
 
     app.json("POST", &path, None).await;
-    tags::scanned(&app.state, "t1", None).await;
-    tags::scanned(&app.state, "t1", Some(MANAGER)).await;
+    tags::scanned(&app.state, "t1", None, None).await;
+    tags::scanned(&app.state, "t1", Some(MANAGER), None).await;
     let (_, detail): (_, Value) = app.json("GET", &format!("/api/games/{game}"), None).await;
     assert!(detail["sessions"].as_array().unwrap().is_empty());
     assert_eq!(detail["play_status"], "completed");
@@ -167,10 +173,10 @@ async fn a_finished_game_can_keep_its_status_on_a_scan() {
     let (game, copy) = copy_of(&app, "Celeste", "owned").await;
     app.json("POST", &format!("/api/copies/{copy}/tag-link"), None)
         .await;
-    tags::scanned(&app.state, "t2", None).await;
+    tags::scanned(&app.state, "t2", None, None).await;
 
     assert_eq!(
-        tags::scanned(&app.state, "t2", Some(MANAGER)).await,
+        tags::scanned(&app.state, "t2", Some(MANAGER), None).await,
         Scan::Played { game_id: game }
     );
     let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
@@ -183,7 +189,7 @@ async fn a_finished_game_can_keep_its_status_on_a_scan() {
         Some(json!({"play_status": "paused"})),
     )
     .await;
-    tags::scanned(&app.state, "t2", Some(MANAGER)).await;
+    tags::scanned(&app.state, "t2", Some(MANAGER), None).await;
     let (_, detail) = app.json("GET", &format!("/api/games/{game}"), None).await;
     assert_eq!(
         detail["play_status"], "playing",
@@ -201,28 +207,31 @@ async fn scans_respect_who_may_link_and_log_play() {
 
     // Another user's scan leaves the manager's link waiting.
     assert_eq!(
-        tags::scanned(&app.state, "t3", Some("viewer")).await,
+        tags::scanned(&app.state, "t3", Some("viewer"), None).await,
         Scan::Unknown
     );
     assert!(app.state.tag_link.lock().unwrap().is_some());
     assert_eq!(
-        tags::scanned(&app.state, "t3", None).await,
+        tags::scanned(&app.state, "t3", None, None).await,
         Scan::Linked { copy_id: copy }
     );
 
     // Viewers and readers with no user cannot log play by default.
     assert_eq!(
-        tags::scanned(&app.state, "t3", Some("viewer")).await,
+        tags::scanned(&app.state, "t3", Some("viewer"), None).await,
         Scan::Unknown
     );
-    assert_eq!(tags::scanned(&app.state, "t3", None).await, Scan::Unknown);
     assert_eq!(
-        tags::scanned(&app.state, "t3", Some("bad id!")).await,
+        tags::scanned(&app.state, "t3", None, None).await,
+        Scan::Unknown
+    );
+    assert_eq!(
+        tags::scanned(&app.state, "t3", Some("bad id!"), None).await,
         Scan::Unknown
     );
     let long = "t".repeat(129);
     assert_eq!(
-        tags::scanned(&app.state, &long, Some(MANAGER)).await,
+        tags::scanned(&app.state, &long, Some(MANAGER), None).await,
         Scan::Unknown
     );
     assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 0);
@@ -233,7 +242,7 @@ async fn scans_respect_who_may_link_and_log_play() {
     );
 
     assert_eq!(
-        tags::scanned(&app.state, "t3", Some(MANAGER)).await,
+        tags::scanned(&app.state, "t3", Some(MANAGER), None).await,
         Scan::Played { game_id: game }
     );
 }
@@ -248,7 +257,7 @@ async fn viewers_log_play_from_tags_only_when_allowed_and_managers_exist() {
         .await
         .unwrap();
     assert_eq!(
-        tags::scanned(&app.state, "t4", Some("viewer-1")).await,
+        tags::scanned(&app.state, "t4", Some("viewer-1"), None).await,
         Scan::Played { game_id: game }
     );
     assert_eq!(
@@ -257,7 +266,10 @@ async fn viewers_log_play_from_tags_only_when_allowed_and_managers_exist() {
         1
     );
     // A scan with no person has no play to log.
-    assert_eq!(tags::scanned(&app.state, "t4", None).await, Scan::Unknown);
+    assert_eq!(
+        tags::scanned(&app.state, "t4", None, None).await,
+        Scan::Unknown
+    );
     assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 1);
 
     let locked = app_with(&[
@@ -279,8 +291,51 @@ async fn viewers_log_play_from_tags_only_when_allowed_and_managers_exist() {
         .await
         .unwrap();
     assert_eq!(
-        tags::scanned(&locked.state, "t5", Some(MANAGER)).await,
+        tags::scanned(&locked.state, "t5", Some(MANAGER), None).await,
         Scan::Unknown
     );
     assert_eq!(locked.scalar("SELECT COUNT(*) FROM play_sessions").await, 0);
+}
+
+#[tokio::test]
+async fn readers_log_play_for_the_person_the_options_name() {
+    let app = app_with(&[
+        ("MEMORY_CARD_TAG_READERS", "reader-1=ana"),
+        ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true"),
+    ])
+    .await;
+    let (game, copy) = copy_of(&app, "Celeste", "owned").await;
+    sqlx::query("INSERT INTO nfc_tags (tag_id, copy_id) VALUES ('t6', ?)")
+        .bind(copy)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let sessions = |who: &'static str| {
+        let app = &app;
+        async move {
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM play_sessions WHERE user_id = ?")
+                .bind(who)
+                .fetch_one(&app.pool)
+                .await
+                .unwrap()
+        }
+    };
+
+    assert_eq!(
+        tags::scanned(&app.state, "t6", None, Some("reader-1")).await,
+        Scan::Played { game_id: game }
+    );
+    assert_eq!(sessions("ana").await, 1);
+    assert_eq!(
+        tags::scanned(&app.state, "t6", None, Some("reader-2")).await,
+        Scan::Unknown,
+        "a reader the options do not name"
+    );
+    // The user Home Assistant names comes before the reader's person.
+    assert_eq!(
+        tags::scanned(&app.state, "t6", Some(MANAGER), Some("reader-1")).await,
+        Scan::Played { game_id: game }
+    );
+    assert_eq!(sessions(MANAGER).await, 1);
+    assert_eq!(sessions("ana").await, 1);
 }
