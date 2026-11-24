@@ -1,0 +1,113 @@
+/* Victorian clockwork skin: aged parchment & oiled mahogany, burnished brass trims and verdigris accents. */
+[data-mc-theme='steampunk'] {
+  --steam-heading: #593310;
+  --steam-brass: #b5893b;
+  --steam-patina: #2b6e65;
+  --steam-btn-bg: linear-gradient(180deg, #a66724, #7c4714);
+  --steam-btn-bg-hover: linear-gradient(180deg, #945a1e, #6b3b0f);
+  --steam-btn-border: #59310b;
+  --steam-btn-shadow: inset 0 1px #f2cf8366, 0 2px 4px #3b220a26;
+  --steam-card-shadow: 0 2px 8px #3b220a14, inset 0 1px #fff9ea;
+}
+
+[data-mc-theme='steampunk'][data-mantine-color-scheme='dark'] {
+  --steam-heading: #f0cf89;
+  --steam-brass: #c49038;
+  --steam-patina: #4db8a7;
+  --steam-btn-bg: linear-gradient(180deg, #e0b35e, #bf8c34);
+  --steam-btn-bg-hover: linear-gradient(180deg, #ebc170, #cc983e);
+  --steam-btn-border: #8a601b;
+  --steam-btn-shadow: inset 0 1px #fff0c277, 0 2px 8px #0a060266;
+  --steam-card-shadow: 0 3px 12px #0a060255, inset 0 1px #f0cf8918;
+}
+
+[data-mc-theme='steampunk'] {
+  .mantine-AppShell-main {
+    background-size: 40px 40px, 40px 40px, 40px 40px;
+  }
+
+  .mantine-Title-root,
+  .mantine-AppShell-header .mantine-Text-root {
+    font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', 'Liberation Serif', serif;
+  }
+
+  .mantine-Title-root[data-order='1'] {
+    color: var(--steam-heading);
+  }
+
+  .mantine-Card-root {
+    background-color: var(--mc-surface);
+    box-shadow: var(--steam-card-shadow);
+  }
+
+  .mantine-NavLink-root[data-active] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--steam-brass) 55%, transparent);
+  }
+
+  .mantine-NavLink-root[data-active] .mantine-NavLink-section {
+    color: var(--steam-patina);
+  }
+
+  .mantine-Button-root:where(:not([data-variant]), [data-variant='filled']):where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])) {
+    background-image: var(--steam-btn-bg);
+    border: 1px solid var(--steam-btn-border);
+    box-shadow: var(--steam-btn-shadow);
+  }
+
+  .mantine-Button-root:where(:not([data-variant]), [data-variant='filled']):where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])):hover {
+    background-image: var(--steam-btn-bg-hover);
+  }
+
+  .mantine-Input-input:focus-within {
+    border-color: var(--steam-brass);
+  }
+
+  .mantine-Tabs-list {
+    gap: 4px;
+    border-bottom: 1px solid var(--mc-border);
+  }
+
+  .mantine-Tabs-list::before {
+    display: none;
+  }
+
+  .mantine-Tabs-tab {
+    background: color-mix(in srgb, var(--mc-surface) 74%, var(--mc-background));
+    border: 1px solid var(--mc-border);
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: -1px;
+    color: var(--mc-muted);
+    font-weight: 600;
+  }
+
+  .mantine-Tabs-tab:hover {
+    background: var(--mc-surface);
+    color: var(--mantine-color-text);
+  }
+
+  .mantine-Tabs-tab[data-active] {
+    background: var(--mc-surface);
+    color: var(--steam-heading);
+    border-color: var(--steam-brass);
+    border-bottom: 1px solid var(--mc-surface);
+    box-shadow: inset 0 2px var(--steam-brass);
+    font-weight: 700;
+  }
+
+  .mc-filter {
+    background: var(--mc-surface);
+    border-color: var(--mc-border);
+  }
+
+  .mc-filter:hover {
+    background: var(--mantine-color-default-hover);
+    color: var(--mantine-color-text);
+  }
+
+  .mc-filter[aria-pressed='true'] {
+    background: var(--mantine-primary-color-light);
+    color: var(--mantine-primary-color-light-color);
+    border-color: var(--steam-brass);
+  }
+}

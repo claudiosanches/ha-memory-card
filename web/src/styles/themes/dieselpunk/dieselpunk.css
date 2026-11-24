@@ -1,0 +1,120 @@
+/* Industrial Art Deco skin: embossed diamond tread plate, gunmetal steel, machined corners and cockpit amber. */
+[data-mc-theme='dieselpunk'] {
+  --mantine-radius-sm: 2px;
+  --mantine-radius-md: 2px;
+  --mantine-radius-lg: 3px;
+  --diesel-accent: #b85312;
+  --diesel-heading: #222824;
+  --diesel-outline: #8c968e;
+  --diesel-btn-border: #753107;
+  --diesel-card-shadow: 0 2px 6px #1c211d18;
+}
+
+[data-mc-theme='dieselpunk'][data-mantine-color-scheme='dark'] {
+  --diesel-accent: #e89420;
+  --diesel-heading: #f2be63;
+  --diesel-outline: #4f5c54;
+  --diesel-btn-border: #8a5108;
+  --diesel-card-shadow: 0 3px 12px #07090866;
+}
+
+[data-mc-theme='dieselpunk'] {
+  .mantine-Title-root[data-order='1'] {
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--diesel-heading);
+    border-bottom: 2px solid var(--diesel-accent);
+    padding-bottom: 2px;
+  }
+
+  .mantine-Card-root,
+  .mantine-Paper-root,
+  .mantine-Modal-content,
+  .mantine-Menu-dropdown,
+  .mantine-Button-root,
+  .mantine-ActionIcon-root,
+  .mantine-Input-input,
+  .mantine-NavLink-root,
+  .mantine-SegmentedControl-root,
+  .mantine-SegmentedControl-indicator,
+  .mc-filter {
+    border-radius: 2px;
+  }
+
+  .mantine-Card-root {
+    background-color: var(--mc-surface);
+    box-shadow: var(--diesel-card-shadow);
+  }
+
+  .mantine-Input-input:focus-within {
+    border-color: var(--diesel-accent);
+  }
+
+  .mantine-NavLink-root[data-active] {
+    box-shadow: inset 3px 0 var(--diesel-accent), inset 0 0 0 1px var(--diesel-outline);
+  }
+
+  .mantine-NavLink-root[data-active] .mantine-NavLink-section {
+    color: var(--diesel-accent);
+  }
+
+  .mantine-Button-root:where(:not([data-variant]), [data-variant='filled']):where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])) {
+    border: 1px solid var(--diesel-btn-border);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8125rem;
+  }
+
+  .mantine-Tabs-list {
+    gap: 3px;
+    border-bottom: 2px solid var(--mc-border);
+  }
+
+  .mantine-Tabs-list::before {
+    display: none;
+  }
+
+  .mantine-Tabs-tab {
+    background: color-mix(in srgb, var(--mc-surface) 78%, var(--mc-background));
+    border: 1px solid var(--mc-border);
+    border-bottom: 0;
+    border-radius: 2px 2px 0 0;
+    margin-bottom: -2px;
+    color: var(--mc-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8125rem;
+  }
+
+  .mantine-Tabs-tab:hover {
+    background: var(--mc-surface);
+    color: var(--mantine-color-text);
+  }
+
+  .mantine-Tabs-tab[data-active] {
+    background: var(--mc-surface);
+    color: var(--diesel-heading);
+    border-color: var(--diesel-accent);
+    border-bottom: 2px solid var(--mc-surface);
+    box-shadow: inset 0 2px var(--diesel-accent);
+    font-weight: 700;
+  }
+
+  .mc-filter {
+    background: var(--mc-surface);
+    border-color: var(--mc-border);
+  }
+
+  .mc-filter:hover {
+    background: var(--mantine-color-default-hover);
+    color: var(--mantine-color-text);
+  }
+
+  .mc-filter[aria-pressed='true'] {
+    background: var(--mantine-primary-color-light);
+    color: var(--mantine-primary-color-light-color);
+    border-color: var(--diesel-accent);
+  }
+}

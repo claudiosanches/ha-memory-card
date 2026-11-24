@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="lugD" x1="0" y1="-3" x2="0" y2="3" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c8780" stop-opacity="0.34"/>
+      <stop offset="0.5" stop-color="#2c3430" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#070908" stop-opacity="0.65"/>
+    </linearGradient>
+    <g id="lug">
+      <path d="M-8.5 0.9Q0 -2.3 8.5 0.9Q0 4.2 -8.5 0.9Z" fill="#040605" fill-opacity="0.55"/>
+      <path d="M-8.5 0Q0 -3.2 8.5 0Q0 3.2 -8.5 0Z" fill="url(#lugD)"/>
+      <path d="M-6.4 -0.4Q0 -2.3 6.4 -0.4" stroke="#a6b3aa" stroke-opacity="0.22" stroke-width="0.75" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <use href="#lug" transform="translate(12 12) rotate(45)"/>
+  <use href="#lug" transform="translate(36 12) rotate(-45)"/>
+  <use href="#lug" transform="translate(12 36) rotate(-45)"/>
+  <use href="#lug" transform="translate(36 36) rotate(45)"/>
+</svg>

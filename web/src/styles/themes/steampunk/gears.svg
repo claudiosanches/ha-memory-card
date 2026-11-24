@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="brass" x1="6" y1="6" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f2cf78"/>
+      <stop offset="0.5" stop-color="#c49038"/>
+      <stop offset="1" stop-color="#7c5016"/>
+    </linearGradient>
+    <linearGradient id="copper" x1="27" y1="27" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e39d63"/>
+      <stop offset="0.55" stop-color="#b86b35"/>
+      <stop offset="1" stop-color="#753d18"/>
+    </linearGradient>
+  </defs>
+  <!-- Large brass main gear -->
+  <path d="M18.5 5.5h4l.8 3.6a10 10 0 0 1 2.7 1.1l3.1-2 2.8 2.8-2 3.1c.5.8.8 1.7 1.1 2.7l3.5.8v4l-3.5.8a10 10 0 0 1-1.1 2.7l2 3.1-2.8 2.8-3.1-2a10 10 0 0 1-2.7 1.1l-.8 3.5h-4l-.8-3.5a10 10 0 0 1-2.7-1.1l-3.1 2-2.8-2.8 2-3.1a10 10 0 0 1-1.1-2.7l-3.5-.8v-4l3.5-.8a10 10 0 0 1 1.1-2.7l-2-3.1 2.8-2.8 3.1 2a10 10 0 0 1 2.7-1.1l.8-3.6z" fill="url(#brass)" stroke="#4a2d0d" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="20.5" cy="19.6" r="6.8" stroke="#f7df9d" stroke-opacity="0.55" stroke-width="0.9"/>
+  <circle cx="20.5" cy="19.6" r="4.6" fill="#231912" stroke="#f2cf78" stroke-width="1.4"/>
+  <circle cx="20.5" cy="19.6" r="2.1" fill="#3aa392"/>
+  <!-- Small interlocking copper pinion -->
+  <path d="M34.3 26.8h2.4l.5 2.1c.5.2 1 .4 1.5.7l1.8-1.1 1.7 1.7-1.1 1.8c.3.5.5 1 .7 1.5l2.1.5v2.4l-2.1.5c-.2.5-.4 1-.7 1.5l1.1 1.8-1.7 1.7-1.8-1.1c-.5.3-1 .5-1.5.7l-.5 2.1h-2.4l-.5-2.1c-.5-.2-1-.4-1.5-.7l-1.8 1.1-1.7-1.7 1.1-1.8c-.3-.5-.5-1-.7-1.5l-2.1-.5V34l2.1-.5c.2-.5.4-1 .7-1.5l-1.1-1.8 1.7-1.7 1.8 1.1c.5-.3 1-.5 1.5-.7l.5-2.1z" fill="url(#copper)" stroke="#4a2d0d" stroke-width="1.3" stroke-linejoin="round"/>
+  <circle cx="35.5" cy="35.2" r="2.8" fill="#231912" stroke="#e6aa68" stroke-width="1.2"/>
+</svg>
