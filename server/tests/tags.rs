@@ -340,4 +340,18 @@ async fn readers_log_play_for_the_person_the_options_name() {
     );
     assert_eq!(sessions(MANAGER).await, 1);
     assert_eq!(sessions("ana").await, 1);
+
+    // Ana's reader is hers, so it leaves a manager's link waiting.
+    *app.state.tag_status.lock().unwrap() = TagsStatus::Connected;
+    app.json("POST", &format!("/api/copies/{copy}/tag-link"), None)
+        .await;
+    assert_eq!(
+        tags::scanned(&app.state, "t7", None, Some("reader-1")).await,
+        Scan::Unknown
+    );
+    assert!(app.state.tag_link.lock().unwrap().is_some());
+    assert_eq!(
+        tags::scanned(&app.state, "t7", None, Some("reader-2")).await,
+        Scan::Linked { copy_id: copy }
+    );
 }

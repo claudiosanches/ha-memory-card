@@ -216,7 +216,7 @@ pub async fn scanned(
             .find(|tag_reader| Some(tag_reader.device.as_str()) == reader)
             .map(|tag_reader| tag_reader.person.as_str())
     });
-    let pending = take_link(state, user);
+    let pending = take_link(state, person);
     let result = match pending {
         Some(link) => db::tags::link(&state.db, tag_id, link.copy_id, &link.by)
             .await
@@ -268,16 +268,17 @@ pub async fn scanned(
     }
 }
 
-/// The link waiting for this scan, if any. A scan by another named user
-/// leaves it waiting; a reader with no user may complete it.
-fn take_link(state: &AppState, user: Option<&str>) -> Option<PendingLink> {
+/// The link waiting for this scan, if any. A scan by another person, as the
+/// event's user or the reader's in `tag_readers`, leaves it waiting; a scan
+/// with no person may complete it.
+fn take_link(state: &AppState, person: Option<&str>) -> Option<PendingLink> {
     let mut waiting = state.tag_link.lock().expect("tag link lock");
     let link = waiting.as_ref()?;
     if link.until <= OffsetDateTime::now_utc() {
         *waiting = None;
         return None;
     }
-    if user.is_some_and(|id| id != link.by) {
+    if person.is_some_and(|id| id != link.by) {
         return None;
     }
     waiting.take()

@@ -404,8 +404,8 @@ page's address. When a reader no option names scans a linked tag, the app's
 **Log** tab shows its device ID. `person` is a user ID from **Settings** in
 Memory Card, as for `managers`.
 
-A link waits for a scan by the manager who started it or by a reader with no
-user. Pages open in Memory Card show a scan within a second, like any change
+A link waits for a scan by the manager who started it, or by a reader with no
+user that `tag_readers` does not give to someone else. Pages open in Memory Card show a scan within a second, like any change
 someone else makes. Scanning the same tag again on the same day does not add
 another session for that person. A game whose status counts as finished goes
 back to playing too, unless the `tag_scan_finished` option is set to `keep`.
