@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="52" height="36" viewBox="0 0 26 18" shape-rendering="crispEdges">
+  <!-- Cord stub (visible on both light cream and dark charcoal sidebars) -->
+  <rect x="12" y="2" width="1" height="2" fill="#7a6950"/>
+  <rect x="13" y="1" width="1" height="1" fill="#968264"/>
+  <rect x="14" y="0" width="2" height="1" fill="#968264"/>
+
+  <!-- Outer dark pixel outline -->
+  <rect x="2" y="4" width="22" height="1" fill="#352b24"/>
+  <rect x="2" y="16" width="22" height="1" fill="#352b24"/>
+  <rect x="1" y="5" width="1" height="11" fill="#352b24"/>
+  <rect x="24" y="5" width="1" height="11" fill="#352b24"/>
+
+  <!-- Warm cream console shell with pixel bevel -->
+  <rect x="2" y="5" width="22" height="11" fill="#efe2c8"/>
+  <rect x="2" y="5" width="21" height="1" fill="#fff8ea"/>
+  <rect x="2" y="5" width="1" height="10" fill="#fff8ea"/>
+  <rect x="2" y="15" width="22" height="1" fill="#c7b79a"/>
+  <rect x="23" y="6" width="1" height="10" fill="#c7b79a"/>
+
+  <!-- Dark recessed faceplate -->
+  <rect x="3" y="6" width="20" height="9" fill="#4d4031"/>
+  <rect x="3" y="6" width="20" height="1" fill="#352b24"/>
+
+  <!-- Crisp + D-pad (6x6 with 2px arms) -->
+  <rect x="6" y="8" width="2" height="6" fill="#1e1813"/>
+  <rect x="4" y="10" width="6" height="2" fill="#1e1813"/>
+  <rect x="6" y="8" width="1" height="1" fill="#665742"/>
+  <rect x="4" y="10" width="1" height="1" fill="#665742"/>
+  <rect x="6" y="10" width="2" height="2" fill="#352b24"/>
+
+  <!-- Center panel: Retro 3-color header stripes -->
+  <rect x="11" y="7" width="5" height="1" fill="#a94c2b"/>
+  <rect x="11" y="8" width="5" height="1" fill="#dd9050"/>
+  <rect x="11" y="9" width="5" height="1" fill="#d3b269"/>
+
+  <!-- Center Select & Start bay -->
+  <rect x="11" y="11" width="5" height="3" fill="#efe2c8"/>
+  <rect x="11" y="13" width="5" height="1" fill="#c7b79a"/>
+  <rect x="11" y="12" width="2" height="1" fill="#352b24"/>
+  <rect x="14" y="12" width="2" height="1" fill="#352b24"/>
+
+  <!-- B & A buttons (staggered, terracotta with burnt-orange pixel shine) -->
+  <rect x="17" y="13" width="2" height="1" fill="#231c17"/>
+  <rect x="17" y="11" width="2" height="2" fill="#a94c2b"/>
+  <rect x="17" y="11" width="1" height="1" fill="#dd9050"/>
+
+  <rect x="20" y="11" width="2" height="1" fill="#231c17"/>
+  <rect x="20" y="9" width="2" height="2" fill="#a94c2b"/>
+  <rect x="20" y="9" width="1" height="1" fill="#dd9050"/>
+</svg>

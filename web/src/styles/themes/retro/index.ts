@@ -1,5 +1,6 @@
 import { virtualColor, type MantineThemeOverride } from '@mantine/core';
 import { chartColors, variables as base } from '../default/variables';
+import gamepad from './gamepad.svg';
 
 export const retro = {
   id: 'retro' as const,
@@ -18,6 +19,7 @@ export const retro = {
   variables: {
     variables: {
       ...base.variables,
+      '--mc-nav-image': `url("${gamepad}")`,
       '--mc-background-image': 'repeating-linear-gradient(0deg, transparent 0 3px, #90755012 3px 4px)',
       '--mc-header-image': 'linear-gradient(to top, #a94c2b 0 2px, #dd9050 2px 4px, #d3b269 4px 6px, transparent 6px)',
     },
