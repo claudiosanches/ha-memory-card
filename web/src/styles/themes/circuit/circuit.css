@@ -3,7 +3,7 @@
   --circuit-accent: #0f7540;
   --circuit-icon: #b45309;
   --circuit-outline: #0f754077;
-  --circuit-btn-border: #084a28;
+  --circuit-btn-border: 1px solid #094f2a;
   --circuit-glow: transparent;
   --circuit-card-shadow: none;
   --circuit-btn-glow: none;
@@ -13,7 +13,7 @@
   --circuit-accent: #00e676;
   --circuit-icon: #ffb300;
   --circuit-outline: #00e67688;
-  --circuit-btn-border: #7dffb6;
+  --circuit-btn-border: 2px solid #04612e;
   --circuit-glow: #00e6762e;
   --circuit-card-shadow: 0 0 14px #00e67620, inset 0 0 14px #00e6760d;
   --circuit-btn-glow: 0 0 14px #00e6764d;
@@ -68,9 +68,9 @@
     color: var(--circuit-icon);
   }
 
-  .mantine-Button-root[data-variant='filled']:where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])) {
+  .mantine-Button-root:where(:not([data-variant]), [data-variant='filled']):where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])) {
     font-weight: 700;
-    border: 1px solid var(--circuit-btn-border);
+    border: var(--circuit-btn-border);
     box-shadow: var(--circuit-btn-glow);
   }
 

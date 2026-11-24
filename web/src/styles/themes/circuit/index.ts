@@ -15,7 +15,7 @@ export const circuit = {
     autoContrast: true,
     colors: {
       brand: virtualColor({ name: 'brand', light: 'circuitLight', dark: 'circuitDark' }),
-      circuitLight: ['#e8f8ef', '#cef0dc', '#9ee2bb', '#6bd199', '#3ec07b', '#22ab64', '#169653', '#128448', '#0f7540', '#0b5e33'],
+      circuitLight: ['#e8f8ef', '#cef0dc', '#9ee2bb', '#6bd199', '#3ec07b', '#22ab64', '#169653', '#158f4f', '#128448', '#0e6e3b'],
       circuitDark: ['#d6ffe5', '#a6ffc8', '#75ffab', '#4dff94', '#2ef57f', '#17e36c', '#09c95a', '#0c6b36', '#00d964', '#1ce878'],
       gray: ['#e4f2ea', '#d3e8dc', '#bddcc9', '#9ec9b0', '#7ca88f', '#5a856d', '#426b54', '#2c5e43', '#193b28', '#092416'],
       dark: ['#d6ffe5', '#b0e6c4', '#7ac797', '#4e966a', '#246b42', '#174d2e', '#0a1c11', '#07140c', '#040a06', '#020503'],
