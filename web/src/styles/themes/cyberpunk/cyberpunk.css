@@ -1,66 +1,127 @@
-/* Neon HUD skin: sharp tech edges, cyan/magenta laser accents and night-city glow. */
+/* Neon sci-fi skin: ultraviolet horizons, magenta-violet glows and electric cyan highlights. */
 [data-mc-theme='cyberpunk'] {
-  --cyber-cyan: #006e85;
-  --cyber-magenta: #b81362;
-  --cyber-card-sheen: #0099b822;
-  --cyber-glow: transparent;
-  --cyber-btn-glow: 0 2px 10px #b8136226;
+  --cyber-cyan: #007799;
+  --cyber-magenta: #c91878;
+  --cyber-card-border: #cfaef2;
+  --cyber-card-shadow: 0 4px 18px #7b2cbf26, 0 0 12px #ff2a9d1c, inset 0 1px #00c6ff55;
+  --cyber-btn-bg: linear-gradient(135deg, #c91878, #7b2cbf);
+  --cyber-btn-bg-hover: linear-gradient(135deg, #b31269, #6922a6);
+  --cyber-btn-glow: 0 0 16px #c9187855, 0 3px 12px #7b2cbf44;
+  --cyber-title-gradient: linear-gradient(90deg, #c91474, #7b2cbf, #0077a8);
+  --cyber-title-glow: drop-shadow(0 0 10px #c918782e);
 }
 
 [data-mc-theme='cyberpunk'][data-mantine-color-scheme='dark'] {
-  --cyber-cyan: #00e5ff;
-  --cyber-magenta: #ff2a85;
-  --cyber-card-sheen: #00e5ff30;
-  --cyber-glow: #00e5ff22;
-  --cyber-btn-glow: 0 0 14px #ff2a8552;
+  --cyber-cyan: #00f5ff;
+  --cyber-magenta: #ff2a9d;
+  --cyber-card-border: #6b2fb3;
+  --cyber-card-shadow: 0 0 18px #ff2a9d22, inset 0 1px #00f5ff44;
+  --cyber-btn-bg: linear-gradient(135deg, #e01b86, #8426db);
+  --cyber-btn-bg-hover: linear-gradient(135deg, #f02995, #9436eb);
+  --cyber-btn-glow: 0 0 16px #ff2a9d5c;
+  --cyber-title-gradient: linear-gradient(90deg, #ff6bd6, #ffb84d, #00f5ff);
+  --cyber-title-glow: drop-shadow(0 0 12px #ff2a9d40);
 }
 
 [data-mc-theme='cyberpunk'] {
+  .mantine-AppShell-main {
+    background-size: 100% 100%, 40px 40px, 40px 40px;
+  }
+
   .mantine-AppShell-header {
-    border-bottom-color: var(--cyber-cyan);
-    box-shadow: 0 2px 14px var(--cyber-glow);
+    --mc-selected: #ffffff29;
+    --mantine-primary-color-light-color: #ffffff;
+    color: #ffffff;
+    border-bottom-color: #7b2cbf;
+    box-shadow: 0 2px 20px #7b2cbf48, 0 1px 10px #ff2a9d35;
+  }
+
+  .mantine-AppShell-header .mantine-Burger-burger {
+    --burger-color: #ffffff;
+  }
+
+  .mantine-Title-root[data-order='1'] {
+    width: fit-content;
+    background: var(--cyber-title-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: var(--cyber-title-glow);
+  }
+
+  .mantine-Title-root:not([data-order='1']) {
+    color: #5a189a;
   }
 
   .mantine-Card-root {
-    border-radius: 6px;
-    box-shadow: inset 0 1px var(--cyber-card-sheen), 0 4px 16px var(--cyber-glow);
-  }
-
-  .mantine-NavLink-root {
-    border-radius: 4px;
+    border-color: var(--cyber-card-border);
+    box-shadow: var(--cyber-card-shadow);
   }
 
   .mantine-NavLink-root[data-active] {
-    box-shadow: inset 3px 0 var(--cyber-cyan), 0 0 12px var(--cyber-glow);
+    background: linear-gradient(90deg, #fce0f2, #e5f5ff);
+    box-shadow: inset 3px 0 var(--cyber-magenta), 0 0 12px #c918782e;
   }
 
   .mantine-NavLink-root[data-active] .mantine-NavLink-section {
-    color: var(--cyber-cyan);
+    color: var(--cyber-magenta);
   }
 
-  .mantine-Button-root[data-variant='filled']:not(:disabled, [data-disabled]),
+  .mantine-Button-root[data-variant='filled']:where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])) {
+    background-image: var(--cyber-btn-bg);
+    box-shadow: var(--cyber-btn-glow);
+  }
+
+  .mantine-Button-root[data-variant='filled']:where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])):hover {
+    background-image: var(--cyber-btn-bg-hover);
+  }
+
   .mantine-Chip-label[data-checked]:not([data-disabled]) {
+    background-image: var(--cyber-btn-bg);
     box-shadow: var(--cyber-btn-glow);
   }
 
   .mantine-Input-input:focus-within {
     border-color: var(--cyber-cyan);
-    box-shadow: 0 0 0 1px var(--cyber-cyan), 0 0 10px var(--cyber-glow);
+    box-shadow: 0 0 0 1px var(--cyber-cyan), 0 0 10px #00c6ff38;
   }
 
   .mantine-Tabs-tab[data-active] {
-    border-color: var(--cyber-cyan);
-    color: var(--cyber-cyan);
+    border-color: var(--cyber-magenta);
+    color: var(--cyber-magenta);
   }
 }
 
 [data-mc-theme='cyberpunk'][data-mantine-color-scheme='dark'] {
-  .mantine-Title-root {
-    color: #f4f7ff;
-    text-shadow: 0 0 18px #00e5ff28;
+  .mantine-AppShell-header {
+    border-bottom-color: #ff2a9d;
+    box-shadow: 0 2px 20px #ff2a9d44;
+  }
+
+  .mantine-Title-root:not([data-order='1']) {
+    color: #f8f0ff;
+  }
+
+  .mantine-NavLink-root[data-active] {
+    background: linear-gradient(90deg, #4b1575, #1b3161);
+    color: #ffffff;
+    box-shadow: inset 3px 0 #ff2a9d, 0 0 14px #ff2a9d40;
+  }
+
+  .mantine-NavLink-root[data-active] .mantine-NavLink-section {
+    color: #00f5ff;
+  }
+
+  .mantine-Input-input:focus-within {
+    box-shadow: 0 0 0 1px #00f5ff, 0 0 12px #00f5ff33;
+  }
+
+  .mantine-Tabs-tab[data-active] {
+    border-color: #00f5ff;
+    color: #00f5ff;
   }
 
   .mantine-SegmentedControl-indicator {
-    box-shadow: inset 0 0 0 1px #ff2a8555;
+    box-shadow: inset 0 0 0 1px #ff2a9d66;
   }
 }
