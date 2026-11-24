@@ -1,6 +1,11 @@
 //! SQL built at runtime, for filters and the table and column names the code
 //! picks. Text is `&'static str`, so only the code writes it, and every value
 //! is bound. Fixed queries use the `sqlx::query!` macros instead.
+//!
+//! `clippy.toml` and `tests/sql_in_db.rs` keep `QueryBuilder` and `AssertSqlSafe`
+//! to this module.
+
+#![allow(clippy::disallowed_types)]
 
 use sqlx::query::{Query, QueryAs, QueryScalar};
 use sqlx::sqlite::{SqliteArguments, SqliteRow};

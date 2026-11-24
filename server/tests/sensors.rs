@@ -1,4 +1,6 @@
 //! What the Home Assistant sensors report, when they refresh and how the broker is found.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 

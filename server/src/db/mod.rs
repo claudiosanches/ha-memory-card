@@ -1,4 +1,6 @@
-//! All of the server's SQL.
+//! All of the server's SQL. `clippy.toml` keeps queries out of other modules.
+
+#![allow(clippy::disallowed_methods)]
 
 pub mod devices;
 pub mod duplicates;

@@ -1,4 +1,6 @@
 //! Photos of copies.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 

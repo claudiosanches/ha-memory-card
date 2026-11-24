@@ -93,6 +93,16 @@ or a network you trust. TLS support is planned. Inside Home Assistant this does 
 apply: the Mosquitto app is reached over Home Assistant's internal network,
 and it offers no TLS there.
 
+### Queries
+
+All SQL lives in `server/src/db`. Write queries with the `sqlx::query!`
+macros, which check them against the schema when the server builds. Filters
+and table or column names picked at runtime go through `db::sql::Sql`, which
+takes only `&'static str` text and binds every value. `server/clippy.toml` and
+`server/tests/sql_in_db.rs` fail the checks on a query outside `db`, and on
+`QueryBuilder` or `AssertSqlSafe` outside `db/sql.rs`. Run `make sqlx` after
+adding or changing a query.
+
 ### Local Home Assistant
 
 `make ha-up` runs [Home Assistant OS](https://github.com/home-assistant/operating-system)

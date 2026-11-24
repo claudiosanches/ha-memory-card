@@ -1,4 +1,6 @@
 //! Duplicate groups and their labels.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 

@@ -1,4 +1,6 @@
 //! Games, releases, copies and the library filters.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
 mod common;
 

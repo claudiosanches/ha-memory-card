@@ -1,4 +1,6 @@
 //! IGDB linking and sync against a local stand-in for Twitch and IGDB.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 

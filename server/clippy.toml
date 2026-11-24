@@ -1,0 +1,26 @@
+# SQL lives in src/db, which allows these methods. SQL built at runtime goes
+# through src/db/sql.rs, the only module that allows the builder types.
+# tests/sql_in_db.rs checks what clippy cannot: the query macros and
+# `AssertSqlSafe(...)` calls.
+
+disallowed-methods = [
+    { path = "sqlx::query", reason = "SQL lives in src/db" },
+    { path = "sqlx::query_as", reason = "SQL lives in src/db" },
+    { path = "sqlx::query_scalar", reason = "SQL lives in src/db" },
+    { path = "sqlx::query_with", reason = "SQL lives in src/db" },
+    { path = "sqlx::query_as_with", reason = "SQL lives in src/db" },
+    { path = "sqlx::query_scalar_with", reason = "SQL lives in src/db" },
+    { path = "sqlx::raw_sql", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::execute", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::execute_many", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::fetch", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::fetch_many", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::fetch_all", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::fetch_one", reason = "SQL lives in src/db" },
+    { path = "sqlx::Executor::fetch_optional", reason = "SQL lives in src/db" },
+]
+
+disallowed-types = [
+    { path = "sqlx::QueryBuilder", reason = "use db::sql::Sql, which takes only &'static str text" },
+    { path = "sqlx::AssertSqlSafe", reason = "use db::sql::Sql, which takes only &'static str text" },
+]

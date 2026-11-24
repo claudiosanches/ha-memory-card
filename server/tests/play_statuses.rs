@@ -1,4 +1,6 @@
 //! Built-in and custom play statuses.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 

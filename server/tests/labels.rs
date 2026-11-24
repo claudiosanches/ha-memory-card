@@ -1,4 +1,6 @@
 //! Labels people make up, put on games and filter the library by.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 

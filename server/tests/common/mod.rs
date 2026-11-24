@@ -1,4 +1,5 @@
-#![allow(dead_code)]
+// Tests set up and read rows with SQL.
+#![allow(dead_code, clippy::disallowed_methods)]
 
 use std::net::SocketAddr;
 use std::sync::Arc;

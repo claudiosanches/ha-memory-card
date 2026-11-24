@@ -1,4 +1,6 @@
 //! Home Assistant tags: linking a copy and starting it with a scan.
+// Tests set up and read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 
