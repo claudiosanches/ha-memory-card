@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.id AS \"id!\", g.title, s.suggested_at\n           FROM suggestions s JOIN games g ON g.id = s.game_id\n           ORDER BY s.suggested_at DESC, s.id DESC LIMIT 1",
+  "query": "SELECT g.id AS \"id!\", g.title, s.suggested_at,\n                  COALESCE(u.display_name, u.name) AS person\n           FROM suggestions s JOIN games g ON g.id = s.game_id\n           LEFT JOIN users u ON u.id = s.user_id\n           ORDER BY s.suggested_at DESC, s.id DESC LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -35,6 +35,12 @@
             "name": "suggested_at"
           }
         }
+      },
+      {
+        "name": "person",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -43,8 +49,9 @@
     "nullable": [
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "1924ae69f9a9ef04304baa4d3e3f7acb870757e885122d1243e9fababd1f6a77"
+  "hash": "80092a61d009fe35dc62b79b4fbd4e6b71ab0fed2d0c412467d5bce05b242601"
 }

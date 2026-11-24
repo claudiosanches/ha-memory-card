@@ -33,7 +33,7 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
     let app = TestApp::new().await;
     let empty = sensors::snapshot(&app.pool).await.unwrap();
     assert_eq!((empty.games, empty.copies, empty.playing_count), (0, 0, 0));
-    assert!(empty.last_played.is_none() && empty.last_added.is_none());
+    assert!(empty.people.is_empty() && empty.last_added.is_none());
 
     let (status, result) = app.post_csv("/api/import", COLLECTION).await;
     assert_eq!(status, StatusCode::OK, "{result}");
@@ -67,11 +67,16 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
     assert_eq!(snapshot.games, 4, "the wishlist-only game is left out");
     assert_eq!(snapshot.copies, 6);
     assert_eq!(snapshot.wishlist, 1);
-    assert_eq!(snapshot.backlog, 1, "Tetris; Silksong is only wanted");
     assert_eq!(snapshot.playing_count, 2);
     assert_eq!(snapshot.playing, vec!["Celeste", "Hades"]);
 
-    let last_played = snapshot.last_played.unwrap();
+    // The importer's play is their own.
+    assert_eq!(snapshot.people.len(), 1);
+    let mine = &snapshot.people[0];
+    assert_eq!(mine.id, common::MANAGER);
+    assert_eq!(mine.backlog, 1, "Tetris; Silksong is only wanted");
+    assert_eq!((mine.playing_count, mine.playing.len()), (2, 2));
+    let last_played = mine.last_played.clone().unwrap();
     assert_eq!(last_played.title, "Celeste");
     assert_eq!(last_played.date, "2026-11-20");
     assert_eq!(last_played.platform.as_deref(), Some("Nintendo Switch"));

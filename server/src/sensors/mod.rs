@@ -7,6 +7,7 @@ pub mod entities;
 pub mod integration;
 pub mod supervisor;
 
+use std::collections::BTreeSet;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -113,7 +114,7 @@ impl Sensors {
 
 enum Signal {
     Connected,
-    /// Someone pressed Roll a pick, or an automation sent filters.
+    /// An automation asked for a pick for a person, maybe with filters.
     Roll(Vec<u8>),
     /// The broker still holds a device an earlier run published.
     Published,
@@ -251,9 +252,9 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     let (client, eventloop) = AsyncClient::new(options(&broker.mqtt, true), 32);
     let (signals, mut events) = mpsc::channel(8);
     let poller = tokio::spawn(poll(eventloop, signals));
-    let config = discovery::device_config(broker.ingress_slug.as_deref()).to_string();
+    let slug = broker.ingress_slug.as_deref();
     let mut connected = false;
-    let mut sent: Option<String> = None;
+    let mut sent = Published::default();
     let mut last_roll: Option<Instant> = None;
 
     loop {
@@ -273,9 +274,9 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     let _ = client.try_subscribe(PICK_TOPIC, QoS::AtLeastOnce);
                     // Kept by the broker, so Home Assistant reads them again
                     // when it restarts.
-                    send(&client, DISCOVERY_TOPIC, config.clone());
+                    sent = Published::default();
+                    send_state(&client, state, slug, &mut sent).await;
                     send(&client, AVAILABILITY_TOPIC, "online");
-                    sent = send_state(&client, state, None).await;
                 }
                 Some(Signal::Roll(_)) if last_roll.is_some_and(|at| at.elapsed() < ROLL_GAP) => {
                     tracing::debug!("ignored a roll right after another");
@@ -284,7 +285,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     last_roll = Some(Instant::now());
                     roll(state, &payload).await;
                     if connected {
-                        sent = send_state(&client, state, sent).await;
+                        send_state(&client, state, slug, &mut sent).await;
                     }
                 }
                 // Only `remove` listens for the device.
@@ -298,7 +299,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
             () = state.changes.next_for_sensors() => {
                 tokio::time::sleep(DEBOUNCE).await;
                 if connected {
-                    sent = send_state(&client, state, sent).await;
+                    send_state(&client, state, slug, &mut sent).await;
                 }
             }
         }
@@ -363,27 +364,48 @@ fn send(client: &AsyncClient, topic: &str, payload: impl Into<Vec<u8>>) -> bool 
     }
 }
 
-/// Publishes the state unless it matches `sent`, and returns what the broker now holds.
+/// What the broker holds now.
+#[derive(Default)]
+struct Published {
+    config: Option<String>,
+    /// Sensor keys in that config.
+    keys: BTreeSet<String>,
+    state: Option<String>,
+}
+
+/// Publishes the device config and the state where they differ from `sent`.
+/// The entities follow who keeps play, so the config changes with them.
 async fn send_state(
     client: &AsyncClient,
     state: &AppState,
-    sent: Option<String>,
-) -> Option<String> {
+    ingress_slug: Option<&str>,
+    sent: &mut Published,
+) {
     let snapshot = match db::sensors::snapshot(&state.db).await {
         Ok(snapshot) => snapshot,
         Err(err) => {
             tracing::warn!(error = %err, "cannot read sensor values");
-            return sent;
+            return;
         }
     };
-    let payload = entities::state(&snapshot).to_string();
-    if sent.as_deref() == Some(payload.as_str()) {
-        return sent;
+    let entities = entities::entities(&snapshot);
+    let keys: BTreeSet<String> = entities
+        .iter()
+        .filter(|entity| entity.platform == entities::Platform::Sensor)
+        .map(|entity| entity.key.clone())
+        .collect();
+    let gone: Vec<String> = sent.keys.difference(&keys).cloned().collect();
+    let config = discovery::device_config(ingress_slug, &entities, &gone).to_string();
+    if sent.config.as_deref() != Some(config.as_str())
+        && send(client, DISCOVERY_TOPIC, config.clone())
+    {
+        sent.config = Some(config);
+        sent.keys = keys;
     }
-    if send(client, STATE_TOPIC, payload.clone()) {
-        Some(payload)
-    } else {
-        sent
+    let payload = entities::state(&snapshot).to_string();
+    if sent.state.as_deref() != Some(payload.as_str()) && send(client, STATE_TOPIC, payload.clone())
+    {
+        sent.state = Some(payload);
     }
 }
 

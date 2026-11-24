@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.title, s.played_on AS date, p.name AS \"platform?\"\n             FROM play_sessions s\n             JOIN games g ON g.id = s.game_id\n             LEFT JOIN copies c ON c.id = s.copy_id\n             LEFT JOIN releases r ON r.id = c.release_id\n             LEFT JOIN platforms p ON p.id = r.platform_id\n            ORDER BY s.played_on DESC, s.id DESC\n            LIMIT 1",
+  "query": "SELECT g.title, s.played_on AS date, p.name AS \"platform?\"\n             FROM play_sessions s\n             JOIN games g ON g.id = s.game_id\n             LEFT JOIN copies c ON c.id = s.copy_id\n             LEFT JOIN releases r ON r.id = c.release_id\n             LEFT JOIN platforms p ON p.id = r.platform_id\n            WHERE s.user_id = ?\n            ORDER BY s.played_on DESC, s.id DESC\n            LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -38,7 +38,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -46,5 +46,5 @@
       true
     ]
   },
-  "hash": "496c683b730625b865bda99a333f7054b1307da0323498e01b1cd77285d443de"
+  "hash": "bde0b5fa49adad4a62f046a89369a6f8152f9978b648bf9a6bd8da9947221f31"
 }

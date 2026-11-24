@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT g.title FROM play_progress p\n            JOIN play_statuses s ON s.key = p.play_status\n            JOIN games g ON g.id = p.game_id\n            WHERE p.user_id = ?1 AND s.counts_as = 'playing'\n              AND EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                           WHERE r.game_id = g.id AND c.status = 'owned')\n            ORDER BY (SELECT MAX(played_on) FROM play_sessions\n                      WHERE user_id = ?1 AND game_id = g.id) DESC NULLS LAST,\n                     g.sort_title\n            LIMIT ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "title",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ddd448bd68855ae52d7cdc3a342503dfe40217e52edab9bc3bd07efd5639f288"
+}

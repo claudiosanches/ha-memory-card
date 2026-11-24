@@ -23,7 +23,7 @@ use serde_json::json;
 use subtle::ConstantTimeEq;
 use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore, watch};
 
-use super::entities::{self, ENTITIES};
+use super::entities;
 use super::{SensorsStatus, broker, set_status, supervisor};
 use crate::AppState;
 use crate::access::{self, Policy};
@@ -83,8 +83,11 @@ fn valid_token(token: &str) -> bool {
 pub struct Feed {
     state: AppState,
     token: Secret,
-    /// The latest state line; `None` until the first is read.
+    /// What open feeds get next: a state line, after a hello line when the
+    /// entities changed. `None` until the first is read.
     latest: watch::Sender<Option<Arc<str>>>,
+    /// The current hello and state lines, which a new feed starts with.
+    current: Mutex<(String, Option<String>)>,
     closed: watch::Sender<bool>,
     places: Arc<Semaphore>,
     /// How many feeds are open, for the status.
@@ -97,6 +100,7 @@ impl Feed {
             state,
             token,
             latest: watch::Sender::new(None),
+            current: Mutex::new((hello(&db::sensors::Snapshot::default()), None)),
             closed: watch::Sender::new(false),
             places: Arc::new(Semaphore::new(FEEDS_MAX)),
             open: Mutex::new(0),
@@ -104,6 +108,7 @@ impl Feed {
     }
 
     /// Reads the sensors and hands them to every open feed, unless unchanged.
+    /// The entities follow who keeps play, so a change to them goes out first.
     pub async fn refresh(&self) {
         let snapshot = match db::sensors::snapshot(&self.state.db).await {
             Ok(snapshot) => snapshot,
@@ -112,14 +117,23 @@ impl Feed {
                 return;
             }
         };
-        let line = json!({ "type": "state", "state": entities::state(&snapshot) }).to_string();
-        self.latest.send_if_modified(|latest| {
-            if latest.as_deref() == Some(line.as_str()) {
-                return false;
+        let hello = hello(&snapshot);
+        let state = json!({ "type": "state", "state": entities::state(&snapshot) }).to_string();
+        let message = {
+            let mut current = self.current.lock().expect("feed lines lock");
+            let entities_changed = current.0 != hello;
+            if !entities_changed && current.1.as_deref() == Some(state.as_str()) {
+                return;
             }
-            *latest = Some(line.into());
-            true
-        });
+            let message = if entities_changed {
+                format!("{hello}\n{state}")
+            } else {
+                state.clone()
+            };
+            *current = (hello, Some(state));
+            message
+        };
+        self.latest.send_replace(Some(message.into()));
     }
 
     /// Ends every open feed.
@@ -215,6 +229,18 @@ impl Lines {
     }
 }
 
+/// The hello line: the app, its device and the entities `snapshot` calls for.
+fn hello(snapshot: &db::sensors::Snapshot) -> String {
+    json!({
+        "type": "hello",
+        "api": API_VERSION,
+        "version": env!("CARGO_PKG_VERSION"),
+        "device": entities::device(None),
+        "entities": entities::entities(snapshot),
+    })
+    .to_string()
+}
+
 fn line(value: &serde_json::Value) -> Bytes {
     let mut line = value.to_string();
     line.push('\n');
@@ -235,18 +261,11 @@ async fn stream(State(feed): State<Arc<Feed>>) -> Result<Response, ApiError> {
         _place: place,
     };
 
-    let hello = line(&json!({
-        "type": "hello",
-        "api": API_VERSION,
-        "version": env!("CARGO_PKG_VERSION"),
-        "device": entities::device(None),
-        "entities": ENTITIES,
-    }));
     let mut latest = feed.latest.subscribe();
-    let first = latest
-        .borrow_and_update()
-        .as_deref()
-        .map(|state| Bytes::from(format!("{state}\n")));
+    latest.mark_unchanged();
+    let (hello, first) = feed.current.lock().expect("feed lines lock").clone();
+    let hello = Bytes::from(format!("{hello}\n"));
+    let first = first.map(|state| Bytes::from(format!("{state}\n")));
     let lines = Lines {
         pending: std::iter::once(hello).chain(first).collect(),
         latest,

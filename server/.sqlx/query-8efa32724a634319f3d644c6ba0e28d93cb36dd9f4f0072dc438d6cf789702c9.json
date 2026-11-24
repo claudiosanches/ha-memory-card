@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT u.id AS \"id!\", COALESCE(u.display_name, u.name) AS name\n           FROM users u\n           WHERE EXISTS (SELECT 1 FROM play_progress WHERE user_id = u.id)\n              OR EXISTS (SELECT 1 FROM play_sessions WHERE user_id = u.id)\n           ORDER BY u.id\n           LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "8efa32724a634319f3d644c6ba0e28d93cb36dd9f4f0072dc438d6cf789702c9"
+}

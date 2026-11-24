@@ -122,13 +122,18 @@ async fn the_feed_says_hello_then_sends_the_state_and_its_changes() {
     assert_eq!(hello["api"], 1);
     assert_eq!(hello["device"]["name"], "Memory Card");
     let entities = hello["entities"].as_array().unwrap();
-    assert_eq!(entities.len(), 9);
+    assert_eq!(
+        entities.len(),
+        7,
+        "the household's, while nobody keeps play"
+    );
     assert_eq!(
         entities[0],
         json!({"key": "games", "platform": "sensor", "name": "Games", "icon": "mdi:gamepad-variant",
-               "unit": "games", "state_class": "measurement", "attributes": false})
+               "unit": "games", "state_class": "measurement", "attributes": false,
+               "object_id": "games"})
     );
-    assert_eq!(entities[8]["platform"], "button");
+    assert_eq!(entities[6]["platform"], "button");
 
     let state = next_line(&mut body, &mut buffer).await;
     assert_eq!(state["type"], "state");
@@ -138,12 +143,18 @@ async fn the_feed_says_hello_then_sends_the_state_and_its_changes() {
     let (imported, result) = app.post_csv("/api/import", ONE_GAME).await;
     assert_eq!(imported, StatusCode::OK, "{result}");
     feed.refresh().await;
-    let state = next_line(&mut body, &mut buffer).await;
-    assert_eq!(state["type"], "state");
+    // The importer keeps play now, so their sensors come first.
+    let hello = next_line(&mut body, &mut buffer).await;
     assert_eq!(
-        state["state"]["games"], 1,
+        hello["type"], "hello",
         "an unchanged state is not sent again"
     );
+    let entities = hello["entities"].as_array().unwrap();
+    assert_eq!(entities.len(), 10);
+    assert_eq!(entities[7]["person"]["kind"], "backlog");
+    let state = next_line(&mut body, &mut buffer).await;
+    assert_eq!(state["type"], "state");
+    assert_eq!(state["state"]["games"], 1);
     assert_eq!(
         state["state"]["attributes"]["playing"]["games"],
         json!(["Celeste"])
@@ -413,7 +424,7 @@ async fn the_app_announces_the_feed_and_takes_it_back_when_the_mode_changes() {
     let (imported, result) = app.post_csv("/api/import", ONE_GAME).await;
     assert_eq!(imported, StatusCode::OK, "{result}");
     tokio::time::timeout(Duration::from_secs(5), async {
-        while text.matches('\n').count() < 3 {
+        while text.matches('\n').count() < 4 {
             text.push_str(&String::from_utf8_lossy(
                 &response.chunk().await.unwrap().unwrap(),
             ));
@@ -421,7 +432,9 @@ async fn the_app_announces_the_feed_and_takes_it_back_when_the_mode_changes() {
     })
     .await
     .expect("a new state after the write");
-    let last: Value = serde_json::from_str(text.lines().nth(2).unwrap()).unwrap();
+    let hello: Value = serde_json::from_str(text.lines().nth(2).unwrap()).unwrap();
+    assert_eq!(hello["type"], "hello");
+    let last: Value = serde_json::from_str(text.lines().nth(3).unwrap()).unwrap();
     assert_eq!(last["state"]["games"], 1);
     sensors.stop().await;
 

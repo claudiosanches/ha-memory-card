@@ -1,0 +1,28 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n             COUNT(*) FILTER (WHERE s.counts_as = 'backlog') AS \"backlog!: i64\",\n             COUNT(*) FILTER (WHERE s.counts_as = 'playing') AS \"playing!: i64\"\n           FROM play_progress p JOIN play_statuses s ON s.key = p.play_status\n           WHERE p.user_id = ?\n             AND EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                          WHERE r.game_id = p.game_id AND c.status = 'owned')",
+  "describe": {
+    "columns": [
+      {
+        "name": "backlog!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "playing!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "dd3ac334302c77d2992e8e8086b7d5df3677e08030d632171a17700f44a66bd3"
+}

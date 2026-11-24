@@ -303,13 +303,19 @@ async function ingress(ha) {
 
 const DASHBOARD = 'memory-card-games';
 
-/** A dashboard with every Memory Card entity, once its sensors exist. */
-async function dashboard(ha) {
+/**
+ * A dashboard with the household's sensors and the owner's own, once the
+ * owner's exist.
+ */
+async function dashboard(ha, owner) {
   const dashboards = await ha.call('lovelace/dashboards/list');
   if (dashboards.some((d) => d.url_path === DASHBOARD)) return;
+  const { options } = await ha.supervisor('get', `/addons/${APP}/info`);
+  // The owner's sensors follow their name, as Memory Card suggests them.
+  const mine = (kind) => `sensor.memory_card_${owner.name.toLowerCase()}_${kind}`;
   for (let tries = 0; ; tries++) {
     const states = await ha.call('get_states');
-    if (states.some((s) => s.entity_id === 'button.memory_card_roll_pick')) break;
+    if (states.some((s) => s.entity_id === mine('backlog'))) break;
     if (tries > 30) {
       console.warn('The Memory Card sensors did not appear, so no dashboard was added');
       return;
@@ -325,7 +331,27 @@ async function dashboard(ha) {
     mode: 'storage',
   });
   const tile = (entity, name, wide = false) => ({ type: 'tile', entity, name, ...(wide && { grid_options: { columns: 12 } }) });
-  const roll = { action: 'perform-action', perform_action: 'button.press', target: { entity_id: 'button.memory_card_roll_pick' } };
+  const titles = (entity) => ({
+    type: 'markdown',
+    content: `{% for game in state_attr('${entity}', 'games') or [] %}- {{ game }}\n{% else %}Nothing right now.{% endfor %}`,
+    grid_options: { columns: 12 },
+  });
+  // The integration's button rolls for whoever presses it; MQTT names the person.
+  const roll =
+    options.sensors === 'integration'
+      ? { action: 'perform-action', perform_action: 'button.press', target: { entity_id: 'button.memory_card_roll_pick' } }
+      : {
+          action: 'perform-action',
+          perform_action: 'mqtt.publish',
+          data: { topic: 'memory_card/pick/roll', payload: JSON.stringify({ person: owner.id }) },
+        };
+  const rollCard = {
+    type: 'button',
+    name: `Roll a pick for ${owner.name}`,
+    icon: 'mdi:dice-5',
+    tap_action: roll,
+    grid_options: { columns: 12 },
+  };
   await ha.call('lovelace/config/save', {
     url_path: DASHBOARD,
     config: {
@@ -342,22 +368,19 @@ async function dashboard(ha) {
                 { type: 'heading', heading: 'Collection' },
                 tile('sensor.memory_card_games', 'Games'),
                 tile('sensor.memory_card_copies', 'Copies'),
-                tile('sensor.memory_card_backlog', 'Backlog'),
                 tile('sensor.memory_card_wishlist', 'Wishlist'),
+                tile('sensor.memory_card_playing', 'Playing'),
                 tile('sensor.memory_card_last_added', 'Last added', true),
               ],
             },
             {
               type: 'grid',
               cards: [
-                { type: 'heading', heading: 'Playing' },
-                tile('sensor.memory_card_last_played', 'Last played', true),
-                {
-                  type: 'markdown',
-                  content:
-                    "{% for game in state_attr('sensor.memory_card_playing', 'games') or [] %}- {{ game }}\n{% else %}Nothing right now.{% endfor %}",
-                  grid_options: { columns: 12 },
-                },
+                { type: 'heading', heading: owner.name },
+                tile(mine('backlog'), 'Backlog'),
+                tile(mine('playing'), 'Playing'),
+                tile(mine('last_played'), 'Last played', true),
+                titles(mine('playing')),
               ],
             },
             {
@@ -365,7 +388,9 @@ async function dashboard(ha) {
               cards: [
                 { type: 'heading', heading: 'Pick for me' },
                 tile('sensor.memory_card_pick', 'Current pick', true),
-                { ...tile('button.memory_card_roll_pick', 'Roll a pick', true), hide_state: true, tap_action: roll, icon_tap_action: roll },
+                rollCard,
+                { type: 'heading', heading: 'Playing in the house', heading_style: 'subtitle' },
+                titles('sensor.memory_card_playing'),
               ],
             },
             {
@@ -376,7 +401,7 @@ async function dashboard(ha) {
                 {
                   type: 'history-graph',
                   hours_to_show: 168,
-                  entities: ['sensor.memory_card_games', 'sensor.memory_card_copies', 'sensor.memory_card_backlog', 'sensor.memory_card_wishlist'],
+                  entities: ['sensor.memory_card_games', 'sensor.memory_card_copies', mine('backlog'), 'sensor.memory_card_wishlist'],
                   grid_options: { columns: 'full' },
                 },
               ],
@@ -481,7 +506,7 @@ async function main() {
       await saveState(state);
     }
     if (!state.dashboard) {
-      await dashboard(ha);
+      await dashboard(ha, state.owner);
       state.dashboard = true;
       await saveState(state);
     }
