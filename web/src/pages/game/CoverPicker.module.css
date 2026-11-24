@@ -1,4 +1,4 @@
-.picker { position: relative; flex-shrink: 0; align-self: flex-start; border-radius: 6px; }
+.picker { position: relative; flex-shrink: 0; border-radius: 6px; }
 .open { display: block; border-radius: 6px; cursor: zoom-in; }
 .open[data-placeholder] { cursor: pointer; }
 .open:disabled { cursor: default; }

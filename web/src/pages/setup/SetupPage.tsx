@@ -1,6 +1,6 @@
 import { Badge, Button, Card, Chip, Group, Loader, MultiSelect, Progress, Select, Stack, Text, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useLocalStorage, useMediaQuery } from '@mantine/hooks';
+import { useLocalStorage } from '@mantine/hooks';
 import { IconLink, IconPlus } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -161,7 +161,6 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   const devices = useDevices();
   const stores = useStores();
   const [dialog, setDialog] = useState<'copy' | 'igdb' | null>(null);
-  const phone = useMediaQuery('(max-width: 36em)');
   const [copyEdits, setCopyEdits] = useState<Record<number, CopyEdit>>({});
   const form = useForm({
     initialValues: {
@@ -260,7 +259,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
             path={game.cover_path}
             uploaded={game.cover_uploaded}
             title={game.title}
-            width={phone ? 92 : 120}
+            width={120}
           />
           <Stack gap="md" className={classes.fields}>
             <Title order={2} size="h3" className={classes.title}>

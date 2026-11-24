@@ -242,7 +242,7 @@ function GameView({ game }: { game: GameDetail }) {
               path={game.cover_path}
               uploaded={game.cover_uploaded}
               title={game.title}
-              width={phone ? 92 : 160}
+              width={160}
               readOnly={!canManage}
             />
             <Stack className={classes.identityText} gap={4}>
