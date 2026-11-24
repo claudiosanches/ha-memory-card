@@ -316,7 +316,12 @@ async fn roll(
         (Some(user), None) => user,
         (Some(user), Some(named)) if named == user => user,
         (Some(_), Some(_)) => return Err(ApiError::Forbidden("not_your_roll")),
-        (None, Some(named)) if access::valid_user_id(named) => named,
+        (None, Some(named)) if access::valid_user_id(named) => {
+            if !super::may_roll_for(&feed.state, named).await? {
+                return Err(ApiError::Forbidden("play_not_allowed"));
+            }
+            named
+        }
         (None, Some(_)) => {
             return Err(ApiError::Invalid {
                 code: "invalid_user",

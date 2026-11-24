@@ -364,7 +364,9 @@ A pick comes from one person's backlog, so a roll names whose:
 
 Rolls need managers set in the options, and the person must be a manager or
 a viewer with `viewers_track_progress` on. A person rolls only for
-themselves.
+themselves. A roll that names a person, from an automation or MQTT, needs
+someone Memory Card knows: a manager, or a person who has already changed
+something in it, such as their play status.
 
 The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs)

@@ -34,6 +34,18 @@ pub async fn record(pool: &SqlitePool, user: &User) -> sqlx::Result<()> {
     Ok(())
 }
 
+/// Whether the app knows this person: from a change they made through ingress,
+/// a tag scan or a roll.
+pub async fn known(pool: &SqlitePool, id: &str) -> sqlx::Result<bool> {
+    let known = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM users WHERE id = ?) AS "known!: bool""#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(known)
+}
+
 /// Makes sure a person known only by ID, such as from a tag scan, has a row.
 pub async fn ensure(conn: &mut SqliteConnection, id: &str) -> sqlx::Result<()> {
     sqlx::query!("INSERT OR IGNORE INTO users (id) VALUES (?)", id)

@@ -313,6 +313,17 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     poller.abort();
 }
 
+/// Whether a roll that names `person`, with nobody calling, may pick for
+/// them: someone who keeps play and is a manager or known to the app, so a
+/// roll cannot add made-up people.
+pub(crate) async fn may_roll_for(state: &AppState, person: &str) -> sqlx::Result<bool> {
+    let policy = crate::access::Policy::from_config(&state.config);
+    if !policy.can_track_progress(person) {
+        return Ok(false);
+    }
+    Ok(policy.managers.iter().any(|m| m == person) || db::users::known(&state.db, person).await?)
+}
+
 /// Picks a game from the named person's backlog, as Pick for me does; the
 /// sensors show it. MQTT cannot tell who sent the roll, so it must name them.
 async fn roll(state: &AppState, payload: &[u8]) {
@@ -330,9 +341,16 @@ async fn roll(state: &AppState, payload: &[u8]) {
         tracing::info!("ignored a roll from Home Assistant that names no person");
         return;
     };
-    if !crate::access::Policy::from_config(&state.config).can_track_progress(&person) {
-        tracing::info!("ignored a roll for someone who cannot keep play");
-        return;
+    match may_roll_for(state, &person).await {
+        Ok(true) => {}
+        Ok(false) => {
+            tracing::info!("ignored a roll for someone who cannot keep play");
+            return;
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, "cannot check who a roll is for");
+            return;
+        }
     }
     match db::suggestions::suggest(&state.db, &person, request.filter).await {
         Ok(pick) => tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant"),

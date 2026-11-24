@@ -301,6 +301,45 @@ async fn a_roll_is_for_one_person_who_keeps_play() {
         );
     }
 
+    // With viewers keeping play, an automation names only people the app knows.
+    let viewers = TestApp::with_env(&[("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true")]).await;
+    let (status, result) = viewers
+        .post_csv(
+            "/api/import",
+            "game_title,play_status,platform,region,format,status\n\
+             Tetris,backlog,Switch,eu,physical,owned\n",
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let router = integration::router(feed(&viewers));
+    let made_up = r#"{"person": "made-up", "play_status": ["none"]}"#;
+    let (status, error) = roll_as(&router, None, made_up).await;
+    assert_eq!(
+        (status, error["code"].as_str()),
+        (StatusCode::FORBIDDEN, Some("play_not_allowed"))
+    );
+    assert_eq!(
+        viewers
+            .scalar("SELECT COUNT(*) FROM users WHERE id = 'made-up'")
+            .await,
+        0
+    );
+    // Once they keep play in the app, it knows them.
+    let tetris = viewers.scalar("SELECT id FROM games").await;
+    let play = Request::put(format!("/api/games/{tetris}/play-status"))
+        .header("x-remote-user-id", "made-up")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"play_status": "backlog"}"#))
+        .unwrap();
+    assert_eq!(
+        viewers.request(common::SUPERVISOR, play).await.0,
+        StatusCode::OK
+    );
+    assert_eq!(
+        roll_as(&router, None, r#"{"person": "made-up"}"#).await.1["title"],
+        "Tetris"
+    );
+
     let nobody = TestApp::with_env(&[("MEMORY_CARD_MANAGERS", "")]).await;
     let router = integration::router(feed(&nobody));
     assert_eq!(
