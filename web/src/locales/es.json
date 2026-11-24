@@ -189,7 +189,10 @@
     "themes": {
       "default": "Predeterminado",
       "retro": "Retro",
-      "internet-2000s": "Internet de los 2000"
+      "internet-2000s": "Internet de los 2000",
+      "cyberpunk": "Cyberpunk",
+      "pastel-plush": "Peluche pastel",
+      "cursed-90s": "Años 90 malditos"
     },
     "schemes": {
       "auto": "Sistema",

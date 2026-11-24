@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" shape-rendering="crispEdges">
+  <!-- Classic 1996 pixel-art yellow/black Under Construction diamond sign -->
+  <polygon points="22,2 42,22 22,42 2,22" fill="#000000"/>
+  <polygon points="22,5 39,22 22,39 5,22" fill="#ffdd00"/>
+  <polygon points="22,7 37,22 22,37 7,22" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <!-- Pixel exclamation + hazard stripes -->
+  <rect x="20" y="12" width="4" height="12" fill="#000000"/>
+  <rect x="20" y="27" width="4" height="4" fill="#000000"/>
+  <!-- Tiny top-corner pixel glint -->
+  <rect x="21" y="6" width="2" height="2" fill="#ffffff"/>
+</svg>

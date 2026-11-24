@@ -1,0 +1,105 @@
+/* Cursed 1996 web skin: zero rounded corners, 3D outset/inset bevels, classic serif + mono. */
+[data-mc-theme='cursed-90s'] {
+  --mantine-font-family: 'Times New Roman', 'Liberation Serif', Georgia, serif;
+  --mantine-font-family-headings: 'Times New Roman', 'Liberation Serif', Georgia, serif;
+  --w90-hi: #ffffff;
+  --w90-hi2: #efefef;
+  --w90-lo: #404040;
+  --w90-lo2: #808080;
+  --w90-header-text: #ffffff;
+  --w90-outset: inset 1px 1px var(--w90-hi), inset -1px -1px var(--w90-lo), inset 2px 2px var(--w90-hi2), inset -2px -2px var(--w90-lo2);
+  --w90-inset: inset 1px 1px var(--w90-lo), inset -1px -1px var(--w90-hi), inset 2px 2px var(--w90-lo2), inset -2px -2px var(--w90-hi2);
+}
+
+[data-mc-theme='cursed-90s'][data-mantine-color-scheme='dark'] {
+  --w90-hi: #8c8cb8;
+  --w90-hi2: #585880;
+  --w90-lo: #000000;
+  --w90-lo2: #242442;
+  --w90-header-text: #ffff00;
+}
+
+[data-mc-theme='cursed-90s'] *,
+[data-mc-theme='cursed-90s'] *::before,
+[data-mc-theme='cursed-90s'] *::after {
+  border-radius: 0 !important;
+}
+
+[data-mc-theme='cursed-90s'] {
+  body,
+  .mantine-Title-root,
+  .mantine-Text-root {
+    font-family: 'Times New Roman', 'Liberation Serif', Georgia, serif;
+  }
+
+  .mantine-AppShell-header {
+    --mc-selected: #c0c0c0;
+    --mantine-primary-color-light-color: #000080;
+    color: var(--w90-header-text);
+    border-bottom: 2px solid var(--w90-lo);
+    box-shadow: inset 0 1px var(--w90-hi);
+  }
+
+  .mantine-AppShell-header .mantine-Burger-burger {
+    --burger-color: var(--w90-header-text);
+  }
+
+  .mantine-AppShell-navbar {
+    border-right: 2px solid var(--w90-lo);
+    box-shadow: inset -1px 0 var(--w90-hi);
+  }
+
+  .mantine-Card-root,
+  .mantine-Modal-content,
+  .mantine-Menu-dropdown {
+    background-color: var(--mc-surface);
+    border: 2px solid var(--w90-lo);
+    box-shadow: var(--w90-outset), 4px 4px 0 #00000055;
+  }
+
+  .mantine-Button-root:where(:not([data-variant='subtle'], [data-variant='transparent'])),
+  .mantine-ActionIcon-root:where(:not([data-variant='subtle'], [data-variant='transparent'])),
+  .mantine-SegmentedControl-indicator,
+  .mantine-Chip-label,
+  .mc-filter[aria-pressed='true'] {
+    font-family: Tahoma, 'MS Sans Serif', Geneva, sans-serif;
+    border: 1px solid var(--w90-lo);
+    box-shadow: var(--w90-outset);
+  }
+
+  .mantine-Button-root:where(:not([data-variant='subtle'], [data-variant='transparent'], :disabled, [data-disabled])):active,
+  .mantine-ActionIcon-root:where(:not([data-variant='subtle'], [data-variant='transparent'], :disabled, [data-disabled])):active {
+    box-shadow: var(--w90-inset);
+    transform: translate(1px, 1px);
+  }
+
+  .mantine-Badge-root {
+    font-family: 'Courier New', 'Liberation Mono', monospace;
+    border: 1px solid var(--w90-lo2);
+  }
+
+  .mantine-Input-input {
+    font-family: 'Courier New', 'Liberation Mono', monospace;
+    border: 1px solid var(--w90-lo);
+    box-shadow: var(--w90-inset);
+  }
+
+  .mantine-SegmentedControl-root {
+    border: 1px solid var(--w90-lo);
+    box-shadow: var(--w90-inset);
+  }
+
+  .mantine-NavLink-root[data-active] {
+    box-shadow: var(--w90-outset);
+  }
+
+  .mantine-Tabs-tab[data-active] {
+    border: 2px solid var(--w90-lo);
+    border-bottom-color: var(--mc-surface);
+    box-shadow: inset 1px 1px var(--w90-hi);
+  }
+
+  .mantine-Anchor-root {
+    text-decoration: underline;
+  }
+}

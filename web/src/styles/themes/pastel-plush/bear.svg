@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <!-- Round bear ears -->
+  <circle cx="12.5" cy="15.5" r="6" fill="#9a6e63" stroke="#e4a8c3" stroke-width="1.6"/>
+  <circle cx="12.5" cy="15.5" r="3" fill="#e89cc0"/>
+  <circle cx="35.5" cy="15.5" r="6" fill="#9a6e63" stroke="#e4a8c3" stroke-width="1.6"/>
+  <circle cx="35.5" cy="15.5" r="3" fill="#e89cc0"/>
+  <!-- Bear head -->
+  <ellipse cx="24" cy="26.5" rx="14.5" ry="13" fill="#9a6e63" stroke="#e4a8c3" stroke-width="1.6"/>
+  <!-- Cream muzzle -->
+  <ellipse cx="24" cy="30.2" rx="6.2" ry="4.6" fill="#f7e2d7"/>
+  <!-- Rosy blush -->
+  <ellipse cx="14.4" cy="29.5" rx="2.8" ry="1.6" fill="#f28ab9" opacity="0.7"/>
+  <ellipse cx="33.6" cy="29.5" rx="2.8" ry="1.6" fill="#f28ab9" opacity="0.7"/>
+  <!-- Cozy happy eyes -->
+  <circle cx="18.2" cy="24.8" r="2" fill="#2d1922"/>
+  <circle cx="17.6" cy="24.1" r="0.7" fill="#fff5fa"/>
+  <circle cx="29.8" cy="24.8" r="2" fill="#2d1922"/>
+  <circle cx="29.2" cy="24.1" r="0.7" fill="#fff5fa"/>
+  <!-- Nose & smile -->
+  <ellipse cx="24" cy="28.7" rx="2.1" ry="1.4" fill="#4e2b36"/>
+  <path d="M22.2 31.3c.7.9 1.4.9 1.8.1.4.8 1.1.8 1.8-.1" stroke="#4e2b36" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Pastel pink heart held at bottom -->
+  <path d="M24 44.5s-5.2-3-5.2-6c0-1.7 1.3-2.9 2.8-2.9 1.1 0 1.9.6 2.4 1.4.5-.8 1.3-1.4 2.4-1.4 1.5 0 2.8 1.2 2.8 2.9 0 3-5.2 6-5.2 6z" fill="#f488b8" stroke="#ffd2e7" stroke-width="1.1"/>
+  <!-- Little moon & star -->
+  <path d="M40.5 7.5a3.5 3.5 0 1 0 3.2 4.9 2.7 2.7 0 0 1-3.2-4.9z" fill="#ffd9ec"/>
+  <circle cx="8" cy="39" r="1.3" fill="#f49ec7"/>
+</svg>

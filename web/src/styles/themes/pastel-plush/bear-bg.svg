@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <!-- Tiny bear silhouette 1 -->
+  <g fill="#613d54" opacity="0.32">
+    <circle cx="22" cy="23" r="3.2"/>
+    <circle cx="34" cy="23" r="3.2"/>
+    <ellipse cx="28" cy="29" rx="7.5" ry="6.5"/>
+  </g>
+  <!-- Tiny bear silhouette 2 -->
+  <g fill="#613d54" opacity="0.28">
+    <circle cx="86" cy="87" r="3.2"/>
+    <circle cx="98" cy="87" r="3.2"/>
+    <ellipse cx="92" cy="93" rx="7.5" ry="6.5"/>
+  </g>
+  <!-- Tiny crescent moon & stars -->
+  <path d="M94 25a4.5 4.5 0 1 0 4.1 6.3 3.4 3.4 0 0 1-4.1-6.3z" fill="#774b68" opacity="0.34"/>
+  <path d="M30 92l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#7c4f6c" opacity="0.32"/>
+  <path d="M64 56l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#7c4f6c" opacity="0.28"/>
+  <circle cx="112" cy="58" r="1.4" fill="#774b68" opacity="0.3"/>
+  <circle cx="16" cy="64" r="1.4" fill="#774b68" opacity="0.28"/>
+</svg>

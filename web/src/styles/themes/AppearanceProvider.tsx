@@ -4,7 +4,10 @@ import { createContext, useContext, useLayoutEffect, type ReactNode } from 'reac
 import { sharedTheme } from '../mantine';
 import { palette } from './default/palette';
 import { sharedVariables, variables } from './default/variables';
+import { cursed90s } from './cursed-90s';
+import { cyberpunk } from './cyberpunk';
 import { internet2000s } from './internet-2000s';
+import { pastelPlush } from './pastel-plush';
 import { retro } from './retro';
 
 type VisualTheme = {
@@ -17,7 +20,14 @@ type VisualTheme = {
   };
 };
 
-export const themes = [{ id: 'default', palette, variables }, retro, internet2000s] as const satisfies readonly VisualTheme[];
+export const themes = [
+  { id: 'default', palette, variables },
+  retro,
+  internet2000s,
+  cyberpunk,
+  pastelPlush,
+  cursed90s,
+] as const satisfies readonly VisualTheme[];
 
 const AppearanceContext = createContext<{ themeId: string; selectTheme: (id: string) => void } | null>(null);
 

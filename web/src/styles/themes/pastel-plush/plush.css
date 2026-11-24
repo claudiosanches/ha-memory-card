@@ -1,0 +1,74 @@
+/* Soft pastel pink skin: pillowy corners, gentle rose shadows and plush accents. */
+[data-mc-theme='pastel-plush'] {
+  --plush-shadow: 0 4px 14px #c75b8c18;
+}
+
+[data-mc-theme='pastel-plush'][data-mantine-color-scheme='dark'] {
+  --plush-shadow: 0 4px 16px #0b050966;
+}
+
+[data-mc-theme='pastel-plush'] {
+  .mantine-Card-root {
+    border-radius: 16px;
+    box-shadow: var(--plush-shadow);
+  }
+
+  .mantine-Button-root,
+  .mantine-SegmentedControl-root,
+  .mantine-SegmentedControl-indicator {
+    border-radius: 999px;
+  }
+
+  .mantine-NavLink-root {
+    border-radius: 12px;
+  }
+
+  .mantine-Tabs-list {
+    width: fit-content;
+    max-width: 100%;
+    padding: 4px;
+    gap: 2px;
+    background: var(--mc-surface);
+    border: 1px solid var(--mc-border);
+    border-radius: 16px;
+  }
+
+  .mantine-Tabs-list::before {
+    display: none;
+  }
+
+  .mantine-Tabs-tab {
+    border: 0;
+    border-radius: 12px;
+    color: var(--mc-muted);
+    font-weight: 550;
+  }
+
+  .mantine-Tabs-tab:hover {
+    background: var(--mantine-color-default-hover);
+    color: var(--mantine-color-text);
+  }
+
+  .mantine-Tabs-tab[data-active] {
+    background: var(--mantine-primary-color-light);
+    color: var(--mantine-primary-color-light-color);
+    font-weight: 650;
+  }
+
+  .mc-filter {
+    border-radius: 999px;
+    background: var(--mc-surface);
+    border-color: var(--mc-border);
+  }
+
+  .mc-filter:hover {
+    background: var(--mantine-color-default-hover);
+    color: var(--mantine-color-text);
+  }
+
+  .mc-filter[aria-pressed='true'] {
+    background: var(--mantine-primary-color-light);
+    color: var(--mantine-primary-color-light-color);
+    border-color: color-mix(in srgb, var(--mantine-primary-color-filled) 35%, var(--mc-border));
+  }
+}
