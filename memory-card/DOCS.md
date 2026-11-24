@@ -297,6 +297,8 @@ your games by play status, your most played games and a calendar of your
 play, copies by platform and by store, and what was paid next to what the
 copies are worth now.
 
+![The Household page comparing everyone's play this month](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/household.webp)
+
 **Household** in the sidebar puts everyone's play side by side for this
 month, this year or all time: play time, sessions, days played, games
 played, games finished and each person's most played game, the most play
