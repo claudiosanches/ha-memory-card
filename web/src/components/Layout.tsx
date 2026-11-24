@@ -109,7 +109,7 @@ export function Layout() {
       </AppShell.Header>
 
       <AppShell.Navbar id="app-navigation" data-opened={opened || undefined} className={classes.navbar} p="md" data-rail={rail || undefined}>
-        <AppShell.Section grow>
+        <AppShell.Section grow className={classes.navLinks}>
           {me.data && (
             <>
               <Text className={classes.sectionLabel}>{t('app.collection')}</Text>

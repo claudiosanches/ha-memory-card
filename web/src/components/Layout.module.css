@@ -1,7 +1,9 @@
 .header { background-color: var(--mc-surface); background-image: var(--mc-header-image, none); border-color: var(--mc-border); }
 .brand { font-size: 1.125rem; font-weight: 750; letter-spacing: -0.035em; }
 .logo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--mc-selected); color: var(--mantine-primary-color-light-color); }
-.navbar { background: var(--mc-nav-image, none) center bottom 76px / auto no-repeat var(--mc-surface); border-color: var(--mc-border); }
+.navbar { background-color: var(--mc-surface); border-color: var(--mc-border); }
+.navLinks { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.navLinks::after { content: ''; flex: 1; min-height: 0; background: var(--mc-nav-image, none) center bottom 12px / auto no-repeat; }
 .sectionLabel { margin: 16px 12px 10px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mc-muted); }
 .navLink { border-radius: 8px; padding: 12px; margin-bottom: 4px; color: var(--mc-muted); }
 .navLink:where(:not([data-active])):hover { color: var(--mantine-color-text); }
@@ -28,9 +30,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .main { background-image: var(--mc-still-background-image, var(--mc-background-image)); }
-  .navbar { background-image: var(--mc-still-nav-image, var(--mc-nav-image, none)); }
+  .navLinks::after { background-image: var(--mc-still-nav-image, var(--mc-nav-image, none)); }
 }
 
-@media (max-height: 48em) {
-  .navbar { background-image: none; }
+@media (max-height: 53em) {
+  .navLinks::after { background-image: none; }
 }
