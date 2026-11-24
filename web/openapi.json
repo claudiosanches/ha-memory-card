@@ -1774,6 +1774,54 @@
         }
       }
     },
+    "/api/household": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "operationId": "getHousehold",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "month",
+                "year",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Everyone who keeps play, the most minutes first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonTotals"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_filter`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/igdb/matches": {
       "get": {
         "tags": [
@@ -5302,6 +5350,56 @@
           }
         }
       },
+      "PersonTotals": {
+        "type": "object",
+        "required": [
+          "person",
+          "sessions",
+          "minutes",
+          "days",
+          "games",
+          "finished"
+        ],
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Days with at least one session."
+          },
+          "finished": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Games their status put in a finished group during the period."
+          },
+          "games": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Different games played."
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "person": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "top_game": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TopGame",
+                "description": "Their most played game in the period, by sessions."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
       "Platform": {
         "type": "object",
         "required": [
@@ -6549,6 +6647,27 @@
           },
           "igdb_title": {
             "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "TopGame": {
+        "type": "object",
+        "required": [
+          "game_id",
+          "title",
+          "sessions"
+        ],
+        "properties": {
+          "game_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "int64"
           },
           "title": {
             "type": "string"

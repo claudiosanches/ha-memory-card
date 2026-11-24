@@ -1,18 +1,19 @@
 import { Alert, Anchor, AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
-  IconChecklist,
   IconChartBar,
+  IconChecklist,
   IconCopy,
-  IconStack2,
   IconDeviceGamepad2,
+  IconDeviceSdCard,
   IconFileImport,
   IconHeart,
-  IconLibrary,
-  IconSettings,
-  IconDeviceSdCard,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
+  IconLibrary,
+  IconSettings,
+  IconStack2,
+  IconUsers,
 } from '@tabler/icons-react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { type ComponentType, useEffect } from 'react';
@@ -24,7 +25,7 @@ import { followHomeAssistant } from '../i18n';
 import { ColorSchemePicker } from './ColorSchemePicker';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'backlog' | 'duplicates' | 'wishlist' | 'stats' | 'setup' | 'import' | 'manage' | 'settings';
+type NavKey = 'library' | 'backlog' | 'duplicates' | 'wishlist' | 'stats' | 'household' | 'setup' | 'import' | 'manage' | 'settings';
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
@@ -33,6 +34,7 @@ const COLLECTION: NavItem[] = [
   { key: 'duplicates', to: '/duplicates', icon: IconCopy },
   { key: 'wishlist', to: '/wishlist', icon: IconHeart },
   { key: 'stats', to: '/stats', icon: IconChartBar },
+  { key: 'household', to: '/household', icon: IconUsers },
 ];
 
 const TOOLS: NavItem[] = [

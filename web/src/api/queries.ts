@@ -20,6 +20,7 @@ export const queryKeys = {
   duplicates: ['duplicates'],
   missing: ['missing-details'],
   stats: ['stats'],
+  household: ['household'],
 } as const;
 
 /** Who is signed in and their role. Options only change on restart. */

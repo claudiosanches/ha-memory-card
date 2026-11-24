@@ -19,6 +19,7 @@ import { SETTINGS_TABS, SettingsPage, type SettingsTab } from './pages/SettingsP
 import { IgdbMatchesPage } from './pages/IgdbMatchesPage';
 import { SetupPage } from './pages/setup/SetupPage';
 import { StatsPage } from './pages/stats/StatsPage';
+import { HouseholdPage } from './pages/household/HouseholdPage';
 import { parseSearch, stringifySearch } from './searchParams';
 
 const rootRoute = createRootRoute({ component: Layout });
@@ -35,6 +36,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/duplicates', component: DuplicatesPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/household', component: HouseholdPage }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: '/igdb-matches',

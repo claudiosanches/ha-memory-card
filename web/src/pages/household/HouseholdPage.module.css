@@ -1,0 +1,12 @@
+.name {
+  min-width: 0;
+}
+
+.link {
+  color: var(--mantine-color-anchor);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

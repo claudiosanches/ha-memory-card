@@ -18,6 +18,7 @@
     "duplicates": "Duplicates",
     "wishlist": "Wishlist",
     "stats": "Stats",
+    "household": "Household",
     "setup": "Missing details",
     "import": "Import and export",
     "manage": "Manage",
@@ -828,6 +829,24 @@
     "copiesCount_other": "{{count}} copies",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games"
+  },
+  "household": {
+    "intro": "See how everyone in the house plays.",
+    "periods": {
+      "month": "This month",
+      "year": "This year",
+      "all": "All time"
+    },
+    "empty": "Nobody has logged play in this period.",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "games_one": "{{count}} game",
+    "games_other": "{{count}} games",
+    "finished_one": "{{count}} finished",
+    "finished_other": "{{count}} finished",
+    "topGame": "Most played:",
+    "you": "You",
+    "rank": "Place {{rank}}"
   },
   "bundle": {
     "add": "Add games inside this copy",

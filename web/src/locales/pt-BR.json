@@ -18,6 +18,7 @@
     "duplicates": "Duplicados",
     "wishlist": "Lista de desejos",
     "stats": "Estatísticas",
+    "household": "Casa",
     "setup": "Detalhes faltando",
     "import": "Importar e exportar",
     "manage": "Gerenciar",
@@ -828,6 +829,24 @@
     "copiesCount_other": "{{count}} cópias",
     "gamesCount_one": "{{count}} jogo",
     "gamesCount_other": "{{count}} jogos"
+  },
+  "household": {
+    "intro": "Veja como cada pessoa da casa joga.",
+    "periods": {
+      "month": "Este mês",
+      "year": "Este ano",
+      "all": "Desde sempre"
+    },
+    "empty": "Ninguém registrou partidas neste período.",
+    "days_one": "{{count}} dia",
+    "days_other": "{{count}} dias",
+    "games_one": "{{count}} jogo",
+    "games_other": "{{count}} jogos",
+    "finished_one": "{{count}} concluído",
+    "finished_other": "{{count}} concluídos",
+    "topGame": "Mais jogado:",
+    "you": "Você",
+    "rank": "{{rank}}º lugar"
   },
   "bundle": {
     "add": "Adicionar jogos desta cópia",

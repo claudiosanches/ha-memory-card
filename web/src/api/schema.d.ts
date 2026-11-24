@@ -368,6 +368,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/household": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getHousehold"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/igdb/matches": {
         parameters: {
             query?: never;
@@ -1314,6 +1330,29 @@ export interface components {
             /** Format: int64 */
             sessions: number;
         };
+        PersonTotals: {
+            /**
+             * Format: int64
+             * @description Days with at least one session.
+             */
+            days: number;
+            /**
+             * Format: int64
+             * @description Games their status put in a finished group during the period.
+             */
+            finished: number;
+            /**
+             * Format: int64
+             * @description Different games played.
+             */
+            games: number;
+            /** Format: int64 */
+            minutes: number;
+            person: components["schemas"]["Person"];
+            /** Format: int64 */
+            sessions: number;
+            top_game?: components["schemas"]["TopGame"] | null;
+        };
         Platform: {
             abbreviation?: string | null;
             active: boolean;
@@ -1740,6 +1779,13 @@ export interface components {
             /** Format: int64 */
             game_id: number;
             igdb_title: string;
+            title: string;
+        };
+        TopGame: {
+            /** Format: int64 */
+            game_id: number;
+            /** Format: int64 */
+            sessions: number;
             title: string;
         };
         /** @description The Home Assistant user behind a request. */
@@ -2924,6 +2970,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Genre"][];
+                };
+            };
+        };
+    };
+    getHousehold: {
+        parameters: {
+            query?: {
+                period?: "month" | "year" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Everyone who keeps play, the most minutes first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonTotals"][];
+                };
+            };
+            /** @description `invalid_filter` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
