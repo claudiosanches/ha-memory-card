@@ -66,12 +66,12 @@ async fn compares_everyone_who_keeps_play() {
             {
                 "person": {"id": "ana", "name": "Ana"},
                 "sessions": 1, "minutes": 120, "days": 1, "games": 1, "finished": 1,
-                "top_game": {"game_id": tetris, "title": "Tetris", "sessions": 1},
+                "top_game": {"game_id": tetris, "title": "Tetris", "cover_path": null, "sessions": 1},
             },
             {
                 "person": {"id": common::MANAGER, "name": null},
                 "sessions": 2, "minutes": 90, "days": 1, "games": 1, "finished": 0,
-                "top_game": {"game_id": hades, "title": "Hades", "sessions": 2},
+                "top_game": {"game_id": hades, "title": "Hades", "cover_path": null, "sessions": 2},
             },
         ])
     );

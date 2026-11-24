@@ -1782,6 +1782,8 @@ export interface components {
             title: string;
         };
         TopGame: {
+            /** @description Relative to the covers URL. */
+            cover_path?: string | null;
             /** Format: int64 */
             game_id: number;
             /** Format: int64 */

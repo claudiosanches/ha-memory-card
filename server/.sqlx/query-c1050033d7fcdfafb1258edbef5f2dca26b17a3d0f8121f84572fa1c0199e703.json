@@ -1,0 +1,57 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT g.id AS \"game_id!\", g.title, g.cover_path, COUNT(*) AS \"sessions!: i64\"\n               FROM play_sessions s JOIN games g ON g.id = s.game_id\n               WHERE s.user_id = ? AND s.played_on >= date('now', ?)\n               GROUP BY g.id\n               ORDER BY COUNT(*) DESC, SUM(s.minutes) DESC, g.sort_title\n               LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "cover_path",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "cover_path"
+          }
+        }
+      },
+      {
+        "name": "sessions!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "c1050033d7fcdfafb1258edbef5f2dca26b17a3d0f8121f84572fa1c0199e703"
+}

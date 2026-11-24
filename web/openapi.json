@@ -6661,6 +6661,13 @@
           "sessions"
         ],
         "properties": {
+          "cover_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative to the covers URL."
+          },
           "game_id": {
             "type": "integer",
             "format": "int64"

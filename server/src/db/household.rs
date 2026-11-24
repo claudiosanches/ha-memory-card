@@ -52,6 +52,8 @@ pub struct PersonTotals {
 pub struct TopGame {
     pub game_id: i64,
     pub title: String,
+    /// Relative to the covers URL.
+    pub cover_path: Option<String>,
     pub sessions: i64,
 }
 
@@ -83,7 +85,7 @@ pub async fn totals(pool: &SqlitePool, period: Period) -> sqlx::Result<Vec<Perso
     for row in rows {
         let top_game = sqlx::query_as!(
             TopGame,
-            r#"SELECT g.id AS "game_id!", g.title, COUNT(*) AS "sessions!: i64"
+            r#"SELECT g.id AS "game_id!", g.title, g.cover_path, COUNT(*) AS "sessions!: i64"
                FROM play_sessions s JOIN games g ON g.id = s.game_id
                WHERE s.user_id = ? AND s.played_on >= date('now', ?)
                GROUP BY g.id
