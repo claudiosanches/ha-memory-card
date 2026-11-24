@@ -52,6 +52,7 @@
   .mantine-Button-root:where(:not([data-variant='subtle'], [data-variant='transparent'], :disabled, [data-disabled])),
   .mantine-ActionIcon-root:where(:not([data-variant='subtle'], [data-variant='transparent'], :disabled, [data-disabled])),
   .mantine-SegmentedControl-indicator,
+  .mantine-Chip-label:where(:not([data-disabled])),
   .mc-filter[aria-pressed='true'] {
     background-image: var(--portal-button-gloss);
     box-shadow: inset 0 1px var(--portal-highlight), inset 0 -1px var(--portal-shadow);

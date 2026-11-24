@@ -89,6 +89,7 @@ export const internet2000s = {
       ...chartColors.dark,
       '--mc-chart-bar': '#6282f2',
       '--mc-chart-physical': '#6282f2',
+      '--mc-chart-digital': '#5cc8ff',
     },
   },
 };

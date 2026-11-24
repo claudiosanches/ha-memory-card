@@ -65,6 +65,23 @@ export const chartColors = {
   },
 };
 
+/** Shared contrast adjustments applied beneath each theme's light/dark tokens. */
+export const sharedVariables = {
+  variables: {},
+  light: {
+    '--mantine-color-placeholder': 'var(--mc-muted)',
+    // Mantine's stock light-variant text colors for warm/green hues fall below 4.5:1 on light tints.
+    '--mantine-color-yellow-light-color': '#8f4700',
+    '--mantine-color-orange-light-color': '#a83200',
+    '--mantine-color-green-light-color': '#1f6b2e',
+    '--mantine-color-lime-light-color': '#3f6a00',
+    '--mantine-color-teal-light-color': '#06694b',
+  },
+  dark: {
+    '--mantine-color-placeholder': 'var(--mc-muted)',
+  },
+};
+
 export const variables = {
   variables: {
     '--mc-background-image': 'none',
@@ -93,11 +110,15 @@ export const variables = {
     '--mc-border': '#303b48',
     '--mc-muted': '#a1acba',
     '--mc-selected': '#2a3440',
-    '--mc-on-accent': '#11243b',
+    '--mc-on-accent': '#ffffff',
     '--mc-cover-shadow': '0 5px 15px #00000040, 0 1px 3px #00000030',
     '--mantine-color-dimmed': '#a1acba',
     '--mantine-color-text': 'var(--mantine-color-dark-0)',
+    '--mantine-color-gray-light': '#2c3542',
+    '--mantine-color-gray-light-hover': '#364151',
+    '--mantine-color-gray-light-color': '#e7ebf0',
     ...chartColors.dark,
+    '--mc-chart-bar': '#4dabf7',
     '--mc-chart-physical': '#9085e9',
     '--mc-chart-digital': '#199e70',
   },

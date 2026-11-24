@@ -3,7 +3,7 @@ import { useLocalStorage } from '@mantine/hooks';
 import { createContext, useContext, useLayoutEffect, type ReactNode } from 'react';
 import { sharedTheme } from '../mantine';
 import { palette } from './default/palette';
-import { variables } from './default/variables';
+import { sharedVariables, variables } from './default/variables';
 import { internet2000s } from './internet-2000s';
 import { retro } from './retro';
 
@@ -41,7 +41,11 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     <AppearanceContext.Provider value={{ themeId: selected.id, selectTheme }}>
       <MantineProvider
         theme={mergeThemeOverrides(sharedTheme, selected.palette)}
-        cssVariablesResolver={() => selected.variables}
+        cssVariablesResolver={() => ({
+          variables: { ...sharedVariables.variables, ...selected.variables.variables },
+          light: { ...sharedVariables.light, ...selected.variables.light },
+          dark: { ...sharedVariables.dark, ...selected.variables.dark },
+        })}
         defaultColorScheme="auto"
       >
         {children}

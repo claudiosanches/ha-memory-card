@@ -3,6 +3,8 @@ import { IconCheck } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { STATUS_COLORS, type StatusColor } from '../api/types';
 
+const LIGHT_SWATCHES = new Set<StatusColor>(['yellow', 'lime']);
+
 /** One of the palette colors play statuses and labels use, as a row of swatches. */
 export function ColorPicker({
   label,
@@ -31,7 +33,7 @@ export function ColorPicker({
               onClick={() => onChange(color)}
               style={{ cursor: 'pointer' }}
             >
-              {selected && <IconCheck size={14} color="white" />}
+              {selected && <IconCheck size={14} color={LIGHT_SWATCHES.has(color) ? 'var(--mantine-color-black)' : 'white'} />}
             </ColorSwatch>
           );
         })}
