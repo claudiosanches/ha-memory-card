@@ -432,6 +432,33 @@ currency of the copy priced last, else in Home Assistant's currency.
 Memory Card reads Home Assistant's language and currency once after it
 starts. Restart the app after changing either of them in Home Assistant.
 
+## Themes
+
+Memory Card comes in 13 themes, each with a light and a dark version. To
+pick one, go to **Settings > Appearance > Theme**. The button at the top
+right switches between light, dark and your system's setting, and so does
+**Color scheme** under **Settings > Appearance**. Both choices are saved in
+that browser, so each person and each device keeps their own.
+
+The first five keep to quiet colors and let the covers stand out. The rest
+give the whole app a style of its own.
+
+| Theme | Look |
+| --- | --- |
+| Default | Cool slate with teal accents, blue in the dark. |
+| Monochrome | Black, white and grays with no tint, so the covers bring the color. |
+| Warm Stone | Cream and travertine with espresso and sand accents. |
+| Slate | Low-glare slate and frost blue, easy on the eyes for long browsing. |
+| Sage | Pale mist, or forest charcoal in the dark, with eucalyptus accents. |
+| Retro | An 80s console: parchment or charcoal, faint scanlines, orange and gold stripes and a pixel-art gamepad. |
+| 2000's Internet | A glossy game portal: enamel blue headers, glass buttons, a starfield and a spinning globe. |
+| Steampunk | Vellum and mahogany, serif headings, brass controls, ledger tabs and gears. |
+| Dieselpunk | 1930s Art Deco: tread-plate steel, sharp corners, uppercase headings, amber accents and a pressure gauge. |
+| Cyberpunk | Neon magenta, violet and cyan over a grid, with a city skyline. |
+| Circuit | Monospace wireframe: a green dot matrix in light, a phosphor CRT in dark, and a microchip. |
+| Pastel Plush | Soft and rounded: strawberry cream with a bunny in light, berry plum with a teddy bear in dark. |
+| Cursed 90's | A 1996 home page: square bevels, Tahoma and Courier, a speckled or starfield background and an Under Construction sign. |
+
 ## Data and backups
 
 Everything the app stores lives in the app's data folder, which Home Assistant
