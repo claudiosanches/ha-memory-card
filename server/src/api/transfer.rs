@@ -15,11 +15,11 @@ use crate::AppState;
 use crate::access::Actor;
 use crate::db::devices::DeviceKind;
 use crate::db::library::{LibraryFilter, Ownership};
+use crate::db::transfer::{self, snapshot::Snapshot};
 use crate::error::{ApiError, ApiResult, ErrorBody};
 use crate::transfer::parse::{FileIssue, HeaderMatch, headers, parse};
 use crate::transfer::plan::{Plan, Ref, RowAction, RowReport, plan};
-use crate::transfer::snapshot::{self, Snapshot};
-use crate::transfer::{apply, export, template};
+use crate::transfer::{export, template};
 
 #[derive(Debug, Default, Serialize, ToSchema)]
 pub struct ImportSummary {
@@ -210,8 +210,7 @@ pub async fn preview(
 ) -> ApiResult<Json<ImportPreview>> {
     let mut preview = match parse(&body) {
         Ok(rows) => {
-            let mut conn = state.db.acquire().await?;
-            let snapshot = snapshot::load(&mut conn, &by).await?;
+            let snapshot = transfer::snapshot(&state.db, &by).await?;
             let plan = plan(&rows, &snapshot);
             preview_of(plan, &snapshot)
         }
@@ -242,17 +241,7 @@ pub async fn run(
         field: None,
     })?;
 
-    let mut tx = crate::db::write_tx(&state.db).await?;
-    let snapshot = snapshot::load(&mut tx, &by).await?;
-    let plan = plan(&rows, &snapshot);
-    if plan.has_errors() {
-        return Err(ApiError::Invalid {
-            code: "import_invalid",
-            field: None,
-        });
-    }
-    apply::apply(&mut tx, &plan, &by).await?;
-    tx.commit().await?;
+    let plan = transfer::import(&state.db, &by, |snapshot| plan(&rows, snapshot)).await?;
 
     let summary = summarize(&plan);
     tracing::info!(
@@ -262,9 +251,7 @@ pub async fn run(
         updated_copies = summary.updated_copies,
         "import applied"
     );
-    let unlinked_games = sqlx::query_scalar("SELECT COUNT(*) FROM games WHERE igdb_id IS NULL")
-        .fetch_one(&state.db)
-        .await?;
+    let unlinked_games = crate::db::igdb::unlinked_count(&state.db).await?;
     Ok(Json(ImportResult {
         summary,
         unlinked_games,

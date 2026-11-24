@@ -1,11 +1,9 @@
 //! CSV import and export. One row per copy; a row with only game columns
 //! describes a game with no copies.
 
-pub mod apply;
 pub mod export;
 pub mod parse;
 pub mod plan;
-pub mod snapshot;
 
 /// Column order for export and the blank template.
 pub const COLUMNS: [&str; 23] = [

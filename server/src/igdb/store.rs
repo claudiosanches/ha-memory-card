@@ -6,19 +6,16 @@
 
 use std::path::Path;
 
-use sqlx::{Sqlite, SqlitePool, Transaction};
 use time::OffsetDateTime;
 use time::macros::format_description;
 
 use super::{GameData, Igdb, Localization, MultiplayerMode};
 use crate::covers::{self, Owner};
+use crate::db::Pool;
 use crate::db::games::PlayerCounts;
-use crate::db::write_tx;
+use crate::db::igdb::{self as db, Covers, GameUpdate, Release, ReleaseUpdate, Tag};
 use crate::domain::sort_title;
 use crate::error::{ApiError, ApiResult};
-use crate::slug::{self, Table};
-
-const NOW: &str = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
 
 /// `cover_source` of an uploaded cover. IGDB never replaces one.
 const UPLOAD: &str = "upload";
@@ -29,7 +26,7 @@ const WORLDWIDE: i64 = 8;
 /// Links `game_id` to `data.id` and stores its metadata. `Conflict("igdb_linked")`
 /// when another game already has that IGDB id.
 pub async fn apply(
-    pool: &SqlitePool,
+    pool: &Pool,
     covers_dir: &Path,
     igdb: &Igdb,
     game_id: i64,
@@ -37,244 +34,104 @@ pub async fn apply(
     overwrite: bool,
 ) -> ApiResult<()> {
     // Checked before downloading covers; the unique index still decides.
-    let taken: bool =
-        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM games WHERE igdb_id = ? AND id != ?)")
-            .bind(data.id)
-            .bind(game_id)
-            .fetch_one(pool)
-            .await?;
-    if taken {
+    if db::linked_elsewhere(pool, data.id, game_id).await? {
         return Err(ApiError::Conflict("igdb_linked"));
     }
 
-    let releases = releases(pool, game_id).await?;
+    let releases = db::releases(pool, game_id).await?;
     let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
-
-    // The stored value wins unless overwriting; a missing IGDB value never clears one.
-    let fill = |column: &'static str, param: u8| {
-        if overwrite {
-            format!("{column} = COALESCE(?{param}, {column})")
-        } else {
-            format!("{column} = COALESCE({column}, ?{param})")
-        }
-    };
-
-    let mut tx = write_tx(pool).await?;
-    let game_counts = game_counts(&data.multiplayer_modes);
     let (developers, publishers) = companies(data);
     let igdb_title = Some(data.name.trim()).filter(|t| !t.is_empty());
-    let title = igdb_title.filter(|_| overwrite);
-    sqlx::query(sqlx::AssertSqlSafe(format!(
-        "UPDATE games SET igdb_id = ?1, {summary},
-            first_release_date = COALESCE(?3, first_release_date),
-            developers = ?4, publishers = ?5,
-            {local_max}, {online_max}, {local_coop}, {online_coop},
-            title = COALESCE(?11, title), sort_title = COALESCE(?12, sort_title),
-            igdb_title = COALESCE(?13, igdb_title),
-            igdb_synced_at = {NOW}, updated_at = {NOW}
-         WHERE id = ?10",
-        summary = fill("summary", 2),
-        local_max = fill("local_max_players", 6),
-        online_max = fill("online_max_players", 7),
-        local_coop = fill("local_coop", 8),
-        online_coop = fill("online_coop", 9),
-    )))
-    .bind(data.id)
-    .bind(data.summary.as_deref().filter(|s| !s.trim().is_empty()))
-    .bind(data.first_release_date.and_then(date))
-    .bind(serde_json::to_string(&developers).expect("strings serialize"))
-    .bind(serde_json::to_string(&publishers).expect("strings serialize"))
-    .bind(game_counts.local_max_players)
-    .bind(game_counts.online_max_players)
-    .bind(game_counts.local_coop)
-    .bind(game_counts.online_coop)
-    .bind(game_id)
-    .bind(title)
-    .bind(title.map(sort_title))
-    .bind(igdb_title)
-    .execute(&mut *tx)
-    .await
-    .map_err(|err| ApiError::unique(err, "igdb_linked"))?;
-
-    sqlx::query("DELETE FROM game_names WHERE game_id = ? AND source = 'igdb'")
-        .bind(game_id)
-        .execute(&mut *tx)
-        .await?;
-    for alternative in &data.alternative_names {
-        let name = alternative.name.trim();
-        if name.is_empty() {
-            continue;
-        }
-        // A name added by hand stays as it is.
-        sqlx::query(
-            "INSERT OR IGNORE INTO game_names (game_id, name, source, comment) VALUES (?, ?, 'igdb', ?)",
-        )
-        .bind(game_id)
-        .bind(name)
-        .bind(alternative.comment.as_deref().map(str::trim).filter(|c| !c.is_empty()))
-        .execute(&mut *tx)
-        .await?;
-    }
-
-    sqlx::query("DELETE FROM game_links WHERE game_id = ?")
-        .bind(game_id)
-        .execute(&mut *tx)
-        .await?;
-    for (igdb_id, kind) in data.links() {
-        sqlx::query("INSERT OR IGNORE INTO game_links (game_id, igdb_id, kind) VALUES (?, ?, ?)")
-            .bind(game_id)
-            .bind(igdb_id)
-            .bind(kind)
-            .execute(&mut *tx)
-            .await?;
-    }
-
-    sqlx::query("DELETE FROM game_genres WHERE game_id = ?")
-        .bind(game_id)
-        .execute(&mut *tx)
-        .await?;
-    for genre in &data.genres {
-        let id = tag_id(
-            &mut tx,
-            Table::Genres,
-            "igdb_genre_id",
-            genre.id,
-            &genre.name,
-            &genre.name,
-        )
-        .await?;
-        sqlx::query("INSERT OR IGNORE INTO game_genres (game_id, genre_id) VALUES (?, ?)")
-            .bind(game_id)
-            .bind(id)
-            .execute(&mut *tx)
-            .await?;
-    }
-
-    let replace_modes = overwrite && !data.game_modes.is_empty();
-    if replace_modes {
-        sqlx::query("DELETE FROM game_game_modes WHERE game_id = ?")
-            .bind(game_id)
-            .execute(&mut *tx)
-            .await?;
-    }
-    let has_modes: bool =
-        sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM game_game_modes WHERE game_id = ?)")
-            .bind(game_id)
-            .fetch_one(&mut *tx)
-            .await?;
-    if !has_modes {
-        for mode in &data.game_modes {
-            let slug = mode.slug.as_deref().unwrap_or(&mode.name);
-            let id = tag_id(
-                &mut tx,
-                Table::GameModes,
-                "igdb_game_mode_id",
-                mode.id,
-                &mode.name,
-                slug,
-            )
-            .await?;
-            sqlx::query(
-                "INSERT OR IGNORE INTO game_game_modes (game_id, game_mode_id) VALUES (?, ?)",
-            )
-            .bind(game_id)
-            .bind(id)
-            .execute(&mut *tx)
-            .await?;
-        }
-    }
-
-    let release_sql = format!(
-        "UPDATE releases SET {}, {}, {}, {}, {}, {}, updated_at = {NOW} WHERE id = ?7",
-        fill("local_max_players", 1),
-        fill("online_max_players", 2),
-        fill("local_coop", 3),
-        fill("online_coop", 4),
-        fill("release_date", 5),
-        fill("title", 6),
-    );
-    for release in &releases {
-        let platform = release.igdb_platform_id;
-        let c = platform
-            .and_then(|p| {
-                data.multiplayer_modes
-                    .iter()
-                    .find(|m| m.platform == Some(p))
+    let update = GameUpdate {
+        igdb_id: data.id,
+        summary: data.summary.as_deref().filter(|s| !s.trim().is_empty()),
+        first_release_date: data.first_release_date.and_then(date),
+        developers,
+        publishers,
+        counts: game_counts(&data.multiplayer_modes),
+        title: igdb_title
+            .filter(|_| overwrite)
+            .map(|title| (title, sort_title(title))),
+        igdb_title,
+        names: data
+            .alternative_names
+            .iter()
+            .map(|alternative| {
+                let comment = alternative.comment.as_deref().map(str::trim);
+                (alternative.name.trim(), comment.filter(|c| !c.is_empty()))
             })
-            .map(counts)
-            .unwrap_or_default();
-        sqlx::query(sqlx::AssertSqlSafe(release_sql.clone()))
-            .bind(c.local_max_players)
-            .bind(c.online_max_players)
-            .bind(c.local_coop)
-            .bind(c.online_coop)
-            .bind(platform.and_then(|p| release_date(data, p, &release.region)))
-            .bind(release_title(data, &release.region))
-            .bind(release.id)
-            .execute(&mut *tx)
-            .await?;
-    }
-
-    let changed = write_covers(&mut tx, game_id, &covers).await?;
-    tx.commit().await?;
+            .filter(|(name, _)| !name.is_empty())
+            .collect(),
+        links: data.links(),
+        genres: data
+            .genres
+            .iter()
+            .map(|genre| Tag {
+                igdb_id: genre.id,
+                name: &genre.name,
+                slug_from: &genre.name,
+            })
+            .collect(),
+        game_modes: data
+            .game_modes
+            .iter()
+            .map(|mode| Tag {
+                igdb_id: mode.id,
+                name: &mode.name,
+                slug_from: mode.slug.as_deref().unwrap_or(&mode.name),
+            })
+            .collect(),
+        replace_modes: overwrite && !data.game_modes.is_empty(),
+        releases: releases
+            .iter()
+            .map(|release| {
+                let platform = release.igdb_platform_id;
+                ReleaseUpdate {
+                    id: release.id,
+                    counts: platform
+                        .and_then(|p| {
+                            data.multiplayer_modes
+                                .iter()
+                                .find(|m| m.platform == Some(p))
+                        })
+                        .map(counts)
+                        .unwrap_or_default(),
+                    release_date: platform.and_then(|p| release_date(data, p, &release.region)),
+                    title: release_title(data, &release.region),
+                }
+            })
+            .collect(),
+    };
+    let changed = db::write(pool, game_id, &update, overwrite, &covers).await?;
     clean_up(covers_dir, changed).await;
     Ok(())
 }
 
 /// Downloads and stores the game's IGDB covers without touching its other data.
 pub async fn refresh_covers(
-    pool: &SqlitePool,
+    pool: &Pool,
     covers_dir: &Path,
     igdb: &Igdb,
     game_id: i64,
     data: &GameData,
 ) -> ApiResult<()> {
-    let releases = releases(pool, game_id).await?;
+    let releases = db::releases(pool, game_id).await?;
     let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
-    let mut tx = write_tx(pool).await?;
-    let changed = write_covers(&mut tx, game_id, &covers).await?;
-    tx.commit().await?;
+    let changed = db::write_covers(pool, game_id, &covers).await?;
     clean_up(covers_dir, changed).await;
     Ok(())
 }
 
-#[derive(sqlx::FromRow)]
-struct ReleaseRow {
-    id: i64,
-    region: String,
-    igdb_platform_id: Option<i64>,
-    cover_source: Option<String>,
-}
-
-async fn releases(pool: &SqlitePool, game_id: i64) -> sqlx::Result<Vec<ReleaseRow>> {
-    sqlx::query_as(
-        "SELECT r.id, r.region, p.igdb_platform_id, r.cover_source
-         FROM releases r JOIN platforms p ON p.id = r.platform_id WHERE r.game_id = ?",
-    )
-    .bind(game_id)
-    .fetch_all(pool)
-    .await
-}
-
-/// Downloaded covers, relative to the covers directory. Uploads are skipped.
-struct Covers {
-    /// `None` keeps the stored cover.
-    game: Option<String>,
-    /// IGDB owns regional covers, so `None` clears one.
-    releases: Vec<(i64, Option<String>)>,
-}
-
+/// Downloads the covers; uploads are skipped.
 async fn download_covers(
-    pool: &SqlitePool,
+    pool: &Pool,
     covers_dir: &Path,
     igdb: &Igdb,
     game_id: i64,
     data: &GameData,
-    releases: &[ReleaseRow],
+    releases: &[Release],
 ) -> ApiResult<Covers> {
-    let source: Option<String> = sqlx::query_scalar("SELECT cover_source FROM games WHERE id = ?")
-        .bind(game_id)
-        .fetch_optional(pool)
+    let source = db::cover_source(pool, game_id)
         .await?
         .ok_or(ApiError::NotFound)?;
     let game = match data.cover.as_ref().map(|c| c.image_id.as_str()) {
@@ -315,87 +172,10 @@ async fn download_covers(
     })
 }
 
-/// Stores the covers unless an upload arrived meanwhile, and returns what changed.
-async fn write_covers(
-    tx: &mut Transaction<'static, Sqlite>,
-    game_id: i64,
-    covers: &Covers,
-) -> sqlx::Result<Vec<(Owner, Option<String>)>> {
-    let mut changed = Vec::new();
-    if let Some(path) = &covers.game {
-        let result = sqlx::query(
-            "UPDATE games SET cover_path = ?, cover_source = 'igdb'
-             WHERE id = ? AND cover_source IS NOT 'upload'",
-        )
-        .bind(path)
-        .bind(game_id)
-        .execute(&mut **tx)
-        .await?;
-        if result.rows_affected() > 0 {
-            changed.push((Owner::Game(game_id), Some(path.clone())));
-        }
-    }
-    for (release_id, path) in &covers.releases {
-        let result = sqlx::query(
-            "UPDATE releases SET cover_path = ?1,
-                cover_source = CASE WHEN ?1 IS NULL THEN NULL ELSE 'igdb_localization' END
-             WHERE id = ?2 AND cover_source IS NOT 'upload'",
-        )
-        .bind(path)
-        .bind(release_id)
-        .execute(&mut **tx)
-        .await?;
-        if result.rows_affected() > 0 {
-            changed.push((Owner::Release(*release_id), path.clone()));
-        }
-    }
-    Ok(changed)
-}
-
 async fn clean_up(covers_dir: &Path, changed: Vec<(Owner, Option<String>)>) {
     for (owner, kept) in changed {
         covers::keep_only(covers_dir, owner, kept.as_deref()).await;
     }
-}
-
-/// Finds a genre or game mode by IGDB id, then by name, or creates it.
-async fn tag_id(
-    tx: &mut Transaction<'static, Sqlite>,
-    table: Table,
-    igdb_column: &'static str,
-    igdb_id: i64,
-    name: &str,
-    slug_from: &str,
-) -> sqlx::Result<i64> {
-    let table_name = table.name();
-    let found: Option<i64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT id FROM {table_name} WHERE {igdb_column} = ?1
-         UNION ALL SELECT id FROM {table_name} WHERE name = ?2 AND {igdb_column} IS NULL
-         LIMIT 1"
-    )))
-    .bind(igdb_id)
-    .bind(name)
-    .fetch_optional(&mut **tx)
-    .await?;
-    if let Some(id) = found {
-        sqlx::query(sqlx::AssertSqlSafe(format!(
-            "UPDATE {table_name} SET {igdb_column} = ? WHERE id = ?"
-        )))
-        .bind(igdb_id)
-        .bind(id)
-        .execute(&mut **tx)
-        .await?;
-        return Ok(id);
-    }
-    let slug = slug::free(tx, table, slug_from).await?;
-    sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "INSERT INTO {table_name} ({igdb_column}, name, slug) VALUES (?, ?, ?) RETURNING id"
-    )))
-    .bind(igdb_id)
-    .bind(name)
-    .bind(slug)
-    .fetch_one(&mut **tx)
-    .await
 }
 
 /// Earliest date for the platform in the release's region, else worldwide.

@@ -1,12 +1,13 @@
 //! Picks an owned game to play next.
 
 use serde::{Deserialize, Serialize};
-use sqlx::{QueryBuilder, SqlitePool};
+use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use super::games::{self, GameDetail};
 use super::library::{self, DeviceMatch, LibraryFilter, Ownership, StatusFilter};
 use super::play_statuses;
+use super::sql::Sql;
 use crate::error::{ApiError, ApiResult};
 use crate::slug::Slug;
 
@@ -85,7 +86,7 @@ pub async fn suggest(
     .execute(&mut *tx)
     .await?;
 
-    let mut pick = QueryBuilder::new(
+    let mut pick = Sql::new(
         "SELECT id FROM (
              SELECT g.id, (SELECT MAX(suggested_at) FROM suggestions s
                            WHERE s.user_id = ",
@@ -124,7 +125,7 @@ pub async fn suggest(
     .execute(&mut *tx)
     .await?;
 
-    let mut copies = QueryBuilder::new(
+    let mut copies = Sql::new(
         "SELECT c.id FROM copies c JOIN releases r ON r.id = c.release_id
          JOIN games g ON g.id = r.game_id WHERE g.id = ",
     );

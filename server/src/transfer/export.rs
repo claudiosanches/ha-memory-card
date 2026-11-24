@@ -1,91 +1,8 @@
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
-
 use super::{COLUMNS, UTF8_BOM};
-use crate::db::library::{self, LibraryFilter};
-use crate::domain::{Condition, CopyStatus, Format, Region};
+use crate::db::Pool;
+use crate::db::library::LibraryFilter;
+use crate::db::transfer::export::rows;
 use crate::money;
-
-#[derive(sqlx::FromRow)]
-struct ExportRow {
-    copy_id: Option<i64>,
-    status: Option<CopyStatus>,
-    igdb_id: Option<i64>,
-    game_title: String,
-    play_status: Option<String>,
-    labels: Option<String>,
-    platform: Option<String>,
-    region: Option<Region>,
-    release_title: Option<String>,
-    product_code: Option<String>,
-    format: Option<Format>,
-    device: Option<String>,
-    store: Option<String>,
-    condition: Option<Condition>,
-    notes: Option<String>,
-    edition: Option<String>,
-    purchased_on: Option<String>,
-    price: Option<i64>,
-    currency: Option<String>,
-    estimated_value: Option<i64>,
-    estimated_currency: Option<String>,
-    barcode: Option<String>,
-    bundle_copy_id: Option<i64>,
-}
-
-/// Copies matching the library filters, as CSV. Without copy filters, games
-/// with no copies get a row of their own.
-pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
-    let mut qb = QueryBuilder::new(
-        "SELECT copy_id, status, igdb_id, game_title, play_status,
-                (SELECT group_concat(l.name, '; ' ORDER BY l.name COLLATE NOCASE)
-                 FROM game_labels gl JOIN labels l ON l.id = gl.label_id
-                 WHERE gl.game_id = rows.game_id) AS labels,
-                platform, region,
-                release_title, product_code, format, device, store, condition, notes,
-                edition, purchased_on, price, currency, estimated_value, estimated_currency,
-                barcode, bundle_copy_id
-         FROM (
-             SELECT c.id AS copy_id, c.status, g.igdb_id, g.title AS game_title,
-                    (SELECT play_status FROM play_progress WHERE user_id = ",
-    );
-    qb.push_bind(filter.person.clone()).push(
-        " AND game_id = g.id) AS play_status,
-                    p.name AS platform, r.region, r.title AS release_title, r.product_code,
-                    c.format, d.name AS device, s.name AS store, c.condition, c.notes,
-                    c.edition, c.purchased_on, c.price, c.currency, c.estimated_value,
-                    c.estimated_currency, c.barcode, c.bundle_id AS bundle_copy_id,
-                    g.sort_title, g.id AS game_id, p.sort_order AS platform_order
-             FROM copies c
-             JOIN releases r ON r.id = c.release_id
-             JOIN games g ON g.id = r.game_id
-             JOIN platforms p ON p.id = r.platform_id
-             LEFT JOIN devices d ON d.id = c.device_id
-             LEFT JOIN stores s ON s.id = c.store_id
-             WHERE 1 = 1",
-    );
-    library::push_copy_filters(&mut qb, filter, library::DeviceMatch::Assigned);
-    library::push_game_filters(&mut qb, filter);
-    if !library::has_copy_filters(filter) {
-        qb.push(
-            " UNION ALL
-             SELECT NULL, NULL, g.igdb_id, g.title,
-                    (SELECT play_status FROM play_progress WHERE user_id = ",
-        );
-        qb.push_bind(filter.person.clone()).push(
-            " AND game_id = g.id),
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    g.sort_title, g.id, NULL
-             FROM games g
-             WHERE NOT EXISTS (
-                 SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
-                 WHERE r.game_id = g.id)",
-        );
-        library::push_game_filters(&mut qb, filter);
-    }
-    qb.push(") AS rows ORDER BY sort_title, game_id, platform_order, region, copy_id");
-    qb
-}
 
 /// A cell that starts with one of these runs as a formula in a spreadsheet.
 const FORMULA_START: [char; 6] = ['=', '+', '-', '@', '\t', '\r'];
@@ -135,10 +52,8 @@ pub fn unplain(text: &str) -> String {
     out
 }
 
-pub async fn export(pool: &SqlitePool, filter: &LibraryFilter) -> Result<Vec<u8>, ExportError> {
-    let mut filter = filter.clone();
-    library::resolve_search(pool, &mut filter).await?;
-    let rows: Vec<ExportRow> = query(&filter).build_query_as().fetch_all(pool).await?;
+pub async fn export(pool: &Pool, filter: &LibraryFilter) -> Result<Vec<u8>, ExportError> {
+    let rows = rows(pool, filter).await?;
 
     let mut out = UTF8_BOM.to_vec();
     {

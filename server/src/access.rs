@@ -12,9 +12,9 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use http_body_util::BodyExt;
 use serde::Serialize;
-use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
+use crate::db::Pool;
 use crate::error::ErrorBody;
 
 // The Supervisor drops client copies of these and sets its own, so they can
@@ -229,7 +229,7 @@ impl Drop for Place {
 }
 
 /// Keeps the names of users who change things. Runs after [`guard`].
-pub async fn remember(State(db): State<SqlitePool>, request: Request, next: Next) -> Response {
+pub async fn remember(State(db): State<Pool>, request: Request, next: Next) -> Response {
     if !is_read(request.method())
         && let Some(access) = request.extensions().get::<Access>()
         && let Err(err) = crate::db::users::record(&db, &access.user).await

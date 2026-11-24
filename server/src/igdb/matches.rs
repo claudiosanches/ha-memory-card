@@ -3,10 +3,11 @@
 use std::collections::HashMap;
 
 use serde::Serialize;
-use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use super::{Igdb, IgdbError, SearchHit};
+use crate::db::Pool;
+use crate::db::igdb as db;
 use crate::domain::search_key;
 
 /// Candidates kept per game.
@@ -40,46 +41,28 @@ pub enum MatchError {
 
 /// Unlinked, unskipped games after `after`, by id, with their candidates.
 pub async fn next(
-    pool: &SqlitePool,
+    pool: &Pool,
     igdb: &Igdb,
     after: i64,
     limit: i64,
 ) -> Result<Vec<MatchGroup>, MatchError> {
-    let games = sqlx::query!(
-        r#"SELECT id AS "id!", title FROM games
-           WHERE igdb_id IS NULL AND igdb_skipped = 0 AND id > ?
-           ORDER BY id LIMIT ?"#,
-        after,
-        limit
-    )
-    .fetch_all(pool)
-    .await?;
-    let linked: Vec<(i64, i64)> =
-        sqlx::query_as("SELECT igdb_id, id FROM games WHERE igdb_id IS NOT NULL")
-            .fetch_all(pool)
-            .await?;
+    let games = db::to_review(pool, after, limit).await?;
+    let linked = db::linked(pool).await?;
 
     let mut groups = Vec::with_capacity(games.len());
-    for game in games {
-        let platforms = sqlx::query_scalar!(
-            r#"SELECT p.name FROM platforms p
-               WHERE EXISTS (SELECT 1 FROM releases r WHERE r.platform_id = p.id AND r.game_id = ?)
-               ORDER BY p.sort_order, p.name"#,
-            game.id
-        )
-        .fetch_all(pool)
-        .await?;
+    for (game_id, title) in games {
+        let platforms = db::platform_names(pool, game_id).await?;
         let mut candidates: Vec<MatchCandidate> = igdb
-            .search(&game.title)
+            .search(&title)
             .await?
             .into_iter()
             .map(|mut hit| {
                 hit.game_id = linked
                     .iter()
-                    .find(|(igdb_id, _)| *igdb_id == hit.igdb_id)
-                    .map(|(_, id)| *id);
+                    .find(|(_, igdb_id)| *igdb_id == hit.igdb_id)
+                    .map(|(id, _)| *id);
                 MatchCandidate {
-                    score: similarity(&game.title, &hit.name),
+                    score: similarity(&title, &hit.name),
                     hit,
                 }
             })
@@ -88,8 +71,8 @@ pub async fn next(
         candidates.sort_by_key(|c| std::cmp::Reverse(c.score));
         candidates.truncate(CANDIDATES);
         groups.push(MatchGroup {
-            game_id: game.id,
-            title: game.title,
+            game_id,
+            title,
             platforms,
             candidates,
         });

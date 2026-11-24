@@ -1,7 +1,7 @@
 use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use time::Date;
 use time::macros::format_description;
 use utoipa::ToSchema;
@@ -11,7 +11,7 @@ use crate::AppState;
 use crate::access::Actor;
 use crate::covers::{self, Owner};
 use crate::db::games::{
-    self, CopyFields, GameDetail, GameFields, PlayerCounts, Price, ReleaseFields,
+    self, CopyFields, GameDetail, GameFields, GameMode, Genre, PlayerCounts, Price, ReleaseFields,
 };
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
 use crate::db::{labels, progress};
@@ -113,20 +113,6 @@ pub struct ReleaseInput {
     pub local_coop: Option<bool>,
     #[serde(default)]
     pub online_coop: Option<bool>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct GameMode {
-    pub id: i64,
-    pub name: String,
-    pub slug: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Genre {
-    pub id: i64,
-    pub name: String,
-    pub slug: String,
 }
 
 pub(super) fn date(value: Option<&str>, field: &'static str) -> ApiResult<Option<String>> {
@@ -560,14 +546,7 @@ pub async fn delete_release(
     responses((status = OK, body = Vec<GameMode>))
 )]
 pub async fn game_modes(State(state): State<AppState>) -> ApiResult<Json<Vec<GameMode>>> {
-    Ok(Json(
-        sqlx::query_as!(
-            GameMode,
-            r#"SELECT id AS "id!", name, slug FROM game_modes ORDER BY id"#
-        )
-        .fetch_all(&state.db)
-        .await?,
-    ))
+    Ok(Json(games::game_modes(&state.db).await?))
 }
 
 #[utoipa::path(
@@ -575,12 +554,5 @@ pub async fn game_modes(State(state): State<AppState>) -> ApiResult<Json<Vec<Gam
     responses((status = OK, body = Vec<Genre>))
 )]
 pub async fn genres(State(state): State<AppState>) -> ApiResult<Json<Vec<Genre>>> {
-    Ok(Json(
-        sqlx::query_as!(
-            Genre,
-            r#"SELECT id AS "id!", name, slug FROM genres ORDER BY name"#
-        )
-        .fetch_all(&state.db)
-        .await?,
-    ))
+    Ok(Json(games::genres(&state.db).await?))
 }

@@ -39,12 +39,7 @@ pub struct Status {
     )
 )]
 pub async fn get_status(State(state): State<AppState>) -> Result<Json<Status>, ApiError> {
-    let last_currency: Option<String> = sqlx::query_scalar(
-        "SELECT currency FROM copies WHERE currency IS NOT NULL
-         ORDER BY updated_at DESC, id DESC LIMIT 1",
-    )
-    .fetch_optional(&state.db)
-    .await?;
+    let last_currency = crate::db::games::last_currency(&state.db).await?;
 
     let regional = crate::regional::get(&state).await.unwrap_or_default();
     let default_currency = state

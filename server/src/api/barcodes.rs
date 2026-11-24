@@ -6,7 +6,8 @@ use utoipa::ToSchema;
 use crate::AppState;
 use crate::access::{Access, Role};
 use crate::barcodes::{self, Product};
-use crate::domain::{self, CopyStatus, Region};
+use crate::db::games::{self, BarcodeCopy};
+use crate::domain;
 use crate::error::{ApiError, ApiPath, ApiResult, ErrorBody};
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -17,16 +18,6 @@ pub struct BarcodeLookup {
     pub copies: Vec<BarcodeCopy>,
     pub product: Option<Product>,
     pub lookup: LookupOutcome,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct BarcodeCopy {
-    pub copy_id: i64,
-    pub game_id: i64,
-    pub title: String,
-    pub platform_id: i64,
-    pub region: Region,
-    pub status: CopyStatus,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
@@ -59,17 +50,7 @@ pub async fn look_up(
     ApiPath(code): ApiPath<String>,
 ) -> ApiResult<Json<BarcodeLookup>> {
     let barcode = domain::barcode(&code).ok_or(ApiError::invalid("invalid_barcode", "barcode"))?;
-    let copies = sqlx::query_as!(
-        BarcodeCopy,
-        r#"SELECT c.id AS "copy_id!", g.id AS "game_id!", g.title, r.platform_id,
-                  r.region AS "region: Region", c.status AS "status: CopyStatus"
-           FROM copies c JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id
-           WHERE c.barcode = ?
-           ORDER BY g.sort_title, c.id"#,
-        barcode
-    )
-    .fetch_all(&state.db)
-    .await?;
+    let copies = games::with_barcode(&state.db, &barcode).await?;
 
     let (product, lookup) = if !copies.is_empty() {
         (None, LookupOutcome::InCollection)

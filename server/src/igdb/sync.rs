@@ -10,6 +10,7 @@ use utoipa::ToSchema;
 
 use super::{GameData, Igdb, store};
 use crate::AppState;
+use crate::db::igdb as db;
 use crate::error::{ApiError, ApiResult};
 
 const BATCH: usize = 100;
@@ -77,14 +78,8 @@ fn update(state: &AppState, change: impl FnOnce(&mut SyncStatus)) {
 }
 
 async fn run(state: &AppState, igdb: &Arc<Igdb>) -> sqlx::Result<()> {
-    let unlinked: Vec<(i64, String)> =
-        sqlx::query_as("SELECT id, title FROM games WHERE igdb_id IS NULL ORDER BY id")
-            .fetch_all(&state.db)
-            .await?;
-    let linked: Vec<(i64, i64)> =
-        sqlx::query_as("SELECT id, igdb_id FROM games WHERE igdb_id IS NOT NULL ORDER BY id")
-            .fetch_all(&state.db)
-            .await?;
+    let unlinked = db::unlinked(&state.db).await?;
+    let linked = db::linked(&state.db).await?;
     update(state, |s| s.total = unlinked.len() + linked.len());
 
     for (game_id, title) in unlinked {
@@ -149,13 +144,7 @@ async fn run(state: &AppState, igdb: &Arc<Igdb>) -> sqlx::Result<()> {
 /// one of those is on a platform the game has a release for.
 async fn match_title(state: &AppState, igdb: &Igdb, game_id: i64, title: &str) -> ApiResult<bool> {
     let candidates = igdb.named(title).await?;
-    let platforms: Vec<i64> = sqlx::query_scalar(
-        "SELECT DISTINCT p.igdb_platform_id FROM releases r JOIN platforms p ON p.id = r.platform_id
-         WHERE r.game_id = ? AND p.igdb_platform_id IS NOT NULL",
-    )
-    .bind(game_id)
-    .fetch_all(&state.db)
-    .await?;
+    let platforms = db::igdb_platforms(&state.db, game_id).await?;
     let Some(data) = choose(candidates, &platforms) else {
         return Ok(false);
     };

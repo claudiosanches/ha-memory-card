@@ -62,14 +62,8 @@ pub async fn search(
 
 /// Fills `game_id` for hits already in the collection.
 async fn mark_collected(state: &AppState, hits: &mut [SearchHit]) -> ApiResult<()> {
-    let ids = serde_json::to_string(&hits.iter().map(|hit| hit.igdb_id).collect::<Vec<_>>())
-        .expect("a list of numbers serializes");
-    let owned: Vec<(i64, i64)> = sqlx::query_as(
-        "SELECT igdb_id, id FROM games WHERE igdb_id IN (SELECT value FROM json_each(?))",
-    )
-    .bind(ids)
-    .fetch_all(&state.db)
-    .await?;
+    let ids: Vec<i64> = hits.iter().map(|hit| hit.igdb_id).collect();
+    let owned = crate::db::igdb::games_for(&state.db, &ids).await?;
     for hit in hits {
         hit.game_id = owned
             .iter()
@@ -199,12 +193,7 @@ pub async fn skip(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<axum::http::StatusCode> {
-    let result = sqlx::query!("UPDATE games SET igdb_skipped = 1 WHERE id = ?", id)
-        .execute(&state.db)
-        .await?;
-    if result.rows_affected() == 0 {
-        return Err(ApiError::NotFound);
-    }
+    crate::db::igdb::skip(&state.db, id).await?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 

@@ -3,9 +3,9 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
+use super::slugs::{self, Table};
 use crate::domain::StatusColor;
 use crate::error::{ApiError, ApiResult};
-use crate::slug::{self, Table};
 
 /// Separate labels in a CSV cell, so names cannot hold them.
 pub const SEPARATORS: [char; 2] = [',', ';'];
@@ -79,8 +79,8 @@ pub async fn for_game(pool: &SqlitePool, game_id: i64) -> sqlx::Result<Vec<GameL
 
 pub async fn create(pool: &SqlitePool, fields: &LabelFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slug::ensure_name_free(&mut tx, Table::Labels, &fields.name, None).await?;
-    let slug = slug::for_new(&mut tx, Table::Labels, fields.slug.as_deref(), &fields.name).await?;
+    slugs::ensure_name_free(&mut tx, Table::Labels, &fields.name, None).await?;
+    let slug = slugs::for_new(&mut tx, Table::Labels, fields.slug.as_deref(), &fields.name).await?;
     let id = sqlx::query_scalar!(
         r#"INSERT INTO labels (name, slug, color) VALUES (?, ?, ?) RETURNING id AS "id!""#,
         fields.name,
@@ -89,14 +89,14 @@ pub async fn create(pool: &SqlitePool, fields: &LabelFields) -> ApiResult<i64> {
     )
     .fetch_one(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
     tx.commit().await?;
     Ok(id)
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &LabelFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slug::ensure_name_free(&mut tx, Table::Labels, &fields.name, Some(id)).await?;
+    slugs::ensure_name_free(&mut tx, Table::Labels, &fields.name, Some(id)).await?;
     let result = sqlx::query!(
         "UPDATE labels
          SET name = ?, slug = COALESCE(?, slug), color = ?,
@@ -109,7 +109,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &LabelFields) -> ApiResu
     )
     .execute(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
     found(result.rows_affected())?;
     tx.commit().await?;
     Ok(())

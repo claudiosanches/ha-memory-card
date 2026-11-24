@@ -1036,3 +1036,70 @@ pub async fn set_uploaded_cover(
     .await?;
     Ok(result.rows_affected() > 0)
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GameMode {
+    pub id: i64,
+    pub name: String,
+    pub slug: String,
+}
+
+pub async fn game_modes(pool: &SqlitePool) -> sqlx::Result<Vec<GameMode>> {
+    sqlx::query_as!(
+        GameMode,
+        r#"SELECT id AS "id!", name, slug FROM game_modes ORDER BY id"#
+    )
+    .fetch_all(pool)
+    .await
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct Genre {
+    pub id: i64,
+    pub name: String,
+    pub slug: String,
+}
+
+pub async fn genres(pool: &SqlitePool) -> sqlx::Result<Vec<Genre>> {
+    sqlx::query_as!(
+        Genre,
+        r#"SELECT id AS "id!", name, slug FROM genres ORDER BY name"#
+    )
+    .fetch_all(pool)
+    .await
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct BarcodeCopy {
+    pub copy_id: i64,
+    pub game_id: i64,
+    pub title: String,
+    pub platform_id: i64,
+    pub region: Region,
+    pub status: CopyStatus,
+}
+
+/// Copies with this barcode, by game.
+pub async fn with_barcode(pool: &SqlitePool, barcode: &str) -> sqlx::Result<Vec<BarcodeCopy>> {
+    sqlx::query_as!(
+        BarcodeCopy,
+        r#"SELECT c.id AS "copy_id!", g.id AS "game_id!", g.title, r.platform_id,
+                  r.region AS "region: Region", c.status AS "status: CopyStatus"
+           FROM copies c JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id
+           WHERE c.barcode = ?
+           ORDER BY g.sort_title, c.id"#,
+        barcode
+    )
+    .fetch_all(pool)
+    .await
+}
+
+/// The currency of the copy changed last that has one.
+pub async fn last_currency(pool: &SqlitePool) -> sqlx::Result<Option<String>> {
+    sqlx::query_scalar(
+        "SELECT currency FROM copies WHERE currency IS NOT NULL
+         ORDER BY updated_at DESC, id DESC LIMIT 1",
+    )
+    .fetch_optional(pool)
+    .await
+}

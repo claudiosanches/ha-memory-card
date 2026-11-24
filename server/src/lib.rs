@@ -30,7 +30,6 @@ use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderName, HeaderValue, header};
 use axum::middleware;
-use sqlx::SqlitePool;
 use tower_http::services::ServeDir;
 use tower_http::set_header::{SetResponseHeader, SetResponseHeaderLayer};
 use tower_http::trace::TraceLayer;
@@ -44,7 +43,7 @@ use crate::tags::{PendingLink, TagsStatus};
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: SqlitePool,
+    pub db: db::Pool,
     pub config: Arc<Config>,
     /// `None` without credentials.
     pub igdb: Option<Arc<Igdb>>,
@@ -61,7 +60,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(db: SqlitePool, config: Arc<Config>) -> Self {
+    pub fn new(db: db::Pool, config: Arc<Config>) -> Self {
         let igdb = config
             .igdb
             .clone()

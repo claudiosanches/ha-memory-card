@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.name FROM platforms p\n               WHERE EXISTS (SELECT 1 FROM releases r WHERE r.platform_id = p.id AND r.game_id = ?)\n               ORDER BY p.sort_order, p.name",
+  "query": "SELECT p.name FROM platforms p\n           WHERE EXISTS (SELECT 1 FROM releases r WHERE r.platform_id = p.id AND r.game_id = ?)\n           ORDER BY p.sort_order, p.name",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "793d1e636dabfe6e0655125db19a82e7b480e26af295bd95f7e854a04b264815"
+  "hash": "caee21d394cb663b320e075f155e299edb2c8a766024eb2f39885c0a5c336f51"
 }

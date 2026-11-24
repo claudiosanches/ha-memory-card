@@ -3,8 +3,8 @@ use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use super::found;
+use super::slugs::{self, Table};
 use crate::error::{ApiError, ApiResult};
-use crate::slug::{self, Table};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Store {
@@ -52,8 +52,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Store> {
 
 pub async fn create(pool: &SqlitePool, fields: &StoreFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slug::ensure_name_free(&mut tx, Table::Stores, &fields.name, None).await?;
-    let slug = slug::for_new(&mut tx, Table::Stores, fields.slug.as_deref(), &fields.name).await?;
+    slugs::ensure_name_free(&mut tx, Table::Stores, &fields.name, None).await?;
+    let slug = slugs::for_new(&mut tx, Table::Stores, fields.slug.as_deref(), &fields.name).await?;
     let id = sqlx::query_scalar!(
         r#"INSERT INTO stores (name, slug, notes) VALUES (?, ?, ?) RETURNING id AS "id!""#,
         fields.name,
@@ -62,14 +62,14 @@ pub async fn create(pool: &SqlitePool, fields: &StoreFields) -> ApiResult<i64> {
     )
     .fetch_one(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
     tx.commit().await?;
     Ok(id)
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &StoreFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slug::ensure_name_free(&mut tx, Table::Stores, &fields.name, Some(id)).await?;
+    slugs::ensure_name_free(&mut tx, Table::Stores, &fields.name, Some(id)).await?;
     let result = sqlx::query!(
         "UPDATE stores
          SET name = ?, slug = COALESCE(?, slug), notes = ?,
@@ -82,7 +82,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &StoreFields) -> ApiResu
     )
     .execute(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
     found(result.rows_affected())?;
     tx.commit().await?;
     Ok(())

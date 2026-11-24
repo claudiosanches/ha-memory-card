@@ -4,8 +4,8 @@ use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
+use super::slugs::{self, Table};
 use crate::error::{ApiError, ApiResult};
-use crate::slug::{self, Table};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
@@ -115,8 +115,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Device> {
 pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
     let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
-    slug::ensure_name_free(&mut tx, Table::Devices, &fields.name, None).await?;
-    let slug = slug::for_new(
+    slugs::ensure_name_free(&mut tx, Table::Devices, &fields.name, None).await?;
+    let slug = slugs::for_new(
         &mut tx,
         Table::Devices,
         fields.slug.as_deref(),
@@ -137,7 +137,7 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
     )
     .fetch_one(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
 
     set_platforms(&mut tx, id, &platform_ids).await?;
     tx.commit().await?;
@@ -146,7 +146,7 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slug::ensure_name_free(&mut tx, Table::Devices, &fields.name, Some(id)).await?;
+    slugs::ensure_name_free(&mut tx, Table::Devices, &fields.name, Some(id)).await?;
     let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
 
     let result = sqlx::query!(
@@ -164,7 +164,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiRes
     )
     .execute(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
     found(result.rows_affected())?;
 
     sqlx::query!("DELETE FROM device_platforms WHERE device_id = ?", id)

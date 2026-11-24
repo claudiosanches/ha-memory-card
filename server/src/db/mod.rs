@@ -1,7 +1,10 @@
+//! All of the server's SQL.
+
 pub mod devices;
 pub mod duplicates;
 pub mod games;
 pub mod household;
+pub mod igdb;
 pub mod labels;
 pub mod library;
 pub mod missing;
@@ -12,11 +15,14 @@ pub mod premigration;
 pub mod progress;
 pub mod sensors;
 pub mod sessions;
+pub mod slugs;
+pub mod sql;
 pub mod stats;
 pub mod stores;
 pub mod suggestions;
 pub mod tags;
 pub mod titles;
+pub mod transfer;
 pub mod users;
 
 use std::path::Path;
@@ -29,6 +35,9 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, S
 use crate::error::{ApiError, ApiResult};
 
 pub static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
+
+/// The connection pool. Code outside `db` names this rather than the backend's type.
+pub type Pool = SqlitePool;
 
 /// Pre-migration snapshots kept on disk.
 pub const PRE_MIGRATION_KEEP: usize = 5;

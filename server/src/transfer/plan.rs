@@ -7,10 +7,10 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use super::parse::RawRow;
-use super::snapshot::{CopyRow, GameRow, ReleaseRow, Snapshot};
 use crate::db::devices::DeviceKind;
 use crate::db::labels::{PER_GAME_MAX, SEPARATORS};
 use crate::db::play_statuses;
+use crate::db::transfer::snapshot::{CopyRow, GameRow, ReleaseRow, Snapshot};
 use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::money;
 

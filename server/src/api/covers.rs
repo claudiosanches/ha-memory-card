@@ -147,10 +147,7 @@ async fn restore_igdb_covers(state: &AppState, game_id: i64) {
     let Some(igdb) = state.igdb.clone() else {
         return;
     };
-    let igdb_id = match sqlx::query_scalar!("SELECT igdb_id FROM games WHERE id = ?", game_id)
-        .fetch_one(&state.db)
-        .await
-    {
+    let igdb_id = match crate::db::igdb::igdb_id(&state.db, game_id).await {
         Ok(Some(id)) => id,
         Ok(None) => return,
         Err(err) => {

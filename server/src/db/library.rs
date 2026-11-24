@@ -5,12 +5,14 @@
 
 use serde::{Deserialize, Deserializer, Serialize};
 use sqlx::types::Json;
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{Sqlite, SqlitePool};
 use utoipa::{IntoParams, ToSchema};
 
 use super::play_statuses;
+use super::slugs::Table;
+use super::sql::Sql;
 use crate::domain::{Condition, CopyStatus, Format, Region};
-use crate::slug::{Slug, Table};
+use crate::slug::Slug;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -232,8 +234,8 @@ struct SummaryRow {
 }
 
 /// Builds the library query. Public so tests can inspect its query plan.
-pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
-    let mut qb = QueryBuilder::new("SELECT g.id, g.title, g.igdb_id, g.cover_path, ");
+pub fn query(filter: &LibraryFilter) -> Sql {
+    let mut qb = Sql::new("SELECT g.id, g.title, g.igdb_id, g.cover_path, ");
     push_play_columns(&mut qb, filter);
     qb.push(
         ",
@@ -267,7 +269,7 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
 }
 
 /// The person's `play_status` and `last_played_at` for game `g`.
-fn push_play_columns(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
+fn push_play_columns(qb: &mut Sql, filter: &LibraryFilter) {
     qb.push("(SELECT play_status FROM play_progress WHERE user_id = ")
         .push_bind(filter.person.clone())
         .push(" AND game_id = g.id) AS play_status, (SELECT MAX(played_on) FROM play_sessions WHERE user_id = ")
@@ -296,7 +298,7 @@ pub fn has_copy_filters(filter: &LibraryFilter) -> bool {
 }
 
 /// Conditions on games `g` after a `WHERE`.
-pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, device: DeviceMatch) {
+pub fn push_filters(qb: &mut Sql, filter: &LibraryFilter, device: DeviceMatch) {
     if has_copy_filters(filter) {
         qb.push(
             " AND EXISTS (SELECT 1 FROM copies c JOIN releases r ON r.id = c.release_id
@@ -309,7 +311,7 @@ pub fn push_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter, devic
 }
 
 /// Conditions on games `g` that do not look at copies.
-pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
+pub fn push_game_filters(qb: &mut Sql, filter: &LibraryFilter) {
     if !filter.genre.is_empty() {
         qb.push(" AND EXISTS (SELECT 1 FROM game_genres gg WHERE gg.game_id = g.id");
         push_slugs(qb, "gg.genre_id", Table::Genres, &filter.genre);
@@ -345,11 +347,7 @@ pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) 
 }
 
 /// Conditions on copies `c`, their releases `r` and games `g`.
-pub fn push_copy_filters(
-    qb: &mut QueryBuilder<Sqlite>,
-    filter: &LibraryFilter,
-    device: DeviceMatch,
-) {
+pub fn push_copy_filters(qb: &mut Sql, filter: &LibraryFilter, device: DeviceMatch) {
     if let Some(status) = filter.ownership.unwrap_or_default().status() {
         qb.push(" AND c.status = ").push_bind(status);
     }
@@ -380,7 +378,7 @@ pub fn push_copy_filters(
 }
 
 /// The person's status for game `g` in `filter.play_status`.
-fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
+fn push_play_status(qb: &mut Sql, filter: &LibraryFilter) {
     let statuses: Vec<String> = filter
         .play_status
         .iter()
@@ -402,22 +400,21 @@ fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
     if unset {
         wanted.push(play_statuses::NONE.to_owned());
     }
-    push_list(qb, &wanted);
+    qb.push_list(&wanted);
 }
 
-fn push_in<T>(qb: &mut QueryBuilder<Sqlite>, column: &'static str, values: &[T])
+fn push_in<T>(qb: &mut Sql, column: &'static str, values: &[T])
 where
     T: Clone + for<'q> sqlx::Encode<'q, Sqlite> + sqlx::Type<Sqlite> + 'static,
 {
     if values.is_empty() {
         return;
     }
-    qb.push(" AND ").push(column).push(" IN ");
-    push_list(qb, values);
+    qb.push(" AND ").push(column).push(" IN ").push_list(values);
 }
 
 /// ` AND column IN (ids of the rows of table with these slugs)`.
-fn push_slugs(qb: &mut QueryBuilder<Sqlite>, column: &'static str, table: Table, slugs: &[Slug]) {
+fn push_slugs(qb: &mut Sql, column: &'static str, table: Table, slugs: &[Slug]) {
     if slugs.is_empty() {
         return;
     }
@@ -426,25 +423,12 @@ fn push_slugs(qb: &mut QueryBuilder<Sqlite>, column: &'static str, table: Table,
 }
 
 /// Pushes `(SELECT id FROM table WHERE slug IN (?, ...))`.
-fn push_ids(qb: &mut QueryBuilder<Sqlite>, table: Table, slugs: &[Slug]) {
+fn push_ids(qb: &mut Sql, table: Table, slugs: &[Slug]) {
     qb.push("(SELECT id FROM ")
         .push(table.name())
-        .push(" WHERE slug IN ");
-    push_list(qb, slugs);
-    qb.push(")");
-}
-
-/// Pushes `(?, ?, ...)`.
-fn push_list<T>(qb: &mut QueryBuilder<Sqlite>, values: &[T])
-where
-    T: Clone + for<'q> sqlx::Encode<'q, Sqlite> + sqlx::Type<Sqlite> + 'static,
-{
-    qb.push("(");
-    let mut list = qb.separated(", ");
-    for value in values {
-        list.push_bind(value.clone());
-    }
-    list.push_unseparated(")");
+        .push(" WHERE slug IN ")
+        .push_list(slugs)
+        .push(")");
 }
 
 /// One copy in the copies view, with its release and game.
@@ -483,8 +467,8 @@ pub struct CopyRow {
 }
 
 /// Copies matching the filters: copy filters apply to each copy, the others to its game.
-pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
-    let mut qb = QueryBuilder::new(
+pub fn copies_query(filter: &LibraryFilter) -> Sql {
+    let mut qb = Sql::new(
         "SELECT c.id AS copy_id, g.id AS game_id, g.title,
                 COALESCE(r.cover_path, g.cover_path) AS cover_path,
                 r.id AS release_id, r.platform_id, r.region, r.title AS release_title,

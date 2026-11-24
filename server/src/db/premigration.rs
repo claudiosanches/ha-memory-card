@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use sqlx::SqlitePool;
-use sqlx::migrate::Migrator;
+use sqlx::migrate::{Migrate, Migrator};
 use time::OffsetDateTime;
 use time::macros::format_description;
 
@@ -65,12 +65,9 @@ async fn applied_versions(pool: &SqlitePool, migrator: &Migrator) -> Result<Vec<
         return Ok(Vec::new());
     }
 
-    // SQLite parameters represent values only. Double embedded quotes in identifiers.
-    let table = table.replace('"', "\"\"");
-    let sql = format!("SELECT version FROM \"{table}\" WHERE success = 1");
-    Ok(sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
-        .fetch_all(pool)
-        .await?)
+    let mut conn = pool.acquire().await?;
+    let applied = conn.list_applied_migrations(table).await?;
+    Ok(applied.into_iter().map(|m| m.version).collect())
 }
 
 /// Keeps the newest `keep` snapshots. Names start with a UTC timestamp, so

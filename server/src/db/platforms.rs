@@ -3,8 +3,8 @@ use sqlx::SqlitePool;
 use utoipa::ToSchema;
 
 use super::found;
+use super::slugs::{self, Table};
 use crate::error::{ApiError, ApiResult};
-use crate::slug::{self, Table};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
@@ -96,8 +96,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
 pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
 
-    slug::ensure_name_free(&mut tx, Table::Platforms, &fields.name, None).await?;
-    let slug = slug::for_new(
+    slugs::ensure_name_free(&mut tx, Table::Platforms, &fields.name, None).await?;
+    let slug = slugs::for_new(
         &mut tx,
         Table::Platforms,
         fields.slug.as_deref(),
@@ -117,7 +117,7 @@ pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64
     )
     .fetch_one(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
 
     tx.commit().await?;
     Ok(id)
@@ -125,7 +125,7 @@ pub async fn create(pool: &SqlitePool, fields: &PlatformFields) -> ApiResult<i64
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &PlatformFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slug::ensure_name_free(&mut tx, Table::Platforms, &fields.name, Some(id)).await?;
+    slugs::ensure_name_free(&mut tx, Table::Platforms, &fields.name, Some(id)).await?;
     let result = sqlx::query!(
         // A platform switched on goes to the end of the active list.
         "UPDATE platforms
@@ -143,7 +143,7 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &PlatformFields) -> ApiR
     )
     .execute(&mut *tx)
     .await
-    .map_err(slug::conflict)?;
+    .map_err(slugs::conflict)?;
     found(result.rows_affected())?;
     tx.commit().await?;
     Ok(())
