@@ -37,7 +37,10 @@ export const cyberpunk = {
     light: {
       '--mc-background': '#f5ecfc',
       '--mc-background-image': LIGHT_BG,
-      '--mc-header-image': 'linear-gradient(90deg, #c91878 0%, #7b2cbf 52%, #0088b8 100%)',
+      '--mc-header-image': [
+        'linear-gradient(to top, #3ce8ff 0 2px, #ff70c8 2px 3px, transparent 3px)',
+        'linear-gradient(90deg, #c91878 0%, #7b2cbf 52%, #0088b8 100%)',
+      ].join(', '),
       '--mc-surface': '#ffffff',
       '--mc-border': '#d5bef0',
       '--mc-muted': '#5c487a',
