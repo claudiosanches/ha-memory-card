@@ -52,6 +52,10 @@ body { background: var(--mc-background); }
   --chip-color: var(--mc-on-accent);
 }
 
+:root[data-mantine-color-scheme='light'] .mantine-Tabs-tab {
+  --tab-hover-color: color-mix(in srgb, var(--mantine-color-text) 8%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
