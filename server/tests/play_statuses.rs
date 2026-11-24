@@ -25,12 +25,18 @@ async fn create(app: &TestApp, label: &str, counts_as: &str) -> (StatusCode, Val
     .await
 }
 
+/// The test manager's status for the game.
 async fn status_of(app: &TestApp, title: &str) -> Option<String> {
-    sqlx::query_scalar("SELECT play_status FROM games WHERE title = ?")
-        .bind(title)
-        .fetch_one(&app.pool)
-        .await
-        .unwrap()
+    sqlx::query_scalar(
+        "SELECT p.play_status FROM games g
+         LEFT JOIN play_progress p ON p.game_id = g.id AND p.user_id = ?
+         WHERE g.title = ?",
+    )
+    .bind(common::MANAGER)
+    .bind(title)
+    .fetch_one(&app.pool)
+    .await
+    .unwrap()
 }
 
 #[tokio::test]

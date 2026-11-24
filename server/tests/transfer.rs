@@ -169,9 +169,13 @@ async fn import_then_export_round_trips() {
         "the importer added them"
     );
 
+    // The play status column is the importer's own.
     let (igdb, status, sort): (Option<i64>, Option<String>, String) = sqlx::query_as(
-        "SELECT igdb_id, play_status, sort_title FROM games WHERE title = 'Super Mario Odyssey'",
+        "SELECT g.igdb_id, p.play_status, g.sort_title FROM games g
+         LEFT JOIN play_progress p ON p.game_id = g.id AND p.user_id = ?
+         WHERE g.title = 'Super Mario Odyssey'",
     )
+    .bind(common::MANAGER)
     .fetch_one(&app.pool)
     .await
     .unwrap();

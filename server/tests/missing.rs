@@ -51,7 +51,7 @@ async fn lists_what_each_game_lacks() {
         .json(
             "PUT",
             &format!("/api/games/{complete}"),
-            Some(json!({ "title": "Complete", "play_status": "backlog", "game_mode_ids": [single_player] })),
+            Some(json!({ "title": "Complete", "game_mode_ids": [single_player] })),
         )
         .await;
     assert_eq!(status, StatusCode::OK);
@@ -78,12 +78,12 @@ async fn lists_what_each_game_lacks() {
             {
                 "game_id": bare,
                 "title": "Bare",
-                "fields": ["play_status", "cover", "game_modes", "players", "copies"],
+                "fields": ["cover", "game_modes", "players", "copies"],
             },
             {
                 "game_id": copies,
                 "title": "Copies",
-                "fields": ["play_status", "cover", "game_modes", "players", "store", "condition"],
+                "fields": ["cover", "game_modes", "players", "store", "condition"],
             },
         ])
     );

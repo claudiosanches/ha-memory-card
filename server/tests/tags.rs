@@ -110,7 +110,6 @@ async fn a_scanned_tag_starts_its_copy() {
         "Home Assistant's day"
     );
     assert_eq!(sessions[0]["copy_id"], copy);
-    assert_eq!(sessions[0]["created_by"]["id"], MANAGER);
     assert_eq!(detail["play_status"], "playing");
 
     assert_eq!(
@@ -249,9 +248,17 @@ async fn viewers_log_play_from_tags_only_when_allowed_and_managers_exist() {
         .await
         .unwrap();
     assert_eq!(
-        tags::scanned(&app.state, "t4", None).await,
+        tags::scanned(&app.state, "t4", Some("viewer-1")).await,
         Scan::Played { game_id: game }
     );
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM play_sessions WHERE user_id = 'viewer-1'")
+            .await,
+        1
+    );
+    // A scan with no person has no play to log.
+    assert_eq!(tags::scanned(&app.state, "t4", None).await, Scan::Unknown);
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 1);
 
     let locked = app_with(&[
         ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "true"),

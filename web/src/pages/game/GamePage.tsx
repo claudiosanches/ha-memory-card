@@ -57,6 +57,7 @@ import { useFormatDate } from '../../hooks/useFormatDate';
 import { BundleContentsModal } from './BundleContents';
 import { Copies } from './Copies';
 import { TagLinkModal } from './TagLink';
+import { Household } from './Household';
 import { defaultCopy, Sessions } from './Sessions';
 import { CoverPicker } from './CoverPicker';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
@@ -349,6 +350,7 @@ function GameView({ game }: { game: GameDetail }) {
               <Text size="sm" fw={600}>{lastSession ? formatDate(lastSession.played_on) : t('game.never')}</Text>
             </div>
             <Sessions game={game} copies={copyNames} canTrack={canTrack} />
+            <Household game={game} />
           </Stack>
         </Card>
 

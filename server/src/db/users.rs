@@ -1,5 +1,5 @@
 use serde::Serialize;
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use crate::access::User;
@@ -31,5 +31,13 @@ pub async fn record(pool: &SqlitePool, user: &User) -> sqlx::Result<()> {
     )
     .execute(pool)
     .await?;
+    Ok(())
+}
+
+/// Makes sure a person known only by ID, such as from a tag scan, has a row.
+pub async fn ensure(conn: &mut SqliteConnection, id: &str) -> sqlx::Result<()> {
+    sqlx::query!("INSERT OR IGNORE INTO users (id) VALUES (?)", id)
+        .execute(conn)
+        .await?;
     Ok(())
 }

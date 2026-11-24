@@ -91,10 +91,11 @@ async fn mark_collected(state: &AppState, hits: &mut [SearchHit]) -> ApiResult<(
 )]
 pub async fn bundle_contents(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<Vec<SearchHit>>> {
     let igdb = client(&state)?;
-    let Some(bundle) = games::get(&state.db, id).await?.igdb_id else {
+    let Some(bundle) = games::get(&state.db, id, &by).await?.igdb_id else {
         return Ok(Json(Vec::new()));
     };
     let mut hits = igdb.bundle_contents(bundle).await?;
@@ -128,11 +129,12 @@ pub struct LinkInput {
 )]
 pub async fn link(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<LinkInput>,
 ) -> ApiResult<Json<GameDetail>> {
     let igdb = client(&state)?;
-    games::get(&state.db, id).await?;
+    games::get(&state.db, id, &by).await?;
     let data = igdb
         .games(&[input.igdb_id])
         .await?
@@ -148,7 +150,7 @@ pub async fn link(
         input.overwrite,
     )
     .await?;
-    Ok(Json(games::get(&state.db, id).await?))
+    Ok(Json(games::get(&state.db, id, &by).await?))
 }
 
 #[derive(Debug, Deserialize, IntoParams)]

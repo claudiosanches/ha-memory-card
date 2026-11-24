@@ -7,7 +7,7 @@ use utoipa::ToSchema;
 
 use super::found;
 use super::photos::CopyPhoto;
-use super::sessions::{self, PlaySession};
+use super::sessions::{self, PersonPlay, PlaySession};
 use super::tags::CopyTag;
 use super::users::Person;
 use crate::covers::Owner;
@@ -90,7 +90,7 @@ pub struct GameDetail {
     pub first_release_date: Option<String>,
     pub developers: Vec<String>,
     pub publishers: Vec<String>,
-    /// A play status key.
+    /// The viewer's play status key.
     pub play_status: Option<String>,
     pub local_max_players: Option<i64>,
     pub online_max_players: Option<i64>,
@@ -106,8 +106,10 @@ pub struct GameDetail {
     pub updated_by: Option<Person>,
     /// In platform list order, then region.
     pub releases: Vec<ReleaseDetail>,
-    /// Latest first; the first is when the game was last played.
+    /// The viewer's sessions, latest first; the first is when they last played.
     pub sessions: Vec<PlaySession>,
+    /// Everyone else who keeps play for the game.
+    pub household: Vec<PersonPlay>,
     /// Games in the collection that IGDB names as another version of this one, by title.
     pub versions: Vec<GameVersion>,
     /// Other names the game goes by, which the library search also matches.
@@ -201,7 +203,6 @@ pub struct PlayerCounts {
 pub struct GameFields {
     pub title: String,
     pub summary: Option<String>,
-    pub play_status: Option<String>,
     pub players: PlayerCounts,
     pub game_mode_ids: Vec<i64>,
     /// Names added by hand; `None` keeps them.
@@ -242,13 +243,13 @@ pub struct ReleaseFields {
     pub players: PlayerCounts,
 }
 
-pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
+/// The game as `viewer` sees it: the household's game with their own play.
+pub async fn get(pool: &SqlitePool, id: i64, viewer: &str) -> ApiResult<GameDetail> {
     let game = sqlx::query!(
         r#"SELECT g.id AS "id!", g.igdb_id, g.title, g.summary, g.cover_path,
                   g.cover_source IS 'upload' AS "cover_uploaded!: bool", g.first_release_date,
                   g.developers AS "developers: Json<Vec<String>>",
                   g.publishers AS "publishers: Json<Vec<String>>",
-                  g.play_status,
                   g.local_max_players, g.online_max_players,
                   g.local_coop AS "local_coop: bool", g.online_coop AS "online_coop: bool",
                   (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)
@@ -440,7 +441,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         first_release_date: game.first_release_date,
         developers: game.developers.0,
         publishers: game.publishers.0,
-        play_status: game.play_status,
+        play_status: super::progress::get(pool, viewer, id).await?,
         local_max_players: game.local_max_players,
         online_max_players: game.online_max_players,
         local_coop: game.local_coop,
@@ -452,7 +453,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
         created_by: Person::from_columns(game.created_by, game.created_by_name),
         updated_by: Person::from_columns(game.updated_by, game.updated_by_name),
         releases,
-        sessions: sessions::for_game(pool, id).await?,
+        sessions: sessions::for_person(pool, id, viewer).await?,
+        household: sessions::household(pool, id, viewer).await?,
         versions: versions(pool, id).await?,
         names: sqlx::query_as!(
             GameName,
@@ -465,38 +467,49 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<GameDetail> {
     })
 }
 
+/// Adds a game, with `play_status` as its creator's own.
 pub async fn create(
     pool: &SqlitePool,
     title: &str,
     play_status: Option<&str>,
     by: &str,
 ) -> ApiResult<i64> {
-    super::play_statuses::ensure_exists(pool, play_status).await?;
+    let mut tx = crate::db::write_tx(pool).await?;
+    super::play_statuses::ensure_exists(&mut *tx, play_status).await?;
     let sort = sort_title(title);
-    Ok(sqlx::query_scalar!(
-        r#"INSERT INTO games (title, sort_title, play_status, created_by, updated_by)
-           VALUES (?, ?, ?, ?, ?) RETURNING id AS "id!""#,
+    let id = sqlx::query_scalar!(
+        r#"INSERT INTO games (title, sort_title, created_by, updated_by)
+           VALUES (?, ?, ?, ?) RETURNING id AS "id!""#,
         title,
         sort,
-        play_status,
         by,
         by
     )
-    .fetch_one(pool)
-    .await?)
+    .fetch_one(&mut *tx)
+    .await?;
+    if let Some(status) = play_status {
+        sqlx::query!(
+            "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)",
+            by,
+            id,
+            status
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+    tx.commit().await?;
+    Ok(id)
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
-    super::play_statuses::ensure_exists(&mut *tx, fields.play_status.as_deref()).await?;
-
     let modes = game_mode_ids(&mut tx, &fields.game_mode_ids).await?;
 
     let sort = sort_title(&fields.title);
     let p = &fields.players;
     let result = sqlx::query!(
         "UPDATE games
-         SET title = ?, sort_title = ?, summary = ?, play_status = ?,
+         SET title = ?, sort_title = ?, summary = ?,
              local_max_players = ?, online_max_players = ?,
              local_coop = ?, online_coop = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
@@ -504,7 +517,6 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
         fields.title,
         sort,
         fields.summary,
-        fields.play_status,
         p.local_max_players,
         p.online_max_players,
         p.local_coop,
@@ -553,26 +565,6 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
 
     tx.commit().await?;
     Ok(())
-}
-
-pub async fn set_play_status(
-    pool: &SqlitePool,
-    id: i64,
-    status: Option<&str>,
-    by: &str,
-) -> ApiResult<()> {
-    super::play_statuses::ensure_exists(pool, status).await?;
-    let result = sqlx::query!(
-        "UPDATE games SET play_status = ?, updated_by = ?,
-                          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         WHERE id = ?",
-        status,
-        by,
-        id
-    )
-    .execute(pool)
-    .await?;
-    found(result.rows_affected())
 }
 
 /// Deletes a game with its releases and copies, and returns the release ids.

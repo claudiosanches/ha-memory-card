@@ -1,0 +1,66 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT u.id AS \"id!\", COALESCE(u.display_name, u.name) AS name,\n                  (SELECT play_status FROM play_progress\n                   WHERE user_id = u.id AND game_id = ?1) AS play_status,\n                  (SELECT COUNT(*) FROM play_sessions\n                   WHERE user_id = u.id AND game_id = ?1) AS \"sessions!: i64\",\n                  (SELECT COALESCE(SUM(minutes), 0) FROM play_sessions\n                   WHERE user_id = u.id AND game_id = ?1) AS \"minutes!: i64\",\n                  (SELECT MAX(played_on) FROM play_sessions\n                   WHERE user_id = u.id AND game_id = ?1) AS \"last_played_on: String\"\n           FROM users u\n           WHERE u.id != ?2\n             AND (EXISTS (SELECT 1 FROM play_progress WHERE user_id = u.id AND game_id = ?1)\n                  OR EXISTS (SELECT 1 FROM play_sessions WHERE user_id = u.id AND game_id = ?1))\n           ORDER BY 6 DESC NULLS LAST, 2",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "name": "play_status",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "play_progress",
+            "name": "play_status"
+          }
+        }
+      },
+      {
+        "name": "sessions!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "minutes!: i64",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "last_played_on: String",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "407130f4be7816dc79b2bbe4a5147de26ddebf27263b47c8450a60b2e8bc94da"
+}

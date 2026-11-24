@@ -176,7 +176,7 @@ async fn only_a_few_feeds_open_at_once() {
 }
 
 async fn roll(router: &Router, body: &str) -> (StatusCode, Value) {
-    roll_as(router, None, body).await
+    roll_as(router, Some(common::MANAGER), body).await
 }
 
 async fn roll_as(router: &Router, user: Option<&str>, body: &str) -> (StatusCode, Value) {
@@ -194,7 +194,7 @@ async fn roll_as(router: &Router, user: Option<&str>, body: &str) -> (StatusCode
 }
 
 #[tokio::test]
-async fn a_roll_picks_from_the_backlog_with_the_same_filters_as_mqtt() {
+async fn a_roll_picks_from_the_callers_backlog_with_the_same_filters_as_mqtt() {
     let app = TestApp::new().await;
     let router = integration::router(feed(&app));
     assert_eq!(roll(&router, "").await.0, StatusCode::NOT_FOUND);
@@ -215,9 +215,12 @@ async fn a_roll_picks_from_the_backlog_with_the_same_filters_as_mqtt() {
         pick,
         json!({"title": "Tetris", "platforms": ["Nintendo Switch"]})
     );
-    let (status, pick) = roll(&router, "roll").await;
+    let (status, pick) = roll(&router, "").await;
     assert_eq!(status, StatusCode::OK);
     assert!(pick["title"].is_string());
+    // Each person picks from their own backlog.
+    let (status, _) = roll_as(&router, None, r#"{"person": "someone_else"}"#).await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
 
     let (status, error) = roll(&router, r#"{"colour": 1}"#).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
@@ -227,7 +230,7 @@ async fn a_roll_picks_from_the_backlog_with_the_same_filters_as_mqtt() {
 }
 
 #[tokio::test]
-async fn only_managers_and_automations_roll_and_only_once_managers_are_set() {
+async fn a_roll_is_for_one_person_who_keeps_play() {
     let app = TestApp::new().await;
     let (status, result) = app
         .post_csv(
@@ -238,25 +241,61 @@ async fn only_managers_and_automations_roll_and_only_once_managers_are_set() {
         .await;
     assert_eq!(status, StatusCode::OK, "{result}");
     let router = integration::router(feed(&app));
+    let manager = format!(r#"{{"person": "{}"}}"#, common::MANAGER);
+    assert_eq!(roll(&router, "").await.0, StatusCode::OK);
+    assert_eq!(roll(&router, &manager).await.0, StatusCode::OK);
     assert_eq!(
-        roll_as(&router, Some(common::MANAGER), "").await.0,
-        StatusCode::OK
-    );
-    assert_eq!(
-        roll_as(&router, None, "").await.0,
+        roll_as(&router, None, &manager).await.0,
         StatusCode::OK,
-        "an automation"
+        "an automation names the person"
     );
-    let (status, error) = roll_as(&router, Some("someone_else"), "").await;
-    assert_eq!(status, StatusCode::FORBIDDEN);
-    assert_eq!(error["code"], "manager_required");
-    let (status, error) = roll_as(&router, Some("bad id!"), "").await;
-    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
-    assert_eq!(error["code"], "invalid_user");
+
+    for (user, body, status, code) in [
+        (
+            None,
+            "",
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "person_required",
+        ),
+        (
+            None,
+            r#"{"person": "bad id!"}"#,
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_user",
+        ),
+        (
+            Some(common::MANAGER),
+            r#"{"person": "someone_else"}"#,
+            StatusCode::FORBIDDEN,
+            "not_your_roll",
+        ),
+        (
+            Some("someone_else"),
+            "",
+            StatusCode::FORBIDDEN,
+            "play_not_allowed",
+        ),
+        (
+            Some("bad id!"),
+            "",
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "invalid_user",
+        ),
+    ] {
+        let (got, error) = roll_as(&router, user, body).await;
+        assert_eq!(
+            (got, error["code"].as_str()),
+            (status, Some(code)),
+            "{user:?} {body}"
+        );
+    }
 
     let nobody = TestApp::with_env(&[("MEMORY_CARD_MANAGERS", "")]).await;
     let router = integration::router(feed(&nobody));
-    assert_eq!(roll_as(&router, None, "").await.0, StatusCode::FORBIDDEN);
+    assert_eq!(
+        roll_as(&router, None, &manager).await.0,
+        StatusCode::FORBIDDEN
+    );
 }
 
 #[derive(Default)]

@@ -10,7 +10,8 @@ use super::play_statuses;
 use crate::error::{ApiError, ApiResult};
 use crate::slug::Slug;
 
-/// Picks kept, newest first; only the last day's change what comes next.
+/// Picks kept for each person, newest first; only the last day's change what
+/// comes next.
 pub const KEPT_MAX: i64 = 1000;
 
 /// Values inside one filter are OR, filters are AND, and the copy filters
@@ -18,7 +19,8 @@ pub const KEPT_MAX: i64 = 1000;
 #[derive(Debug, Default, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct SuggestionFilter {
-    /// Play status keys. Empty means every status that counts as backlog.
+    /// The person's play status keys. Empty means every status that counts as
+    /// backlog.
     #[serde(default, deserialize_with = "library::filter_list")]
     pub play_status: Vec<String>,
     /// Platform slugs.
@@ -50,9 +52,13 @@ pub struct Suggestion {
     pub copy_ids: Vec<i64>,
 }
 
-/// Picks a random match, skipping games suggested in the last day unless
-/// nothing else matches, then records the pick.
-pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<Suggestion> {
+/// Picks a random match from `person`'s backlog, skipping games picked for
+/// them in the last day unless nothing else matches, then records the pick.
+pub async fn suggest(
+    pool: &SqlitePool,
+    person: &str,
+    filter: SuggestionFilter,
+) -> ApiResult<Suggestion> {
     let statuses = if filter.play_status.is_empty() {
         play_statuses::backlog_keys(pool).await?
     } else {
@@ -66,10 +72,12 @@ pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<S
         game_mode: filter.game_mode,
         min_local_players: filter.min_local_players,
         ownership: Some(Ownership::Owned),
+        person: Some(person.to_owned()),
         ..LibraryFilter::default()
     };
 
     let mut tx = pool.begin().await?;
+    super::users::ensure(&mut tx, person).await?;
     sqlx::query!(
         "DELETE FROM suggestions
          WHERE suggested_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-30 days')"
@@ -79,7 +87,11 @@ pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<S
 
     let mut pick = QueryBuilder::new(
         "SELECT id FROM (
-             SELECT g.id, (SELECT MAX(suggested_at) FROM suggestions s WHERE s.game_id = g.id) AS last
+             SELECT g.id, (SELECT MAX(suggested_at) FROM suggestions s
+                           WHERE s.user_id = ",
+    );
+    pick.push_bind(person).push(
+        " AND s.game_id = g.id) AS last
              FROM games g WHERE 1 = 1",
     );
     library::push_filters(&mut pick, &filter, DeviceMatch::Playable);
@@ -95,12 +107,18 @@ pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<S
         .await?
         .ok_or(ApiError::NoMatch("no_candidates"))?;
 
-    sqlx::query!("INSERT INTO suggestions (game_id) VALUES (?)", game_id)
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query!(
+        "INSERT INTO suggestions (user_id, game_id) VALUES (?, ?)",
+        person,
+        game_id
+    )
+    .execute(&mut *tx)
+    .await?;
     sqlx::query!(
         "DELETE FROM suggestions
-         WHERE id <= (SELECT id FROM suggestions ORDER BY id DESC LIMIT 1 OFFSET ?)",
+         WHERE user_id = ?1 AND id <= (SELECT id FROM suggestions WHERE user_id = ?1
+                                       ORDER BY id DESC LIMIT 1 OFFSET ?2)",
+        person,
         KEPT_MAX
     )
     .execute(&mut *tx)
@@ -117,7 +135,7 @@ pub async fn suggest(pool: &SqlitePool, filter: SuggestionFilter) -> ApiResult<S
     tx.commit().await?;
 
     Ok(Suggestion {
-        game: games::get(pool, game_id).await?,
+        game: games::get(pool, game_id, person).await?,
         copy_ids,
     })
 }

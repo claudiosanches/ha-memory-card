@@ -66,23 +66,26 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
                WHERE c.status = 'owned') AS "games!: i64",
              (SELECT COUNT(*) FROM copies WHERE status = 'owned' AND bundle_id IS NULL) AS "copies!: i64",
              (SELECT COUNT(*) FROM copies WHERE status = 'wanted' AND bundle_id IS NULL) AS "wishlist!: i64",
-             (SELECT COUNT(*) FROM games g JOIN play_statuses s ON s.key = g.play_status
-               WHERE s.counts_as = 'backlog' AND EXISTS (
-                 SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
-                  WHERE r.game_id = g.id AND c.status = 'owned')) AS "backlog!: i64",
-             (SELECT COUNT(*) FROM games g JOIN play_statuses s ON s.key = g.play_status
-               WHERE s.counts_as = 'playing' AND EXISTS (
-                 SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
-                  WHERE r.game_id = g.id AND c.status = 'owned')) AS "playing!: i64""#
+             (SELECT COUNT(*) FROM games g
+               WHERE EXISTS (SELECT 1 FROM play_progress p JOIN play_statuses s ON s.key = p.play_status
+                              WHERE p.game_id = g.id AND s.counts_as = 'backlog')
+                 AND EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
+                              WHERE r.game_id = g.id AND c.status = 'owned')) AS "backlog!: i64",
+             (SELECT COUNT(*) FROM games g
+               WHERE EXISTS (SELECT 1 FROM play_progress p JOIN play_statuses s ON s.key = p.play_status
+                              WHERE p.game_id = g.id AND s.counts_as = 'playing')
+                 AND EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
+                              WHERE r.game_id = g.id AND c.status = 'owned')) AS "playing!: i64""#
     )
     .fetch_one(pool)
     .await?;
 
     let playing = sqlx::query_scalar!(
-        r#"SELECT g.title FROM games g JOIN play_statuses s ON s.key = g.play_status
-            WHERE s.counts_as = 'playing' AND EXISTS (
-              SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
-               WHERE r.game_id = g.id AND c.status = 'owned')
+        r#"SELECT g.title FROM games g
+            WHERE EXISTS (SELECT 1 FROM play_progress p JOIN play_statuses s ON s.key = p.play_status
+                           WHERE p.game_id = g.id AND s.counts_as = 'playing')
+              AND EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
+                           WHERE r.game_id = g.id AND c.status = 'owned')
             ORDER BY (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) DESC NULLS LAST,
                      g.sort_title
             LIMIT ?"#,

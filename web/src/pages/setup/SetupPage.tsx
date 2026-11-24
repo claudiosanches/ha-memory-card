@@ -27,14 +27,12 @@ import {
 } from '../../api/types';
 import { notifyError } from '../../components/notify';
 import { PageHeader } from '../../components/PageHeader';
-import { usePlayStatusList } from '../../components/playStatuses';
 import { CoverPicker } from '../game/CoverPicker';
 import { checkedOrNull, CopyForm, gameInput, numberOrNull, PlayerFields } from '../game/forms';
 import { IgdbLinkModal } from '../game/IgdbLink';
 import classes from './SetupPage.module.css';
 
 const FIELDS: MissingField[] = [
-  'play_status',
   'cover',
   'game_modes',
   'players',
@@ -158,7 +156,6 @@ type OwnedCopy = { copy: CopyDetail; release: ReleaseDetail };
 function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { game: GameDetail }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const statuses = usePlayStatusList();
   const gameModes = useGameModes();
   const platforms = usePlatforms();
   const devices = useDevices();
@@ -168,7 +165,6 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   const [copyEdits, setCopyEdits] = useState<Record<number, CopyEdit>>({});
   const form = useForm({
     initialValues: {
-      play_status: null as string | null,
       game_mode_ids: [] as string[],
       local_max: '' as string | number,
       online_max: '' as string | number,
@@ -180,7 +176,6 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   const has = (field: MissingField) => fields.includes(field);
   const show = {
     cover: has('cover'),
-    playStatus: has('play_status'),
     gameModes: has('game_modes'),
     players: has('players'),
     copies: has('copies'),
@@ -202,7 +197,6 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
     mutationFn: async (v: typeof form.values) => {
       let latest = game;
       const patch: Partial<GameInput> = {};
-      if (has('play_status') && v.play_status) patch.play_status = v.play_status;
       if (has('game_modes') && v.game_mode_ids.length) patch.game_mode_ids = v.game_mode_ids.map(Number);
       if (has('players') && (v.local_max !== '' || v.online_max !== '' || v.local_coop || v.online_coop)) {
         patch.local_max_players = numberOrNull(v.local_max);
@@ -290,15 +284,6 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
               <Text size="sm" c="dimmed">
                 {t('setup.coverHint')}
               </Text>
-            )}
-            {show.playStatus && (
-              <Select
-                label={t('game.playStatus')}
-                placeholder={t('common.notSet')}
-                data={statuses.options}
-                clearable
-                {...form.getInputProps('play_status')}
-              />
             )}
             {show.gameModes && (
               <MultiSelect

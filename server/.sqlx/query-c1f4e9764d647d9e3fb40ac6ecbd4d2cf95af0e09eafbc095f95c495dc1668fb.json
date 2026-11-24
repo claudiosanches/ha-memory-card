@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, 'playing')\n             ON CONFLICT (user_id, game_id) DO UPDATE\n             SET play_status = 'playing', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c1f4e9764d647d9e3fb40ac6ecbd4d2cf95af0e09eafbc095f95c495dc1668fb"
+}

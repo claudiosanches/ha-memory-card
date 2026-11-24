@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "8b3709d435f779e6b09b0894c7335a344ae6aa9e60b9708ad8db3123c8dae70e"
+}

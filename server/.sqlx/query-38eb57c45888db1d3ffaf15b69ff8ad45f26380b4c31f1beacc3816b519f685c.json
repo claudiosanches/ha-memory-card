@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.play_status AS \"play_status: String\", COUNT(*) AS \"games!: i64\"\n           FROM games g\n           LEFT JOIN play_progress p ON p.game_id = g.id AND p.user_id = ?\n           LEFT JOIN play_statuses s ON s.key = p.play_status\n           WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                         WHERE r.game_id = g.id AND c.status = 'owned')\n           GROUP BY p.play_status\n           ORDER BY p.play_status IS NULL, MIN(s.sort_order)",
+  "describe": {
+    "columns": [
+      {
+        "name": "play_status: String",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "play_progress",
+            "name": "play_status"
+          }
+        }
+      },
+      {
+        "name": "games!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "38eb57c45888db1d3ffaf15b69ff8ad45f26380b4c31f1beacc3816b519f685c"
+}

@@ -103,6 +103,10 @@ pub struct LibraryFilter {
     #[serde(skip)]
     #[param(ignore)]
     pub matches: Option<Vec<i64>>,
+    /// Whose play the status filter, the played sort and the play columns use.
+    #[serde(skip)]
+    #[param(ignore)]
+    pub person: Option<String>,
 }
 
 /// Finds the games `q` matches, so the query can filter on their ids.
@@ -229,9 +233,10 @@ struct SummaryRow {
 
 /// Builds the library query. Public so tests can inspect its query plan.
 pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
-    let mut qb = QueryBuilder::new(
-        "SELECT g.id, g.title, g.igdb_id, g.cover_path, g.play_status,
-                (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) AS last_played_at,
+    let mut qb = QueryBuilder::new("SELECT g.id, g.title, g.igdb_id, g.cover_path, ");
+    push_play_columns(&mut qb, filter);
+    qb.push(
+        ",
                 (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
                  WHERE r.game_id = g.id AND c.status = 'owned') AS owned_copies,
                 (SELECT COUNT(*) FROM copies c JOIN releases r ON r.id = c.release_id
@@ -259,6 +264,15 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
         LibrarySort::Played => " ORDER BY last_played_at DESC NULLS LAST, g.sort_title",
     });
     qb
+}
+
+/// The person's `play_status` and `last_played_at` for game `g`.
+fn push_play_columns(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
+    qb.push("(SELECT play_status FROM play_progress WHERE user_id = ")
+        .push_bind(filter.person.clone())
+        .push(" AND game_id = g.id) AS play_status, (SELECT MAX(played_on) FROM play_sessions WHERE user_id = ")
+        .push_bind(filter.person.clone())
+        .push(" AND game_id = g.id) AS last_played_at");
 }
 
 /// How the device filter matches a copy.
@@ -311,7 +325,7 @@ pub fn push_game_filters(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) 
         push_slugs(qb, "gl.label_id", Table::Labels, &filter.label);
         qb.push(")");
     }
-    push_play_status(qb, &filter.play_status);
+    push_play_status(qb, filter);
     match filter.igdb {
         Some(IgdbLink::Linked) => qb.push(" AND g.igdb_id IS NOT NULL"),
         Some(IgdbLink::Unlinked) => qb.push(" AND g.igdb_id IS NULL"),
@@ -365,27 +379,30 @@ pub fn push_copy_filters(
     }
 }
 
-fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &[StatusFilter]) {
+/// The person's status for game `g` in `filter.play_status`.
+fn push_play_status(qb: &mut QueryBuilder<Sqlite>, filter: &LibraryFilter) {
     let statuses: Vec<String> = filter
+        .play_status
         .iter()
         .filter_map(|s| match s {
             StatusFilter::Set(status) => Some(status.clone()),
             StatusFilter::Unset => None,
         })
         .collect();
-    let unset = filter.contains(&StatusFilter::Unset);
-    match (statuses.is_empty(), unset) {
-        (true, false) => {}
-        (true, true) => {
-            qb.push(" AND g.play_status IS NULL");
-        }
-        (false, false) => push_in(qb, "g.play_status", &statuses),
-        (false, true) => {
-            qb.push(" AND (g.play_status IS NULL OR g.play_status IN ");
-            push_list(qb, &statuses);
-            qb.push(")");
-        }
+    let unset = filter.play_status.contains(&StatusFilter::Unset);
+    if statuses.is_empty() && !unset {
+        return;
     }
+    qb.push(" AND COALESCE((SELECT play_status FROM play_progress WHERE user_id = ")
+        .push_bind(filter.person.clone())
+        .push(" AND game_id = g.id), ")
+        .push_bind(play_statuses::NONE)
+        .push(") IN ");
+    let mut wanted = statuses;
+    if unset {
+        wanted.push(play_statuses::NONE.to_owned());
+    }
+    push_list(qb, &wanted);
 }
 
 fn push_in<T>(qb: &mut QueryBuilder<Sqlite>, column: &'static str, values: &[T])
@@ -461,7 +478,7 @@ pub struct CopyRow {
     /// The bundle copy this copy came in.
     pub bundle_copy_id: Option<i64>,
     pub barcode: Option<String>,
-    /// The game's latest session.
+    /// The person's latest session of the game.
     pub last_played_at: Option<String>,
 }
 
@@ -469,12 +486,15 @@ pub struct CopyRow {
 pub fn copies_query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     let mut qb = QueryBuilder::new(
         "SELECT c.id AS copy_id, g.id AS game_id, g.title,
-                COALESCE(r.cover_path, g.cover_path) AS cover_path, g.play_status,
+                COALESCE(r.cover_path, g.cover_path) AS cover_path,
                 r.id AS release_id, r.platform_id, r.region, r.title AS release_title,
                 r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes,
                 c.edition, c.purchased_on, c.price AS price_minor, c.currency,
-                c.bundle_id AS bundle_copy_id, c.barcode,
-                (SELECT MAX(played_on) FROM play_sessions WHERE game_id = g.id) AS last_played_at
+                c.bundle_id AS bundle_copy_id, c.barcode, ",
+    );
+    push_play_columns(&mut qb, filter);
+    qb.push(
+        "
          FROM copies c
          JOIN releases r ON r.id = c.release_id
          JOIN games g ON g.id = r.game_id

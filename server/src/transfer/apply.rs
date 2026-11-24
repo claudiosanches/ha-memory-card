@@ -82,17 +82,19 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
     for game in &plan.games {
         let sort = sort_title(&game.title);
         let id = sqlx::query_scalar!(
-            r#"INSERT INTO games (igdb_id, title, sort_title, play_status, created_by, updated_by)
-               VALUES (?, ?, ?, ?, ?, ?) RETURNING id AS "id!""#,
+            r#"INSERT INTO games (igdb_id, title, sort_title, created_by, updated_by)
+               VALUES (?, ?, ?, ?, ?) RETURNING id AS "id!""#,
             game.igdb_id,
             game.title,
             sort,
-            game.play_status,
             by,
             by
         )
         .fetch_one(&mut *conn)
         .await?;
+        if let Some(status) = &game.play_status {
+            set_status(conn, by, id, status).await?;
+        }
         games.push(id);
     }
     let mut labels = Vec::with_capacity(plan.labels.len());
@@ -121,16 +123,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
     }
 
     for (id, status) in &plan.game_statuses {
-        sqlx::query!(
-            "UPDATE games SET play_status = ?, updated_by = ?,
-                              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-             WHERE id = ?",
-            status,
-            by,
-            id
-        )
-        .execute(&mut *conn)
-        .await?;
+        set_status(conn, by, *id, status).await?;
     }
     for (id, igdb_id) in &plan.game_igdb_links {
         sqlx::query!(
@@ -255,5 +248,26 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
         sync_contents(conn, bundle).await?;
     }
 
+    Ok(())
+}
+
+/// The play status column is the importing person's own.
+async fn set_status(
+    conn: &mut SqliteConnection,
+    by: &str,
+    game_id: i64,
+    status: &str,
+) -> sqlx::Result<()> {
+    sqlx::query!(
+        "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)
+         ON CONFLICT (user_id, game_id) DO UPDATE
+         SET play_status = excluded.play_status,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')",
+        by,
+        game_id,
+        status
+    )
+    .execute(conn)
+    .await?;
     Ok(())
 }

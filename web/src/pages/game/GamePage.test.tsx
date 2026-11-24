@@ -29,6 +29,7 @@ const GAME: GameDetail = {
   labels: [],
   created_at: '2026-11-01T10:00:00.000Z',
   sessions: [],
+  household: [],
   versions: [],
   names: [],
   releases: [
@@ -625,7 +626,6 @@ describe('Game page', () => {
       minutes: 90,
       notes: 'Boss fight',
       created_at: '2026-11-02T20:00:00Z',
-      created_by: { id: 'a1', name: 'Sam' },
     };
     const calls = mockApi({
       ...SETUP,
@@ -636,7 +636,7 @@ describe('Game page', () => {
     renderAt('/games/4');
 
     const row = await screen.findByTestId('session-5');
-    expect(within(row).getByText(/90 minutes · Sam/)).toBeInTheDocument();
+    expect(within(row).getByText(/90 minutes/)).toBeInTheDocument();
     expect(within(row).getByText('Boss fight')).toBeInTheDocument();
 
     fireEvent.click(within(row).getByRole('button', { name: en.sessions.edit }));
@@ -678,28 +678,31 @@ describe('Game page', () => {
     expect(screen.queryByRole('button', { name: en.common.edit })).not.toBeInTheDocument();
   });
 
-  it('lets a viewer change only the sessions they logged', async () => {
-    const session = (id: number, by: string) => ({
-      id,
-      played_on: '2026-11-02',
-      copy_id: null,
-      minutes: null,
-      notes: null,
-      created_at: '2026-11-02T20:00:00Z',
-      created_by: { id: by, name: by },
-    });
+  it("shows everyone else's play without letting anyone change it", async () => {
     mockApi({
       ...SETUP,
       'GET /api/me': { ...VIEWER, can_track_progress: true },
-      'GET /api/games/4': { ...GAME, sessions: [session(1, VIEWER.user.id), session(2, 'manager-id')] },
+      'GET /api/games/4': {
+        ...GAME,
+        household: [
+          {
+            person: { id: 'b2', name: 'Ana' },
+            play_status: 'completed',
+            sessions: 3,
+            minutes: 120,
+            last_played_on: '2026-11-01',
+          },
+        ],
+      },
     });
     renderAt('/games/4');
 
-    const mine = await screen.findByTestId('session-1');
-    expect(within(mine).getByRole('button', { name: en.sessions.edit })).toBeInTheDocument();
-    const theirs = screen.getByTestId('session-2');
-    expect(within(theirs).queryByRole('button', { name: en.sessions.edit })).not.toBeInTheDocument();
-    expect(within(theirs).queryByRole('button', { name: en.sessions.delete })).not.toBeInTheDocument();
+    const household = await screen.findByTestId('household');
+    expect(within(household).getByText(en.game.household)).toBeInTheDocument();
+    expect(within(household).getByText('Ana')).toBeInTheDocument();
+    expect(await within(household).findByText(en.playStatus.completed)).toBeInTheDocument();
+    expect(within(household).getByText(/3 sessions/)).toBeInTheDocument();
+    expect(within(household).queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('links the game to an IGDB search result', async () => {

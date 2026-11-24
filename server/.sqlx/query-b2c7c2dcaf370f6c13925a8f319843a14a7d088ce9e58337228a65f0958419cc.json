@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", igdb_id, title, play_status FROM games",
+  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, p.play_status AS \"play_status: String\"\n           FROM games g LEFT JOIN play_progress p ON p.game_id = g.id AND p.user_id = ?",
   "describe": {
     "columns": [
       {
@@ -37,19 +37,19 @@
         }
       },
       {
-        "name": "play_status",
+        "name": "play_status: String",
         "ordinal": 3,
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "games",
+            "table": "play_progress",
             "name": "play_status"
           }
         }
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -58,5 +58,5 @@
       true
     ]
   },
-  "hash": "02299f8bd9400ee69f7bac0a11b52b6814e175be57677d7ac140f5c156fc3ca8"
+  "hash": "b2c7c2dcaf370f6c13925a8f319843a14a7d088ce9e58337228a65f0958419cc"
 }

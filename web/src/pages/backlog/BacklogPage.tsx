@@ -11,7 +11,7 @@ import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../api/errors';
-import { useCanManage, useCanTrackProgress, useGames, usePlatforms } from '../../api/queries';
+import { useCanTrackProgress, useGames, usePlatforms } from '../../api/queries';
 import type { BuiltinStatus, GameSummary, StatusGroup } from '../../api/types';
 import { PageHeader } from '../../components/PageHeader';
 import { Description } from '../../components/Description';
@@ -43,7 +43,6 @@ export function BacklogPage() {
   const statuses = usePlayStatusList();
   const [sorting, setSorting] = useState<GameSummary[] | null>(null);
   const canTrack = useCanTrackProgress();
-  const canManage = useCanManage();
 
   const groups = useMemo(
     () => groupByStatus(games.data ?? [], (key) => statuses.get(key)?.counts_as),
@@ -87,7 +86,9 @@ export function BacklogPage() {
         </section>
       )}
 
-      {canManage && groups.backlog.length > 0 && <Picker />}
+      {!canTrack && <Text c="dimmed">{t('backlog.noPlay')}</Text>}
+
+      {canTrack && groups.backlog.length > 0 && <Picker />}
 
       {groups.playing.length > 0 && (
         <Section title={t('backlog.playing')} count={groups.playing.length}>

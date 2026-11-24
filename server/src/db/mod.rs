@@ -8,6 +8,7 @@ pub mod photos;
 pub mod platforms;
 pub mod play_statuses;
 pub mod premigration;
+pub mod progress;
 pub mod sensors;
 pub mod sessions;
 pub mod stats;

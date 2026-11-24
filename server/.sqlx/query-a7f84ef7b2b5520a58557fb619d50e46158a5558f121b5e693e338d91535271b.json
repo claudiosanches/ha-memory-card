@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT played_on AS \"day!: String\", COUNT(*) AS \"sessions!: i64\",\n                  COALESCE(SUM(minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions\n           WHERE played_on >= date('now', '-371 days')\n           GROUP BY played_on ORDER BY played_on",
+  "query": "SELECT played_on AS \"day!: String\", COUNT(*) AS \"sessions!: i64\",\n                  COALESCE(SUM(minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions\n           WHERE user_id = ? AND played_on >= date('now', '-371 days')\n           GROUP BY played_on ORDER BY played_on",
   "describe": {
     "columns": [
       {
@@ -28,7 +28,7 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -36,5 +36,5 @@
       false
     ]
   },
-  "hash": "f47c200e4c0bcad0afa71235570679a433d382231186bd20ecc741cc5a93b507"
+  "hash": "a7f84ef7b2b5520a58557fb619d50e46158a5558f121b5e693e338d91535271b"
 }

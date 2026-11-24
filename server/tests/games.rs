@@ -6,7 +6,7 @@ use axum::http::StatusCode;
 use common::TestApp;
 use memory_card::config::FinishedScan;
 use memory_card::db::library::{self, LibraryFilter};
-use memory_card::db::sessions;
+use memory_card::db::sessions::{self, SessionFields};
 use memory_card::error::ApiError;
 use serde_json::{Value, json};
 
@@ -158,7 +158,7 @@ async fn moving_and_deleting_copies() {
 }
 
 #[tokio::test]
-async fn game_status_players_and_modes() {
+async fn game_players_and_modes() {
     let app = TestApp::new().await;
     let game = new_game(&app, "Mario Kart 8 Deluxe").await;
     let modes: Vec<i64> = sqlx::query_scalar(
@@ -170,7 +170,6 @@ async fn game_status_players_and_modes() {
 
     let body = json!({
         "title": "Mario Kart 8 Deluxe",
-        "play_status": "playing",
         "local_max_players": 4,
         "online_max_players": 12,
         "game_mode_ids": modes,
@@ -179,7 +178,6 @@ async fn game_status_players_and_modes() {
         .json("PUT", &format!("/api/games/{game}"), Some(body.clone()))
         .await;
     assert_eq!(status, StatusCode::OK, "{detail}");
-    assert_eq!(detail["play_status"], "playing");
     assert_eq!(detail["game_mode_ids"], json!(modes));
     assert_eq!(detail["local_max_players"], 4);
 
@@ -254,7 +252,6 @@ async fn sessions_log_play_and_the_latest_is_last_played() {
     assert_eq!(sessions[0]["copy_id"], copy);
     assert_eq!(sessions[0]["minutes"], 45);
     assert_eq!(sessions[1]["notes"], "Cup run");
-    assert_eq!(sessions[1]["created_by"]["id"], common::MANAGER);
 
     let (_, games) = app.json("GET", "/api/games?sort=played", None).await;
     assert_eq!(games[0]["id"], game);
@@ -324,15 +321,16 @@ async fn sessions_log_play_and_the_latest_is_last_played() {
 }
 
 #[tokio::test]
-async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
+async fn a_person_keeps_5000_sessions_of_a_game_and_logs_200_a_day() {
     let app = TestApp::new().await;
     let game = new_game(&app, "Animal Crossing").await;
     let other = new_game(&app, "Tetris").await;
     sqlx::query(
         "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 4999)
-         INSERT INTO play_sessions (game_id, played_on, created_at)
-         SELECT ?, '2020-01-01', '2020-01-01T00:00:00.000Z' FROM n",
+         INSERT INTO play_sessions (user_id, game_id, played_on, created_at)
+         SELECT ?, ?, '2020-01-01', '2020-01-01T00:00:00.000Z' FROM n",
     )
+    .bind(common::MANAGER)
     .bind(game)
     .execute(&app.pool)
     .await
@@ -350,6 +348,16 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
     let (status, error) = log(game).await;
     assert_eq!(status, StatusCode::CONFLICT);
     assert_eq!(error["code"], "too_many_sessions");
+    // The limit is each person's.
+    let fields = SessionFields {
+        played_on: "2026-11-20".into(),
+        copy_id: None,
+        minutes: None,
+        notes: None,
+    };
+    sessions::add(&app.pool, game, &fields, "someone-else")
+        .await
+        .unwrap();
     // A tag scan logs a session too.
     let switch = app.platform_id("switch").await;
     let copy = |game: i64| async move {
@@ -367,7 +375,7 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
             &app.pool,
             copy,
             "2026-11-21",
-            Some(common::MANAGER),
+            common::MANAGER,
             FinishedScan::Keep,
         )
         .await
@@ -380,11 +388,11 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
 
     sqlx::query(
         "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 198)
-         INSERT INTO play_sessions (game_id, played_on, created_by)
-         SELECT ?, '2026-11-20', ? FROM n",
+         INSERT INTO play_sessions (user_id, game_id, played_on)
+         SELECT ?, ?, '2026-11-20' FROM n",
     )
-    .bind(other)
     .bind(common::MANAGER)
+    .bind(other)
     .execute(&app.pool)
     .await
     .unwrap();
@@ -397,30 +405,7 @@ async fn a_game_keeps_5000_sessions_and_a_person_logs_200_a_day() {
         matches!(scanned, Err(ApiError::Conflict("too_many_sessions_today"))),
         "{scanned:?}"
     );
-    assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 5199);
-
-    // Scans with no person share one day's limit.
-    sqlx::query(
-        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 199)
-         INSERT INTO play_sessions (game_id, played_on) SELECT ?, '2026-11-20' FROM n",
-    )
-    .bind(other)
-    .execute(&app.pool)
-    .await
-    .unwrap();
-    let anonymous = |copy: i64| async move {
-        sessions::start_from_tag(&app.pool, copy, "2026-11-21", None, FinishedScan::Keep).await
-    };
-    assert!(
-        anonymous(copy(new_game(app, "Hades").await).await)
-            .await
-            .is_ok()
-    );
-    let scanned = anonymous(copy(new_game(app, "Okami").await).await).await;
-    assert!(
-        matches!(scanned, Err(ApiError::Conflict("too_many_sessions_today"))),
-        "{scanned:?}"
-    );
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM play_sessions").await, 5200);
 }
 
 #[tokio::test]
@@ -586,10 +571,12 @@ async fn library_filters_combine_on_one_copy() {
         ["Astro Bot", "Splatoon", "Zelda: Tears of the Kingdom"]
     );
 
-    sqlx::query("UPDATE games SET play_status = NULL WHERE title = 'Splatoon'")
-        .execute(&app.pool)
-        .await
-        .unwrap();
+    sqlx::query(
+        "DELETE FROM play_progress WHERE game_id = (SELECT id FROM games WHERE title = 'Splatoon')",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
     assert_eq!(titles(&app, "play_status=none").await, ["Splatoon"]);
     assert_eq!(
         titles(&app, "play_status=none,completed").await,
@@ -696,8 +683,10 @@ async fn library_game_mode_filter_and_sorting() {
 
     for (title, day) in [("Astro Bot", "2026-11-01"), ("Splatoon", "2026-11-15")] {
         sqlx::query(
-            "INSERT INTO play_sessions (game_id, played_on) SELECT id, ? FROM games WHERE title = ?",
+            "INSERT INTO play_sessions (user_id, game_id, played_on)
+             SELECT ?, id, ? FROM games WHERE title = ?",
         )
+        .bind(common::MANAGER)
         .bind(day)
         .bind(title)
         .execute(&app.pool)
@@ -951,13 +940,32 @@ async fn games_and_copies_name_who_added_and_changed_them() {
         "a copy edit leaves the game alone"
     );
 
+    // A play status is Alex's own and leaves the game alone.
+    let (_, game) = json_as(
+        &app,
+        alex,
+        "PUT",
+        &format!("/api/games/{id}/play-status"),
+        json!({"play_status": "playing"}),
+    )
+    .await;
+    assert_eq!(game["play_status"], "playing");
+    assert_eq!(game["updated_by"]["id"], "sam");
+    let (_, seen) = json_as(&app, sam, "GET", &format!("/api/games/{id}"), Value::Null).await;
+    assert_eq!(seen["play_status"], Value::Null);
+    assert_eq!(
+        seen["household"][0]["person"],
+        json!({"id": "alex", "name": "Alex"})
+    );
+    assert_eq!(seen["household"][0]["play_status"], "playing");
+
     let renamed = ("alex", "Alex B.");
     let (_, game) = json_as(
         &app,
         renamed,
         "PUT",
-        &format!("/api/games/{id}/play-status"),
-        json!({"play_status": "playing"}),
+        &format!("/api/games/{id}"),
+        json!({"title": "Hades"}),
     )
     .await;
     assert_eq!(game["updated_by"]["name"], "Alex B.");

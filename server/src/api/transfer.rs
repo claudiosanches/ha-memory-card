@@ -172,6 +172,7 @@ fn csv_download(name: &str, body: Vec<u8>) -> Response {
 )]
 pub async fn export_csv(
     State(state): State<AppState>,
+    Actor(by): Actor,
     filter: Result<Query<LibraryFilter>, QueryRejection>,
 ) -> ApiResult<Response> {
     let Query(mut filter) = filter.map_err(|_| ApiError::Invalid {
@@ -179,6 +180,7 @@ pub async fn export_csv(
         field: None,
     })?;
     filter.ownership.get_or_insert(Ownership::Any);
+    filter.person = Some(by);
     let body = export::export(&state.db, &filter)
         .await
         .map_err(|err| match err {
@@ -203,12 +205,13 @@ pub async fn template_csv() -> Response {
 )]
 pub async fn preview(
     State(state): State<AppState>,
+    Actor(by): Actor,
     CsvBody(body): CsvBody,
 ) -> ApiResult<Json<ImportPreview>> {
     let mut preview = match parse(&body) {
         Ok(rows) => {
             let mut conn = state.db.acquire().await?;
-            let snapshot = snapshot::load(&mut conn).await?;
+            let snapshot = snapshot::load(&mut conn, &by).await?;
             let plan = plan(&rows, &snapshot);
             preview_of(plan, &snapshot)
         }
@@ -240,7 +243,7 @@ pub async fn run(
     })?;
 
     let mut tx = crate::db::write_tx(&state.db).await?;
-    let snapshot = snapshot::load(&mut tx).await?;
+    let snapshot = snapshot::load(&mut tx, &by).await?;
     let plan = plan(&rows, &snapshot);
     if plan.has_errors() {
         return Err(ApiError::Invalid {

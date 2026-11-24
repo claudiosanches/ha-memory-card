@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT play_status FROM play_progress WHERE user_id = ? AND game_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "play_status",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "play_progress",
+            "name": "play_status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "40a70965f8cc1c8d88ae6c72a1fe693c4f98a1529cb7e3f5c0f79f3db4bccaef"
+}

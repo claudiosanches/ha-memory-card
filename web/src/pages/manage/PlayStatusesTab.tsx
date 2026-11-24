@@ -114,7 +114,7 @@ export function PlayStatusesTab() {
                   <Text size="xs" c="dimmed">
                     {[
                       t('playStatuses.summary', { group: t(`playStatuses.group.${status.counts_as}`) }),
-                      t('platforms.gameCount', { count: status.game_count }),
+                      t('playStatuses.uses', { count: status.game_count }),
                       status.builtin ? t('playStatuses.builtin') : null,
                     ]
                       .filter(Boolean)

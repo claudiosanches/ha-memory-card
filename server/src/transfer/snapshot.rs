@@ -78,7 +78,8 @@ pub struct Snapshot {
     pub game_labels: Vec<(i64, i64)>,
 }
 
-pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
+/// The collection as an import sees it, with `person`'s play statuses.
+pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Snapshot> {
     let platforms = sqlx::query_as!(
         PlatformRow,
         r#"SELECT id AS "id!", name, abbreviation, slug FROM platforms ORDER BY sort_order"#
@@ -108,7 +109,9 @@ pub async fn load(conn: &mut SqliteConnection) -> sqlx::Result<Snapshot> {
 
     let games = sqlx::query_as!(
         GameRow,
-        r#"SELECT id AS "id!", igdb_id, title, play_status FROM games"#
+        r#"SELECT g.id AS "id!", g.igdb_id, g.title, p.play_status AS "play_status: String"
+           FROM games g LEFT JOIN play_progress p ON p.game_id = g.id AND p.user_id = ?"#,
+        person
     )
     .fetch_all(&mut *conn)
     .await?;

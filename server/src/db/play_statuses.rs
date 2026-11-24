@@ -21,6 +21,7 @@ pub struct PlayStatus {
     pub color: StatusColor,
     pub counts_as: StatusGroup,
     pub builtin: bool,
+    /// Games in this status, once for each person who has them in it.
     pub game_count: i64,
 }
 
@@ -43,7 +44,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<PlayStatus>> {
         PlayStatus,
         r#"SELECT s.key AS "key!", s.label, s.color AS "color: StatusColor",
                   s.counts_as AS "counts_as: StatusGroup", s.builtin AS "builtin: bool",
-                  (SELECT COUNT(*) FROM games g WHERE g.play_status = s.key) AS "game_count!: i64"
+                  (SELECT COUNT(*) FROM play_progress p WHERE p.play_status = s.key) AS "game_count!: i64"
            FROM play_statuses s
            ORDER BY s.sort_order, s.key"#
     )
@@ -56,7 +57,7 @@ pub async fn get(pool: &SqlitePool, key: &str) -> ApiResult<PlayStatus> {
         PlayStatus,
         r#"SELECT s.key AS "key!", s.label, s.color AS "color: StatusColor",
                   s.counts_as AS "counts_as: StatusGroup", s.builtin AS "builtin: bool",
-                  (SELECT COUNT(*) FROM games g WHERE g.play_status = s.key) AS "game_count!: i64"
+                  (SELECT COUNT(*) FROM play_progress p WHERE p.play_status = s.key) AS "game_count!: i64"
            FROM play_statuses s
            WHERE s.key = ?"#,
         key
@@ -159,7 +160,8 @@ pub async fn update(pool: &SqlitePool, key: &str, fields: &StatusFields) -> ApiR
     Ok(())
 }
 
-/// Deletes a custom status and moves its games to `move_to`, or to no status.
+/// Deletes a custom status and moves everyone's games in it to `move_to`, or
+/// to no status.
 pub async fn delete(pool: &SqlitePool, key: &str, move_to: Option<&str>) -> ApiResult<()> {
     let mut tx = write_tx(pool).await?;
     let builtin = sqlx::query_scalar!(
@@ -179,14 +181,24 @@ pub async fn delete(pool: &SqlitePool, key: &str, move_to: Option<&str>) -> ApiR
         .await
         .map_err(|_| ApiError::invalid("unknown_play_status", "move_to"))?;
 
-    sqlx::query!(
-        "UPDATE games SET play_status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         WHERE play_status = ?",
-        move_to,
-        key
-    )
-    .execute(&mut *tx)
-    .await?;
+    match move_to {
+        Some(move_to) => {
+            sqlx::query!(
+                "UPDATE play_progress SET play_status = ?,
+                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                 WHERE play_status = ?",
+                move_to,
+                key
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+        None => {
+            sqlx::query!("DELETE FROM play_progress WHERE play_status = ?", key)
+                .execute(&mut *tx)
+                .await?;
+        }
+    }
     let result = sqlx::query!("DELETE FROM play_statuses WHERE key = ?", key)
         .execute(&mut *tx)
         .await?;

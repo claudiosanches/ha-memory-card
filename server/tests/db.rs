@@ -47,6 +47,7 @@ async fn fresh_database_has_schema_and_seed() {
             "labels",
             "nfc_tags",
             "platforms",
+            "play_progress",
             "play_sessions",
             "play_statuses",
             "releases",

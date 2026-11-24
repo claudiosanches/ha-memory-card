@@ -71,7 +71,7 @@ pub async fn add(
     };
     Ok((
         StatusCode::CREATED,
-        Json(games::get(&state.db, game_id).await?),
+        Json(games::get(&state.db, game_id, &by).await?),
     ))
 }
 
@@ -85,11 +85,12 @@ pub async fn add(
 )]
 pub async fn delete(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
     let (game_id, path) = photos::delete(&state.db, id).await?;
     covers::remove_file(&state.config.covers_dir(), &path).await;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
 /// Deletes photo directories of copies that are gone. Best effort.

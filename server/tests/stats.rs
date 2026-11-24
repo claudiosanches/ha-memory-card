@@ -35,6 +35,20 @@ async fn stats_total_the_collection() {
         .await;
     }
 
+    // Someone else's play is not the manager's.
+    sqlx::query("INSERT INTO users (id) VALUES ('someone-else')")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO play_sessions (user_id, game_id, played_on, minutes)
+         VALUES ('someone-else', ?, date('now'), 90)",
+    )
+    .bind(hades)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+
     let (status, stats) = app.json("GET", "/api/stats", None).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(stats["games"], 3);

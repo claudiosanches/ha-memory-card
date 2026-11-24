@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.cover_path,\n                  g.cover_source IS 'upload' AS \"cover_uploaded!: bool\", g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.play_status,\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\",\n                  g.created_at, g.created_by,\n                  COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  g.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM games g\n           LEFT JOIN users cu ON cu.id = g.created_by\n           LEFT JOIN users uu ON uu.id = g.updated_by\n           WHERE g.id = ?",
+  "query": "SELECT g.id AS \"id!\", g.igdb_id, g.title, g.summary, g.cover_path,\n                  g.cover_source IS 'upload' AS \"cover_uploaded!: bool\", g.first_release_date,\n                  g.developers AS \"developers: Json<Vec<String>>\",\n                  g.publishers AS \"publishers: Json<Vec<String>>\",\n                  g.local_max_players, g.online_max_players,\n                  g.local_coop AS \"local_coop: bool\", g.online_coop AS \"online_coop: bool\",\n                  (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)\n                      AS \"game_mode_ids!: Json<Vec<i64>>\",\n                  (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)\n                      AS \"genre_ids!: Json<Vec<i64>>\",\n                  g.created_at, g.created_by,\n                  COALESCE(cu.display_name, cu.name) AS created_by_name,\n                  g.updated_by, COALESCE(uu.display_name, uu.name) AS updated_by_name\n           FROM games g\n           LEFT JOIN users cu ON cu.id = g.created_by\n           LEFT JOIN users uu ON uu.id = g.updated_by\n           WHERE g.id = ?",
   "describe": {
     "columns": [
       {
@@ -98,19 +98,8 @@
         }
       },
       {
-        "name": "play_status",
-        "ordinal": 9,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "games",
-            "name": "play_status"
-          }
-        }
-      },
-      {
         "name": "local_max_players",
-        "ordinal": 10,
+        "ordinal": 9,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -121,7 +110,7 @@
       },
       {
         "name": "online_max_players",
-        "ordinal": 11,
+        "ordinal": 10,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -132,7 +121,7 @@
       },
       {
         "name": "local_coop: bool",
-        "ordinal": 12,
+        "ordinal": 11,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -143,7 +132,7 @@
       },
       {
         "name": "online_coop: bool",
-        "ordinal": 13,
+        "ordinal": 12,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -154,19 +143,19 @@
       },
       {
         "name": "game_mode_ids!: Json<Vec<i64>>",
-        "ordinal": 14,
+        "ordinal": 13,
         "type_info": "Integer",
         "origin": "Expression"
       },
       {
         "name": "genre_ids!: Json<Vec<i64>>",
-        "ordinal": 15,
+        "ordinal": 14,
         "type_info": "Integer",
         "origin": "Expression"
       },
       {
         "name": "created_at",
-        "ordinal": 16,
+        "ordinal": 15,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -177,7 +166,7 @@
       },
       {
         "name": "created_by",
-        "ordinal": 17,
+        "ordinal": 16,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -188,13 +177,13 @@
       },
       {
         "name": "created_by_name",
-        "ordinal": 18,
+        "ordinal": 17,
         "type_info": "Text",
         "origin": "Expression"
       },
       {
         "name": "updated_by",
-        "ordinal": 19,
+        "ordinal": 18,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -205,7 +194,7 @@
       },
       {
         "name": "updated_by_name",
-        "ordinal": 20,
+        "ordinal": 19,
         "type_info": "Text",
         "origin": "Expression"
       }
@@ -229,7 +218,6 @@
       true,
       true,
       true,
-      true,
       false,
       true,
       true,
@@ -237,5 +225,5 @@
       true
     ]
   },
-  "hash": "2454ab61b6c115e02bee8b5e8f35d6d5990ad9bc2458ab27674b0a85fed60058"
+  "hash": "962f55e4c015c2f87b5b344b0acc83420210a9185ec511b44cca38ae95bb6b4c"
 }

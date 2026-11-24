@@ -22,10 +22,10 @@ describe('Play statuses tab', () => {
 
     const custom = await screen.findByTestId('status-replaying');
     expect(custom).toHaveTextContent('Replaying');
-    expect(custom).toHaveTextContent('Counts as Playing · 3 games');
+    expect(custom).toHaveTextContent('Counts as Playing · Used 3 times');
     expect(within(custom).getByRole('button', { name: en.common.delete })).toBeInTheDocument();
     const builtin = screen.getByTestId('status-completed');
-    expect(builtin).toHaveTextContent('Counts as Finished · 0 games · Built-in');
+    expect(builtin).toHaveTextContent('Counts as Finished · Used 0 times · Built-in');
     expect(within(builtin).queryByRole('button', { name: en.common.delete })).toBeNull();
   });
 
@@ -83,7 +83,7 @@ describe('Play statuses tab', () => {
     const row = await screen.findByTestId('status-replaying');
     fireEvent.click(within(row).getByRole('button', { name: en.common.delete }));
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('combobox', { name: '3 games have this status. Move them to:' }));
+    fireEvent.click(within(dialog).getByRole('combobox', { name: 'This status is in use 3 times. Move those games to:' }));
     fireEvent.click(await screen.findByRole('option', { name: 'Playing', hidden: true }));
     fireEvent.click(within(dialog).getByRole('button', { name: en.common.delete }));
 

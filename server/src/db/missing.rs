@@ -8,7 +8,6 @@ use crate::error::ApiResult;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MissingField {
-    PlayStatus,
     Cover,
     GameModes,
     /// No player counts on the game or its releases. A game whose only mode
@@ -41,7 +40,6 @@ pub async fn list(pool: &SqlitePool, igdb: bool) -> ApiResult<Vec<MissingDetails
              WHERE c.status = 'owned'
            )
            SELECT g.id AS "id!", g.title,
-             g.play_status IS NULL AS "play_status!: bool",
              g.cover_path IS NULL AS "cover!: bool",
              NOT EXISTS (SELECT 1 FROM game_game_modes gm WHERE gm.game_id = g.id) AS "game_modes!: bool",
              (g.local_max_players IS NULL AND g.online_max_players IS NULL
@@ -79,7 +77,6 @@ pub async fn list(pool: &SqlitePool, igdb: bool) -> ApiResult<Vec<MissingDetails
         .into_iter()
         .filter_map(|row| {
             let fields: Vec<MissingField> = [
-                (row.play_status, MissingField::PlayStatus),
                 (row.cover, MissingField::Cover),
                 (row.game_modes, MissingField::GameModes),
                 (row.players, MissingField::Players),

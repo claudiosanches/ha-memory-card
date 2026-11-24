@@ -34,7 +34,8 @@ pub struct Stats {
     pub unvalued: i64,
     /// By the year of the purchase date; copies without one are left out.
     pub spent_by_year: Vec<YearAmount>,
-    /// Owned games per play status, in play status order; `None` is not set.
+    /// Owned games per the person's play status, in play status order; `None`
+    /// is not set.
     pub play_statuses: Vec<StatusCount>,
     /// In platform list order.
     pub platforms: Vec<PlatformTotal>,
@@ -54,11 +55,13 @@ pub struct Stats {
     pub value_change: Vec<ValueChange>,
     /// The copies worth the most, up to five per currency, largest first.
     pub most_valuable: Vec<ValuableCopy>,
-    /// Play in the last 53 weeks, by `YYYY-MM-DD`; days without play are left out.
+    /// The person's play in the last 53 weeks, by `YYYY-MM-DD`; days without
+    /// play are left out.
     pub play_days: Vec<DayPlay>,
+    /// The person's sessions and minutes, all time.
     pub total_sessions: i64,
     pub total_minutes: i64,
-    /// By session count, then minutes.
+    /// The person's, by session count, then minutes.
     pub most_played: Vec<PlayedGame>,
 }
 
@@ -162,7 +165,8 @@ fn amount(currency: String, minor: i64, copies: i64) -> Amount {
     }
 }
 
-pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
+/// The household's collection, with `person`'s own play.
+pub async fn get(pool: &SqlitePool, person: &str) -> sqlx::Result<Stats> {
     let counts = sqlx::query!(
         r#"SELECT
              (SELECT COUNT(DISTINCT r.game_id) FROM releases r
@@ -234,12 +238,15 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
 
     let play_statuses = sqlx::query_as!(
         StatusCount,
-        r#"SELECT g.play_status, COUNT(*) AS "games!: i64"
-           FROM games g LEFT JOIN play_statuses s ON s.key = g.play_status
+        r#"SELECT p.play_status AS "play_status: String", COUNT(*) AS "games!: i64"
+           FROM games g
+           LEFT JOIN play_progress p ON p.game_id = g.id AND p.user_id = ?
+           LEFT JOIN play_statuses s ON s.key = p.play_status
            WHERE EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id
                          WHERE r.game_id = g.id AND c.status = 'owned')
-           GROUP BY g.play_status
-           ORDER BY g.play_status IS NULL, MIN(s.sort_order)"#
+           GROUP BY p.play_status
+           ORDER BY p.play_status IS NULL, MIN(s.sort_order)"#,
+        person
     )
     .fetch_all(pool)
     .await?;
@@ -374,15 +381,17 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
         r#"SELECT played_on AS "day!: String", COUNT(*) AS "sessions!: i64",
                   COALESCE(SUM(minutes), 0) AS "minutes!: i64"
            FROM play_sessions
-           WHERE played_on >= date('now', '-371 days')
-           GROUP BY played_on ORDER BY played_on"#
+           WHERE user_id = ? AND played_on >= date('now', '-371 days')
+           GROUP BY played_on ORDER BY played_on"#,
+        person
     )
     .fetch_all(pool)
     .await?;
 
     let play = sqlx::query!(
         r#"SELECT COUNT(*) AS "sessions!: i64", COALESCE(SUM(minutes), 0) AS "minutes!: i64"
-           FROM play_sessions"#
+           FROM play_sessions WHERE user_id = ?"#,
+        person
     )
     .fetch_one(pool)
     .await?;
@@ -392,9 +401,11 @@ pub async fn get(pool: &SqlitePool) -> sqlx::Result<Stats> {
         r#"SELECT g.id AS "game_id!", g.title, COUNT(*) AS "sessions!: i64",
                   COALESCE(SUM(s.minutes), 0) AS "minutes!: i64"
            FROM play_sessions s JOIN games g ON g.id = s.game_id
+           WHERE s.user_id = ?
            GROUP BY g.id
            ORDER BY COUNT(*) DESC, SUM(s.minutes) DESC, g.sort_title
            LIMIT ?"#,
+        person,
         MOST_PLAYED
     )
     .fetch_all(pool)

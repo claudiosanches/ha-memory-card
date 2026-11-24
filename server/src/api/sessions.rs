@@ -1,13 +1,13 @@
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::{Extension, Json};
 use serde::Deserialize;
 use utoipa::ToSchema;
 
 use super::games::date;
 use super::input::{NOTES_MAX, optional};
 use crate::AppState;
-use crate::access::{Access, Actor, Role};
+use crate::access::Actor;
 use crate::db::games::{self, GameDetail};
 use crate::db::sessions::{self, SessionFields};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
@@ -55,7 +55,7 @@ impl SessionInput {
     responses(
         (status = CREATED, description = "The game with the new session", body = GameDetail),
         (status = NOT_FOUND, body = ErrorBody),
-        (status = CONFLICT, description = "`too_many_sessions`: 5000 per game; `too_many_sessions_today`: 200 a day per person", body = ErrorBody),
+        (status = CONFLICT, description = "`too_many_sessions`: 5000 per game per person; `too_many_sessions_today`: 200 a day per person", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody),
     )
 )]
@@ -66,7 +66,10 @@ pub async fn add(
     ApiJson(input): ApiJson<SessionInput>,
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
     sessions::add(&state.db, id, &input.validate()?, &by).await?;
-    Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
+    Ok((
+        StatusCode::CREATED,
+        Json(games::get(&state.db, id, &by).await?),
+    ))
 }
 
 #[utoipa::path(
@@ -82,12 +85,12 @@ pub async fn add(
 )]
 pub async fn update(
     State(state): State<AppState>,
-    Extension(access): Extension<Access>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<SessionInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = sessions::update(&state.db, id, &input.validate()?, owner(&access)).await?;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    let game_id = sessions::update(&state.db, id, &input.validate()?, &by).await?;
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
 #[utoipa::path(
@@ -101,14 +104,9 @@ pub async fn update(
 )]
 pub async fn delete(
     State(state): State<AppState>,
-    Extension(access): Extension<Access>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = sessions::delete(&state.db, id, owner(&access)).await?;
-    Ok(Json(games::get(&state.db, game_id).await?))
-}
-
-/// Viewers change only the sessions they logged; managers change any.
-fn owner(access: &Access) -> Option<&str> {
-    (access.role != Role::Manager).then_some(access.user.id.as_str())
+    let game_id = sessions::delete(&state.db, id, &by).await?;
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }

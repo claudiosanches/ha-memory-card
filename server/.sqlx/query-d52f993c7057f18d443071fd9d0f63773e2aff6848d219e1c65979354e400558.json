@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COUNT(*) AS \"sessions!: i64\", COALESCE(SUM(minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions",
+  "query": "SELECT COUNT(*) AS \"sessions!: i64\", COALESCE(SUM(minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions WHERE user_id = ?",
   "describe": {
     "columns": [
       {
@@ -17,12 +17,12 @@
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
       false
     ]
   },
-  "hash": "bda230de2159faab45d66542c28be3d041b59bde37690c1e4594ba6c14401d51"
+  "hash": "d52f993c7057f18d443071fd9d0f63773e2aff6848d219e1c65979354e400558"
 }

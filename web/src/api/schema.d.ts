@@ -942,7 +942,7 @@ export interface components {
             format: components["schemas"]["Format"];
             /** Format: int64 */
             game_id: number;
-            /** @description The game's latest session. */
+            /** @description The person's latest session of the game. */
             last_played_at?: string | null;
             notes?: string | null;
             /** Format: int64 */
@@ -1072,6 +1072,8 @@ export interface components {
             first_release_date?: string | null;
             game_mode_ids: number[];
             genre_ids: number[];
+            /** @description Everyone else who keeps play for the game. */
+            household: components["schemas"]["PersonPlay"][];
             /** Format: int64 */
             id: number;
             /** Format: int64 */
@@ -1086,12 +1088,12 @@ export interface components {
             online_coop?: boolean | null;
             /** Format: int64 */
             online_max_players?: number | null;
-            /** @description A play status key. */
+            /** @description The viewer's play status key. */
             play_status?: string | null;
             publishers: string[];
             /** @description In platform list order, then region. */
             releases: components["schemas"]["ReleaseDetail"][];
-            /** @description Latest first; the first is when the game was last played. */
+            /** @description The viewer's sessions, latest first; the first is when they last played. */
             sessions: components["schemas"]["PlaySession"][];
             summary?: string | null;
             title: string;
@@ -1111,8 +1113,6 @@ export interface components {
             online_coop?: boolean | null;
             /** Format: int64 */
             online_max_players?: number | null;
-            /** @description A play status key. */
-            play_status?: string | null;
             summary?: string | null;
             title: string;
         };
@@ -1279,14 +1279,14 @@ export interface components {
          * @description A detail a game can lack. Copy details count when any owned copy lacks them.
          * @enum {string}
          */
-        MissingField: "play_status" | "cover" | "game_modes" | "players" | "copies" | "device" | "store" | "condition" | "igdb";
+        MissingField: "cover" | "game_modes" | "players" | "copies" | "device" | "store" | "condition" | "igdb";
         NewDeviceReport: {
             kind: components["schemas"]["DeviceKind"];
             name: string;
             platforms: string[];
         };
         NewGameInput: {
-            /** @description A play status key. */
+            /** @description A play status key: the creator's own status for the game. */
             play_status?: string | null;
             title: string;
         };
@@ -1301,6 +1301,18 @@ export interface components {
             id: string;
             /** @description Display name, else username; `None` when Home Assistant sent neither. */
             name?: string | null;
+        };
+        /** @description Someone else's play of a game, as the game page shows it. */
+        PersonPlay: {
+            /** @description `YYYY-MM-DD`. */
+            last_played_on?: string | null;
+            /** Format: int64 */
+            minutes: number;
+            person: components["schemas"]["Person"];
+            /** @description Their play status key. */
+            play_status?: string | null;
+            /** Format: int64 */
+            sessions: number;
         };
         Platform: {
             abbreviation?: string | null;
@@ -1382,7 +1394,6 @@ export interface components {
              */
             copy_id?: number | null;
             created_at: string;
-            created_by?: components["schemas"]["Person"] | null;
             /** Format: int64 */
             id: number;
             /** Format: int64 */
@@ -1395,7 +1406,10 @@ export interface components {
             builtin: boolean;
             color: components["schemas"]["StatusColor"];
             counts_as: components["schemas"]["StatusGroup"];
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Games in this status, once for each person who has them in it.
+             */
             game_count: number;
             key: string;
             /** @description `null` for a built-in status that keeps its default name. */
@@ -1409,7 +1423,7 @@ export interface components {
             label?: string | null;
         };
         PlayStatusInput: {
-            /** @description A play status key; `null` clears it. */
+            /** @description A play status key for the caller's own play; `null` clears it. */
             play_status?: string | null;
         };
         PlayStatusOrder: {
@@ -1544,7 +1558,7 @@ export interface components {
              * @description Games with an owned copy.
              */
             games: number;
-            /** @description By session count, then minutes. */
+            /** @description The person's, by session count, then minutes. */
             most_played: components["schemas"]["PlayedGame"][];
             /** @description The copies worth the most, up to five per currency, largest first. */
             most_valuable: components["schemas"]["ValuableCopy"][];
@@ -1552,9 +1566,15 @@ export interface components {
             physical: number;
             /** @description In platform list order. */
             platforms: components["schemas"]["PlatformTotal"][];
-            /** @description Play in the last 53 weeks, by `YYYY-MM-DD`; days without play are left out. */
+            /**
+             * @description The person's play in the last 53 weeks, by `YYYY-MM-DD`; days without
+             *     play are left out.
+             */
             play_days: components["schemas"]["DayPlay"][];
-            /** @description Owned games per play status, in play status order; `None` is not set. */
+            /**
+             * @description Owned games per the person's play status, in play status order; `None`
+             *     is not set.
+             */
             play_statuses: components["schemas"]["StatusCount"][];
             /** @description Largest first. */
             regions: components["schemas"]["RegionCount"][];
@@ -1566,7 +1586,10 @@ export interface components {
             stores: components["schemas"]["StoreCount"][];
             /** Format: int64 */
             total_minutes: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description The person's sessions and minutes, all time.
+             */
             total_sessions: number;
             /**
              * Format: int64
@@ -1680,7 +1703,10 @@ export interface components {
             min_local_players?: number | null;
             /** @description Platform slugs. */
             platform?: string[];
-            /** @description Play status keys. Empty means every status that counts as backlog. */
+            /**
+             * @description The person's play status keys. Empty means every status that counts as
+             *     backlog.
+             */
             play_status?: string[];
         };
         SyncStatus: {
@@ -2864,7 +2890,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description `too_many_sessions`: 5000 per game; `too_many_sessions_today`: 200 a day per person */
+            /** @description `too_many_sessions`: 5000 per game per person; `too_many_sessions_today`: 200 a day per person */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -4211,7 +4237,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description A random owned game, not one picked in the last day when others match */
+            /** @description A random owned game from the caller's backlog, not one picked for them in the last day when others match */
             200: {
                 headers: {
                     [name: string]: unknown;

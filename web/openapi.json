@@ -1731,7 +1731,7 @@
             }
           },
           "409": {
-            "description": "`too_many_sessions`: 5000 per game; `too_many_sessions_today`: 200 a day per person",
+            "description": "`too_many_sessions`: 5000 per game per person; `too_many_sessions_today`: 200 a day per person",
             "content": {
               "application/json": {
                 "schema": {
@@ -3388,7 +3388,7 @@
         },
         "responses": {
           "200": {
-            "description": "A random owned game, not one picked in the last day when others match",
+            "description": "A random owned game from the caller's backlog, not one picked for them in the last day when others match",
             "content": {
               "application/json": {
                 "schema": {
@@ -3997,7 +3997,7 @@
               "string",
               "null"
             ],
-            "description": "The game's latest session."
+            "description": "The person's latest session of the game."
           },
           "notes": {
             "type": [
@@ -4410,6 +4410,7 @@
           "created_at",
           "releases",
           "sessions",
+          "household",
           "versions",
           "names"
         ],
@@ -4462,6 +4463,13 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "household": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonPlay"
+            },
+            "description": "Everyone else who keeps play for the game."
           },
           "id": {
             "type": "integer",
@@ -4519,7 +4527,7 @@
               "string",
               "null"
             ],
-            "description": "A play status key."
+            "description": "The viewer's play status key."
           },
           "publishers": {
             "type": "array",
@@ -4539,7 +4547,7 @@
             "items": {
               "$ref": "#/components/schemas/PlaySession"
             },
-            "description": "Latest first; the first is when the game was last played."
+            "description": "The viewer's sessions, latest first; the first is when they last played."
           },
           "summary": {
             "type": [
@@ -4629,13 +4637,6 @@
               "null"
             ],
             "format": "int64"
-          },
-          "play_status": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "A play status key."
           },
           "summary": {
             "type": [
@@ -5179,7 +5180,6 @@
         "type": "string",
         "description": "A detail a game can lack. Copy details count when any owned copy lacks them.",
         "enum": [
-          "play_status",
           "cover",
           "game_modes",
           "players",
@@ -5223,7 +5223,7 @@
               "string",
               "null"
             ],
-            "description": "A play status key."
+            "description": "A play status key: the creator's own status for the game."
           },
           "title": {
             "type": "string"
@@ -5263,6 +5263,42 @@
               "null"
             ],
             "description": "Display name, else username; `None` when Home Assistant sent neither."
+          }
+        }
+      },
+      "PersonPlay": {
+        "type": "object",
+        "description": "Someone else's play of a game, as the game page shows it.",
+        "required": [
+          "person",
+          "sessions",
+          "minutes"
+        ],
+        "properties": {
+          "last_played_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`YYYY-MM-DD`."
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "person": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "play_status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Their play status key."
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -5492,16 +5528,6 @@
           "created_at": {
             "type": "string"
           },
-          "created_by": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/Person"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "id": {
             "type": "integer",
             "format": "int64"
@@ -5546,7 +5572,8 @@
           },
           "game_count": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Games in this status, once for each person who has them in it."
           },
           "key": {
             "type": "string"
@@ -5591,7 +5618,7 @@
               "string",
               "null"
             ],
-            "description": "A play status key; `null` clears it."
+            "description": "A play status key for the caller's own play; `null` clears it."
           }
         },
         "additionalProperties": false
@@ -6062,7 +6089,7 @@
             "items": {
               "$ref": "#/components/schemas/PlayedGame"
             },
-            "description": "By session count, then minutes."
+            "description": "The person's, by session count, then minutes."
           },
           "most_valuable": {
             "type": "array",
@@ -6087,14 +6114,14 @@
             "items": {
               "$ref": "#/components/schemas/DayPlay"
             },
-            "description": "Play in the last 53 weeks, by `YYYY-MM-DD`; days without play are left out."
+            "description": "The person's play in the last 53 weeks, by `YYYY-MM-DD`; days without\nplay are left out."
           },
           "play_statuses": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatusCount"
             },
-            "description": "Owned games per play status, in play status order; `None` is not set."
+            "description": "Owned games per the person's play status, in play status order; `None`\nis not set."
           },
           "regions": {
             "type": "array",
@@ -6130,7 +6157,8 @@
           },
           "total_sessions": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "The person's sessions and minutes, all time."
           },
           "unpriced": {
             "type": "integer",
@@ -6402,7 +6430,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Play status keys. Empty means every status that counts as backlog."
+            "description": "The person's play status keys. Empty means every status that counts as\nbacklog."
           }
         },
         "additionalProperties": false

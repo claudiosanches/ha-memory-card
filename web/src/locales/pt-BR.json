@@ -199,7 +199,7 @@
     "accessNoManagers": "Ninguém pode alterar a coleção até que um gestor seja nomeado. Copie seu ID de usuário abaixo. No Home Assistant, vá em Configurações > Aplicativos > Memory Card > Configuração, adicione o ID em Managers, salve e reinicie o aplicativo.",
     "accessManager": "Você pode gerenciar a coleção e as configurações dela.",
     "accessViewer": "Você pode navegar pela coleção. Peça a um gestor para fazer alterações.",
-    "accessViewerProgress": "Você pode navegar pela coleção e registrar seu progresso. Peça a um gestor para fazer outras alterações.",
+    "accessViewerProgress": "Você pode navegar pela coleção e registrar as próprias partidas. Peça a um gestor para fazer outras alterações.",
     "signedInAs": "Conectado como",
     "role": "Papel",
     "roles": {
@@ -313,7 +313,7 @@
       "status": "owned ou wanted. Vazio significa owned.",
       "igdb_id": "Id do jogo no IGDB, opcional. Diferencia jogos com o mesmo título.",
       "game_title": "Obrigatória.",
-      "play_status": "backlog, playing, paused, completed, dropped, mastered.",
+      "play_status": "O seu: backlog, playing, paused, completed, dropped, mastered.",
       "labels": "Nomes das etiquetas, separados por vírgulas ou ponto e vírgula. Elas são adicionadas ao jogo, e as que ainda não existem são criadas.",
       "platform": "Nome, abreviação ou slug da plataforma, como na tela Gerenciar. Nomes desconhecidos são criados.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial ou sem região). Também NTSC-U, PAL, NTSC-J.",
@@ -414,8 +414,8 @@
     "builtin": "Nativo",
     "summary": "Conta como {{group}}",
     "deleteTitle": "Excluir {{name}}?",
-    "moveTo_one": "{{count}} jogo tem este status. Mover para:",
-    "moveTo_other": "{{count}} jogos têm este status. Mover para:",
+    "moveTo_one": "Este status está em uso {{count}} vez. Mover esses jogos para:",
+    "moveTo_other": "Este status está em uso {{count}} vezes. Mover esses jogos para:",
     "group": {
       "backlog": "Backlog",
       "playing": "Jogando",
@@ -445,7 +445,9 @@
       "over": "{{name}} está na posição {{position}}.",
       "end": "{{name}} solto na posição {{position}}.",
       "cancel": "Movimento de {{name}} cancelado."
-    }
+    },
+    "uses_one": "Usado {{count}} vez",
+    "uses_other": "Usado {{count}} vezes"
   },
   "library": {
     "search": "Buscar títulos",
@@ -605,7 +607,9 @@
     "developers": "Desenvolvedoras",
     "publishers": "Publicadoras",
     "genres": "Gêneros",
-    "cover": "Capa de {{title}}"
+    "cover": "Capa de {{title}}",
+    "household": "Outros na casa",
+    "someone": "Alguém"
   },
   "igdb": {
     "link": "Vincular ao IGDB",
@@ -686,7 +690,8 @@
     "lastPlayed": "jogado em {{date}}",
     "empty": "Nada no backlog.",
     "cleared": "Backlog esvaziado. Mandou bem.",
-    "moved": "{{title}}: {{status}}"
+    "moved": "{{title}}: {{status}}",
+    "noPlay": "Seu backlog aparece aqui quando um gestor permite que visualizadores registrem as próprias partidas."
   },
   "duplicates": {
     "intro": "Jogos dos quais você tem mais de uma cópia.",
@@ -707,7 +712,6 @@
     "intro": "Passe pelos jogos sem detalhes, um de cada vez. Preencha o que souber ou pule para o próximo.",
     "lookFor": "Procurar",
     "fields": {
-      "play_status": "Status de jogo",
       "cover": "Capa",
       "game_modes": "Modos de jogo",
       "players": "Contagem de jogadores",
@@ -756,7 +760,7 @@
   "stats": {
     "intro": "Totais do que você tem, do que pagou e do que jogou.",
     "empty": "Adicione jogos para ver estatísticas.",
-    "groupPlay": "Backlog e partidas",
+    "groupPlay": "Seu backlog e partidas",
     "groupCollection": "Coleção",
     "groupMoney": "Gastos e valor",
     "games": "Jogos",

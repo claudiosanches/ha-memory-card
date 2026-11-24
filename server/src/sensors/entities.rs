@@ -7,8 +7,6 @@ use serde_json::{Value, json};
 use crate::db::sensors::Snapshot;
 use crate::db::suggestions::SuggestionFilter;
 
-/// What the Roll a pick button sends; anything else must be filters as JSON.
-pub const PICK_PRESS: &str = "roll";
 /// Home Assistant drops longer states.
 const MAX_STATE: usize = 255;
 
@@ -119,13 +117,31 @@ pub fn device(ingress_slug: Option<&str>) -> Value {
     device
 }
 
-/// The filters a roll asks for: the button's press means the defaults.
-pub fn pick_filter(payload: &[u8]) -> Result<SuggestionFilter, serde_json::Error> {
+/// A roll from Home Assistant: whose backlog it picks from, and the filters.
+#[derive(Debug, Default)]
+pub struct RollRequest {
+    /// A Home Assistant user ID.
+    pub person: Option<String>,
+    pub filter: SuggestionFilter,
+}
+
+/// Reads a roll: nothing means the defaults, otherwise a JSON object with an
+/// optional `person` beside the filters.
+pub fn roll_request(payload: &[u8]) -> Result<RollRequest, serde_json::Error> {
     let trimmed = payload.trim_ascii();
-    if trimmed.is_empty() || trimmed == PICK_PRESS.as_bytes() {
-        return Ok(SuggestionFilter::default());
+    if trimmed.is_empty() {
+        return Ok(RollRequest::default());
     }
-    serde_json::from_slice(trimmed)
+    let mut fields: serde_json::Map<String, Value> = serde_json::from_slice(trimmed)?;
+    let person = match fields.remove("person") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(person)) => Some(person),
+        Some(_) => return Err(serde::de::Error::custom("person is a user ID")),
+    };
+    Ok(RollRequest {
+        person,
+        filter: serde_json::from_value(Value::Object(fields))?,
+    })
 }
 
 /// Every value, by entity key. Missing titles are `null`, which Home Assistant shows as unknown.
@@ -201,13 +217,18 @@ mod tests {
     }
 
     #[test]
-    fn the_button_rolls_with_defaults_and_automations_send_filters() {
-        assert!(pick_filter(b"roll").unwrap().platform.is_empty());
-        assert!(pick_filter(b"").unwrap().device.is_empty());
-        let filter = pick_filter(br#"{"device": ["switch"], "min_local_players": 2}"#).unwrap();
-        assert_eq!(filter.device, ["switch".into()]);
-        assert_eq!(filter.min_local_players, Some(2));
-        assert!(pick_filter(b"{\"colour\": 1}").is_err());
+    fn a_roll_names_a_person_beside_its_filters() {
+        let empty = roll_request(b"").unwrap();
+        assert!(empty.person.is_none() && empty.filter.device.is_empty());
+        let request =
+            roll_request(br#"{"person": "abc", "device": ["switch"], "min_local_players": 2}"#)
+                .unwrap();
+        assert_eq!(request.person.as_deref(), Some("abc"));
+        assert_eq!(request.filter.device, ["switch".into()]);
+        assert_eq!(request.filter.min_local_players, Some(2));
+        assert!(roll_request(b"roll").is_err());
+        assert!(roll_request(br#"{"person": 1}"#).is_err());
+        assert!(roll_request(b"{\"colour\": 1}").is_err());
     }
 
     #[test]

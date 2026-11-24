@@ -13,7 +13,7 @@ import { Cover } from '../../components/Cover';
 import classes from './BacklogPage.module.css';
 import { useSetPlayStatus } from './usePlayStatus';
 
-/** Rolls a random backlog game, optionally one a device can play. Managers only: rolls are shared history. */
+/** Rolls a random game from your own backlog, optionally one a device can play. */
 export function Picker() {
   const { t } = useTranslation();
   const devices = useDevices();

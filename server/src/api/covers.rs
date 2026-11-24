@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 
 use super::body::ImageBody;
 use crate::AppState;
+use crate::access::Actor;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, GameDetail};
 use crate::error::{ApiError, ApiPath, ApiResult, ErrorBody};
@@ -37,10 +38,11 @@ pub struct Image(#[allow(dead_code)] Vec<u8>);
 )]
 pub async fn upload_game(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ImageBody(body): ImageBody,
 ) -> ApiResult<Json<GameDetail>> {
-    upload(&state, Owner::Game(id), &body).await
+    upload(&state, Owner::Game(id), &body, &by).await
 }
 
 #[utoipa::path(
@@ -53,9 +55,10 @@ pub async fn upload_game(
 )]
 pub async fn remove_game(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    remove(&state, Owner::Game(id)).await
+    remove(&state, Owner::Game(id), &by).await
 }
 
 #[utoipa::path(
@@ -70,10 +73,11 @@ pub async fn remove_game(
 )]
 pub async fn upload_release(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ImageBody(body): ImageBody,
 ) -> ApiResult<Json<GameDetail>> {
-    upload(&state, Owner::Release(id), &body).await
+    upload(&state, Owner::Release(id), &body, &by).await
 }
 
 #[utoipa::path(
@@ -86,12 +90,18 @@ pub async fn upload_release(
 )]
 pub async fn remove_release(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    remove(&state, Owner::Release(id)).await
+    remove(&state, Owner::Release(id), &by).await
 }
 
-async fn upload(state: &AppState, owner: Owner, bytes: &[u8]) -> ApiResult<Json<GameDetail>> {
+async fn upload(
+    state: &AppState,
+    owner: Owner,
+    bytes: &[u8],
+    viewer: &str,
+) -> ApiResult<Json<GameDetail>> {
     if bytes.len() > MAX_BYTES {
         return Err(ApiError::Invalid {
             code: "image_too_large",
@@ -120,16 +130,16 @@ async fn upload(state: &AppState, owner: Owner, bytes: &[u8]) -> ApiResult<Json<
         return Err(ApiError::NotFound);
     }
     covers::keep_only(&dir, owner, Some(&path)).await;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, viewer).await?))
 }
 
-async fn remove(state: &AppState, owner: Owner) -> ApiResult<Json<GameDetail>> {
+async fn remove(state: &AppState, owner: Owner, viewer: &str) -> ApiResult<Json<GameDetail>> {
     let game_id = games::cover_game(&state.db, owner).await?;
     if games::set_uploaded_cover(&state.db, owner, None).await? {
         covers::keep_only(&state.config.covers_dir(), owner, None).await;
         restore_igdb_covers(state, game_id).await;
     }
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, viewer).await?))
 }
 
 /// Best effort: without IGDB the cover stays empty until the next refresh.

@@ -199,7 +199,7 @@
     "accessNoManagers": "Nadie puede cambiar la colección hasta que se nombre un gestor. Copia tu ID de usuario abajo. En Home Assistant, ve a Ajustes > Aplicaciones > Memory Card > Configuración, añade el ID en Managers, guarda y reinicia la aplicación.",
     "accessManager": "Puedes gestionar la colección y sus ajustes.",
     "accessViewer": "Puedes explorar la colección. Pide a un gestor que haga cambios.",
-    "accessViewerProgress": "Puedes explorar la colección y registrar tu progreso. Pide a un gestor que haga otros cambios.",
+    "accessViewerProgress": "Puedes explorar la colección y llevar el registro de tu propio juego. Pide a un gestor que haga otros cambios.",
     "signedInAs": "Conectado como",
     "role": "Rol",
     "roles": {
@@ -313,7 +313,7 @@
       "status": "owned o wanted. Vacío significa owned.",
       "igdb_id": "Id opcional del juego en IGDB. Distingue juegos con el mismo título.",
       "game_title": "Obligatoria.",
-      "play_status": "backlog, playing, paused, completed, dropped, mastered.",
+      "play_status": "El tuyo: backlog, playing, paused, completed, dropped, mastered.",
       "labels": "Nombres de categorías, separados por comas o punto y coma. Se añaden al juego, y las categorías que aún no existen se crean.",
       "platform": "Nombre, abreviatura o slug de la plataforma, como en la pantalla Gestionar. Los nombres desconocidos se crean.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial o sin región). También NTSC-U, PAL, NTSC-J.",
@@ -414,8 +414,8 @@
     "builtin": "Predefinido",
     "summary": "Cuenta como {{group}}",
     "deleteTitle": "¿Eliminar {{name}}?",
-    "moveTo_one": "{{count}} juego tiene este estado. Muévelo a:",
-    "moveTo_other": "{{count}} juegos tienen este estado. Muévelos a:",
+    "moveTo_one": "Este estado está en uso {{count}} vez. Mueve esos juegos a:",
+    "moveTo_other": "Este estado está en uso {{count}} veces. Mueve esos juegos a:",
     "group": {
       "backlog": "Pendiente",
       "playing": "Jugando",
@@ -445,7 +445,9 @@
       "over": "{{name}} está en la posición {{position}}.",
       "end": "{{name}} soltado en la posición {{position}}.",
       "cancel": "Se canceló el movimiento de {{name}}."
-    }
+    },
+    "uses_one": "Usado {{count}} vez",
+    "uses_other": "Usado {{count}} veces"
   },
   "library": {
     "search": "Buscar títulos",
@@ -605,7 +607,9 @@
     "developers": "Desarrolladoras",
     "publishers": "Editoras",
     "genres": "Géneros",
-    "cover": "Portada de {{title}}"
+    "cover": "Portada de {{title}}",
+    "household": "Otros en casa",
+    "someone": "Alguien"
   },
   "igdb": {
     "link": "Vincular a IGDB",
@@ -686,7 +690,8 @@
     "lastPlayed": "jugado el {{date}}",
     "empty": "No hay nada en pendientes.",
     "cleared": "Pendientes vaciados. Buen trabajo.",
-    "moved": "{{title}}: {{status}}"
+    "moved": "{{title}}: {{status}}",
+    "noPlay": "Tus pendientes aparecen aquí cuando un gestor permite que los lectores lleven su propio registro de juego."
   },
   "duplicates": {
     "intro": "Juegos de los que tienes más de una copia.",
@@ -707,7 +712,6 @@
     "intro": "Repasa los juegos a los que les faltan detalles, uno a uno. Rellena lo que sepas o salta al siguiente.",
     "lookFor": "Buscar",
     "fields": {
-      "play_status": "Estado de juego",
       "cover": "Portada",
       "game_modes": "Modos de juego",
       "players": "Número de jugadores",
@@ -756,7 +760,7 @@
   "stats": {
     "intro": "Totales de lo que tienes, lo que pagaste y lo que jugaste.",
     "empty": "Añade juegos para ver estadísticas.",
-    "groupPlay": "Pendientes y partidas",
+    "groupPlay": "Tus pendientes y partidas",
     "groupCollection": "Colección",
     "groupMoney": "Gastos y valor",
     "games": "Juegos",

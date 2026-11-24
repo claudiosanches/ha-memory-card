@@ -26,6 +26,7 @@ function detail(id: number, title: string): GameDetail {
     labels: [],
     created_at: '2026-11-01T10:00:00.000Z',
     sessions: [],
+    household: [],
     versions: [],
     names: [],
     releases: [
@@ -51,7 +52,7 @@ function detail(id: number, title: string): GameDetail {
 }
 
 const MISSING: MissingDetails[] = [
-  { game_id: 4, title: 'Metroid Dread', fields: ['play_status', 'store'] },
+  { game_id: 4, title: 'Metroid Dread', fields: ['store'] },
   { game_id: 5, title: 'Tunic', fields: ['cover'] },
 ];
 
@@ -79,11 +80,8 @@ describe('Setup wizard', () => {
     fireEvent.click(await screen.findByRole('button', { name: en.setup.start_other.replace('{{count}}', '2') }));
     expect(await screen.findByText('Metroid Dread')).toBeInTheDocument();
     const missing = screen.getByTestId('missing-fields');
-    expect(within(missing).getByText(en.setup.fields.play_status)).toBeInTheDocument();
     expect(within(missing).getByText(en.setup.fields.store)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('combobox', { name: en.game.playStatus }));
-    fireEvent.click(await screen.findByRole('option', { name: en.playStatus.playing, hidden: true }));
     const copy = screen.getByTestId('setup-copy-21');
     expect(within(copy).queryByRole('combobox', { name: en.game.device })).not.toBeInTheDocument();
     fireEvent.click(within(copy).getByRole('combobox', { name: en.game.store }));
@@ -91,8 +89,7 @@ describe('Setup wizard', () => {
     fireEvent.click(screen.getByRole('button', { name: en.setup.saveNext }));
 
     expect(await screen.findByText('Tunic')).toBeInTheDocument();
-    const game = calls.find((c) => c.method === 'PUT' && c.path === '/api/games/4')?.body as Record<string, unknown>;
-    expect(game).toMatchObject({ title: 'Metroid Dread', play_status: 'playing' });
+    expect(calls.some((c) => c.method === 'PUT' && c.path === '/api/games/4')).toBe(false);
     const copyBody = calls.find((c) => c.path === '/api/copies/21')?.body;
     expect(copyBody).toMatchObject({ platform_id: 1, region: 'eu', format: 'physical', store_id: 3, condition: 'cib', notes: 'Spare' });
 

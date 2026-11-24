@@ -268,8 +268,9 @@ async fn stream(State(feed): State<Arc<Feed>>) -> Result<Response, ApiError> {
         .into_response())
 }
 
-/// Picks a game the way the app's Roll button does, with optional filters,
-/// for the Home Assistant user named in [`USER_HEADER`] or an automation.
+/// Picks a game from one person's backlog, as Pick for me does, with optional
+/// filters. The person is the Home Assistant user in [`USER_HEADER`], who
+/// rolls only for themselves, or the `person` an automation names.
 async fn roll(
     State(feed): State<Arc<Feed>>,
     headers: HeaderMap,
@@ -288,14 +289,34 @@ async fn roll(
                 })?,
         ),
     };
-    if !Policy::from_config(&feed.state.config).can_roll(user) {
-        return Err(ApiError::Forbidden("manager_required"));
-    }
-    let filter = entities::pick_filter(&body).map_err(|_| ApiError::Invalid {
+    let request = entities::roll_request(&body).map_err(|_| ApiError::Invalid {
         code: "invalid_filters",
         field: None,
     })?;
-    let game = db::suggestions::suggest(&feed.state.db, filter).await?.game;
+    let person = match (user, request.person.as_deref()) {
+        (Some(user), None) => user,
+        (Some(user), Some(named)) if named == user => user,
+        (Some(_), Some(_)) => return Err(ApiError::Forbidden("not_your_roll")),
+        (None, Some(named)) if access::valid_user_id(named) => named,
+        (None, Some(_)) => {
+            return Err(ApiError::Invalid {
+                code: "invalid_user",
+                field: Some("person"),
+            });
+        }
+        (None, None) => {
+            return Err(ApiError::Invalid {
+                code: "person_required",
+                field: Some("person"),
+            });
+        }
+    };
+    if !Policy::from_config(&feed.state.config).can_track_progress(person) {
+        return Err(ApiError::Forbidden("play_not_allowed"));
+    }
+    let game = db::suggestions::suggest(&feed.state.db, person, request.filter)
+        .await?
+        .game;
     feed.state.changes.announce();
     let platforms = db::sensors::owned_platforms(&feed.state.db, game.id).await?;
     Ok(Json(json!({ "title": game.title, "platforms": platforms })).into_response())

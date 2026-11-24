@@ -198,11 +198,7 @@ async fn viewers_read_but_change_nothing() {
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
     assert_eq!(body["code"], "manager_required");
-    assert_eq!(
-        app.scalar("SELECT COUNT(*) FROM games WHERE play_status IS NOT NULL")
-            .await,
-        0
-    );
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM play_progress").await, 0);
 
     let (status, _) = send(
         &app,
@@ -214,6 +210,18 @@ async fn viewers_read_but_change_nothing() {
     )
     .await;
     assert_eq!(status, StatusCode::OK);
+    // The manager's own status; the viewer has none.
+    let (_, seen) = send(
+        &app,
+        SUPERVISOR,
+        "GET",
+        &format!("/api/games/{game}"),
+        Some(VIEWER),
+        None,
+    )
+    .await;
+    assert_eq!(seen["play_status"], Value::Null);
+    assert_eq!(seen["household"][0]["play_status"], "playing");
 }
 
 /// Walks every route in the API document, so a new route cannot skip the check.
@@ -304,7 +312,7 @@ async fn viewers_track_progress_when_the_option_allows_it() {
     let (status, body) = send(&app, SUPERVISOR, "DELETE", &uri, Some(VIEWER), None).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
-    // Another person's sessions are theirs to change, or a manager's.
+    // Another person's sessions are theirs alone to change.
     let uri = format!("/api/games/{game}/sessions");
     let (_, body) = send(
         &app,
@@ -338,6 +346,30 @@ async fn viewers_track_progress_when_the_option_allows_it() {
     assert_eq!(status, StatusCode::FORBIDDEN);
     let (status, _) = send(&app, SUPERVISOR, "PUT", &uri, Some(MANAGER), Some(moved)).await;
     assert_eq!(status, StatusCode::OK);
+    let (_, body) = send(
+        &app,
+        SUPERVISOR,
+        "POST",
+        &format!("/api/games/{game}/sessions"),
+        Some(VIEWER),
+        Some(json!({ "played_on": "2026-11-22" })),
+    )
+    .await;
+    let theirs = body["sessions"][0]["id"].as_i64().unwrap();
+    let (status, body) = send(
+        &app,
+        SUPERVISOR,
+        "DELETE",
+        &format!("/api/sessions/{theirs}"),
+        Some(MANAGER),
+        None,
+    )
+    .await;
+    assert_eq!(
+        (status, body["code"].as_str()),
+        (StatusCode::FORBIDDEN, Some("not_your_session")),
+        "managers have no say over a viewer's play"
+    );
 
     let (status, _) = send(
         &app,

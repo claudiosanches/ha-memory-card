@@ -35,12 +35,13 @@ const MANAGER_READS: [&str; 8] = [
     "/api/missing-details",
 ];
 
-/// Play progress, open to viewers when the option allows it.
-const PROGRESS_WRITES: [(Method, &str); 4] = [
+/// Changes to the caller's own play, open to viewers when the option allows it.
+const PLAY_WRITES: [(Method, &str); 5] = [
     (Method::PUT, "/api/games/{id}/play-status"),
     (Method::POST, "/api/games/{id}/sessions"),
     (Method::PUT, "/api/sessions/{id}"),
     (Method::DELETE, "/api/sessions/{id}"),
+    (Method::POST, "/api/suggestions"),
 ];
 
 /// Changes one person may have under way at once. Home Assistant passes a
@@ -73,20 +74,15 @@ impl Policy {
         }
     }
 
-    /// Whether `user` may log play. Without managers nobody may; a scan
-    /// from a reader with no Home Assistant user counts as a viewer.
-    pub fn can_track_progress(&self, user: Option<&str>) -> bool {
-        if self.managers.is_empty() {
-            return false;
-        }
-        user.is_some_and(|id| self.managers.iter().any(|m| m == id)) || self.viewers_track_progress
+    /// Whether `person` may keep their own play: statuses, sessions and picks.
+    /// Without managers nobody may.
+    pub fn can_track_progress(&self, person: &str) -> bool {
+        self.managers.iter().any(|m| m == person) || self.viewers_track_progress()
     }
 
-    /// Whether a roll from Home Assistant may record a pick, as Pick for me
-    /// does for managers. A roll with no user comes from an automation,
-    /// which only Home Assistant administrators can write.
-    pub fn can_roll(&self, user: Option<&str>) -> bool {
-        !self.managers.is_empty() && user.is_none_or(|id| self.managers.iter().any(|m| m == id))
+    /// Whether viewers keep their own play, which needs managers set.
+    fn viewers_track_progress(&self) -> bool {
+        !self.managers.is_empty() && self.viewers_track_progress
     }
 }
 
@@ -137,7 +133,7 @@ pub async fn guard(
         Some(matched) => matched.as_str(),
         None => request.uri().path(),
     };
-    let viewers_track_progress = policy.can_track_progress(None);
+    let viewers_track_progress = policy.viewers_track_progress();
     if role < required_role(request.method(), path, viewers_track_progress) {
         tracing::debug!(method = %request.method(), path, "viewer denied");
         return deny(StatusCode::FORBIDDEN, "manager_required");
@@ -155,7 +151,7 @@ pub async fn guard(
     request.extensions_mut().insert(Access {
         role,
         managers_configured: !policy.managers.is_empty(),
-        can_track_progress: policy.can_track_progress(Some(&user.id)),
+        can_track_progress: policy.can_track_progress(&user.id),
         user,
     });
     let response = next.run(request).await;
@@ -243,7 +239,8 @@ pub async fn remember(State(db): State<SqlitePool>, request: Request, next: Next
     next.run(request).await
 }
 
-/// The ID of the user making a change, for `created_by` and `updated_by`.
+/// The ID of the person making the request: who a change is by, and whose
+/// play a read shows.
 pub struct Actor(pub String);
 
 impl<S: Send + Sync> FromRequestParts<S> for Actor {
@@ -266,10 +263,7 @@ fn required_role(method: &Method, path: &str, viewers_track_progress: bool) -> R
     let open = if is_read(method) {
         !MANAGER_READS.contains(&path)
     } else {
-        viewers_track_progress
-            && PROGRESS_WRITES
-                .iter()
-                .any(|(m, p)| m == method && *p == path)
+        viewers_track_progress && PLAY_WRITES.iter().any(|(m, p)| m == method && *p == path)
     };
     if open { Role::Viewer } else { Role::Manager }
 }
@@ -369,10 +363,6 @@ mod tests {
     #[test]
     fn managers_change_things_and_use_tools() {
         assert_eq!(
-            required_role(&Method::POST, "/api/suggestions", true),
-            Role::Manager
-        );
-        assert_eq!(
             required_role(&Method::POST, "/api/games", true),
             Role::Manager
         );
@@ -400,7 +390,7 @@ mod tests {
 
     #[test]
     fn progress_follows_the_option() {
-        for (method, path) in &PROGRESS_WRITES {
+        for (method, path) in &PLAY_WRITES {
             assert_eq!(required_role(method, path, false), Role::Manager);
             assert_eq!(required_role(method, path, true), Role::Viewer);
         }

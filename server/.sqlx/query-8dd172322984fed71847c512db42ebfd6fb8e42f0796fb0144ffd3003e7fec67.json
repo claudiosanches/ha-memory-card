@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT s.id AS \"id!\", s.played_on, s.copy_id, s.minutes, s.notes, s.created_at,\n                  s.created_by, COALESCE(u.display_name, u.name) AS created_by_name\n           FROM play_sessions s LEFT JOIN users u ON u.id = s.created_by\n           WHERE s.game_id = ?\n           ORDER BY s.played_on DESC, s.id DESC",
+  "query": "SELECT id AS \"id!\", played_on, copy_id, minutes, notes, created_at\n           FROM play_sessions\n           WHERE user_id = ? AND game_id = ?\n           ORDER BY played_on DESC, id DESC",
   "describe": {
     "columns": [
       {
@@ -68,27 +68,10 @@
             "name": "created_at"
           }
         }
-      },
-      {
-        "name": "created_by",
-        "ordinal": 6,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "play_sessions",
-            "name": "created_by"
-          }
-        }
-      },
-      {
-        "name": "created_by_name",
-        "ordinal": 7,
-        "type_info": "Text",
-        "origin": "Expression"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
@@ -96,10 +79,8 @@
       true,
       true,
       true,
-      false,
-      true,
-      true
+      false
     ]
   },
-  "hash": "1a2eda2ed44ce0b55336798bab0204fe38aefad7f81cb8b52bdc676daa28d60a"
+  "hash": "8dd172322984fed71847c512db42ebfd6fb8e42f0796fb0144ffd3003e7fec67"
 }

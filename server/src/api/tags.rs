@@ -73,8 +73,9 @@ pub async fn cancel_link(
 )]
 pub async fn unlink(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(tag_id): ApiPath<String>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = tags::unlink(&state.db, &tag_id).await?;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }

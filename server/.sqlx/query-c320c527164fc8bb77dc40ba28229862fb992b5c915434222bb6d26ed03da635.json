@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS (SELECT 1 FROM play_sessions\n                          WHERE user_id = ?1 AND game_id = ?2 AND copy_id = ?3 AND played_on = ?4)\n                  AS \"logged!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "logged!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c320c527164fc8bb77dc40ba28229862fb992b5c915434222bb6d26ed03da635"
+}

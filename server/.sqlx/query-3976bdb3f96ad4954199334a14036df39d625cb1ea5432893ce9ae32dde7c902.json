@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT s.key AS \"key!\", s.label, s.color AS \"color: StatusColor\",\n                  s.counts_as AS \"counts_as: StatusGroup\", s.builtin AS \"builtin: bool\",\n                  (SELECT COUNT(*) FROM games g WHERE g.play_status = s.key) AS \"game_count!: i64\"\n           FROM play_statuses s\n           WHERE s.key = ?",
+  "query": "SELECT s.key AS \"key!\", s.label, s.color AS \"color: StatusColor\",\n                  s.counts_as AS \"counts_as: StatusGroup\", s.builtin AS \"builtin: bool\",\n                  (SELECT COUNT(*) FROM play_progress p WHERE p.play_status = s.key) AS \"game_count!: i64\"\n           FROM play_statuses s\n           ORDER BY s.sort_order, s.key",
   "describe": {
     "columns": [
       {
@@ -66,7 +66,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
@@ -77,5 +77,5 @@
       false
     ]
   },
-  "hash": "5e57097974bac0da7bd6ca4c514882e2b5b486d920461473ff707d4d7eb3c23c"
+  "hash": "3976bdb3f96ad4954199334a14036df39d625cb1ea5432893ce9ae32dde7c902"
 }

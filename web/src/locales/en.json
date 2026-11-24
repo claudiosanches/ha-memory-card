@@ -199,7 +199,7 @@
     "accessNoManagers": "Nobody can change the collection until a manager is named. Copy your user ID below. In Home Assistant, go to Settings > Apps > Memory Card > Configuration, add the ID to Managers, save, then restart the app.",
     "accessManager": "You can manage the collection and its settings.",
     "accessViewer": "You can browse the collection. Ask a manager to make changes.",
-    "accessViewerProgress": "You can browse the collection and track play progress. Ask a manager to make other changes.",
+    "accessViewerProgress": "You can browse the collection and keep track of your own play. Ask a manager to make other changes.",
     "signedInAs": "Signed in as",
     "role": "Role",
     "roles": {
@@ -313,7 +313,7 @@
       "status": "owned or wanted. Empty means owned.",
       "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
       "game_title": "Required.",
-      "play_status": "backlog, playing, paused, completed, dropped, mastered.",
+      "play_status": "Yours: backlog, playing, paused, completed, dropped, mastered.",
       "labels": "Label names, separated by commas or semicolons. The game gets them added, and labels that do not exist yet are created.",
       "platform": "Platform name, abbreviation or slug, as on the Manage screen. Unknown names are created.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",
@@ -414,8 +414,8 @@
     "builtin": "Built-in",
     "summary": "Counts as {{group}}",
     "deleteTitle": "Delete {{name}}?",
-    "moveTo_one": "{{count}} game has this status. Move it to:",
-    "moveTo_other": "{{count}} games have this status. Move them to:",
+    "moveTo_one": "This status is in use {{count}} time. Move those games to:",
+    "moveTo_other": "This status is in use {{count}} times. Move those games to:",
     "group": {
       "backlog": "Backlog",
       "playing": "Playing",
@@ -445,7 +445,9 @@
       "over": "{{name}} is at position {{position}}.",
       "end": "{{name}} dropped at position {{position}}.",
       "cancel": "Moving {{name}} was cancelled."
-    }
+    },
+    "uses_one": "Used {{count}} time",
+    "uses_other": "Used {{count}} times"
   },
   "library": {
     "search": "Search titles",
@@ -605,7 +607,9 @@
     "developers": "Developers",
     "publishers": "Publishers",
     "genres": "Genres",
-    "cover": "Cover of {{title}}"
+    "cover": "Cover of {{title}}",
+    "household": "Others in the house",
+    "someone": "Someone"
   },
   "igdb": {
     "link": "Link to IGDB",
@@ -686,7 +690,8 @@
     "lastPlayed": "played {{date}}",
     "empty": "Nothing in the backlog.",
     "cleared": "Backlog cleared. Nice work.",
-    "moved": "{{title}}: {{status}}"
+    "moved": "{{title}}: {{status}}",
+    "noPlay": "Your backlog shows here once a manager lets viewers keep their own play."
   },
   "duplicates": {
     "intro": "Games you own more than one copy of.",
@@ -707,7 +712,6 @@
     "intro": "Go through games that lack details, one at a time. Fill in what you know or skip to the next game.",
     "lookFor": "Look for",
     "fields": {
-      "play_status": "Play status",
       "cover": "Cover",
       "game_modes": "Game modes",
       "players": "Player counts",
@@ -756,7 +760,7 @@
   "stats": {
     "intro": "Totals for what you own, what you paid and what you played.",
     "empty": "Add games to see stats.",
-    "groupPlay": "Backlog and play",
+    "groupPlay": "Your backlog and play",
     "groupCollection": "Collection",
     "groupMoney": "Spending and value",
     "games": "Games",

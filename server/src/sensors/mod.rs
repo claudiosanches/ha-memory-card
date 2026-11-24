@@ -312,22 +312,28 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     poller.abort();
 }
 
-/// Picks a game the way the app's Roll button does; the sensors show it.
+/// Picks a game from the named person's backlog, as Pick for me does; the
+/// sensors show it. MQTT cannot tell who sent the roll, so it must name them.
 async fn roll(state: &AppState, payload: &[u8]) {
-    // MQTT carries no user, so anyone who can press the button rolls once
-    // managers are set.
-    if !crate::access::Policy::from_config(&state.config).can_roll(None) {
-        tracing::info!("ignored a roll from Home Assistant: no managers are set");
-        return;
-    }
-    let filter = match entities::pick_filter(payload) {
-        Ok(filter) => filter,
+    let request = match entities::roll_request(payload) {
+        Ok(request) => request,
         Err(err) => {
             tracing::warn!(error = %err, "ignored a pick request with unreadable filters");
             return;
         }
     };
-    match db::suggestions::suggest(&state.db, filter).await {
+    let Some(person) = request
+        .person
+        .filter(|person| crate::access::valid_user_id(person))
+    else {
+        tracing::info!("ignored a roll from Home Assistant that names no person");
+        return;
+    };
+    if !crate::access::Policy::from_config(&state.config).can_track_progress(&person) {
+        tracing::info!("ignored a roll for someone who cannot keep play");
+        return;
+    }
+    match db::suggestions::suggest(&state.db, &person, request.filter).await {
         Ok(pick) => tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant"),
         Err(err) => tracing::info!(error = %err, "no game to pick for Home Assistant"),
     }

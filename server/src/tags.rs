@@ -205,22 +205,28 @@ pub async fn scanned(state: &AppState, tag_id: &str, user: Option<&str>) -> Scan
                 copy_id: link.copy_id,
             }),
         None => match db::tags::copy_for(&state.db, tag_id).await {
-            Ok(Some(_)) if !Policy::from_config(&state.config).can_track_progress(user) => {
-                tracing::info!("ignored a tag scan by someone who cannot log play");
-                Ok(Scan::Unknown)
-            }
-            Ok(Some(copy_id)) => {
-                let today = local_date(state).await;
-                db::sessions::start_from_tag(
-                    &state.db,
-                    copy_id,
-                    &today,
-                    user,
-                    state.config.tag_scan_finished,
-                )
-                .await
-                .map(|game_id| Scan::Played { game_id })
-            }
+            Ok(Some(copy_id)) => match user {
+                Some(person) if Policy::from_config(&state.config).can_track_progress(person) => {
+                    let today = local_date(state).await;
+                    db::sessions::start_from_tag(
+                        &state.db,
+                        copy_id,
+                        &today,
+                        person,
+                        state.config.tag_scan_finished,
+                    )
+                    .await
+                    .map(|game_id| Scan::Played { game_id })
+                }
+                Some(_) => {
+                    tracing::info!("ignored a tag scan by someone who cannot keep play");
+                    Ok(Scan::Unknown)
+                }
+                None => {
+                    tracing::info!("ignored a tag scan with no person to play");
+                    Ok(Scan::Unknown)
+                }
+            },
             Ok(None) => Ok(Scan::Unknown),
             Err(err) => Err(err.into()),
         },

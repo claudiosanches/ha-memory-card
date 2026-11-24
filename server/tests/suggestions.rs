@@ -4,6 +4,8 @@ mod common;
 
 use axum::http::StatusCode;
 use common::TestApp;
+use memory_card::db::suggestions;
+use memory_card::error::ApiError;
 use serde_json::{Value, json};
 
 const COLLECTION: &str = "game_title,play_status,platform,region,format,device\n\
@@ -42,9 +44,15 @@ async fn game_id(app: &TestApp, title: &str) -> i64 {
 #[tokio::test]
 async fn suggests_owned_backlog_games_and_skips_recent_picks() {
     let app = collection().await;
+    sqlx::query("INSERT INTO games (title, sort_title) VALUES ('Okami', 'okami')")
+        .execute(&app.pool)
+        .await
+        .unwrap();
     sqlx::query(
-        "INSERT INTO games (title, sort_title, play_status) VALUES ('Okami', 'okami', 'backlog')",
+        "INSERT INTO play_progress (user_id, game_id, play_status)
+         SELECT ?, id, 'backlog' FROM games WHERE title = 'Okami'",
     )
+    .bind(common::MANAGER)
     .execute(&app.pool)
     .await
     .unwrap();
@@ -69,6 +77,13 @@ async fn suggests_owned_backlog_games_and_skips_recent_picks() {
     // Both were picked today, so the older pick comes back.
     assert_eq!(title(&app, json!({})).await, first);
     assert_eq!(app.scalar("SELECT COUNT(*) FROM suggestions").await, 3);
+
+    // The backlog is the manager's; someone else has none yet.
+    let theirs = suggestions::suggest(&app.pool, "someone-else", Default::default()).await;
+    assert!(
+        matches!(theirs, Err(ApiError::NoMatch("no_candidates"))),
+        "{theirs:?}"
+    );
 }
 
 #[tokio::test]
@@ -76,13 +91,14 @@ async fn returns_the_oldest_recent_pick_and_prunes_old_history() {
     let app = collection().await;
     let (tetris, hades) = (game_id(&app, "Tetris").await, game_id(&app, "Hades").await);
     sqlx::query(
-        "INSERT INTO suggestions (game_id, suggested_at) VALUES
-            (?1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-40 days')),
-            (?1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-2 hours')),
-            (?2, strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 hours'))",
+        "INSERT INTO suggestions (user_id, game_id, suggested_at) VALUES
+            (?3, ?1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-40 days')),
+            (?3, ?1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-2 hours')),
+            (?3, ?2, strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 hours'))",
     )
     .bind(tetris)
     .bind(hades)
+    .bind(common::MANAGER)
     .execute(&app.pool)
     .await
     .unwrap();
@@ -96,13 +112,19 @@ async fn returns_the_oldest_recent_pick_and_prunes_old_history() {
 }
 
 #[tokio::test]
-async fn keeps_only_the_newest_picks() {
+async fn keeps_only_each_persons_newest_picks() {
     let app = collection().await;
     let tetris = game_id(&app, "Tetris").await;
+    sqlx::query("INSERT INTO users (id) VALUES ('someone-else')")
+        .execute(&app.pool)
+        .await
+        .unwrap();
     sqlx::query(
         "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1500)
-         INSERT INTO suggestions (game_id) SELECT ? FROM n",
+         INSERT INTO suggestions (user_id, game_id)
+         SELECT CASE WHEN i <= 10 THEN 'someone-else' ELSE ? END, ? FROM n",
     )
+    .bind(common::MANAGER)
     .bind(tetris)
     .execute(&app.pool)
     .await
@@ -111,7 +133,7 @@ async fn keeps_only_the_newest_picks() {
     assert_eq!(title(&app, json!({})).await, "Hades");
     assert_eq!(
         app.scalar("SELECT COUNT(*) FROM suggestions").await,
-        memory_card::db::suggestions::KEPT_MAX
+        suggestions::KEPT_MAX + 10
     );
     assert_eq!(
         app.scalar("SELECT game_id FROM suggestions ORDER BY id DESC LIMIT 1")

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT r.game_id, c.status, g.play_status,\n                  (SELECT counts_as FROM play_statuses WHERE key = g.play_status) AS counts_as\n           FROM copies c JOIN releases r ON r.id = c.release_id JOIN games g ON g.id = r.game_id\n           WHERE c.id = ?",
+  "query": "SELECT r.game_id, c.status,\n                  (SELECT s.counts_as FROM play_progress p\n                   JOIN play_statuses s ON s.key = p.play_status\n                   WHERE p.user_id = ?2 AND p.game_id = r.game_id) AS \"counts_as: String\"\n           FROM copies c JOIN releases r ON r.id = c.release_id\n           WHERE c.id = ?1",
   "describe": {
     "columns": [
       {
@@ -26,19 +26,8 @@
         }
       },
       {
-        "name": "play_status",
+        "name": "counts_as: String",
         "ordinal": 2,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "games",
-            "name": "play_status"
-          }
-        }
-      },
-      {
-        "name": "counts_as",
-        "ordinal": 3,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -49,14 +38,13 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
       false,
-      true,
       true
     ]
   },
-  "hash": "43464a6d4f6be8e95f4b45dea2b5a70b3fde546f2ec12b0e3f6e1b0a9e948c51"
+  "hash": "4715feb82e26d0c1a0356efc36e8e2cbe79c4aba2b50aff8cfa335834460af09"
 }

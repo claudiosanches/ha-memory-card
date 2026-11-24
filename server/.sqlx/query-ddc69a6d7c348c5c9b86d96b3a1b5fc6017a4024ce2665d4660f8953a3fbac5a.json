@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM play_progress WHERE user_id = ? AND game_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ddc69a6d7c348c5c9b86d96b3a1b5fc6017a4024ce2665d4660f8953a3fbac5a"
+}

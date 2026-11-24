@@ -57,7 +57,6 @@ export function gameInput(game: GameDetail): GameInput {
   return {
     title: game.title,
     summary: game.summary,
-    play_status: game.play_status,
     local_max_players: game.local_max_players,
     online_max_players: game.online_max_players,
     local_coop: game.local_coop,

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.id AS \"game_id!\", g.title, COUNT(*) AS \"sessions!: i64\",\n                  COALESCE(SUM(s.minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions s JOIN games g ON g.id = s.game_id\n           GROUP BY g.id\n           ORDER BY COUNT(*) DESC, SUM(s.minutes) DESC, g.sort_title\n           LIMIT ?",
+  "query": "SELECT g.id AS \"game_id!\", g.title, COUNT(*) AS \"sessions!: i64\",\n                  COALESCE(SUM(s.minutes), 0) AS \"minutes!: i64\"\n           FROM play_sessions s JOIN games g ON g.id = s.game_id\n           WHERE s.user_id = ?\n           GROUP BY g.id\n           ORDER BY COUNT(*) DESC, SUM(s.minutes) DESC, g.sort_title\n           LIMIT ?",
   "describe": {
     "columns": [
       {
@@ -39,7 +39,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
@@ -48,5 +48,5 @@
       false
     ]
   },
-  "hash": "254524892df50e45490edceef838747d0c9407146332df102e72ef87484beab6"
+  "hash": "aab1c2b3b3a41604a815d407d06a025005087577f8f614a6f5b6c811a9890495"
 }

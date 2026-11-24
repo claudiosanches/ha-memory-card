@@ -13,8 +13,8 @@ use crate::covers::{self, Owner};
 use crate::db::games::{
     self, CopyFields, GameDetail, GameFields, PlayerCounts, Price, ReleaseFields,
 };
-use crate::db::labels;
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
+use crate::db::{labels, progress};
 use crate::domain::{self, Condition, CopyStatus, Format, Region};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 use crate::money;
@@ -26,7 +26,7 @@ const NAMES_MAX: usize = 50;
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct NewGameInput {
     pub title: String,
-    /// A play status key.
+    /// A play status key: the creator's own status for the game.
     #[serde(default)]
     pub play_status: Option<String>,
 }
@@ -36,9 +36,6 @@ pub struct GameInput {
     pub title: String,
     #[serde(default)]
     pub summary: Option<String>,
-    /// A play status key.
-    #[serde(default)]
-    pub play_status: Option<String>,
     #[serde(default)]
     pub local_max_players: Option<i64>,
     #[serde(default)]
@@ -209,7 +206,6 @@ impl GameInput {
         Ok(GameFields {
             title: required(&self.title, "title", TITLE_MAX)?,
             summary: optional(self.summary.as_deref(), "summary", SUMMARY_MAX)?,
-            play_status: self.play_status.clone(),
             players: players(
                 self.local_max_players,
                 self.online_max_players,
@@ -296,12 +292,14 @@ impl ReleaseInput {
 )]
 pub async fn list(
     State(state): State<AppState>,
+    Actor(by): Actor,
     filter: Result<Query<LibraryFilter>, axum::extract::rejection::QueryRejection>,
 ) -> ApiResult<Json<Vec<GameSummary>>> {
-    let Query(filter) = filter.map_err(|_| ApiError::Invalid {
+    let Query(mut filter) = filter.map_err(|_| ApiError::Invalid {
         code: "invalid_filter",
         field: None,
     })?;
+    filter.person = Some(by);
     Ok(Json(library::list(&state.db, &filter).await?))
 }
 
@@ -315,12 +313,14 @@ pub async fn list(
 )]
 pub async fn list_copies(
     State(state): State<AppState>,
+    Actor(by): Actor,
     filter: Result<Query<LibraryFilter>, axum::extract::rejection::QueryRejection>,
 ) -> ApiResult<Json<Vec<CopyRow>>> {
-    let Query(filter) = filter.map_err(|_| ApiError::Invalid {
+    let Query(mut filter) = filter.map_err(|_| ApiError::Invalid {
         code: "invalid_filter",
         field: None,
     })?;
+    filter.person = Some(by);
     Ok(Json(library::list_copies(&state.db, &filter).await?))
 }
 
@@ -336,7 +336,10 @@ pub async fn create(
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
     let title = required(&input.title, "title", TITLE_MAX)?;
     let id = games::create(&state.db, &title, input.play_status.as_deref(), &by).await?;
-    Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
+    Ok((
+        StatusCode::CREATED,
+        Json(games::get(&state.db, id, &by).await?),
+    ))
 }
 
 #[utoipa::path(
@@ -346,9 +349,10 @@ pub async fn create(
 )]
 pub async fn get(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    Ok(Json(games::get(&state.db, id).await?))
+    Ok(Json(games::get(&state.db, id, &by).await?))
 }
 
 #[utoipa::path(
@@ -368,13 +372,13 @@ pub async fn update(
     ApiJson(input): ApiJson<GameInput>,
 ) -> ApiResult<Json<GameDetail>> {
     games::update(&state.db, id, &input.validate()?, &by).await?;
-    Ok(Json(games::get(&state.db, id).await?))
+    Ok(Json(games::get(&state.db, id, &by).await?))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PlayStatusInput {
-    /// A play status key; `null` clears it.
+    /// A play status key for the caller's own play; `null` clears it.
     pub play_status: Option<String>,
 }
 
@@ -394,8 +398,8 @@ pub async fn set_play_status(
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<PlayStatusInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    games::set_play_status(&state.db, id, input.play_status.as_deref(), &by).await?;
-    Ok(Json(games::get(&state.db, id).await?))
+    progress::set(&state.db, &by, id, input.play_status.as_deref()).await?;
+    Ok(Json(games::get(&state.db, id, &by).await?))
 }
 
 #[utoipa::path(
@@ -437,7 +441,10 @@ pub async fn add_copy(
     ApiJson(input): ApiJson<CopyInput>,
 ) -> ApiResult<(StatusCode, Json<GameDetail>)> {
     games::add_copy(&state.db, id, &input.validate()?, &by).await?;
-    Ok((StatusCode::CREATED, Json(games::get(&state.db, id).await?)))
+    Ok((
+        StatusCode::CREATED,
+        Json(games::get(&state.db, id, &by).await?),
+    ))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -466,7 +473,7 @@ pub async fn add_content(
     let game_id = games::add_content(&state.db, id, input.game_id, &by).await?;
     Ok((
         StatusCode::CREATED,
-        Json(games::get(&state.db, game_id).await?),
+        Json(games::get(&state.db, game_id, &by).await?),
     ))
 }
 
@@ -487,7 +494,7 @@ pub async fn update_copy(
     ApiJson(input): ApiJson<CopyInput>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::update_copy(&state.db, id, &input.validate()?, &by).await?;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
 #[utoipa::path(
@@ -500,11 +507,12 @@ pub async fn update_copy(
 )]
 pub async fn delete_copy(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::delete_copy(&state.db, id).await?;
     super::photos::prune(&state).await;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
 #[utoipa::path(
@@ -520,11 +528,12 @@ pub async fn delete_copy(
 )]
 pub async fn update_release(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<ReleaseInput>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::update_release(&state.db, id, &input.validate()?).await?;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
 #[utoipa::path(
@@ -537,12 +546,13 @@ pub async fn update_release(
 )]
 pub async fn delete_release(
     State(state): State<AppState>,
+    Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
     let game_id = games::delete_release(&state.db, id).await?;
     covers::keep_only(&state.config.covers_dir(), Owner::Release(id), None).await;
     super::photos::prune(&state).await;
-    Ok(Json(games::get(&state.db, game_id).await?))
+    Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
 #[utoipa::path(

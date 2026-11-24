@@ -45,7 +45,11 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
                 edition, purchased_on, price, currency, estimated_value, estimated_currency,
                 barcode, bundle_copy_id
          FROM (
-             SELECT c.id AS copy_id, c.status, g.igdb_id, g.title AS game_title, g.play_status,
+             SELECT c.id AS copy_id, c.status, g.igdb_id, g.title AS game_title,
+                    (SELECT play_status FROM play_progress WHERE user_id = ",
+    );
+    qb.push_bind(filter.person.clone()).push(
+        " AND game_id = g.id) AS play_status,
                     p.name AS platform, r.region, r.title AS release_title, r.product_code,
                     c.format, d.name AS device, s.name AS store, c.condition, c.notes,
                     c.edition, c.purchased_on, c.price, c.currency, c.estimated_value,
@@ -64,7 +68,11 @@ pub fn query(filter: &LibraryFilter) -> QueryBuilder<Sqlite> {
     if !library::has_copy_filters(filter) {
         qb.push(
             " UNION ALL
-             SELECT NULL, NULL, g.igdb_id, g.title, g.play_status,
+             SELECT NULL, NULL, g.igdb_id, g.title,
+                    (SELECT play_status FROM play_progress WHERE user_id = ",
+        );
+        qb.push_bind(filter.person.clone()).push(
+            " AND game_id = g.id),
                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                     g.sort_title, g.id, NULL

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO games (title, sort_title, play_status, created_by, updated_by)\n           VALUES (?, ?, ?, ?, ?) RETURNING id AS \"id!\"",
+  "query": "INSERT INTO games (title, sort_title, created_by, updated_by)\n           VALUES (?, ?, ?, ?) RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 5
+      "Right": 4
     },
     "nullable": [
       false
     ]
   },
-  "hash": "8330a1f40ac5f998aef4b829a48dbaf68143781dde56854f260bead5c1b533ff"
+  "hash": "f8afdfe0411a26f8cb6520660fb152b4e51a7d1ed1b2dada9e7e905dd4de6244"
 }
