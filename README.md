@@ -103,8 +103,9 @@ uses 2 CPUs and 4 GB of RAM. The first run downloads Home Assistant OS (about
 minutes. It also:
 
 - finishes onboarding with an `owner` administrator, made a Memory Card
-  manager, and adds a `viewer` regular user. Their passwords are printed and
-  kept in `target/haos/demo.json`.
+  manager, and adds a `viewer` regular user, who keeps their own play
+  (`viewers_track_progress` is on). Their passwords are printed and kept in
+  `target/haos/demo.json`.
 - installs Mosquitto and the MQTT integration, for the sensors.
 - copies the Memory Card integration from `../ha-memory-card-integration`
   (`HA_INTEGRATION` names another folder), when it is there, and restarts
@@ -117,8 +118,9 @@ minutes. It also:
   about 40 games on 13 platforms with devices, stores, prices in four
   currencies, play sessions, custom play statuses, a bundle and a wishlist,
   linked on IGDB when the credentials are set. A few titles have no exact
-  match there, which leaves something for **Review close matches**.
-- adds a **Games** dashboard with the app's sensors.
+  match there, which leaves something for **Review close matches**. The
+  viewer logs some play of their own, for the **Household** page.
+- adds a **Games** dashboard with the household's sensors and the owner's.
 
 Open http://127.0.0.1:7123 (`HA_PORT` changes the port). Run `make ha-up`
 again after a change to update the app; its data stays. `make ha-logs`

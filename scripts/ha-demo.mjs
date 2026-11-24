@@ -8,7 +8,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { seed } from './seed.mjs';
+import { seed, seedPlayer } from './seed.mjs';
 
 const [base, stateFile] = process.argv.slice(2);
 if (!base || !stateFile) {
@@ -140,6 +140,20 @@ async function connect(token, url = base) {
   };
 }
 
+/** Signs a user in with their password, as the login page does. */
+async function login(user) {
+  const flow = await request('POST', '/auth/login_flow', {
+    json: { client_id: CLIENT_ID, handler: ['homeassistant', null], redirect_uri: `${base}/?auth_callback=1` },
+  });
+  const { result: code } = await request('POST', `/auth/login_flow/${flow.flow_id}`, {
+    json: { client_id: CLIENT_ID, username: user.username, password: user.password },
+  });
+  const { access_token: token } = await request('POST', '/auth/token', {
+    form: { grant_type: 'authorization_code', code, client_id: CLIENT_ID },
+  });
+  return token;
+}
+
 async function addViewer(ha) {
   const viewer = { name: 'Viewer', username: 'viewer', password: newPassword() };
   const { user } = await ha.call('config/auth/create', {
@@ -230,7 +244,9 @@ async function app(ha, state, igdb) {
   const sensorsChanged = SENSORS !== undefined && options.sensors !== SENSORS;
   if (!state.configured || igdbChanged || sensorsChanged) {
     // The Supervisor replaces all options at once.
-    const first = state.configured ? {} : { managers: [state.owner.id], sensors: 'mqtt' };
+    const first = state.configured
+      ? {}
+      : { managers: [state.owner.id], viewers_track_progress: true, sensors: 'mqtt' };
     const sensors = SENSORS ? { sensors: SENSORS } : {};
     await ha.supervisor('post', `/addons/${APP}/options`, {
       options: { ...options, ...first, ...sensors, ...igdb },
@@ -274,7 +290,7 @@ async function reloadIntegration(ha, token) {
   return next;
 }
 
-/** Calls the app's API through ingress, as the owner. */
+/** Calls the app's API through ingress, as the user `ha` is signed in as. */
 async function ingress(ha) {
   const { ingress_entry: entry } = await ha.supervisor('get', `/addons/${APP}/info`);
   const { session } = await ha.call('supervisor/ingress/session', { slug: APP });
@@ -505,6 +521,17 @@ async function main() {
       state.seeded = true;
       await saveState(state);
     }
+    if (!state.viewerPlayed) {
+      // The viewer's own play, so the Household page compares two people.
+      const viewer = await connect(await login(state.viewer));
+      try {
+        await seedPlayer(await ingress(viewer));
+      } finally {
+        viewer.close();
+      }
+      state.viewerPlayed = true;
+      await saveState(state);
+    }
     if (!state.dashboard) {
       await dashboard(ha, state.owner);
       state.dashboard = true;
@@ -518,7 +545,7 @@ async function main() {
   console.log(`
 Home Assistant is at ${url}
   owner / ${state.owner.password}   administrator, made a Memory Card manager at install
-  viewer / ${state.viewer.password}   regular user
+  viewer / ${state.viewer.password}   regular user who keeps their own play
 These logins are kept in ${stateFile}. The app's sensors are on the Games dashboard.`);
 }
 

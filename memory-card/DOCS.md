@@ -16,10 +16,28 @@ or digital. It opens from the Home Assistant sidebar.
 A new install is read-only until you name a manager, so do that first. IGDB
 credentials are optional; without them you enter games by hand.
 
+## Your household
+
+Memory Card keeps one collection for the whole household, and each person's
+play apart.
+
+- The collection is shared: games, copies, devices, stores, platforms,
+  labels, the list of play statuses, NFC tags, photos and covers. Everyone can
+  browse it, and managers change it.
+- Play is each person's own: their play status for every game, which makes
+  their backlog, their play sessions and their picks from **Pick for me**.
+  Only they change it, managers included. Deleting a game removes everyone's
+  play for it.
+- **Stats** sum up the collection and your own play, and **Household**
+  compares everyone's.
+
+A person is a Home Assistant user. Home Assistant signs you in, so Memory
+Card has no login of its own.
+
 ## Managers and viewers
 
-Home Assistant signs you in, so Memory Card has no login of its own. Every
-Home Assistant user can open it from the sidebar, administrators or not.
+Every Home Assistant user can open Memory Card from the sidebar,
+administrators or not.
 
 Only managers can change the collection. A new install has none, so it
 starts read-only. To name a manager:
@@ -39,14 +57,14 @@ starts read-only. To name a manager:
 3. Restart the app from the **Info** tab.
 
 Everyone else is a viewer. Viewers browse the library, game pages, the
-backlog and duplicates. They cannot add, edit or delete anything, roll a
-random pick, change play progress, import or export CSV files, manage
-devices, stores, platforms, play statuses and labels, or sync with IGDB. Requests
-that Home Assistant does not tie to a user are refused.
+backlog, duplicates, stats and the household. They cannot change the
+collection, import or export CSV files, manage devices, stores, platforms,
+play statuses and labels, or sync with IGDB. Requests that Home Assistant
+does not tie to a user are refused.
 
-To let viewers keep track of what they play, turn on
-`viewers_track_progress`. They can then change play status, log play
-sessions and start games from the backlog, but nothing else.
+Managers keep their own play. To let viewers keep theirs, turn on
+`viewers_track_progress`: they can then set their play status, log their
+play sessions and roll picks from their own backlog, but nothing else.
 
 Memory Card keeps the name of each user who adds or changes a game or a
 copy, and the game page shows who added it and who changed it last.
@@ -86,12 +104,13 @@ one.
 | Option | Description |
 |---|---|
 | `managers` | Home Assistant user IDs that can change the collection. Empty (the default) leaves it read-only for everyone. |
-| `viewers_track_progress` | Lets viewers change play status and log play sessions. Off by default. |
+| `viewers_track_progress` | Lets viewers keep their own play: play status, sessions and picks. Off by default. |
 | `external_services` | Lets Memory Card contact IGDB and the barcode database. On by default; IGDB also needs the two credentials below. |
 | `igdb_client_id` | Twitch application client ID. Empty disables IGDB. |
 | `igdb_client_secret` | Twitch application client secret. |
 | `sensors` | `off` (the default), `integration` for the Memory Card integration from the Marketplace, or `mqtt` for the MQTT broker (does nothing without one). See [Home Assistant sensors](#home-assistant-sensors). Going back to `off` removes them. |
-| `tag_scan_finished` | What an NFC tag scan does to a completed, dropped or mastered game: `playing` (default) sets it back to playing, `keep` keeps its status and only logs the session. |
+| `tag_scan_finished` | What an NFC tag scan does when your status for its game is completed, dropped or mastered: `playing` (default) sets it back to playing, `keep` keeps it and only logs the session. |
+| `tag_readers` | NFC readers with no Home Assistant user, such as ESPHome ones, and whose play their scans log. See [NFC tags](#nfc-tags). |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
 | `date_format` | How dates are written: `language` (default) as the app's language writes them, `dmy` as 23/11/2026, `mdy` as 11/23/2026 or `ymd` as 2026-11-23. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
@@ -101,7 +120,7 @@ one.
 ![A game page with its progress, details and labels](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/game.webp)
 
 The library shows your games as a grid of covers, a list or a table. The
-filters narrow it by platform, play status, label, genre, game mode, device,
+filters narrow it by platform, your play status, label, genre, game mode, device,
 store, region, format and players on the same screen, and they stay in the
 address, so a filtered library can be bookmarked. **Show** picks between the
 games you own, the wishlist and both.
@@ -126,9 +145,10 @@ never replaces an uploaded cover. Removing it brings back IGDB's.
 ![The backlog with a random pick](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/backlog.webp)
 
 **Backlog** in the sidebar shows what you are playing, what is on hold and
-the games waiting for you, with how many you have cleared. **Pick for me**
-rolls a random game from the backlog, for one device if you choose one, and
-skips games picked in the last day. Games with no play status wait under
+the games waiting for you, with how many you have cleared. It is yours:
+everyone in the house has their own. **Pick for me** rolls a random game
+from your backlog, for one device if you choose one, and skips games picked
+for you in the last day. Games you have given no play status wait under
 **Not sorted yet** until you give them one.
 
 Manage > Play statuses lists the statuses in the order the app shows them.
@@ -141,7 +161,8 @@ on them. Statuses you add have a name, a color and a "counts as" group:
 - Finished: counted as cleared in the backlog progress.
 - Not counted: left out of the Backlog page.
 
-Deleting a status moves its games to another status, or leaves them with none.
+Deleting a status moves everyone's games in it to another status, or leaves
+them with none.
 
 ## Labels
 
@@ -246,7 +267,7 @@ names for each game, to link with a click or mark as not on IGDB.
 | `status` | `owned` or `wanted` (empty means owned). `wishlist` is read as `wanted`. |
 | `igdb_id` | IGDB game id, optional |
 | `game_title` | Required |
-| `play_status` | `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write the key. |
+| `play_status` | Your own: `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write your key; everyone else's play stays out of the file. |
 | `labels` | Label names, up to 50, separated by commas or semicolons. The import adds them to the game and creates the ones you do not have yet, in gray; it never removes a label. Exports write them separated by `; `. |
 | `platform` | Platform name, abbreviation or slug |
 | `region` | `na`, `eu`, `au`, `nz`, `jp`, `cn`, `asia`, `kr`, `br`, `ww` (worldwide or region-free); also `NTSC-U`, `PAL`, `NTSC-J` |
@@ -270,15 +291,21 @@ names for each game, to link with a click or mark as not on IGDB.
 
 ![Stats in the dark theme](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/stats.webp)
 
-**Stats** in the sidebar sums up the collection: how many games, copies and
-wishlist copies you have, your backlog progress and games by play status, the
-most played games and a calendar of play activity, copies by platform and by
-store, and what you paid next to what your copies are worth now.
+**Stats** in the sidebar sums up the collection and your own play: how many
+games, copies and wishlist copies the house has, your backlog progress and
+your games by play status, your most played games and a calendar of your
+play, copies by platform and by store, and what was paid next to what the
+copies are worth now.
+
+**Household** in the sidebar puts everyone's play side by side for this
+month, this year or all time: play time, sessions, days played, games
+played, games finished and each person's most played game, the most play
+time first.
 
 ## Home Assistant sensors
 
 Memory Card can add a **Memory Card** device to Home Assistant with the
-sensors and button below. Pick one of two ways with the `sensors` option and
+sensors below, for the household and for each person. Pick one of two ways with the `sensors` option and
 restart Memory Card. The Status section under Settings in Memory Card says
 whether the sensors are connected.
 
@@ -295,34 +322,49 @@ whether the sensors are connected.
   **MQTT** integration, which Home Assistant offers to set up once the broker
   runs. Start Memory Card after the broker so it finds it.
 
-Both create the same entities with the same IDs. Switching from one to the
+Both create the same sensors with the same IDs. Switching from one to the
 other removes the old ones on the next start, so history graphs carry on.
+
+The household's:
 
 | Entity | State | Attributes |
 |---|---|---|
 | `sensor.memory_card_games` | Games with at least one owned copy | |
 | `sensor.memory_card_copies` | Owned copies | |
 | `sensor.memory_card_wishlist` | Copies on the wishlist | |
-| `sensor.memory_card_backlog` | Owned games in a status that counts as backlog | |
-| `sensor.memory_card_playing` | Owned games in a status that counts as playing | `games`: their titles, last played first |
-| `sensor.memory_card_last_played` | Title of the game with the latest play session | `date`, `platform` of the copy played |
+| `sensor.memory_card_playing` | Owned games someone is playing | `games`: their titles, the latest played first |
 | `sensor.memory_card_last_added` | Title of the game whose owned copy was added last | `added_at`, `platform` |
-| `sensor.memory_card_pick` | Title of the latest random pick, from Memory Card or Home Assistant | `suggested_at`, `platforms` of its owned copies |
-| `button.memory_card_roll_pick` | Picks a random owned game from the backlog, as **Pick for me** on the Backlog page does | |
+| `sensor.memory_card_pick` | Title of the latest random pick, from Memory Card or Home Assistant | `suggested_at`, `platforms` of its owned copies, `person` whose pick it is |
 
-An automation can roll with filters, for example a game for two on the
-Switch:
+Each person who keeps play, up to 16, gets their own sensors, named after
+them, such as `sensor.memory_card_ana_backlog`:
 
-- with the integration, the `memory_card.roll_pick` action with
-  `device: [switch]` and `min_local_players: 2`. It responds with the
-  picked game's `title` and `platforms`.
-- with MQTT, the `mqtt.publish` action sending
-  `{"device": ["switch"], "min_local_players": 2}` to `memory_card/pick/roll`.
+| Entity | State | Attributes |
+|---|---|---|
+| `sensor.memory_card_<name>_backlog` | Their owned games in a status that counts as backlog | |
+| `sensor.memory_card_<name>_playing` | Their owned games in a status that counts as playing | `games`: up to 10 titles, the latest played first |
+| `sensor.memory_card_<name>_last_played` | Title of the game they last played | `date`, `platform` of the copy played |
 
-Rolls need managers set in the options. With the integration, a person who
-rolls must also be one of them; an automation needs nothing more. MQTT can't
-tell who pressed the button, so there anyone who can press it rolls, once a
-second at most.
+A person's sensors keep their entity IDs when they change their name in Home
+Assistant.
+
+A pick comes from one person's backlog, so a roll names whose:
+
+- with the integration, the **Roll a pick** button
+  (`button.memory_card_roll_pick`) rolls for whoever presses it. The
+  `memory_card.roll_pick` action rolls for whoever calls it, and an
+  automation names the person with `person: person.ana`. Filters narrow it,
+  for example a game for two on the Switch with `device: [switch]` and
+  `min_local_players: 2`. It responds with the picked game's `title` and
+  `platforms`.
+- with MQTT, which cannot tell who sent a message, the `mqtt.publish` action
+  sends `{"person": "<user ID>", "device": ["switch"], "min_local_players": 2}`
+  to `memory_card/pick/roll`. A message without a person is ignored, and
+  rolls come once a second at most.
+
+Rolls need managers set in the options, and the person must be a manager or
+a viewer with `viewers_track_progress` on. A person rolls only for
+themselves.
 
 The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs)
@@ -330,29 +372,41 @@ and `min_local_players`. Each platform, device and store shows its slug in
 its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
-collection grows. Sensors update a second after each change and show as
+collection and each backlog change. Sensors update a second after each change and show as
 unavailable while Memory Card is stopped. Setting the `sensors` option back
 to `off` removes the device on the next start.
 
 ## NFC tags
 
 Put an NFC tag on a game's box, and scanning it with the Home Assistant
-companion app starts that copy: Memory Card logs a play session for today
-and sets the game to playing. To link a tag, choose **Link NFC tag** from the
+companion app starts that copy for you: Memory Card logs a play session for
+today in your play and sets your status for the game to playing. To link a tag, choose **Link NFC tag** from the
 copy's **⋯** menu on the game page, then scan the tag within a minute. Any
 tag Home Assistant reports works, including ones written under **Settings >
 Tags** in Home Assistant.
 
 A scan logs play for managers, and for viewers when `viewers_track_progress`
-is on. A reader with no Home Assistant user, such as an ESPHome NFC reader,
-counts as a viewer, and nothing is logged while no managers are set. A link
-waits for a scan by the manager who started it or by a reader with no user.
+is on; nothing is logged while no managers are set. A reader with no Home
+Assistant user, such as an ESPHome NFC reader, logs play for the person the
+`tag_readers` option names for it, and nothing otherwise:
 
-Pages open in Memory Card show a scan within a second, like any change
+```yaml
+tag_readers:
+  - device: 4f1c9e0d8a7b6c5d4e3f2a1b0c9d8e7f
+    person: your-user-id
+```
+
+`device` is the reader's Home Assistant device ID: open the reader under
+**Settings > Devices & services > Devices**, and it is the last part of the
+page's address. When a reader no option names scans a linked tag, the app's
+**Log** tab shows its device ID. `person` is a user ID from **Settings** in
+Memory Card, as for `managers`.
+
+A link waits for a scan by the manager who started it or by a reader with no
+user. Pages open in Memory Card show a scan within a second, like any change
 someone else makes. Scanning the same tag again on the same day does not add
-another session.
-A game whose status counts as finished goes back to playing too, unless the
-`tag_scan_finished` option is set to `keep`.
+another session for that person. A game whose status counts as finished goes
+back to playing too, unless the `tag_scan_finished` option is set to `keep`.
 Memory Card hears scans through the Home Assistant API, which is why the app
 asks for access to it; the Status section under Settings says whether it is
 listening. **Unlink NFC tags** in the same menu removes a copy's tags.

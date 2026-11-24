@@ -1,8 +1,10 @@
 // Fills an empty collection with test data: games on many platforms, owned
 // and wanted copies, devices, stores, prices, play sessions, custom play
 // statuses, labels and a bundle, then links what it can on IGDB.
-// Usage: node scripts/seed.mjs <url> [user id], for `make run` (user `dev`).
-// scripts/ha-demo.mjs runs it through Home Assistant's ingress.
+// A second person's play follows, so the Household page compares two people.
+// Usage: node scripts/seed.mjs <url> [user id] [second user id], for
+// `make run` (users `dev` and `sam`). scripts/ha-demo.mjs runs it through
+// Home Assistant's ingress, the second person as its viewer.
 
 /** Calls the API as a manager. */
 export async function seed(api) {
@@ -54,6 +56,33 @@ export async function seed(api) {
   console.log(`Added ${(await api('GET', '/api/games')).length} games`);
   return true;
 }
+
+/** Logs another person's play: their own statuses and sessions. */
+export async function seedPlayer(api) {
+  const games = new Map((await api('GET', '/api/games')).map((g) => [g.title, g.id]));
+  const random = mulberry32(11);
+  for (const [title, play_status, count] of PLAYER) {
+    const id = games.get(title);
+    if (!id) continue;
+    await api('PUT', `/api/games/${id}/play-status`, { play_status });
+    for (let i = 0; i < count; i++) {
+      const minutes = 20 + Math.floor(random() * 8) * 10;
+      await api('POST', `/api/games/${id}/sessions`, { played_on: daysAgo(i * 3 + (title === PLAYER[0][0] ? 0 : 1)), minutes });
+    }
+  }
+  await api('POST', '/api/suggestions', {});
+}
+
+/** Another person's statuses and session counts; the first was played today. */
+const PLAYER = [
+  ['Mario Kart 8 Deluxe', 'playing', 6],
+  ['Stardew Valley', 'playing', 5],
+  ['Celeste', 'completed', 3],
+  ['Hades', 'paused', 2],
+  ['Hollow Knight', 'backlog', 0],
+  ['Okami HD', 'backlog', 0],
+  ['Super Mario Odyssey', 'completed', 4],
+];
 
 const DEVICES = [
   ['Switch OLED', 'console', ['switch']],
@@ -212,16 +241,16 @@ function mulberry32(seed) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [base, user = 'dev'] = process.argv.slice(2);
+  const [base, user = 'dev', second = 'sam'] = process.argv.slice(2);
   if (!base) {
-    console.error('usage: node scripts/seed.mjs <url> [user id]');
+    console.error('usage: node scripts/seed.mjs <url> [user id] [second user id]');
     process.exit(1);
   }
-  const api = async (method, path, body, type = 'application/json') => {
+  const as = (id) => async (method, path, body, type = 'application/json') => {
     const headers = {
-      'x-remote-user-id': user,
-      'x-remote-user-name': user,
-      'x-remote-user-display-name': user,
+      'x-remote-user-id': id,
+      'x-remote-user-name': id,
+      'x-remote-user-display-name': id[0].toUpperCase() + id.slice(1),
       'x-requested-with': 'memory-card',
     };
     if (body !== undefined) headers['content-type'] = type;
@@ -234,8 +263,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (!response.ok) throw new Error(`${method} ${path}: ${response.status} ${text}`);
     return text ? JSON.parse(text) : null;
   };
-  seed(api).catch((error) => {
-    console.error(error.message);
-    process.exit(1);
-  });
+  seed(as(user))
+    .then((seeded) => seeded && seedPlayer(as(second)))
+    .catch((error) => {
+      console.error(error.message);
+      process.exit(1);
+    });
 }
