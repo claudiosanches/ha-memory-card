@@ -188,6 +188,10 @@
     "theme": "Theme",
     "themes": {
       "default": "Default",
+      "monochrome": "Monochrome",
+      "warm-stone": "Warm Stone",
+      "slate": "Slate",
+      "sage": "Sage",
       "retro": "Retro",
       "internet-2000s": "2000's Internet",
       "cyberpunk": "Cyberpunk",

@@ -8,8 +8,12 @@ import { circuit } from './circuit';
 import { cursed90s } from './cursed-90s';
 import { cyberpunk } from './cyberpunk';
 import { internet2000s } from './internet-2000s';
+import { monochrome } from './monochrome';
 import { pastelPlush } from './pastel-plush';
 import { retro } from './retro';
+import { sage } from './sage';
+import { slate } from './slate';
+import { warmStone } from './warm-stone';
 
 type VisualTheme = {
   id: string;
@@ -23,6 +27,10 @@ type VisualTheme = {
 
 export const themes = [
   { id: 'default', palette, variables },
+  monochrome,
+  warmStone,
+  slate,
+  sage,
   retro,
   internet2000s,
   cyberpunk,
