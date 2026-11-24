@@ -22,10 +22,14 @@ body { background: var(--mc-background); }
 .mantine-SegmentedControl-root {
   --sc-color: var(--mantine-primary-color-light);
   --sc-label-color: var(--mantine-primary-color-light-color);
-  --sc-shadow: none;
   padding: 3px;
   border: 1px solid var(--mc-border);
   background-color: var(--mc-surface);
+}
+
+.mantine-SegmentedControl-indicator,
+.mantine-SegmentedControl-label[data-active]::before {
+  box-shadow: none;
 }
 
 .mantine-SegmentedControl-label {
@@ -34,6 +38,7 @@ body { background: var(--mc-background); }
 }
 
 .mantine-SegmentedControl-label[data-active] {
+  color: var(--sc-label-color);
   font-weight: 650;
 }
 
@@ -41,6 +46,10 @@ body { background: var(--mc-background); }
   .mantine-SegmentedControl-label:not([data-disabled], [data-active], [data-read-only]):hover {
     color: var(--mantine-color-text);
   }
+}
+
+.mantine-Chip-root:not([data-variant='outline'], [data-variant='light']) {
+  --chip-color: var(--mc-on-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

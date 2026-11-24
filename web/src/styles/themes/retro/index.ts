@@ -1,14 +1,16 @@
-import type { MantineThemeOverride } from '@mantine/core';
+import { virtualColor, type MantineThemeOverride } from '@mantine/core';
 import { chartColors, variables as base } from '../default/variables';
 
 export const retro = {
   id: 'retro' as const,
   palette: {
     primaryColor: 'brand',
-    primaryShade: { light: 8, dark: 3 },
+    primaryShade: { light: 8, dark: 8 },
     autoContrast: true,
     colors: {
-      brand: ['#fff3df', '#ffe3b9', '#ffcc8a', '#fcb269', '#ef934c', '#d97635', '#c35e28', '#a74821', '#8c391e', '#722c19'],
+      brand: virtualColor({ name: 'brand', light: 'retroLight', dark: 'retroDark' }),
+      retroLight: ['#fff3df', '#ffe3b9', '#ffcc8a', '#fcb269', '#ef934c', '#d97635', '#c35e28', '#a74821', '#8c391e', '#722c19'],
+      retroDark: ['#fff3df', '#ffe3b9', '#ffcc8a', '#fcb269', '#ef934c', '#d97635', '#c35e28', '#a74821', '#fcb269', '#ef934c'],
       gray: ['#f3e7cf', '#e7d7b8', '#d7c4a0', '#c7b79a', '#b39f7e', '#968264', '#7a6950', '#665742', '#4d4031', '#352b24'],
       dark: ['#f4ead6', '#dac9ab', '#b5a994', '#938470', '#685e50', '#50483e', '#3b352e', '#2d2924', '#221f1b', '#191714'],
     },
@@ -45,6 +47,12 @@ export const retro = {
       '--mantine-color-dimmed': '#c4b69f',
       '--mantine-color-body': '#2d2924',
       '--mantine-color-default-border': '#51483b',
+      '--mantine-color-brand-light': '#4a3525',
+      '--mantine-color-brand-light-hover': '#5a412e',
+      '--mantine-color-brand-light-color': '#ffe3b9',
+      '--mantine-primary-color-light': '#4a3525',
+      '--mantine-primary-color-light-hover': '#5a412e',
+      '--mantine-primary-color-light-color': '#ffe3b9',
       ...chartColors.dark,
     },
   },

@@ -301,8 +301,8 @@ function GameView({ game }: { game: GameDetail }) {
                   {t('common.edit')}
                 </Button>
                 <ActionIcon
-                  variant="subtle"
-                  color="red"
+                  variant="default"
+                  c="red"
                   size="lg"
                   aria-label={t('game.delete')}
                   onClick={() => setDialog({ kind: 'deleteGame' })}

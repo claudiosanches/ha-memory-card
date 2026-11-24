@@ -14,7 +14,7 @@ type FilterButtonProps = {
 
 export function FilterButton({ children, selected, onClick, count }: FilterButtonProps) {
   return (
-    <button type="button" className={classes.filter} aria-pressed={selected} onClick={onClick}>
+    <button type="button" className={`mc-filter ${classes.filter}`} aria-pressed={selected} onClick={onClick}>
       {children}
       {count !== undefined && <span className={classes.filterCount}>{count}</span>}
     </button>

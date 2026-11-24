@@ -49,9 +49,10 @@
     box-shadow: inset 0 1px var(--portal-highlight), 0 2px 4px var(--portal-shadow);
   }
 
-  .mantine-Button-root:where(:not([data-variant]), [data-variant='filled'], [data-variant='default']),
-  .mantine-ActionIcon-root[data-variant='default'],
-  .mantine-SegmentedControl-indicator {
+  .mantine-Button-root:where(:not([data-variant='subtle'], [data-variant='transparent'], :disabled, [data-disabled])),
+  .mantine-ActionIcon-root:where(:not([data-variant='subtle'], [data-variant='transparent'], :disabled, [data-disabled])),
+  .mantine-SegmentedControl-indicator,
+  .mc-filter[aria-pressed='true'] {
     background-image: var(--portal-button-gloss);
     box-shadow: inset 0 1px var(--portal-highlight), inset 0 -1px var(--portal-shadow);
   }
