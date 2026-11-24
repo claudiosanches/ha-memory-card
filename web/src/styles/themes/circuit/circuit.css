@@ -1,0 +1,105 @@
+/* Circuit wireframe skin: crisp monospace typography, emerald dot-matrix light and phosphor-green CRT dark. */
+[data-mc-theme='circuit'] {
+  --circuit-accent: #0f7540;
+  --circuit-icon: #b45309;
+  --circuit-outline: #0f754077;
+  --circuit-btn-border: #084a28;
+  --circuit-glow: transparent;
+  --circuit-card-shadow: none;
+  --circuit-btn-glow: none;
+}
+
+[data-mc-theme='circuit'][data-mantine-color-scheme='dark'] {
+  --circuit-accent: #00e676;
+  --circuit-icon: #ffb300;
+  --circuit-outline: #00e67688;
+  --circuit-btn-border: #7dffb6;
+  --circuit-glow: #00e6762e;
+  --circuit-card-shadow: 0 0 14px #00e67620, inset 0 0 14px #00e6760d;
+  --circuit-btn-glow: 0 0 14px #00e6764d;
+}
+
+[data-mc-theme='circuit'] {
+  .mantine-AppShell-main {
+    background-size: 20px 20px;
+  }
+
+  body,
+  .mantine-Title-root,
+  .mantine-Button-root,
+  .mantine-Input-input,
+  .mantine-NavLink-label,
+  .mantine-SegmentedControl-label,
+  .mantine-Tabs-tab,
+  .mantine-Badge-root {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Liberation Mono', 'Courier New', monospace;
+  }
+
+  .mantine-AppShell-header {
+    border-bottom-color: var(--circuit-accent);
+    box-shadow: 0 0 18px var(--circuit-glow);
+  }
+
+  .mantine-Title-root {
+    color: #0b5c32;
+  }
+
+  .mantine-Card-root,
+  .mantine-Button-root,
+  .mantine-ActionIcon-root,
+  .mantine-Input-input,
+  .mantine-NavLink-root,
+  .mantine-SegmentedControl-root,
+  .mantine-SegmentedControl-indicator,
+  .mc-filter {
+    border-radius: 4px;
+  }
+
+  .mantine-Card-root {
+    box-shadow: var(--circuit-card-shadow);
+  }
+
+  .mantine-NavLink-root[data-active] {
+    box-shadow: inset 0 0 0 1px var(--circuit-outline), 0 0 12px var(--circuit-glow);
+    color: #084a28;
+  }
+
+  .mantine-NavLink-root[data-active] .mantine-NavLink-section {
+    color: var(--circuit-icon);
+  }
+
+  .mantine-Button-root[data-variant='filled']:where(:not(:disabled, [data-disabled], [style*='--button-bg: var(--mantine-color-red'])) {
+    font-weight: 700;
+    border: 1px solid var(--circuit-btn-border);
+    box-shadow: var(--circuit-btn-glow);
+  }
+
+  .mantine-Input-input:focus-within {
+    border-color: var(--circuit-accent);
+    box-shadow: 0 0 0 1px var(--circuit-accent), 0 0 10px var(--circuit-glow);
+  }
+
+  .mantine-Tabs-tab[data-active] {
+    border-color: var(--circuit-accent);
+    color: var(--circuit-accent);
+  }
+}
+
+[data-mc-theme='circuit'][data-mantine-color-scheme='dark'] {
+  .mantine-AppShell-main {
+    background-size: 100% 4px, 24px 24px;
+  }
+
+  .mantine-Title-root {
+    color: #5effa3;
+    text-shadow: 0 0 14px #00e67650;
+  }
+
+  .mantine-NavLink-root[data-active] {
+    color: #7dffb6;
+  }
+
+  .mantine-SegmentedControl-indicator {
+    box-shadow: inset 0 0 0 1px #00e67655;
+  }
+}

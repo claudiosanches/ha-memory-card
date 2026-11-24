@@ -4,6 +4,7 @@ import { createContext, useContext, useLayoutEffect, type ReactNode } from 'reac
 import { sharedTheme } from '../mantine';
 import { palette } from './default/palette';
 import { sharedVariables, variables } from './default/variables';
+import { circuit } from './circuit';
 import { cursed90s } from './cursed-90s';
 import { cyberpunk } from './cyberpunk';
 import { internet2000s } from './internet-2000s';
@@ -25,6 +26,7 @@ export const themes = [
   retro,
   internet2000s,
   cyberpunk,
+  circuit,
   pastelPlush,
   cursed90s,
 ] as const satisfies readonly VisualTheme[];
