@@ -1,5 +1,8 @@
 /* Circuit wireframe skin: crisp monospace typography, emerald dot-matrix light and phosphor-green CRT dark. */
 [data-mc-theme='circuit'] {
+  --mantine-radius-sm: 4px;
+  --mantine-radius-md: 4px;
+  --mantine-radius-lg: 4px;
   --circuit-accent: #0f7540;
   --circuit-icon: #b45309;
   --circuit-outline: #0f754077;
@@ -45,6 +48,9 @@
   }
 
   .mantine-Card-root,
+  .mantine-Paper-root,
+  .mantine-Modal-content,
+  .mantine-Menu-dropdown,
   .mantine-Button-root,
   .mantine-ActionIcon-root,
   .mantine-Input-input,
@@ -53,6 +59,10 @@
   .mantine-SegmentedControl-indicator,
   .mc-filter {
     border-radius: 4px;
+  }
+
+  .mantine-Tabs-tab {
+    border-radius: 4px 4px 0 0;
   }
 
   .mantine-Card-root {
