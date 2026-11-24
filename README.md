@@ -48,16 +48,17 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
 | `make ha-up` | Local Home Assistant with the app from this tree, see below |
-| `make seed` | Fills an empty collection in `make run` with test data |
+| `make seed` | Fills an empty collection in `make run` with test data, plus play for `sam`, `alex`, `jordan` and `robin` |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 
 The server answers only requests that name a Home Assistant user, so open
 the app through `make proxy` or `make web-dev`. Both sign in as `DEV_USER`
 (`dev` by default), whom `make run` makes a manager. In the proxy, an
 `e2e_user` cookie picks another user; an empty one signs out.
+`DEV_USER=sam make web-dev` signs in as one of the people `make seed` adds.
 
-The server reads these variables; `make run` sets the first four and
-`MEMORY_CARD_MANAGERS`.
+The server reads these variables; `make run` sets the first four,
+`MEMORY_CARD_MANAGERS` and `MEMORY_CARD_VIEWERS_TRACK_PROGRESS`.
 
 | Variable | Default | Purpose |
 |---|---|---|

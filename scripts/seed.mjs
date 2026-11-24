@@ -1,10 +1,10 @@
 // Fills an empty collection with test data: games on many platforms, owned
 // and wanted copies, devices, stores, prices, play sessions, custom play
 // statuses, labels and a bundle, then links what it can on IGDB.
-// A second person's play follows, so the Household page compares two people.
-// Usage: node scripts/seed.mjs <url> [user id] [second user id], for
-// `make run` (users `dev` and `sam`). scripts/ha-demo.mjs runs it through
-// Home Assistant's ingress, the second person as its viewer.
+// Four more people log their own play, for the Household page.
+// Usage: node scripts/seed.mjs <url> [user id], for `make run`.
+// scripts/ha-demo.mjs runs it through Home Assistant's ingress, with Sam's
+// play as its viewer's.
 
 /** Calls the API as a manager. */
 export async function seed(api) {
@@ -57,32 +57,79 @@ export async function seed(api) {
   return true;
 }
 
-/** Logs another person's play: their own statuses and sessions. */
-export async function seedPlayer(api) {
+/** Logs one person's own play: their statuses, sessions and a pick. */
+export async function seedPlayer(api, player = PLAYERS.sam) {
   const games = new Map((await api('GET', '/api/games')).map((g) => [g.title, g.id]));
   const random = mulberry32(11);
-  for (const [title, play_status, count] of PLAYER) {
+  for (const [title, play_status, count = 0, newest = 0, oldest = newest] of player.games) {
     const id = games.get(title);
     if (!id) continue;
     await api('PUT', `/api/games/${id}/play-status`, { play_status });
     for (let i = 0; i < count; i++) {
-      const minutes = 20 + Math.floor(random() * 8) * 10;
-      await api('POST', `/api/games/${id}/sessions`, { played_on: daysAgo(i * 3 + (title === PLAYER[0][0] ? 0 : 1)), minutes });
+      const ago = oldest - Math.round(((oldest - newest) * i) / Math.max(count - 1, 1));
+      const minutes = player.minutes + Math.floor(random() * 6) * 15;
+      await api('POST', `/api/games/${id}/sessions`, { played_on: daysAgo(ago), minutes });
     }
   }
   await api('POST', '/api/suggestions', {});
 }
 
-/** Another person's statuses and session counts; the first was played today. */
-const PLAYER = [
-  ['Mario Kart 8 Deluxe', 'playing', 6],
-  ['Stardew Valley', 'playing', 5],
-  ['Celeste', 'completed', 3],
-  ['Hades', 'paused', 2],
-  ['Hollow Knight', 'backlog', 0],
-  ['Okami HD', 'backlog', 0],
-  ['Super Mario Odyssey', 'completed', 4],
-];
+/**
+ * Everyone else's play, by user ID: the shortest session in minutes, then
+ * [title, status, sessions, newest and oldest in days ago].
+ */
+export const PLAYERS = {
+  // Couch games, a few times a week.
+  sam: {
+    minutes: 20,
+    games: [
+      ['Mario Kart 8 Deluxe', 'playing', 8, 0, 40],
+      ['Stardew Valley', 'playing', 6, 1, 25],
+      ['Super Smash Bros. Ultimate', 'completed', 5, 10, 120],
+      ['Celeste', 'completed', 3, 60, 90],
+      ['Hades', 'paused', 2, 30, 45],
+      ['Super Mario Odyssey', 'completed', 4, 150, 200],
+      ['Hollow Knight', 'backlog'],
+      ['Okami HD', 'backlog'],
+    ],
+  },
+  // Long RPG evenings; leads this month.
+  alex: {
+    minutes: 90,
+    games: [
+      ["Baldur's Gate 3", 'playing', 14, 0, 30],
+      ['Elden Ring', 'playing', 6, 2, 20],
+      ['Persona 5 Royal', 'paused', 4, 50, 80],
+      ['The Witcher 3: Wild Hunt', 'completed', 12, 100, 220],
+      ['Disco Elysium', 'completed', 6, 230, 260],
+      ['Bloodborne', 'mastered', 8, 300, 380],
+      ['Final Fantasy VII Rebirth', 'backlog'],
+      ['Chrono Trigger', 'backlog'],
+    ],
+  },
+  // Played a lot last year, now and then since.
+  jordan: {
+    minutes: 30,
+    games: [
+      ['Animal Crossing: New Horizons', 'playing', 10, 3, 400],
+      ['Stardew Valley', 'completed', 6, 330, 370],
+      ['Pokémon Emerald Version', 'completed', 5, 380, 450],
+      ['Super Mario World', 'completed', 4, 500, 560],
+      ['Forza Horizon 5', 'dropped', 2, 200, 210],
+      ['Outer Wilds', 'backlog'],
+      ['Metroid Prime Remastered', 'backlog'],
+    ],
+  },
+  // Just started.
+  robin: {
+    minutes: 45,
+    games: [
+      ['Astro Bot', 'playing', 2, 0, 3],
+      ['The Legend of Zelda: Breath of the Wild', 'backlog'],
+      ['Metroid Dread', 'backlog'],
+    ],
+  },
+};
 
 const DEVICES = [
   ['Switch OLED', 'console', ['switch']],
@@ -241,9 +288,9 @@ function mulberry32(seed) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [base, user = 'dev', second = 'sam'] = process.argv.slice(2);
+  const [base, user = 'dev'] = process.argv.slice(2);
   if (!base) {
-    console.error('usage: node scripts/seed.mjs <url> [user id] [second user id]');
+    console.error('usage: node scripts/seed.mjs <url> [user id]');
     process.exit(1);
   }
   const as = (id) => async (method, path, body, type = 'application/json') => {
@@ -264,7 +311,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     return text ? JSON.parse(text) : null;
   };
   seed(as(user))
-    .then((seeded) => seeded && seedPlayer(as(second)))
+    .then(async (seeded) => {
+      if (!seeded) return;
+      for (const [id, player] of Object.entries(PLAYERS)) await seedPlayer(as(id), player);
+      console.log(`Logged play for ${Object.keys(PLAYERS).join(', ')}`);
+    })
     .catch((error) => {
       console.error(error.message);
       process.exit(1);
