@@ -14,7 +14,7 @@
   padding: clamp(12px, 2vw, 20px);
   overflow-wrap: anywhere;
   border: 1px solid var(--mc-border);
-  border-radius: 10px;
+  border-radius: var(--mantine-radius-md);
   background: var(--mc-surface);
 }
 
@@ -188,12 +188,12 @@
   gap: 10px;
   padding: 6px;
   margin: -6px;
-  border-radius: 8px;
+  border-radius: var(--mantine-radius-md);
   transition: background-color 120ms ease;
 }
 
 .topGame :global(.mc-cover) {
-  border-radius: 5px;
+  border-radius: min(var(--mantine-radius-md), 5px);
 }
 
 @media (hover: hover) {

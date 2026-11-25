@@ -11,7 +11,7 @@ body { background: var(--mc-background); }
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--mantine-radius-md);
   background: var(--mantine-color-default-hover);
   color: var(--mc-muted);
 }
@@ -46,6 +46,15 @@ body { background: var(--mc-background); }
   .mantine-SegmentedControl-label:not([data-disabled], [data-active], [data-read-only]):hover {
     color: var(--mantine-color-text);
   }
+}
+
+.mantine-Badge-label {
+  line-height: 1.2;
+}
+
+.mantine-Accordion-root[data-variant='contained'] .mantine-Accordion-item {
+  background-color: var(--mc-surface);
+  border-color: var(--mc-border);
 }
 
 .mantine-Chip-root:not([data-variant='outline'], [data-variant='light']) {

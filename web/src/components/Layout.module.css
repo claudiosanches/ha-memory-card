@@ -1,6 +1,6 @@
 .header { background-color: var(--mc-surface); background-image: var(--mc-header-image, none); border-color: var(--mc-border); }
 .brand { font-size: 1.125rem; font-weight: 750; letter-spacing: -0.035em; }
-.logo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--mc-selected); color: var(--mantine-primary-color-light-color); user-select: none; }
+.logo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--mantine-radius-md); background: var(--mc-selected); color: var(--mantine-primary-color-light-color); user-select: none; }
 .navbar { background-color: var(--mc-surface); border-color: var(--mc-border); }
 .navLinks { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; margin-inline: -14px; padding-inline: 14px; }
 .navLinks::after { content: ''; flex: 1; min-height: 0; background: var(--mc-nav-image, none) center bottom 12px / auto no-repeat; }

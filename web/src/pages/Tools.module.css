@@ -4,7 +4,7 @@
 .integrations dt { font-weight: 600; }
 .integrations dd { margin: 0; }
 .status { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--mantine-spacing-card); }
-.status > div { min-width: 0; padding: 12px; border-radius: 8px; background: var(--mc-background); }
+.status > div { min-width: 0; padding: 12px; border-radius: var(--mantine-radius-md); background: var(--mc-background); }
 .status dt { color: var(--mc-muted); font-size: .8125rem; }
 .status dd { margin: 4px 0 0; font-weight: 600; }
 .userId { display: flex; align-items: center; gap: 4px; min-width: 0; }

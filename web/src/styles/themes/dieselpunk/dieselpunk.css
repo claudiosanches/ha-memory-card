@@ -1,8 +1,9 @@
 /* Industrial Art Deco skin: embossed diamond tread plate, gunmetal steel, machined corners and cockpit amber. */
 [data-mc-theme='dieselpunk'] {
+  --mantine-radius-default: 2px;
   --mantine-radius-sm: 2px;
   --mantine-radius-md: 2px;
-  --mantine-radius-lg: 3px;
+  --mantine-radius-lg: 2px;
   --diesel-accent: #b85312;
   --diesel-heading: #222824;
   --diesel-outline: #8c968e;
@@ -38,6 +39,9 @@
   .mantine-NavLink-root,
   .mantine-SegmentedControl-root,
   .mantine-SegmentedControl-indicator,
+  .mantine-Badge-root:not([data-circle]),
+  .mantine-Chip-label,
+  .mantine-Pill-root,
   .mc-filter {
     border-radius: 2px;
   }

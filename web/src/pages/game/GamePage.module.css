@@ -1,32 +1,32 @@
 .page { min-width: 0; }
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; min-width: 0; padding: 28px; overflow: hidden; border: 1px solid var(--mc-border); border-radius: 16px; background: var(--mc-surface); }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; min-width: 0; padding: 28px; overflow: hidden; border: 1px solid var(--mc-border); border-radius: var(--mantine-radius-lg); background: var(--mc-surface); }
 .identity { position: relative; min-width: 0; align-items: flex-start; gap: 22px; }
-.identity :global(.mc-cover) { border-radius: 10px; }
+.identity :global(.mc-cover) { border-radius: var(--mantine-radius-md); }
 .identityText { min-width: 0; padding-bottom: 3px; overflow-wrap: anywhere; }
 .gameTitle { margin-bottom: 8px; font-size: clamp(1.75rem, 3.2vw, 2.75rem); line-height: 1.08; letter-spacing: -0.045em; overflow-wrap: anywhere; }
 .gameActions { flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; padding: 0; }
 .gameActions > :global(button:not([aria-label])) { min-height: 38px; }
 .manageActions { gap: 8px; flex-wrap: nowrap; }
-.manageActions > :global(button[aria-label]) { width: 38px; height: 38px; border: 1px solid var(--mc-border); border-radius: 8px; }
-.metadata { min-width: 0; border-radius: 12px; }
+.manageActions > :global(button[aria-label]) { width: 38px; height: 38px; border: 1px solid var(--mc-border); border-radius: var(--mantine-radius-md); }
+.metadata { min-width: 0; border-radius: var(--mantine-radius-lg); }
 .summaryText { line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
 .playControls { flex-wrap: wrap; }
 .playSelect { width: 220px; }
 .copySelect { width: 260px; }
-.lastPlayed { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 8px 12px; border-radius: 8px; background: var(--mc-background); }
+.lastPlayed { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 8px 12px; border-radius: var(--mantine-radius-md); background: var(--mc-background); }
 .tagRow { flex-wrap: wrap; }
 .tagLink { cursor: pointer; text-decoration: none; transition: background-color 120ms ease; }
 .tagLink:hover { background-color: var(--mantine-primary-color-light-hover); }
 .tagLink[data-variant="outline"]:hover { background-color: var(--mantine-primary-color-light); }
 .releasesHeading { min-width: 0; }
-.release { min-width: 0; overflow: hidden; border-radius: 12px; }
+.release { min-width: 0; overflow: hidden; border-radius: var(--mantine-radius-lg); }
 .releaseHeader { min-width: 0; }
 .releaseIdentity { min-width: 0; }
 .releaseIdentity > :last-child { min-width: 0; overflow-wrap: anywhere; }
 .releaseActions { flex-shrink: 0; }
 
 @media (max-width: 48em) {
-  .hero { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px; border-radius: 12px; }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px; border-radius: var(--mantine-radius-lg); }
   .identity { flex-direction: column; align-items: center; gap: 16px; width: 100%; }
   .identityText { align-items: center; width: 100%; padding: 0; text-align: center; }
   .gameTitle { margin-bottom: 6px; font-size: clamp(1.3rem, 6vw, 1.65rem); line-height: 1.16; letter-spacing: -0.035em; }
@@ -55,6 +55,6 @@
   .hero { padding: 14px; }
   .identity { gap: 12px; }
   .gameTitle { font-size: 1.25rem; }
-  .identity :global(.mc-cover) { border-radius: 8px; }
+  .identity :global(.mc-cover) { border-radius: var(--mantine-radius-md); }
   .releasesHeading { align-items: flex-start; flex-direction: column; }
 }

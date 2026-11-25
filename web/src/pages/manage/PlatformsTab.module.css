@@ -3,14 +3,14 @@
 .list, .grid { list-style: none; margin: 0; padding: 0; }
 .list { display: flex; flex-direction: column; gap: var(--mantine-spacing-compact); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--mantine-spacing-compact); }
-.row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 8px; }
+.row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: var(--mantine-radius-md); }
 .name { flex: 1; min-width: 0; }
 .handle { cursor: grab; touch-action: none; }
 .row[data-dragging] { position: relative; z-index: 1; cursor: grabbing; box-shadow: var(--mc-raised-shadow); }
 .actions { flex-shrink: 0; }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .groupTitle { letter-spacing: 0.06em; padding-top: 6px; }
-.empty { padding: 32px 24px; text-align: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: 12px; }
+.empty { padding: 32px 24px; text-align: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: var(--mantine-radius-lg); }
 
 @media (max-width: 36em) {
   .grid { grid-template-columns: minmax(0, 1fr); }

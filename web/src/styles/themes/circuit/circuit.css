@@ -1,5 +1,6 @@
 /* Circuit wireframe skin: crisp monospace typography, emerald dot-matrix light and phosphor-green CRT dark. */
 [data-mc-theme='circuit'] {
+  --mantine-radius-default: 4px;
   --mantine-radius-sm: 4px;
   --mantine-radius-md: 4px;
   --mantine-radius-lg: 4px;
@@ -57,6 +58,9 @@
   .mantine-NavLink-root,
   .mantine-SegmentedControl-root,
   .mantine-SegmentedControl-indicator,
+  .mantine-Badge-root:not([data-circle]),
+  .mantine-Chip-label,
+  .mantine-Pill-root,
   .mc-filter {
     border-radius: 4px;
   }
