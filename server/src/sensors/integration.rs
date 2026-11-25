@@ -83,9 +83,9 @@ fn valid_token(token: &str) -> bool {
 pub struct Feed {
     state: AppState,
     token: Secret,
-    /// What open feeds get next: a state line, after a hello line when the
-    /// entities changed. `None` until the first is read.
-    latest: watch::Sender<Option<Arc<str>>>,
+    /// The latest hello and state lines, for open feeds. `None` until the
+    /// first is read.
+    latest: watch::Sender<Option<Arc<Lines>>>,
     /// The current hello and state lines, which a new feed starts with.
     current: Mutex<(String, Option<String>)>,
     closed: watch::Sender<bool>,
@@ -119,21 +119,18 @@ impl Feed {
         };
         let hello = hello(&snapshot);
         let state = json!({ "type": "state", "state": entities::state(&snapshot) }).to_string();
-        let message = {
+        let lines = {
             let mut current = self.current.lock().expect("feed lines lock");
-            let entities_changed = current.0 != hello;
-            if !entities_changed && current.1.as_deref() == Some(state.as_str()) {
+            if current.0 == hello && current.1.as_deref() == Some(state.as_str()) {
                 return;
             }
-            let message = if entities_changed {
-                format!("{hello}\n{state}")
-            } else {
-                state.clone()
-            };
-            *current = (hello, Some(state));
-            message
+            *current = (hello.clone(), Some(state.clone()));
+            Lines {
+                hello: hello.into(),
+                state: state.into(),
+            }
         };
-        self.latest.send_replace(Some(message.into()));
+        self.latest.send_replace(Some(Arc::new(lines)));
     }
 
     /// Ends every open feed.
@@ -197,15 +194,25 @@ impl Drop for Open {
     }
 }
 
+/// A hello line and a state line.
 struct Lines {
+    hello: Arc<str>,
+    state: Arc<str>,
+}
+
+/// One open feed.
+struct Stream {
     pending: VecDeque<Bytes>,
-    latest: watch::Receiver<Option<Arc<str>>>,
+    latest: watch::Receiver<Option<Arc<Lines>>>,
+    /// The hello this feed sent last. A feed read slowly skips to the latest
+    /// lines, so it compares hellos instead of trusting each change to say.
+    hello: Arc<str>,
     closed: watch::Receiver<bool>,
     ping: tokio::time::Interval,
     _open: Open,
 }
 
-impl Lines {
+impl Stream {
     /// `None` once the app stops.
     async fn next(&mut self) -> Option<Bytes> {
         if *self.closed.borrow() {
@@ -218,8 +225,13 @@ impl Lines {
             tokio::select! {
                 changed = self.latest.changed() => {
                     changed.ok()?;
-                    if let Some(state) = self.latest.borrow_and_update().as_deref() {
-                        return Some(Bytes::from(format!("{state}\n")));
+                    let latest = self.latest.borrow_and_update().clone();
+                    if let Some(lines) = latest {
+                        if lines.hello == self.hello {
+                            return Some(Bytes::from(format!("{}\n", lines.state)));
+                        }
+                        self.hello = lines.hello.clone();
+                        return Some(Bytes::from(format!("{}\n{}\n", lines.hello, lines.state)));
                     }
                 }
                 _ = self.ping.tick() => return Some(line(&json!({ "type": "ping" }))),
@@ -264,11 +276,13 @@ async fn stream(State(feed): State<Arc<Feed>>) -> Result<Response, ApiError> {
     let mut latest = feed.latest.subscribe();
     latest.mark_unchanged();
     let (hello, first) = feed.current.lock().expect("feed lines lock").clone();
-    let hello = Bytes::from(format!("{hello}\n"));
     let first = first.map(|state| Bytes::from(format!("{state}\n")));
-    let lines = Lines {
-        pending: std::iter::once(hello).chain(first).collect(),
+    let lines = Stream {
+        pending: std::iter::once(Bytes::from(format!("{hello}\n")))
+            .chain(first)
+            .collect(),
         latest,
+        hello: hello.into(),
         closed: feed.closed.subscribe(),
         ping: tokio::time::interval_at(tokio::time::Instant::now() + PING, PING),
         _open: open,

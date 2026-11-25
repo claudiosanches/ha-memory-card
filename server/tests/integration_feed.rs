@@ -170,6 +170,38 @@ async fn the_feed_says_hello_then_sends_the_state_and_its_changes() {
 }
 
 #[tokio::test]
+async fn a_feed_read_late_still_gets_new_entities() {
+    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "integration")]).await;
+    let feed = feed(&app);
+    feed.refresh().await;
+    let response = integration::router(feed.clone())
+        .oneshot(get_feed(Some(TOKEN)))
+        .await
+        .unwrap();
+    let mut body = response.into_body();
+    let mut buffer = Vec::new();
+    assert_eq!(next_line(&mut body, &mut buffer).await["type"], "hello");
+    assert_eq!(next_line(&mut body, &mut buffer).await["type"], "state");
+
+    // New entities, then only new values, before Home Assistant reads either.
+    app.post_csv("/api/import", ONE_GAME).await;
+    feed.refresh().await;
+    app.post_csv(
+        "/api/import",
+        "game_title,platform,region,format\nTetris,Switch,ww,physical\n",
+    )
+    .await;
+    feed.refresh().await;
+
+    let hello = next_line(&mut body, &mut buffer).await;
+    assert_eq!(hello["type"], "hello", "{hello}");
+    assert_eq!(hello["entities"].as_array().unwrap().len(), 10);
+    let state = next_line(&mut body, &mut buffer).await;
+    assert_eq!(state["state"]["games"], 2);
+    feed.close();
+}
+
+#[tokio::test]
 async fn only_a_few_feeds_open_at_once() {
     let app = TestApp::new().await;
     let router = integration::router(feed(&app));
