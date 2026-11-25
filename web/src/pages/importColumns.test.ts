@@ -13,4 +13,10 @@ describe('withColumns', () => {
   it('replaces the header after blank lines, as the server reads it', () => {
     expect(withColumns('\r\n\nName\nGame\n', ['game_title'], ',')).toBe('\r\n\ngame_title\nGame\n');
   });
+
+  it('keeps every row when a quote sits inside a header', () => {
+    expect(withColumns('Na"me,Platform\nCeleste,Switch\nHades,PC\n', ['game_title', 'platform'], ',')).toBe(
+      'game_title,platform\nCeleste,Switch\nHades,PC\n',
+    );
+  });
 });
