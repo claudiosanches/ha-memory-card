@@ -1487,7 +1487,7 @@
             }
           },
           "409": {
-            "description": "`igdb_linked`: another game has this IGDB id",
+            "description": "`igdb_linked`: another game has this IGDB id; `igdb_changed`: the game is no longer unlinked with `unlinked_title`",
             "content": {
               "application/json": {
                 "schema": {
@@ -5109,6 +5109,13 @@
           "overwrite": {
             "type": "boolean",
             "description": "Replace title, summary, game modes, player counts and release titles\nand dates with IGDB's where IGDB has them. Otherwise only empty ones are filled."
+          },
+          "unlinked_title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Link only while the game has no IGDB link and still has this title, as\na review page showed it. Otherwise `igdb_changed`."
           }
         }
       },

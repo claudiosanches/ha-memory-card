@@ -247,6 +247,7 @@
     "igdb_not_configured": "O IGDB não está configurado. Adicione o ID e o segredo do cliente Twitch na configuração do aplicativo.",
     "igdb_failed": "Não foi possível alcançar o IGDB. Tente de novo em instantes.",
     "igdb_linked": "Outro jogo já está vinculado a este jogo do IGDB.",
+    "igdb_changed": "Este jogo mudou enquanto a página estava aberta, então nada foi vinculado.",
     "igdb_not_found": "O IGDB não tem jogo com este id.",
     "sync_running": "Uma sincronização já está em andamento.",
     "platform_builtin": "Plataformas que vêm com o aplicativo não podem ser excluídas. Remova-a das suas plataformas.",

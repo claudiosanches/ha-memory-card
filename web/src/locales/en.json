@@ -247,6 +247,7 @@
     "igdb_not_configured": "IGDB is not set up. Add the Twitch client ID and secret in the app configuration.",
     "igdb_failed": "IGDB could not be reached. Try again in a moment.",
     "igdb_linked": "Another game is already linked to this IGDB game.",
+    "igdb_changed": "This game changed while this page was open, so nothing was linked.",
     "igdb_not_found": "IGDB has no game with this id.",
     "sync_running": "A sync is already running.",
     "platform_builtin": "Platforms that come with the app cannot be deleted. Remove it from your platforms instead.",

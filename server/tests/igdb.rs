@@ -460,6 +460,50 @@ async fn linking_takes_only_the_game_asked_for() {
 }
 
 #[tokio::test]
+async fn a_close_match_links_only_the_game_as_reviewed() {
+    let app = with_igdb().await;
+    let game = app
+        .json(
+            "POST",
+            "/api/games",
+            Some(json!({"title": "Super Mario Odysey"})),
+        )
+        .await
+        .1["id"]
+        .as_i64()
+        .unwrap();
+    let link = || async {
+        app.json(
+            "POST",
+            &format!("/api/games/{game}/igdb"),
+            Some(json!({"igdb_id": 1, "unlinked_title": "Super Mario Odysey"})),
+        )
+        .await
+    };
+    let linked = || app.scalar("SELECT COALESCE(igdb_id, 0) FROM games");
+
+    for change in [
+        "UPDATE games SET title = 'Mario Odyssey'",
+        "UPDATE games SET title = 'Super Mario Odysey', igdb_id = 500",
+    ] {
+        sqlx::query(change).execute(&app.pool).await.unwrap();
+        let before = linked().await;
+        let (status, error) = link().await;
+        assert_eq!(status, StatusCode::CONFLICT, "{change}: {error}");
+        assert_eq!(error["code"], "igdb_changed");
+        assert_eq!(linked().await, before, "{change}");
+    }
+
+    sqlx::query("UPDATE games SET igdb_id = NULL")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let (status, body) = link().await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(linked().await, 1);
+}
+
+#[tokio::test]
 async fn a_stale_sync_leaves_a_game_relinked_meanwhile() {
     let app = with_igdb().await;
     let game = app

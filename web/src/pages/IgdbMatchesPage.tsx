@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { call, errorMessage } from '../api/errors';
+import { ApiError, call, errorMessage } from '../api/errors';
 import { queryKeys } from '../api/queries';
 import type { MatchGroup } from '../api/types';
 import { notifyError } from '../components/notify';
@@ -70,14 +70,18 @@ function MatchCard({ group, onDone }: { group: MatchGroup; onDone: () => void })
       call(
         api.POST('/api/games/{id}/igdb', {
           params: { path: { id: group.game_id } },
-          body: { igdb_id: igdbId, overwrite: false },
+          body: { igdb_id: igdbId, overwrite: false, unlinked_title: group.title },
         }),
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games });
       onDone();
     },
-    onError: (error) => notifyError(errorMessage(t, error)),
+    onError: (error) => {
+      notifyError(errorMessage(t, error));
+      // Linked or renamed since this page loaded, so this card is out of date.
+      if (error instanceof ApiError && error.code === 'igdb_changed') onDone();
+    },
   });
   const skip = useMutation({
     mutationFn: () => call(api.POST('/api/games/{id}/igdb-skip', { params: { path: { id: group.game_id } } })),

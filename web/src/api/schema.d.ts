@@ -1258,6 +1258,11 @@ export interface components {
              *     and dates with IGDB's where IGDB has them. Otherwise only empty ones are filled.
              */
             overwrite?: boolean;
+            /**
+             * @description Link only while the game has no IGDB link and still has this title, as
+             *     a review page showed it. Otherwise `igdb_changed`.
+             */
+            unlinked_title?: string | null;
         };
         /** @enum {string} */
         LookupOutcome: "in_collection" | "found" | "not_found" | "not_in_collection" | "offline" | "failed";
@@ -2751,7 +2756,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description `igdb_linked`: another game has this IGDB id */
+            /** @description `igdb_linked`: another game has this IGDB id; `igdb_changed`: the game is no longer unlinked with `unlinked_title` */
             409: {
                 headers: {
                     [name: string]: unknown;

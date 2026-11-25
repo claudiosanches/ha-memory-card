@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { MatchGroup } from '../api/types';
 import en from '../locales/en.json';
-import { mockApi } from '../test/api';
+import { json, mockApi } from '../test/api';
 import { renderAt } from '../test/render';
 
 const hit = (igdb_id: number, name: string, score: number) => ({ igdb_id, name, year: 2017, platforms: ['Switch'], platform_ids: [130], game_id: null, score });
@@ -30,7 +30,11 @@ describe('IGDB match review', () => {
     expect(within(first).getByRole('radio', { name: /^Super Mario Odyssey 2017/ })).toBeChecked();
     fireEvent.click(within(first).getByRole('button', { name: en.matches.link }));
     await waitFor(() => expect(screen.queryByTestId('match-3')).not.toBeInTheDocument());
-    expect(calls.find((c) => c.path === '/api/games/3/igdb')?.body).toEqual({ igdb_id: 1, overwrite: false });
+    expect(calls.find((c) => c.path === '/api/games/3/igdb')?.body).toEqual({
+      igdb_id: 1,
+      overwrite: false,
+      unlinked_title: 'Super Mario Odysey',
+    });
 
     const second = screen.getByTestId('match-5');
     expect(within(second).getByRole('button', { name: en.matches.link })).toBeDisabled();
@@ -38,5 +42,18 @@ describe('IGDB match review', () => {
     await waitFor(() => expect(screen.queryByTestId('match-5')).not.toBeInTheDocument());
     expect(calls.some((c) => c.path === '/api/games/5/igdb-skip')).toBe(true);
     expect(screen.getByText(en.matches.none)).toBeInTheDocument();
+  });
+
+  it('drops a card whose game changed since the page loaded', async () => {
+    mockApi({
+      'GET /api/igdb/matches': GROUPS,
+      'POST /api/games/3/igdb': json({ code: 'igdb_changed' }, 409),
+    });
+    renderAt('/igdb-matches');
+
+    fireEvent.click(within(await screen.findByTestId('match-3')).getByRole('button', { name: en.matches.link }));
+    expect(await screen.findByText(en.errors.igdb_changed)).toBeInTheDocument();
+    expect(screen.queryByTestId('match-3')).not.toBeInTheDocument();
+    expect(screen.getByTestId('match-5')).toBeInTheDocument();
   });
 });

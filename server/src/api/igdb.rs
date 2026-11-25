@@ -105,6 +105,10 @@ pub struct LinkInput {
     /// and dates with IGDB's where IGDB has them. Otherwise only empty ones are filled.
     #[serde(default)]
     pub overwrite: bool,
+    /// Link only while the game has no IGDB link and still has this title, as
+    /// a review page showed it. Otherwise `igdb_changed`.
+    #[serde(default)]
+    pub unlinked_title: Option<String>,
 }
 
 /// Links the game to an IGDB game and fills its metadata. Posting the current
@@ -116,7 +120,7 @@ pub struct LinkInput {
     responses(
         (status = OK, body = GameDetail),
         (status = NOT_FOUND, body = ErrorBody),
-        (status = CONFLICT, description = "`igdb_linked`: another game has this IGDB id", body = ErrorBody),
+        (status = CONFLICT, description = "`igdb_linked`: another game has this IGDB id; `igdb_changed`: the game is no longer unlinked with `unlinked_title`", body = ErrorBody),
         (status = UNPROCESSABLE_ENTITY, description = "`igdb_not_found`", body = ErrorBody),
         (status = SERVICE_UNAVAILABLE, description = "`igdb_not_configured`", body = ErrorBody),
         (status = BAD_GATEWAY, description = "`igdb_failed`", body = ErrorBody),
@@ -143,7 +147,10 @@ pub async fn link(
         id,
         &data,
         input.overwrite,
-        Expected::Any,
+        match &input.unlinked_title {
+            Some(title) => Expected::Unlinked(title),
+            None => Expected::Any,
+        },
     )
     .await?;
     Ok(Json(games::get(&state.db, id, &by).await?))
