@@ -25,6 +25,14 @@ impl Owner {
     }
 }
 
+/// Waits for the game's other cover changes. Holding it from writing a file to
+/// clearing out the old ones keeps one change from deleting what another is
+/// storing. Games share 64 locks.
+pub async fn lock(game_id: i64) -> tokio::sync::MutexGuard<'static, ()> {
+    static LOCKS: [tokio::sync::Mutex<()>; 64] = [const { tokio::sync::Mutex::const_new(()) }; 64];
+    LOCKS[game_id.rem_euclid(64) as usize].lock().await
+}
+
 /// Writes through a temporary file so a reader never sees half an image.
 pub async fn write(
     covers_dir: &Path,

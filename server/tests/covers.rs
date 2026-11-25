@@ -1,4 +1,6 @@
 //! Uploaded covers for games and releases.
+// Tests read rows with SQL.
+#![allow(clippy::disallowed_methods)]
 
 mod common;
 
@@ -13,6 +15,29 @@ fn files(app: &TestApp, dir: &str) -> Vec<String> {
             .collect(),
         Err(_) => Vec::new(),
     }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn uploads_at_once_keep_the_file_the_game_points_to() {
+    let app = TestApp::new().await;
+    app.release("Okami", "switch").await;
+    let game: i64 = app.scalar("SELECT id FROM games").await;
+    let path = format!("/api/games/{game}/cover");
+
+    let uploads = (0..16).map(|_| app.put_bytes(&path, JPEG));
+    for (status, detail) in futures_util::future::join_all(uploads).await {
+        assert_eq!(status, StatusCode::OK, "{detail}");
+    }
+
+    let stored_path: String = sqlx::query_scalar("SELECT cover_path FROM games")
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+    let dir = format!("game-{game}");
+    assert_eq!(
+        files(&app, &dir),
+        [stored_path.strip_prefix(&format!("{dir}/")).unwrap()]
+    );
 }
 
 #[tokio::test]

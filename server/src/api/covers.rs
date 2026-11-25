@@ -116,6 +116,7 @@ async fn upload(
         field: None,
     })?;
     let game_id = games::cover_game(&state.db, owner).await?;
+    let _cover = covers::lock(game_id).await;
 
     let dir = state.config.covers_dir();
     // A new name per upload, so browsers never show a cached older one.
@@ -135,8 +136,16 @@ async fn upload(
 
 async fn remove(state: &AppState, owner: Owner, viewer: &str) -> ApiResult<Json<GameDetail>> {
     let game_id = games::cover_game(&state.db, owner).await?;
-    if games::set_uploaded_cover(&state.db, owner, None).await? {
-        covers::keep_only(&state.config.covers_dir(), owner, None).await;
+    let removed = {
+        let _cover = covers::lock(game_id).await;
+        let removed = games::set_uploaded_cover(&state.db, owner, None).await?;
+        if removed {
+            covers::keep_only(&state.config.covers_dir(), owner, None).await;
+        }
+        removed
+    };
+    // Takes the lock again to store IGDB's.
+    if removed {
         restore_igdb_covers(state, game_id).await;
     }
     Ok(Json(games::get(&state.db, game_id, viewer).await?))

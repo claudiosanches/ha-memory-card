@@ -33,6 +33,7 @@ pub async fn apply(
     data: &GameData,
     overwrite: bool,
 ) -> ApiResult<()> {
+    let _cover = covers::lock(game_id).await;
     // Checked before downloading covers; the unique index still decides.
     if db::linked_elsewhere(pool, data.id, game_id).await? {
         return Err(ApiError::Conflict("igdb_linked"));
@@ -115,6 +116,7 @@ pub async fn refresh_covers(
     game_id: i64,
     data: &GameData,
 ) -> ApiResult<()> {
+    let _cover = covers::lock(game_id).await;
     let releases = db::releases(pool, game_id).await?;
     let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
     let changed = db::write_covers(pool, game_id, &covers).await?;
