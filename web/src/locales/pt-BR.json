@@ -2,7 +2,7 @@
   "app": {
     "title": "Memory Card",
     "toggleNavigation": "Abrir ou fechar a navegação",
-    "collapseSidebar": "Recolher barra lateral",
+    "collapseSidebar": "Recolher barra",
     "expandSidebar": "Expandir barra lateral",
     "collection": "Coleção",
     "insights": "Resumo",
