@@ -2,6 +2,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { apiBaseUrl } from './client';
 
+/** Queries that ask IGDB itself, which a refetch would ask again. */
+const IGDB_LOOKUPS = new Set(['igdb-search', 'igdb-matches', 'igdb-contents']);
+
 /**
  * Refetches what the page shows when the collection changes elsewhere, such
  * as a tag scan, another user or the IGDB sync. Who is signed in only changes
@@ -21,7 +24,7 @@ export function useLiveUpdates() {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         void queryClient.invalidateQueries({
-          predicate: ({ queryKey: [key] }) => key !== 'me' && !(typeof key === 'string' && key.startsWith('igdb')),
+          predicate: ({ queryKey: [key] }) => key !== 'me' && !IGDB_LOOKUPS.has(String(key)),
         });
       }, 300);
     };

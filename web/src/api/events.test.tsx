@@ -57,4 +57,20 @@ describe('Live updates', () => {
     events?.listeners.get('open')?.();
     await waitFor(() => expect(gamesLoaded()).toBeGreaterThan(before));
   });
+
+  it('refetches the IGDB title differences', async () => {
+    vi.stubGlobal('EventSource', FakeEventSource);
+    const calls = mockApi({
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, sensors: 'off' },
+      'GET /api/igdb/titles': [],
+      'GET /api/igdb/sync': { running: false, done: 0, total: 0, linked: 0, updated: 0, unmatched: 0, failed: 0 },
+    });
+    renderAt('/settings?tab=igdb');
+    await screen.findByText(en.igdb.titlesNone);
+    const loaded = (path: string) => calls.filter((c) => c.path === path).length;
+    const titles = loaded('/api/igdb/titles');
+
+    FakeEventSource.last?.listeners.get('changed')?.();
+    await waitFor(() => expect(loaded('/api/igdb/titles')).toBeGreaterThan(titles));
+  });
 });
