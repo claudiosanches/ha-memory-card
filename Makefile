@@ -10,9 +10,8 @@ DEV_USER ?= dev
 # Local Home Assistant from `make ha-up`.
 HA_PORT ?= 7123
 
-# Docs site tools, run through npx so the app's npm dependencies stay as they are.
-VITEPRESS = vitepress@1.6.4
-WRANGLER = wrangler@4.159.0
+# Docs site tools, locked in docs/package-lock.json apart from the app's.
+DOCS_BIN = docs/node_modules/.bin
 
 # Database the sqlx query macros check against while preparing server/.sqlx.
 SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
@@ -145,17 +144,21 @@ screenshots: web ## Retake docs/images from test data (needs IGDB credentials in
 	cargo build --locked
 	node scripts/screenshots.mjs $(ONLY)
 
+# Reinstalls when the lockfile changes, without install scripts.
+docs/node_modules/.package-lock.json: docs/package-lock.json
+	npm ci --prefix docs --ignore-scripts
+
 .PHONY: docs
-docs: ## Build the docs site into docs/.vitepress/dist
-	npx --yes $(VITEPRESS) build docs
+docs: docs/node_modules/.package-lock.json ## Build the docs site into docs/.vitepress/dist
+	$(DOCS_BIN)/vitepress build docs
 
 .PHONY: docs-dev
-docs-dev: ## Docs site with live reload
-	npx --yes $(VITEPRESS) dev docs
+docs-dev: docs/node_modules/.package-lock.json ## Docs site with live reload
+	$(DOCS_BIN)/vitepress dev docs
 
 .PHONY: docs-deploy
 docs-deploy: docs ## Build the docs site and deploy it to Cloudflare Pages
-	npx --yes $(WRANGLER) pages deploy docs/.vitepress/dist --project-name ha-memory-card
+	$(DOCS_BIN)/wrangler pages deploy docs/.vitepress/dist --project-name ha-memory-card
 
 .PHONY: reset-db
 reset-db: ## Delete the local database and covers, keeping options.json

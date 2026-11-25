@@ -1,0 +1,9 @@
+{
+  "name": "ha-memory-card-docs",
+  "private": true,
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "vitepress": "1.6.4",
+    "wrangler": "4.159.0"
+  }
+}

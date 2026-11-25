@@ -87,7 +87,8 @@ and the other guide pages sit under `/docs/`. The developer pages (this one, Loc
 Releasing) stay out of the site. A new guide page needs a line in
 `docs/README.md` and in the sidebar in `docs/.vitepress/config.mjs`.
 
-VitePress and wrangler run through npx at the versions the Makefile pins.
-Before the first `make docs-deploy`, sign in to Cloudflare with
-`npx wrangler login`. A deploy from `main` updates the site; from another
+VitePress and wrangler are locked in `docs/package-lock.json`, apart from the
+app's dependencies; `make docs` installs them with `npm ci`, without install
+scripts. Before the first `make docs-deploy`, sign in to Cloudflare with
+`docs/node_modules/.bin/wrangler login`. A deploy from `main` updates the site; from another
 branch it gets a preview URL.
