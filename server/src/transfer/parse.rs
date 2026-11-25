@@ -384,6 +384,15 @@ mod tests {
     }
 
     #[test]
+    fn reads_the_header_after_blank_lines() {
+        let (headers, _) = headers(b"\r\n\nName\nZelda\n").unwrap();
+        assert_eq!(headers[0].header, "Name");
+        let rows = parse(b"\n\ngame_title\nZelda\n").unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].line, 4);
+    }
+
+    #[test]
     fn strips_bom_and_reads_semicolons() {
         let mut bytes = UTF8_BOM.to_vec();
         bytes.extend_from_slice("game_title;platform\n\"Pokémon X; Y\";3DS\n".as_bytes());

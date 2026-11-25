@@ -9,4 +9,8 @@ describe('withColumns', () => {
     );
     expect(withColumns('A;B\nx;y', ['notes', null], ';')).toBe('notes;ignored 2\nx;y');
   });
+
+  it('replaces the header after blank lines, as the server reads it', () => {
+    expect(withColumns('\r\n\nName\nGame\n', ['game_title'], ',')).toBe('\r\n\ngame_title\nGame\n');
+  });
 });

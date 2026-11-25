@@ -1,7 +1,7 @@
-/** Where the header row ends: the first line break outside quotes. */
-function headerEnd(text: string): number {
+/** Where the header row starting at `from` ends: the next line break outside quotes. */
+function headerEnd(text: string, from: number): number {
   let quoted = false;
-  for (let i = 0; i < text.length; i++) {
+  for (let i = from; i < text.length; i++) {
     const c = text[i];
     if (c === '"') quoted = !quoted;
     else if (!quoted && (c === '\n' || c === '\r')) return i;
@@ -20,5 +20,7 @@ function quote(value: string, delimiter: string): string {
 export function withColumns(text: string, columns: (string | null)[], delimiter: string): string {
   const body = text.replace(/^\uFEFF/, '');
   const header = columns.map((column, i) => quote(column ?? `ignored ${i + 1}`, delimiter)).join(delimiter);
-  return header + body.slice(headerEnd(body));
+  // The server skips blank lines before the header; keeping them keeps its line numbers.
+  const start = body.length - body.replace(/^[\r\n]+/, '').length;
+  return body.slice(0, start) + header + body.slice(headerEnd(body, start));
 }
