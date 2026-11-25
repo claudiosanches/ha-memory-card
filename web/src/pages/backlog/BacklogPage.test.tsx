@@ -128,6 +128,18 @@ describe('Backlog page', () => {
     expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
   });
 
+  it('brings a game back when its status fails to save', async () => {
+    mockApi({ ...SETUP, 'PUT /api/games/6/play-status': json({ code: 'forbidden' }, 403) });
+    renderAt('/backlog');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.backlog.sort }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: en.playStatus.backlog }));
+    expect(within(dialog).getByTestId('sort-game')).toHaveTextContent('Kirby');
+    fireEvent.click(within(dialog).getByRole('button', { name: en.backlog.skip }));
+    await waitFor(() => expect(within(dialog).getByTestId('sort-game')).toHaveTextContent('Metroid'));
+  });
+
   it('sorts with number keys and skips with S', async () => {
     const calls = mockApi({ ...SETUP, 'PUT /api/games/6/play-status': statusPut(6) });
     renderAt('/backlog');

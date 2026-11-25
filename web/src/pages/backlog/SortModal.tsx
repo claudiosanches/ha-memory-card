@@ -21,7 +21,7 @@ export function SortModal({
   const { t } = useTranslation();
   const phone = useMediaQuery('(max-width: 48em)');
   // A snapshot, so the list does not shift while statuses save.
-  const [queue] = useState(games);
+  const [queue, setQueue] = useState(games);
   const [index, setIndex] = useState(0);
   const setStatus = useSetPlayStatus({ quiet: true });
   const statuses = usePlayStatusList();
@@ -29,7 +29,8 @@ export function SortModal({
 
   const choose = (status: string) => {
     if (!game) return;
-    setStatus.mutate({ id: game.id, status });
+    // A status that fails to save brings its game back at the end.
+    void setStatus.mutateAsync({ id: game.id, status }).catch(() => setQueue((current) => [...current, game]));
     setIndex(index + 1);
   };
   const skip = () => game && setIndex(index + 1);
