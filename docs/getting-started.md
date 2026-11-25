@@ -31,7 +31,7 @@ play apart.
 A new install is read-only for everyone until it has a manager.
 
 1. Open Memory Card as the person who will manage the collection.
-2. Go to **Settings**. Under **Your access**, select **Copy user ID**.
+2. Go to **Settings > Status**. Under **Your access**, select **Copy user ID**.
 3. In Home Assistant, go to **Settings > Apps > Memory Card** and open the
    **Configuration** tab.
 4. Paste the ID under **Managers** and save. Add one entry for each manager.
