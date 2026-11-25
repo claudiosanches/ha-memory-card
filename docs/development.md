@@ -21,7 +21,7 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
 | `make ha-up` | Local Home Assistant with the app from this tree, see [Local Home Assistant](local-home-assistant.md) |
 | `make seed` | Fills an empty collection in `make run` with test data, plus play for `sam`, `alex`, `jordan` and `robin` |
-| `make screenshots` | Retakes the images in `docs/images` from test data. Needs IGDB credentials in `.data/options.json` |
+| `make screenshots` | Retakes the images in `docs/images` from test data. Needs IGDB credentials in `.data/options.json`. `ONLY=themes/` retakes only the images whose names start with it |
 | `make docs-dev` | The docs site with live reload, see [Docs site](#docs-site) |
 | `make docs-deploy` | Builds the docs site and deploys it to Cloudflare Pages |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |

@@ -1,7 +1,8 @@
 // Retakes the screenshots in docs/images. Runs its own server with the seed's
 // test data, so it needs `make web`, `cargo build` and IGDB credentials in
 // .data/options.json for the covers.
-// Usage: node scripts/screenshots.mjs, or `make screenshots`.
+// Usage: node scripts/screenshots.mjs [name prefix...], or `make screenshots`.
+// With prefixes, only matching images are written, such as `themes/`.
 import { execFileSync, spawn } from 'node:child_process';
 import { chmodSync, copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
@@ -13,6 +14,7 @@ const out = join(root, 'docs/images');
 const data = join(root, 'target/screenshots');
 const user = { 'x-remote-user-id': 'morgan', 'x-remote-user-name': 'morgan', 'x-remote-user-display-name': 'Morgan' };
 const themes = Object.keys(JSON.parse(readFileSync(join(root, 'web/src/locales/en.json'), 'utf8')).settings.themes);
+const only = process.argv.slice(2);
 
 const options = JSON.parse(readFileSync(join(root, '.data/options.json'), 'utf8'));
 if (!options.igdb_client_id || !options.igdb_client_secret) {
@@ -100,6 +102,7 @@ try {
 
   /** Saves PNGs side by side as one WebP, scaled by `scale`. */
   async function save(name, pngs, { scale = 1, gap = 0, pad = 0 } = {}) {
+    if (only.length && !only.some((prefix) => name.startsWith(prefix))) return;
     const url = await encoder.evaluate(
       async ({ images, scale, gap, pad }) => {
         const bitmaps = await Promise.all(
@@ -196,13 +199,10 @@ try {
 
   mkdirSync(join(out, 'themes'), { recursive: true });
   for (const theme of themes) {
-    // Themes hide their sidebar picture below 53em (848 pixels) tall.
-    const size = { width: 1280, height: 900, theme };
-    await save(
-      `themes/${theme}`,
-      [await capture('/', { ...size, scheme: 'light' }), await capture('/', { ...size, scheme: 'dark' })],
-      { scale: 0.6, gap: 32 },
-    );
+    for (const scheme of ['light', 'dark']) {
+      // Themes hide their sidebar picture below 53em (848 pixels) tall.
+      await save(`themes/${theme}-${scheme}`, [await capture('/', { width: 1280, height: 900, theme, scheme })]);
+    }
   }
 } finally {
   await browser?.close();

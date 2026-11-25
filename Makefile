@@ -141,9 +141,9 @@ seed: ## Fill an empty collection in `make run` with test data
 	node scripts/seed.mjs http://127.0.0.1:$(PORT) $(DEV_USER)
 
 .PHONY: screenshots
-screenshots: web ## Retake docs/images from test data (needs IGDB credentials in .data/options.json)
+screenshots: web ## Retake docs/images from test data (needs IGDB credentials in .data/options.json; ONLY=themes/ for some)
 	cargo build --locked
-	node scripts/screenshots.mjs
+	node scripts/screenshots.mjs $(ONLY)
 
 .PHONY: docs
 docs: ## Build the docs site into docs/.vitepress/dist

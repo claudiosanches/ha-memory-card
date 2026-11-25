@@ -20,6 +20,13 @@
   cursor: zoom-in;
 }
 
+/* Two screenshots in a row, such as a theme in light and dark, side by side. */
+.vp-doc p:has(> img + img) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
 /* A caption: an italic line right after a screenshot. */
 .vp-doc p:has(> img) + p:has(> em:only-child) {
   margin-top: -8px;
