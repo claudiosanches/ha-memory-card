@@ -10,6 +10,10 @@ DEV_USER ?= dev
 # Local Home Assistant from `make ha-up`.
 HA_PORT ?= 7123
 
+# Docs site tools, run through npx so the app's npm dependencies stay as they are.
+VITEPRESS = vitepress@1.6.4
+WRANGLER = wrangler@4.159.0
+
 # Database the sqlx query macros check against while preparing server/.sqlx.
 SQLX_DB_URL = sqlite://$(CURDIR)/target/sqlx/dev.sqlite
 
@@ -140,6 +144,18 @@ seed: ## Fill an empty collection in `make run` with test data
 screenshots: web ## Retake docs/images from test data (needs IGDB credentials in .data/options.json)
 	cargo build --locked
 	node scripts/screenshots.mjs
+
+.PHONY: docs
+docs: ## Build the docs site into docs/.vitepress/dist
+	npx --yes $(VITEPRESS) build docs
+
+.PHONY: docs-dev
+docs-dev: ## Docs site with live reload
+	npx --yes $(VITEPRESS) dev docs
+
+.PHONY: docs-deploy
+docs-deploy: docs ## Build the docs site and deploy it to Cloudflare Pages
+	npx --yes $(WRANGLER) pages deploy docs/.vitepress/dist --project-name ha-memory-card
 
 .PHONY: reset-db
 reset-db: ## Delete the local database and covers, keeping options.json

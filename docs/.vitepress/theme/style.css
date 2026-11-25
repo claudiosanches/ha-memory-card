@@ -1,0 +1,14 @@
+/* The app's indigo, from its icon. */
+:root {
+  --vp-c-brand-1: #364fc7;
+  --vp-c-brand-2: #3b5bdb;
+  --vp-c-brand-3: #4263eb;
+  --vp-c-brand-soft: rgba(66, 99, 235, 0.14);
+}
+
+.dark {
+  --vp-c-brand-1: #91a7ff;
+  --vp-c-brand-2: #748ffc;
+  --vp-c-brand-3: #4c6ef5;
+  --vp-c-brand-soft: rgba(116, 143, 252, 0.16);
+}

@@ -22,6 +22,8 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make ha-up` | Local Home Assistant with the app from this tree, see [Local Home Assistant](local-home-assistant.md) |
 | `make seed` | Fills an empty collection in `make run` with test data, plus play for `sam`, `alex`, `jordan` and `robin` |
 | `make screenshots` | Retakes the images in `docs/images` from test data. Needs IGDB credentials in `.data/options.json` |
+| `make docs-dev` | The docs site with live reload, see [Docs site](#docs-site) |
+| `make docs-deploy` | Builds the docs site and deploys it to Cloudflare Pages |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 
 The server answers only requests that name a Home Assistant user, so open
@@ -75,3 +77,17 @@ takes only `&'static str` text and binds every value. `server/clippy.toml` and
 `server/tests/sql_in_db.rs` fail the checks on a query outside `db`, and on
 `QueryBuilder` or `AssertSqlSafe` outside `db/sql.rs`. Run `make sqlx` after
 adding or changing a query.
+
+## Docs site
+
+`docs/` is also the site at https://ha-memory-card.pages.dev, built with
+VitePress from `docs/.vitepress/`. `docs/index.md` is the landing page,
+`docs/README.md` the guide's index at `/docs/`, and the other guide pages sit
+under `/docs/`. The developer pages (this one, Local Home Assistant and
+Releasing) stay out of the site. A new guide page needs a line in
+`docs/README.md` and in the sidebar in `docs/.vitepress/config.mjs`.
+
+VitePress and wrangler run through npx at the versions the Makefile pins.
+Before the first `make docs-deploy`, sign in to Cloudflare with
+`npx wrangler login`. A deploy from `main` updates the site; from another
+branch it gets a preview URL.
