@@ -219,7 +219,7 @@ function ColumnMapping({
   const columns = preview.headers.map((h) => h.column ?? null);
   const options = [
     { value: '', label: t('import.notImported') },
-    ...COLUMNS.map((column) => ({ value: column, label: column })),
+    ...COLUMNS.map((column) => ({ value: column, label: `${column} (${t(`import.columnNames.${column}`)})` })),
   ];
   return (
     <Stack gap="xs" data-testid="column-mapping">

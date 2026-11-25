@@ -230,7 +230,7 @@ describe('Import page', () => {
       expect(list).not.toBeNull();
       return list as HTMLElement;
     });
-    fireEvent.click(within(options).getByRole('option', { name: 'game_title', hidden: true }));
+    fireEvent.click(within(options).getByRole('option', { name: 'game_title (Game title)', hidden: true }));
     await waitFor(() => expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(2));
     expect(calls.filter((c) => c.path === '/api/import/preview')[1]?.body).toBe('game_title,ignored 2\nZelda,5\n');
     expect(await screen.findByRole('combobox', { name: 'Read Nota as' })).toBeInTheDocument();
