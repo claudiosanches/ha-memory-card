@@ -524,6 +524,31 @@ describe('Game page', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/photos/3')).toBe(true));
   });
 
+  it('shows the photo before the last one once the last is deleted', async () => {
+    const photos = [1, 2, 3].map((id) => ({ id, path: `copy-21/photo-${id}.jpg`, created_at: '2026-11-21T10:00:00Z' }));
+    const withPhotos = (list: typeof photos) => ({
+      ...GAME,
+      releases: [{ ...GAME.releases[0]!, copies: [{ ...GAME.releases[0]!.copies[0]!, photos: list }] }],
+    });
+    mockApi({
+      ...SETUP,
+      'GET /api/games/4': withPhotos(photos),
+      'DELETE /api/photos/3': withPhotos(photos.slice(0, 2)),
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open photo 3' }));
+    const viewer = await screen.findByRole('dialog', { name: 'Photo 3 of 3' });
+    fireEvent.click(within(viewer).getByRole('button', { name: en.photos.delete }));
+    const after = await screen.findByRole('dialog', { name: 'Photo 2 of 2' });
+    expect(within(after).getByRole('img')).toHaveAttribute('src', 'covers/copy-21/photo-2.jpg');
+    fireEvent.click(within(after).getByRole('button', { name: en.photos.previous }));
+    expect(within(await screen.findByRole('dialog', { name: 'Photo 1 of 2' })).getByRole('img')).toHaveAttribute(
+      'src',
+      'covers/copy-21/photo-1.jpg',
+    );
+  });
+
   it('links an NFC tag once Home Assistant reports a scan', async () => {
     const tagged = {
       ...GAME,

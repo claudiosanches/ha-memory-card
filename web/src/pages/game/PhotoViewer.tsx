@@ -20,8 +20,10 @@ export function PhotoViewer({ photos, start, canDelete, onClose }: Props) {
   const formatDate = useFormatDate();
   const phone = useMediaQuery('(max-width: 48em)');
   const saved = useGameSaved();
-  const [index, setIndex] = useState(start);
-  const photo = photos[Math.min(index, photos.length - 1)];
+  const [chosen, setIndex] = useState(start);
+  // Deleting the last photo leaves the chosen index past the end.
+  const index = Math.min(chosen, photos.length - 1);
+  const photo = photos[index];
 
   const remove = useMutation({
     mutationFn: (id: number) => call(api.DELETE('/api/photos/{id}', { params: { path: { id } } })),
