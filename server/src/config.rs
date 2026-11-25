@@ -211,6 +211,23 @@ pub struct MqttBroker {
     pub password: Option<Secret>,
 }
 
+/// `path` made absolute, with `.` and `..` resolved without touching the disk,
+/// which may not have it yet.
+fn lexical(path: &Path) -> PathBuf {
+    let absolute = std::path::absolute(path).unwrap_or_else(|_| path.to_owned());
+    let mut out = PathBuf::new();
+    for part in absolute.components() {
+        match part {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            other => out.push(other),
+        }
+    }
+    out
+}
+
 /// Shape of `/data/options.json` as written by the Supervisor.
 #[derive(Debug, Default, Deserialize)]
 struct Options {
@@ -316,6 +333,13 @@ impl Config {
         // could plant the path that startup clears.
         let tmp_dir =
             env("MEMORY_CARD_TMP_DIR").map_or_else(|| data_dir.join("tmp"), PathBuf::from);
+        // Startup empties it, so it must not hold the data.
+        if lexical(&data_dir).starts_with(lexical(&tmp_dir)) {
+            return Err(ConfigError::InvalidEnv {
+                name: "MEMORY_CARD_TMP_DIR",
+                value: tmp_dir.display().to_string(),
+            });
+        }
         let options = read_options(&data_dir.join("options.json"))?;
 
         let listen_raw = env("MEMORY_CARD_LISTEN").unwrap_or(DEFAULT_LISTEN.into());
@@ -601,6 +625,35 @@ mod tests {
         assert_eq!(api.websocket, "ws://ha.local:8123/api/websocket");
 
         assert!(load_with(dir.path(), &[]).unwrap().home_assistant.is_none());
+    }
+
+    #[test]
+    fn the_temp_dir_never_holds_the_data() {
+        let dir = tempfile::tempdir().unwrap();
+        let data = dir.path().join("data");
+        for tmp in [data.clone(), dir.path().to_owned(), data.join("..")] {
+            let vars = HashMap::from([
+                ("MEMORY_CARD_DATA_DIR", data.display().to_string()),
+                ("MEMORY_CARD_TMP_DIR", tmp.display().to_string()),
+            ]);
+            assert!(
+                matches!(
+                    Config::load(|name| vars.get(name).cloned()),
+                    Err(ConfigError::InvalidEnv {
+                        name: "MEMORY_CARD_TMP_DIR",
+                        ..
+                    })
+                ),
+                "{}",
+                tmp.display()
+            );
+        }
+        let elsewhere = dir.path().join("scratch");
+        let vars = HashMap::from([
+            ("MEMORY_CARD_DATA_DIR", data.display().to_string()),
+            ("MEMORY_CARD_TMP_DIR", elsewhere.display().to_string()),
+        ]);
+        assert!(Config::load(|name| vars.get(name).cloned()).is_ok());
     }
 
     #[test]
