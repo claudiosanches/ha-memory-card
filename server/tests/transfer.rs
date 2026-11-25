@@ -690,7 +690,9 @@ async fn columns_a_file_leaves_out_keep_the_copy_they_update() {
     assert_eq!(result["summary"]["updated_copies"], 1, "{result}");
     let exported = export(&app).await;
     let row = exported.lines().nth(1).unwrap();
-    for kept in ["Steam", "loose", "19.99", "EUR", "owned", "Switch", "second"] {
+    for kept in [
+        "Steam", "loose", "19.99", "EUR", "owned", "Switch", "second",
+    ] {
         assert!(row.contains(kept), "{kept} in {row}");
     }
 
