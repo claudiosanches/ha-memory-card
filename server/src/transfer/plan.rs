@@ -126,7 +126,14 @@ impl Plan {
     }
 }
 
+/// Folds case as SQLite's `NOCASE` and `lower()` do, so names and product
+/// codes the database keeps apart stay apart.
 fn key(value: &str) -> String {
+    value.trim().to_ascii_lowercase()
+}
+
+/// Game titles are not unique, so they match across any letter case.
+fn title_key(value: &str) -> String {
     value.trim().to_lowercase()
 }
 
@@ -219,7 +226,7 @@ impl<'a> Planner<'a> {
         let mut games_by_igdb = HashMap::new();
         for g in &snapshot.games {
             games_by_title
-                .entry(key(&g.title))
+                .entry(title_key(&g.title))
                 .or_default()
                 .push(Ref::Existing(g.id));
             if let Some(igdb_id) = g.igdb_id {
@@ -236,7 +243,7 @@ impl<'a> Planner<'a> {
                 HashMap::new(),
                 |mut unlinked, g| {
                     unlinked
-                        .entry(key(&g.title))
+                        .entry(title_key(&g.title))
                         .or_insert_with(Vec::new)
                         .push(Ref::Existing(g.id));
                     unlinked
@@ -672,7 +679,11 @@ impl<'a> Planner<'a> {
             }
             // A game imported earlier without an IGDB id gets linked.
             return Ok(
-                match self.unlinked_by_title.get(&key(title)).map(Vec::as_slice) {
+                match self
+                    .unlinked_by_title
+                    .get(&title_key(title))
+                    .map(Vec::as_slice)
+                {
                     Some([only]) => Some((*only, true)),
                     _ => None,
                 },
@@ -682,12 +693,16 @@ impl<'a> Planner<'a> {
         // The copy's current game wins when the title still matches.
         if let Some(copy) = existing_copy
             && let Some(game) = self.copy_game(copy)
-            && key(&game.title) == key(title)
+            && title_key(&game.title) == title_key(title)
         {
             return Ok(Some((Ref::Existing(game.id), false)));
         }
 
-        match self.games_by_title.get(&key(title)).map(Vec::as_slice) {
+        match self
+            .games_by_title
+            .get(&title_key(title))
+            .map(Vec::as_slice)
+        {
             None | Some([]) => Ok(None),
             Some([only]) => Ok(Some((*only, false))),
             Some(_) => Err("ambiguous_game"),
@@ -717,7 +732,7 @@ impl<'a> Planner<'a> {
     ) -> Ref {
         let game = match found {
             Some((game, link)) => {
-                if link && let Some(unlinked) = self.unlinked_by_title.get_mut(&key(title)) {
+                if link && let Some(unlinked) = self.unlinked_by_title.get_mut(&title_key(title)) {
                     unlinked.retain(|g| *g != game);
                 }
                 if let (true, Some(igdb_id), Ref::Existing(id)) = (link, igdb_id, game) {
@@ -738,14 +753,14 @@ impl<'a> Planner<'a> {
                     play_status: None,
                 });
                 self.games_by_title
-                    .entry(key(title))
+                    .entry(title_key(title))
                     .or_default()
                     .push(game);
                 if let Some(igdb_id) = igdb_id {
                     self.games_by_igdb.insert(igdb_id, game);
                 } else {
                     self.unlinked_by_title
-                        .entry(key(title))
+                        .entry(title_key(title))
                         .or_default()
                         .push(game);
                 }

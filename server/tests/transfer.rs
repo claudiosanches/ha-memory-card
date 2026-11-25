@@ -701,6 +701,27 @@ async fn columns_a_file_leaves_out_keep_the_copy_they_update() {
 }
 
 #[tokio::test]
+async fn names_and_codes_the_database_keeps_apart_stay_apart() {
+    let app = TestApp::new().await;
+    let csv = "game_title,platform,region,format,product_code,store\n\
+        Okami,Switch,eu,physical,\u{c9}1,\u{c9}pico\n\
+        Okami,Switch,eu,physical,\u{e9}1,\u{e9}pico\n";
+    let (status, result) = app.post_csv("/api/import", csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM stores WHERE name LIKE '%pico'")
+            .await,
+        2
+    );
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM releases").await, 2);
+
+    let (_, preview) = app
+        .post_csv("/api/import/preview", &export(&app).await)
+        .await;
+    assert_eq!(preview["summary"]["updated_copies"], 0, "{preview}");
+}
+
+#[tokio::test]
 async fn kept_columns_leave_other_values_to_the_file() {
     let app = TestApp::new().await;
     let csv = "game_title,platform,region,format,release_title,condition,price,currency,estimated_value,estimated_currency\n\
