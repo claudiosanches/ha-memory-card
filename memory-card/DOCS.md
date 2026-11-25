@@ -51,7 +51,7 @@ Only managers can change the collection. A new install has none, so it
 starts read-only. To name a manager:
 
 1. Open Memory Card as that person, go to **Settings** and copy the user ID
-   under **Your access**.
+   under **Status > Your access**.
 2. In Home Assistant, go to **Settings > Apps > Memory Card** and open the
    **Configuration** tab. Add the ID to **Managers**, one entry per manager,
    and save. If the form shows no field for it, choose **Edit in YAML** from
@@ -97,7 +97,7 @@ covers and metadata, give it access to the IGDB API.
 5. Restart the app. Options are read only at startup.
 
 Releases for Japan, Korea and Europe get their regional cover when IGDB has
-one. **Settings > Sync with IGDB** refreshes every linked game.
+one. **Cleanup > IGDB > Sync with IGDB** refreshes every linked game.
 
 To keep Memory Card from contacting the internet, turn off
 `external_services`. The IGDB credentials are then ignored, games, covers
@@ -239,15 +239,15 @@ copy. Counts of copies, on the stats page and in the Home Assistant sensors,
 count a bundle once. In the CSV, a copy inside a bundle names the
 bundle copy's `copy_id` in its `bundle_copy_id` column.
 
-## Import and export (CSV)
+## Import & export (CSV)
 
-**Import and export** in the sidebar downloads your collection as a CSV file
+**Import & export** in the sidebar downloads your collection as a CSV file
 and imports one back. Start from **Download blank template** to enter a
 collection in a spreadsheet. **Export CSV** on the Library page downloads
 only the copies that match its filters.
 
 After an import, games without an IGDB link can be linked with
-**Settings > Sync with IGDB**, which matches them by exact title. **Review
+**Cleanup > IGDB > Sync with IGDB**, which matches them by exact title. **Review
 close matches** next to it goes through the rest: it shows IGDB's closest
 names for each game, to link with a click or mark as not on IGDB.
 
@@ -421,7 +421,7 @@ tag_readers:
 `device` is the reader's Home Assistant device ID: open the reader under
 **Settings > Devices & services > Devices**, and it is the last part of the
 page's address. When a reader no option names scans a linked tag, the app's
-**Log** tab shows its device ID. `person` is a user ID from **Settings** in
+**Log** tab shows its device ID. `person` is a user ID from **Settings > Status** in
 Memory Card, as for `managers`.
 
 A link waits for a scan by the manager who started it, or by a reader with no
@@ -452,7 +452,7 @@ starts. Restart the app after changing either of them in Home Assistant.
 
 ## Themes
 
-Memory Card comes in 13 themes, each with a light and a dark version. To
+Memory Card comes in 12 themes, each with a light and a dark version. To
 pick one, go to **Settings > Appearance > Theme**. The button at the top
 right switches between light, dark and your system's setting, and so does
 **Color scheme** under **Settings > Appearance**. Both choices are saved in
@@ -475,7 +475,6 @@ give the whole app a style of its own.
 | Cyberpunk | Neon magenta, violet and cyan over a grid, with a city skyline. |
 | Circuit | Monospace wireframe: a green dot matrix in light, a phosphor CRT in dark, and a microchip. |
 | Pastel Plush | Soft and rounded: strawberry cream with a bunny in light, berry plum with a teddy bear in dark. |
-| Cursed 90's | A 1996 home page: square bevels, Tahoma and Courier, a speckled or starfield background and an Under Construction sign. |
 
 ## Data and backups
 

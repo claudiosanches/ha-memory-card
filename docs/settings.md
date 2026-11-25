@@ -1,8 +1,26 @@
 # Settings
 
-**Settings** in the sidebar has three tabs. Everyone can open it.
+**Settings** at the bottom of the sidebar has two tabs: **Appearance** and
+**Status**. Everyone can open it. **Appearance** opens first once a manager is
+configured; on a new install, **Status** opens first so you can copy your user
+ID.
 
-![Settings, on the Status tab](images/settings.webp)
+![Settings, on the Appearance tab](images/settings.webp)
+
+## Appearance
+
+Choices here are saved in that browser, so each person and each device keeps
+their own.
+
+- **Theme:** one of 12 themes. See [Themes](themes.md).
+- **Color scheme:** **System**, **Light** or **Dark**. The button at the top
+  right of every page switches it too.
+- **Language:** English, Spanish or Brazilian Portuguese. **Automatic** follows
+  Home Assistant's language, or the browser's when Memory Card does not have
+  Home Assistant's.
+
+Dates follow the language, so English writes 11/23/2026. To write them another
+way in every language, set the app's `date_format` option.
 
 ## Status
 
@@ -21,23 +39,3 @@ options or a person for an NFC reader.
 
 **About Memory Card** shows the version, the license, and where to support
 development.
-
-## IGDB
-
-Managers see this tab once IGDB is connected. It has **Sync with IGDB**,
-**Review close matches** and **Review game titles**. See [IGDB](igdb.md).
-
-## Appearance
-
-Choices here are saved in that browser, so each person and each device keeps
-their own.
-
-- **Theme:** one of 13 themes. See [Themes](themes.md).
-- **Color scheme:** **System**, **Light** or **Dark**. The button at the top
-  right of every page switches it too.
-- **Language:** English, Spanish or Brazilian Portuguese. **Automatic** follows
-  Home Assistant's language, or the browser's when Memory Card does not have
-  Home Assistant's.
-
-Dates follow the language, so English writes 11/23/2026. To write them another
-way in every language, set the app's `date_format` option.

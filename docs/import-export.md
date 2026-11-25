@@ -1,6 +1,6 @@
-# Import and export
+# Import & export
 
-**Import and export** in the sidebar moves the collection between Memory Card
+**Import & export** in the sidebar moves the collection between Memory Card
 and a spreadsheet as a CSV file. Only managers see it.
 
 ![Importing a file from another spreadsheet](images/import.webp)

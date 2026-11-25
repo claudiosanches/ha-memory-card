@@ -12,5 +12,5 @@ Backups stop the app for a moment so the database is copied in a consistent
 state. The app starts again on its own when the backup finishes.
 
 To keep a copy outside Home Assistant, **Export collection** under
-[Import and export](import-export.md) downloads every copy as a CSV file. It
+[Import & export](import-export.md) downloads every copy as a CSV file. It
 leaves out play sessions, photos and covers.

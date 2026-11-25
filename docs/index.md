@@ -35,7 +35,7 @@ features:
   - title: Home Assistant sensors
     details: Counts, picks and per-person sensors for dashboards and automations, over MQTT or the Memory Card integration.
     link: /docs/sensors
-  - title: 13 themes
+  - title: 12 themes
     details: Each with a light and a dark version.
     link: /docs/themes
 ---

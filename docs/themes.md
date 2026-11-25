@@ -1,6 +1,6 @@
 # Themes
 
-Memory Card comes in 13 themes, each with a light and a dark version.
+Memory Card comes in 12 themes, each with a light and a dark version.
 
 1. Go to **Settings > Appearance**.
 2. Choose a **Theme**.
@@ -104,11 +104,3 @@ teddy bear in dark.
 
 ![Pastel Plush theme, light](images/themes/pastel-plush-light.webp)
 ![Pastel Plush theme, dark](images/themes/pastel-plush-dark.webp)
-
-## Cursed 90's
-
-A 1996 home page: square bevels, Tahoma and Courier, a speckled or starfield
-background and an Under Construction sign.
-
-![Cursed 90's theme, light](images/themes/cursed-90s-light.webp)
-![Cursed 90's theme, dark](images/themes/cursed-90s-dark.webp)

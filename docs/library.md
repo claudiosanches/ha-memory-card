@@ -56,7 +56,7 @@ game**:
   from a match, or save to enter them yourself. Set your play status if you
   already have one. Saving opens the game page, where you add its copies.
 - **Export CSV:** downloads the copies that match the current filters. See
-  [Import and export](import-export.md).
+  [Import & export](import-export.md).
 - **Scan barcode:** reads the barcode on a box. See [Barcodes](barcodes.md).
 
 ![Adding a game with matches from IGDB](images/add-game.webp)

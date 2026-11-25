@@ -22,14 +22,12 @@ its options. These pages go through everything step by step.
 - [Game page](game.md): details, your progress, releases and copies.
 - [Backlog](backlog.md): what you are playing and a random pick.
 - [Wishlist](wishlist.md): the copies you want.
-- [Duplicates](duplicates.md): games you own more than once.
 - [Stats](stats.md): totals for the collection and your play.
 - [Household](household.md): everyone's play side by side.
-- [Missing details](missing-details.md): fill in what games lack, one at a
-  time.
-- [Import and export](import-export.md): CSV files and spreadsheets.
 - [Manage](manage.md): devices, stores, platforms, play statuses and labels.
-- [Settings](settings.md): status, IGDB, appearance and your access.
+- [Cleanup](cleanup.md): missing details, duplicates and IGDB sync.
+- [Import & export](import-export.md): CSV files and spreadsheets.
+- [Settings](settings.md): appearance, status and your access.
 
 ## Features
 
@@ -39,7 +37,7 @@ its options. These pages go through everything step by step.
 - [Home Assistant sensors](sensors.md): counts, picks and per-person sensors.
 - [Memory Card integration](integration.md): install, the Roll a pick button
   and the roll action.
-- [Themes](themes.md): 13 themes, each in light and dark.
+- [Themes](themes.md): 12 themes, each in light and dark.
 - [Data and backups](data.md): where the collection lives.
 
 ## Help

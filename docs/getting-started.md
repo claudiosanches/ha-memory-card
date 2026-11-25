@@ -73,7 +73,7 @@ IGDB uses Twitch accounts:
    as `!secret igdb_client_secret`.
 5. Restart the app.
 
-**Settings** in Memory Card shows **IGDB: Connected** once it works. See
+**Settings > Status** in Memory Card shows **IGDB: Connected** once it works. See
 [IGDB](igdb.md) for what it fills in.
 
 ## Add your first games
@@ -83,7 +83,7 @@ There are three ways in:
 - **One at a time:** select **Add game** on the [Library](library.md), type
   the title and pick the match from IGDB. Then add your copies on the
   [game page](game.md).
-- **From a spreadsheet:** go to [Import and export](import-export.md), start
+- **From a spreadsheet:** go to [Import & export](import-export.md), start
   from **Download blank template** or use a file you already keep, and
   import it.
 - **From the box:** select **Scan barcode** and point a phone at the box. See

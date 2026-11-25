@@ -13,7 +13,10 @@ const root = join(import.meta.dirname, '..');
 const out = join(root, 'docs/images');
 const data = join(root, 'target/screenshots');
 const user = { 'x-remote-user-id': 'morgan', 'x-remote-user-name': 'morgan', 'x-remote-user-display-name': 'Morgan' };
-const themes = Object.keys(JSON.parse(readFileSync(join(root, 'web/src/locales/en.json'), 'utf8')).settings.themes);
+const hiddenThemes = new Set(['cursed-90s']);
+const themes = Object.keys(JSON.parse(readFileSync(join(root, 'web/src/locales/en.json'), 'utf8')).settings.themes).filter(
+  (theme) => !hiddenThemes.has(theme),
+);
 const only = process.argv.slice(2);
 
 const options = JSON.parse(readFileSync(join(root, '.data/options.json'), 'utf8'));
@@ -163,10 +166,10 @@ try {
     }),
   ]);
   await save('wishlist', [await capture('/wishlist')]);
-  await save('duplicates', [await capture('/duplicates')]);
+  await save('duplicates', [await capture('/cleanup?tab=duplicates')]);
   await save('stats', [await capture('/stats', { scheme: 'dark' })]);
   await save('household', [await capture('/household')]);
-  await save('missing-details', [await capture('/setup')]);
+  await save('missing-details', [await capture('/cleanup?tab=missing')]);
   await save('import', [
     await capture('/import', {
       height: 1260,
@@ -200,7 +203,7 @@ try {
   mkdirSync(join(out, 'themes'), { recursive: true });
   for (const theme of themes) {
     for (const scheme of ['light', 'dark']) {
-      // Themes hide their sidebar picture below 53em (848 pixels) tall.
+      // Themes hide their sidebar picture below 45em (720 pixels) tall.
       await save(`themes/${theme}-${scheme}`, [await capture('/', { width: 1280, height: 900, theme, scheme })]);
     }
   }

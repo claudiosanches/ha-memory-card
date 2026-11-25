@@ -39,7 +39,7 @@ otherwise.
    **Settings > Devices & services > Devices**. The ID is the last part of the
    page's address. A reader no option names also logs its device ID in the
    app's **Log** tab when it scans a linked tag.
-2. Find the person's user ID under **Settings > Your access** in Memory Card,
+2. Find the person's user ID under **Settings > Status > Your access** in Memory Card,
    opened as that person.
 3. In the app's **Configuration** tab, add the pair to `tag_readers`, save and
    restart the app:
