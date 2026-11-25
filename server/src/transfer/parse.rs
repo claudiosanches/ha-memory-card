@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -131,9 +132,36 @@ pub struct RawRow {
     pub estimated_currency: Option<String>,
     pub barcode: Option<String>,
     pub bundle_copy_id: Option<String>,
+    /// Columns the file does not have.
+    pub absent: Arc<[&'static str]>,
 }
 
 impl RawRow {
+    /// The cell of a copy column, to fill one the file does not have.
+    pub fn copy_cell_mut(&mut self, column: &str) -> Option<&mut Option<String>> {
+        Some(match column {
+            "status" => &mut self.status,
+            "platform" => &mut self.platform,
+            "region" => &mut self.region,
+            "release_title" => &mut self.release_title,
+            "product_code" => &mut self.product_code,
+            "format" => &mut self.format,
+            "device" => &mut self.device,
+            "store" => &mut self.store,
+            "condition" => &mut self.condition,
+            "notes" => &mut self.notes,
+            "edition" => &mut self.edition,
+            "purchased_on" => &mut self.purchased_on,
+            "price" => &mut self.price,
+            "currency" => &mut self.currency,
+            "estimated_value" => &mut self.estimated_value,
+            "estimated_currency" => &mut self.estimated_currency,
+            "barcode" => &mut self.barcode,
+            "bundle_copy_id" => &mut self.bundle_copy_id,
+            _ => return None,
+        })
+    }
+
     /// True when the row carries anything beyond the game columns.
     pub fn has_copy_columns(&self) -> bool {
         [
@@ -212,6 +240,11 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
                 .map(|position| (*column, position))
         })
         .collect();
+    let absent: Arc<[&'static str]> = COLUMNS
+        .iter()
+        .copied()
+        .filter(|column| !index.contains_key(column))
+        .collect();
     if !index.contains_key("game_title") {
         return Err(FileIssue {
             column: Some("game_title"),
@@ -262,6 +295,7 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             estimated_currency: cell("estimated_currency"),
             barcode: cell("barcode"),
             bundle_copy_id: cell("bundle_copy_id"),
+            absent: absent.clone(),
         };
         if row.game_title.is_none()
             && row.igdb_id.is_none()

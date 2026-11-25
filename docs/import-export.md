@@ -40,7 +40,7 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
 - One row per copy. A row with only `game_title`, and optionally `igdb_id`
   and `play_status`, adds a game with no copies.
 - Column names are not case sensitive and can be in any order. Only
-  `game_title` is required in every row; rows with a copy also need
+  `game_title` is required in every row; rows that add a copy also need
   `platform`, `region` and `format`.
 - Platform, device and store names match the ones you have, ignoring case.
   Common platforms and the digital stores (Nintendo eShop, PlayStation Store,
@@ -49,8 +49,9 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
   when all its copies are digital, otherwise a console; change it under
   [Manage](manage.md).
 - The export fills `copy_id`. Keep it to update that copy when importing the
-  file again; leave it empty to add a new copy. Importing an unchanged export
-  changes nothing.
+  file again; leave it empty to add a new copy. Columns the file does not
+  have keep that copy's values, while an empty cell clears one. Importing an
+  unchanged export changes nothing.
 - An import never removes a copy, a game or a label.
 
 ## Columns

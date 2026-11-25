@@ -673,6 +673,32 @@ async fn formulas_export_as_text_and_import_back_unchanged() {
 }
 
 #[tokio::test]
+async fn columns_a_file_leaves_out_keep_the_copy_they_update() {
+    let app = TestApp::new().await;
+    let csv = "game_title,platform,region,format,status,store,condition,price,currency,notes\n\
+        Celeste,Switch,eu,physical,owned,Steam,loose,19.99,EUR,first\n";
+    let (status, result) = app.post_csv("/api/import", csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let id: i64 = sqlx::query_scalar("SELECT id FROM copies")
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+
+    let csv = format!("game_title,copy_id,notes\nCeleste,{id},second\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(result["summary"]["updated_copies"], 1, "{result}");
+    let exported = export(&app).await;
+    let row = exported.lines().nth(1).unwrap();
+    for kept in ["Steam", "loose", "19.99", "EUR", "owned", "Switch", "second"] {
+        assert!(row.contains(kept), "{kept} in {row}");
+    }
+
+    let (_, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(result["summary"]["updated_copies"], 0, "{result}");
+}
+
+#[tokio::test]
 async fn many_games_that_share_a_title_plan_quickly() {
     let app = TestApp::new().await;
     let csv = |from: usize| -> String {

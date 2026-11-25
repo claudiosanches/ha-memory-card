@@ -340,7 +340,67 @@ impl<'a> Planner<'a> {
         self.plan
     }
 
+    /// A row that updates a copy, with the copy columns its file does not
+    /// have taken from that copy, so the import changes only what it has.
+    fn kept(&self, raw: &RawRow) -> Option<RawRow> {
+        if raw.absent.is_empty() {
+            return None;
+        }
+        let copy = *self
+            .copies
+            .get(&raw.copy_id.as_deref()?.parse::<i64>().ok()?)?;
+        let release = *self.releases_by_id.get(&copy.release_id)?;
+        let snapshot = self.snapshot;
+        let money = |minor: Option<i64>, currency: Option<&str>| {
+            minor
+                .zip(currency)
+                .map(|(minor, currency)| money::format(minor, currency))
+        };
+        let mut row = raw.clone();
+        for &column in raw.absent.iter() {
+            let value = match column {
+                "status" => Some(copy.status.as_str().to_owned()),
+                "platform" => snapshot
+                    .platforms
+                    .iter()
+                    .find(|p| p.id == release.platform_id)
+                    .map(|p| p.name.clone()),
+                "region" => Some(release.region.as_str().to_owned()),
+                "release_title" => release.title.clone(),
+                "product_code" => release.product_code.clone(),
+                "format" => Some(copy.format.as_str().to_owned()),
+                "device" => copy
+                    .device_id
+                    .and_then(|id| snapshot.devices.iter().find(|d| d.id == id))
+                    .map(|d| d.name.clone()),
+                "store" => copy
+                    .store_id
+                    .and_then(|id| snapshot.stores.iter().find(|s| s.id == id))
+                    .map(|s| s.name.clone()),
+                "condition" => copy.condition.map(|c| c.as_str().to_owned()),
+                "notes" => copy.notes.clone(),
+                "edition" => copy.edition.clone(),
+                "purchased_on" => copy.purchased_on.clone(),
+                "price" => money(copy.price, copy.currency.as_deref()),
+                "currency" => copy.currency.clone(),
+                "estimated_value" => {
+                    money(copy.estimated_value, copy.estimated_currency.as_deref())
+                }
+                "estimated_currency" => copy.estimated_currency.clone(),
+                "barcode" => copy.barcode.clone(),
+                "bundle_copy_id" => copy.bundle_id.map(|id| id.to_string()),
+                _ => continue,
+            };
+            if let Some(cell) = row.copy_cell_mut(column) {
+                *cell = value;
+            }
+        }
+        Some(row)
+    }
+
     fn row(&mut self, raw: &RawRow) {
+        let kept = self.kept(raw);
+        let raw = kept.as_ref().unwrap_or(raw);
         let mut issues = Issues::default();
         let report = |action, issues: Issues| RowReport {
             line: raw.line,
