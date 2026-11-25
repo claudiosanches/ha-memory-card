@@ -22,8 +22,9 @@ function inOrder<T>(request: () => Promise<T>): Promise<T> {
 export function TagLinkModal({ gameId, copy, onClose }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  // Tags linked before this dialog opened.
-  const [known] = useState(() => new Set(copy.tags.map((tag) => tag.tag_id)));
+  // Tags linked before this dialog opened. Scanning one of them again links it anew.
+  const tagKey = (tag: CopyDetail['tags'][number]) => `${tag.tag_id} ${tag.created_at}`;
+  const [known] = useState(() => new Set(copy.tags.map(tagKey)));
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -52,7 +53,7 @@ export function TagLinkModal({ gameId, copy, onClose }: Props) {
   }, [waiting]);
 
   const current = game.data?.releases.flatMap((r) => r.copies).find((c) => c.id === copy.id);
-  const linked = current?.tags.some((tag) => !known.has(tag.tag_id));
+  const linked = current?.tags.some((tag) => !known.has(tagKey(tag)));
   useEffect(() => {
     if (!linked) return;
     notifySuccess(t('tags.linked'));
