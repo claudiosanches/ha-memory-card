@@ -170,6 +170,29 @@ async fn the_feed_says_hello_then_sends_the_state_and_its_changes() {
 }
 
 #[tokio::test]
+async fn a_feed_opened_before_the_first_read_waits_for_it() {
+    let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "integration")]).await;
+    let feed = feed(&app);
+    let response = integration::router(feed.clone())
+        .oneshot(get_feed(Some(TOKEN)))
+        .await
+        .unwrap();
+    let mut body = response.into_body();
+    assert!(
+        tokio::time::timeout(Duration::from_millis(200), body.frame())
+            .await
+            .is_err(),
+        "no hello before the people are read"
+    );
+
+    feed.refresh().await;
+    let mut buffer = Vec::new();
+    assert_eq!(next_line(&mut body, &mut buffer).await["type"], "hello");
+    assert_eq!(next_line(&mut body, &mut buffer).await["type"], "state");
+    feed.close();
+}
+
+#[tokio::test]
 async fn a_feed_read_late_still_gets_new_entities() {
     let app = TestApp::with_env(&[("MEMORY_CARD_SENSORS", "integration")]).await;
     let feed = feed(&app);

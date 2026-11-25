@@ -234,7 +234,9 @@ impl Stream {
                         return Some(Bytes::from(format!("{}\n{}\n", lines.hello, lines.state)));
                     }
                 }
-                _ = self.ping.tick() => return Some(line(&json!({ "type": "ping" }))),
+                _ = self.ping.tick(), if !self.hello.is_empty() => {
+                    return Some(line(&json!({ "type": "ping" })));
+                }
                 _ = self.closed.wait_for(|closed| *closed) => return None,
             }
         }
@@ -276,13 +278,19 @@ async fn stream(State(feed): State<Arc<Feed>>) -> Result<Response, ApiError> {
     let mut latest = feed.latest.subscribe();
     latest.mark_unchanged();
     let (hello, first) = feed.current.lock().expect("feed lines lock").clone();
-    let first = first.map(|state| Bytes::from(format!("{state}\n")));
+    // Before the first read the people are unknown, so the hello waits for it
+    // instead of announcing nobody's sensors.
+    let (pending, hello) = match first {
+        Some(state) => (
+            VecDeque::from([Bytes::from(format!("{hello}\n{state}\n"))]),
+            hello.into(),
+        ),
+        None => (VecDeque::new(), Arc::from("")),
+    };
     let lines = Stream {
-        pending: std::iter::once(Bytes::from(format!("{hello}\n")))
-            .chain(first)
-            .collect(),
+        pending,
         latest,
-        hello: hello.into(),
+        hello,
         closed: feed.closed.subscribe(),
         ping: tokio::time::interval_at(tokio::time::Instant::now() + PING, PING),
         _open: open,
