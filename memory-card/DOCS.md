@@ -405,9 +405,9 @@ to `off` removes the device on the next start.
 Put an NFC tag on a game's box, and scanning it with the Home Assistant
 companion app starts that copy for you: Memory Card logs a play session for
 today in your play and sets your status for the game to playing. To link a tag, choose **Link NFC tag** from the
-copy's **⋯** menu on the game page, then scan the tag within a minute. Any
-tag Home Assistant reports works, without adding it under **Settings >
-Connectivity > Tags** first.
+copy's **⋯** menu on the game page, then scan the tag within a minute. For
+the Home Assistant app, write a blank tag first under **Settings >
+Connectivity > Tags > Add tag**. ESPHome readers read any tag as it is.
 
 A scan logs play for managers, and for viewers when `viewers_track_progress`
 is on; nothing is logged while no managers are set. A reader with no Home

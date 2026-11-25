@@ -11,9 +11,9 @@ today in your play and sets your status for the game to playing.
 2. Within a minute, scan the tag with the Home Assistant app.
 3. Memory Card says **Tag linked**.
 
-Any tag Home Assistant reports works. It does not need to be added under
-**Settings > Connectivity > Tags** in Home Assistant first. A copy can have
-several tags. **Unlink
+For the Home Assistant app, write a blank tag first: in Home Assistant, go to
+**Settings > Connectivity > Tags**, select **Add tag** and scan the tag with
+the app. ESPHome readers read any tag as it is. A copy can have several tags. **Unlink
 NFC tags** in the same menu removes them.
 
 A link waits for a scan by the manager who started it, or by a reader with
