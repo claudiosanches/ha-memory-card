@@ -10,10 +10,23 @@ import { PageHeader } from '../components/PageHeader';
 import { Cover } from '../components/Cover';
 import classes from './DuplicatesPage.module.css';
 
+type Names = { platform: Map<number, string>; device: Map<number, string>; store: Map<number, string> };
+
 export function DuplicatesPage() {
   const { t } = useTranslation();
   const duplicates = useDuplicates();
+  const platforms = usePlatforms();
+  const devices = useDevices();
+  const stores = useStores();
   const [label, setLabel] = useState<DuplicateLabel | null>(null);
+  const names = useMemo<Names>(
+    () => ({
+      platform: new Map((platforms.data ?? []).map((p) => [p.id, p.name])),
+      device: new Map((devices.data ?? []).map((d) => [d.id, d.name])),
+      store: new Map((stores.data ?? []).map((s) => [s.id, s.name])),
+    }),
+    [platforms.data, devices.data, stores.data],
+  );
 
   const all = duplicates.data ?? [];
   const shown = label ? all.filter((group) => group.labels.includes(label)) : all;
@@ -57,7 +70,7 @@ export function DuplicatesPage() {
       ) : (
         <div className={classes.groups}>
           {shown.map((group) => (
-            <GroupCard key={group.game_id} group={group} />
+            <GroupCard key={group.game_id} group={group} names={names} />
           ))}
         </div>
       )}
@@ -65,7 +78,7 @@ export function DuplicatesPage() {
   );
 }
 
-function GroupCard({ group }: { group: DuplicateGroup }) {
+function GroupCard({ group, names }: { group: DuplicateGroup; names: Names }) {
   const { t } = useTranslation();
   const gameLink = { to: '/games/$gameId', params: { gameId: String(group.game_id) } } as const;
   return (
@@ -87,26 +100,15 @@ function GroupCard({ group }: { group: DuplicateGroup }) {
       </div>
       <ul className={classes.copies}>
         {group.copies.map((copy) => (
-          <CopyLine key={copy.id} copy={copy} />
+          <CopyLine key={copy.id} copy={copy} names={names} />
         ))}
       </ul>
     </article>
   );
 }
 
-function CopyLine({ copy }: { copy: DuplicateCopy }) {
+function CopyLine({ copy, names }: { copy: DuplicateCopy; names: Names }) {
   const { t } = useTranslation();
-  const platforms = usePlatforms();
-  const devices = useDevices();
-  const stores = useStores();
-  const names = useMemo(
-    () => ({
-      platform: new Map((platforms.data ?? []).map((p) => [p.id, p.name])),
-      device: new Map((devices.data ?? []).map((d) => [d.id, d.name])),
-      store: new Map((stores.data ?? []).map((s) => [s.id, s.name])),
-    }),
-    [platforms.data, devices.data, stores.data],
-  );
   const details = [
     t(`format.${copy.format}`),
     copy.device_id ? names.device.get(copy.device_id) : null,
