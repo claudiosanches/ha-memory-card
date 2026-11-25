@@ -701,6 +701,60 @@ async fn columns_a_file_leaves_out_keep_the_copy_they_update() {
 }
 
 #[tokio::test]
+async fn kept_columns_leave_other_values_to_the_file() {
+    let app = TestApp::new().await;
+    let csv = "game_title,platform,region,format,release_title,condition,price,currency,estimated_value,estimated_currency\n\
+        Pokemon Red,Game Boy,jp,physical,Aka,loose,19.99,EUR,30,USD\n\
+        Pokemon Blue,Game Boy,jp,physical,Ao,,,,,\n";
+    let (status, result) = app.post_csv("/api/import", csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let red: i64 = app
+        .scalar("SELECT c.id FROM copies c JOIN releases r ON r.id = c.release_id WHERE r.title = 'Aka'")
+        .await;
+    let copy = async || -> (Option<String>, i64, String, i64, String) {
+        sqlx::query_as(
+            "SELECT condition, price, currency, estimated_value, estimated_currency
+             FROM copies WHERE id = ?",
+        )
+        .bind(red)
+        .fetch_one(&app.pool)
+        .await
+        .unwrap()
+    };
+
+    // A lone currency column prices the value, and the price keeps its own.
+    let csv = format!("game_title,copy_id,currency,estimated_value\nPokemon Red,{red},JPY,5000\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(
+        copy().await,
+        (Some("loose".into()), 1999, "EUR".into(), 5000, "JPY".into())
+    );
+    let csv =
+        format!("game_title,copy_id,price,currency,estimated_value\nPokemon Red,{red},20,GBP,40\n");
+    app.post_csv("/api/import", &csv).await;
+    assert_eq!(
+        copy().await,
+        (Some("loose".into()), 2000, "GBP".into(), 4000, "GBP".into())
+    );
+
+    let csv = format!("game_title,copy_id,format\nPokemon Red,{red},digital\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(copy().await.0, None, "a digital copy drops its condition");
+
+    // Moving the copy leaves the other game's release title alone.
+    let csv = format!("game_title,copy_id,format\nPokemon Blue,{red},physical\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let titles: Vec<String> = sqlx::query_scalar("SELECT title FROM releases ORDER BY id")
+        .fetch_all(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(titles, ["Ao"]);
+}
+
+#[tokio::test]
 async fn many_games_that_share_a_title_plan_quickly() {
     let app = TestApp::new().await;
     let csv = |from: usize| -> String {

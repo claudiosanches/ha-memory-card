@@ -356,6 +356,8 @@ impl<'a> Planner<'a> {
                 .zip(currency)
                 .map(|(minor, currency)| money::format(minor, currency))
         };
+        let has = |column: &str| !raw.absent.contains(&column);
+        let digital = raw.format.as_deref().and_then(Format::parse_loose) == Some(Format::Digital);
         let mut row = raw.clone();
         for &column in raw.absent.iter() {
             let value = match column {
@@ -366,7 +368,6 @@ impl<'a> Planner<'a> {
                     .find(|p| p.id == release.platform_id)
                     .map(|p| p.name.clone()),
                 "region" => Some(release.region.as_str().to_owned()),
-                "release_title" => release.title.clone(),
                 "product_code" => release.product_code.clone(),
                 "format" => Some(copy.format.as_str().to_owned()),
                 "device" => copy
@@ -377,16 +378,12 @@ impl<'a> Planner<'a> {
                     .store_id
                     .and_then(|id| snapshot.stores.iter().find(|s| s.id == id))
                     .map(|s| s.name.clone()),
+                "condition" if digital => continue,
                 "condition" => copy.condition.map(|c| c.as_str().to_owned()),
                 "notes" => copy.notes.clone(),
                 "edition" => copy.edition.clone(),
                 "purchased_on" => copy.purchased_on.clone(),
-                "price" => money(copy.price, copy.currency.as_deref()),
                 "currency" => copy.currency.clone(),
-                "estimated_value" => {
-                    money(copy.estimated_value, copy.estimated_currency.as_deref())
-                }
-                "estimated_currency" => copy.estimated_currency.clone(),
                 "barcode" => copy.barcode.clone(),
                 "bundle_copy_id" => copy.bundle_id.map(|id| id.to_string()),
                 _ => continue,
@@ -394,6 +391,22 @@ impl<'a> Planner<'a> {
             if let Some(cell) = row.copy_cell_mut(column) {
                 *cell = value;
             }
+        }
+        // A kept amount keeps its own currency, and a file's one currency
+        // column still prices the value it has.
+        if !has("price") {
+            row.price = money(copy.price, copy.currency.as_deref());
+            row.currency = copy.currency.clone();
+        }
+        if !has("estimated_value") {
+            row.estimated_value = money(copy.estimated_value, copy.estimated_currency.as_deref());
+            row.estimated_currency = copy.estimated_currency.clone();
+        } else if !has("estimated_currency") {
+            row.estimated_currency = if has("currency") {
+                raw.currency.clone()
+            } else {
+                copy.estimated_currency.clone()
+            };
         }
         Some(row)
     }
