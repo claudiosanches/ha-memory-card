@@ -19,6 +19,16 @@ async function openNav(page: Page) {
   if (await burger.isVisible()) await burger.click();
 }
 
+/** Opens a settings section: tabs on wide screens, a select on phones. */
+async function openSection(page: Page, name: string) {
+  const tab = page.getByRole('tab', { name });
+  const picker = page.getByRole('combobox', { name: en.nav.settings });
+  await expect(tab.or(picker)).toBeVisible();
+  if (await tab.isVisible()) return tab.click();
+  await picker.click();
+  await page.getByRole('option', { name }).click();
+}
+
 test('loads under the ingress prefix and navigates', async ({ page }) => {
   const escaped = trackEscapes(page);
 
@@ -28,7 +38,7 @@ test('loads under the ingress prefix and navigates', async ({ page }) => {
   await openNav(page);
   await page.getByRole('link', { name: en.nav.settings }).click();
   await expect(page).toHaveURL(new RegExp(`${PREFIX}/#/settings$`));
-  await page.getByRole('tab', { name: en.settings.status }).click();
+  await openSection(page, en.settings.status);
   await expect(page.getByTestId('status-version')).toHaveText(/^\d+\.\d+\.\d+/);
   await expect(page.getByTestId('igdb-missing')).toBeVisible();
 
