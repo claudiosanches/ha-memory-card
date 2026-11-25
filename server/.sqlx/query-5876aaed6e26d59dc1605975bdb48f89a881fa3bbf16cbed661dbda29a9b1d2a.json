@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE play_progress SET play_status = ? WHERE play_status = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "5876aaed6e26d59dc1605975bdb48f89a881fa3bbf16cbed661dbda29a9b1d2a"
+}

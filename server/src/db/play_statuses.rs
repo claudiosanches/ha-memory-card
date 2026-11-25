@@ -183,10 +183,9 @@ pub async fn delete(pool: &SqlitePool, key: &str, move_to: Option<&str>) -> ApiR
 
     match move_to {
         Some(move_to) => {
+            // Keeps updated_at: the owners did not change their play.
             sqlx::query!(
-                "UPDATE play_progress SET play_status = ?,
-                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-                 WHERE play_status = ?",
+                "UPDATE play_progress SET play_status = ? WHERE play_status = ?",
                 move_to,
                 key
             )

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)\n                 ON CONFLICT (user_id, game_id) DO UPDATE\n                 SET play_status = excluded.play_status,\n                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n                 WHERE play_status IS NOT excluded.play_status",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "33e55d85e5789eb4048645a5cc2bf27df9e49a97143d900e52c54e67fb24bc98"
+}

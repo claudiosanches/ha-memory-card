@@ -101,3 +101,80 @@ async fn compares_everyone_who_keeps_play() {
     let body: Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(body.as_array().unwrap().len(), 2);
 }
+
+async fn finished_this_month(app: &TestApp) -> i64 {
+    let (_, month) = app.json("GET", "/api/household", None).await;
+    month[0]["finished"].as_i64().unwrap()
+}
+
+async fn set_status(app: &TestApp, game: i64, status: &str) {
+    let (code, body) = app
+        .json(
+            "PUT",
+            &format!("/api/games/{game}/play-status"),
+            Some(json!({"play_status": status})),
+        )
+        .await;
+    assert_eq!(code, StatusCode::OK, "{body}");
+}
+
+async fn changed_long_ago(app: &TestApp) {
+    sqlx::query("UPDATE play_progress SET updated_at = '2001-01-01T00:00:00.000Z'")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn a_game_counts_as_finished_when_its_owner_finishes_it() {
+    let app = TestApp::new().await;
+    app.post_csv("/api/import", COLLECTION).await;
+    let hades = app
+        .scalar("SELECT id FROM games WHERE title = 'Hades'")
+        .await;
+    let tetris = app
+        .scalar("SELECT id FROM games WHERE title = 'Tetris'")
+        .await;
+    // Play this month puts the manager on the page.
+    sqlx::query(
+        "INSERT INTO play_sessions (user_id, game_id, played_on) VALUES (?, ?, date('now'))",
+    )
+    .bind(common::MANAGER)
+    .bind(hades)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    app.json(
+        "POST",
+        "/api/play-statuses",
+        Some(json!({"label": "Someday", "color": "teal", "counts_as": "backlog"})),
+    )
+    .await;
+
+    set_status(&app, tetris, "completed").await;
+    assert_eq!(finished_this_month(&app).await, 1);
+
+    changed_long_ago(&app).await;
+    set_status(&app, tetris, "completed").await;
+    assert_eq!(
+        finished_this_month(&app).await,
+        0,
+        "the same status saved again"
+    );
+
+    set_status(&app, hades, "someday").await;
+    changed_long_ago(&app).await;
+    let (status, _) = app
+        .json(
+            "DELETE",
+            "/api/play-statuses/someday?move_to=completed",
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    assert_eq!(
+        finished_this_month(&app).await,
+        0,
+        "a manager moving a deleted status"
+    );
+}

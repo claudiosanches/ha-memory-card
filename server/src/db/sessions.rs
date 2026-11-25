@@ -202,7 +202,8 @@ pub async fn start_from_tag(
         sqlx::query!(
             "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, 'playing')
              ON CONFLICT (user_id, game_id) DO UPDATE
-             SET play_status = 'playing', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')",
+             SET play_status = 'playing', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE play_status IS NOT 'playing'",
             person,
             copy.game_id
         )

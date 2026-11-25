@@ -30,7 +30,8 @@ pub async fn set(
                 "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)
                  ON CONFLICT (user_id, game_id) DO UPDATE
                  SET play_status = excluded.play_status,
-                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')",
+                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                 WHERE play_status IS NOT excluded.play_status",
                 user,
                 game_id,
                 status
