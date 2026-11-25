@@ -109,12 +109,13 @@ impl Feed {
 
     /// Reads the sensors and hands them to every open feed, unless unchanged.
     /// The entities follow who keeps play, so a change to them goes out first.
-    pub async fn refresh(&self) {
+    /// False when the sensors could not be read.
+    pub async fn refresh(&self) -> bool {
         let snapshot = match db::sensors::snapshot(&self.state.db).await {
             Ok(snapshot) => snapshot,
             Err(err) => {
                 tracing::warn!(error = %err, "cannot read sensor values");
-                return;
+                return false;
             }
         };
         let hello = hello(&snapshot);
@@ -122,7 +123,7 @@ impl Feed {
         let lines = {
             let mut current = self.current.lock().expect("feed lines lock");
             if current.0 == hello && current.1.as_deref() == Some(state.as_str()) {
-                return;
+                return true;
             }
             *current = (hello.clone(), Some(state.clone()));
             Lines {
@@ -131,6 +132,7 @@ impl Feed {
             }
         };
         self.latest.send_replace(Some(Arc::new(lines)));
+        true
     }
 
     /// Ends every open feed.
@@ -403,10 +405,18 @@ pub async fn run(state: &AppState, stop: &Notify) {
     }));
     let handover = tokio::spawn(hand_over(state.clone(), token, port));
 
-    feed.refresh().await;
-    loop {
+    // Feeds wait for the first read, so it is retried until it works.
+    let mut stopped = false;
+    let mut retry = Duration::from_secs(1);
+    while !stopped && !feed.refresh().await {
         tokio::select! {
-            () = stop.notified() => break,
+            () = stop.notified() => stopped = true,
+            () = tokio::time::sleep(retry) => retry = (retry * 2).min(Duration::from_secs(60)),
+        }
+    }
+    while !stopped {
+        tokio::select! {
+            () = stop.notified() => stopped = true,
             () = state.changes.next_for_sensors() => {
                 tokio::time::sleep(super::DEBOUNCE).await;
                 feed.refresh().await;
