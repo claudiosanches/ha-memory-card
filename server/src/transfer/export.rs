@@ -11,17 +11,24 @@ const FORMULA_START: [char; 6] = ['=', '+', '-', '@', '\t', '\r'];
 const CELL_BREAKS: [char; 4] = [';', '\t', '\n', '\r'];
 
 /// Whether a cell starting with `text` would run as a formula, past the
-/// spaces and quotes a spreadsheet skips.
+/// spaces and quotes a spreadsheet skips. Apostrophes are skipped too, so
+/// text already starting with one gets another and reads back whole.
 fn opens_formula(text: &str) -> bool {
-    text.trim_start_matches([' ', '"'])
+    text.trim_start_matches([' ', '"', '\''])
         .starts_with(FORMULA_START)
+}
+
+/// Whether a field starting with `text` would run as a formula, past the
+/// apostrophes [`plain`] adds.
+fn starts_formula(text: &str) -> bool {
+    text.trim_start_matches('\'').starts_with(FORMULA_START)
 }
 
 /// Free text that would start a formula, at its start or after a cell break,
 /// gets a `'` there, which spreadsheets show as text and [`unplain`] drops.
 fn plain(text: String) -> String {
     let mut out = String::with_capacity(text.len() + 1);
-    if text.starts_with(FORMULA_START) {
+    if starts_formula(&text) {
         out.push('\'');
     }
     for (at, c) in text.char_indices() {
@@ -36,7 +43,7 @@ fn plain(text: String) -> String {
 /// Undoes [`plain`] for a cell the import reads.
 pub fn unplain(text: &str) -> String {
     let text = match text.strip_prefix('\'') {
-        Some(rest) if rest.starts_with(FORMULA_START) => rest,
+        Some(rest) if starts_formula(rest) => rest,
         _ => text,
     };
     let mut out = String::with_capacity(text.len());
@@ -126,6 +133,9 @@ mod tests {
             ("a\t\tb", "a\t'\tb"),
             ("x; y", "x; y"),
             ("Mario & Luigi", "Mario & Luigi"),
+            ("'Splosion Man", "'Splosion Man"),
+            ("'+ edition", "''+ edition"),
+            ("Box;'=x", "Box;''=x"),
             ("", ""),
         ] {
             assert_eq!(plain(text.to_owned()), exported, "{text:?}");
