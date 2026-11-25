@@ -233,6 +233,8 @@ describe('Import page', () => {
     fireEvent.click(within(options).getByRole('option', { name: 'game_title', hidden: true }));
     await waitFor(() => expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(2));
     expect(calls.filter((c) => c.path === '/api/import/preview')[1]?.body).toBe('game_title,ignored 2\nZelda,5\n');
+    expect(await screen.findByRole('combobox', { name: 'Read Nota as' })).toBeInTheDocument();
+    expect(screen.getByText('Jogo')).toBeInTheDocument();
   });
 
   it('keeps the confirm button off when nothing changes', async () => {

@@ -65,6 +65,8 @@ export function ImportPage() {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState<string | null>(null);
+  // The file's own header names, which a remapped header replaces.
+  const [labels, setLabels] = useState<string[]>([]);
   const [done, setDone] = useState<Result | null>(null);
   // Counts choices, so a slow read of an earlier file is dropped.
   const chosen = useRef(0);
@@ -91,6 +93,7 @@ export function ImportPage() {
     const turn = ++chosen.current;
     setFile(next);
     setText(null);
+    setLabels([]);
     setDone(null);
     preview.reset();
     if (!next) return;
@@ -112,7 +115,11 @@ export function ImportPage() {
     }
     if (turn !== chosen.current) return;
     setText(content);
-    preview.mutate(content);
+    preview.mutate(content, {
+      onSuccess: (result) => {
+        if (turn === chosen.current) setLabels(result.headers.map((h) => h.header));
+      },
+    });
   };
 
   return (
@@ -169,6 +176,7 @@ export function ImportPage() {
         {preview.data && text !== null && preview.data.headers.length > 0 && (
           <ColumnMapping
             preview={preview.data}
+            labels={labels}
             onChange={(columns) => {
               const next = withColumns(text, columns, preview.data.delimiter);
               setText(next);
@@ -193,7 +201,15 @@ export function ImportPage() {
 }
 
 /** How each header of the file is read, with a choice to read it as another column. */
-function ColumnMapping({ preview, onChange }: { preview: Preview; onChange: (columns: (string | null)[]) => void }) {
+function ColumnMapping({
+  preview,
+  labels,
+  onChange,
+}: {
+  preview: Preview;
+  labels: string[];
+  onChange: (columns: (string | null)[]) => void;
+}) {
   const { t } = useTranslation();
   const columns = preview.headers.map((h) => h.column ?? null);
   const options = [
@@ -213,11 +229,11 @@ function ColumnMapping({ preview, onChange }: { preview: Preview; onChange: (col
           {preview.headers.map((header, i) => (
             <Table.Tr key={i}>
               <Table.Td>
-                <Code>{header.header || t('import.noHeader')}</Code>
+                <Code>{(labels[i] ?? header.header) || t('import.noHeader')}</Code>
               </Table.Td>
               <Table.Td>
                 <Select
-                  aria-label={t('import.readAs', { header: header.header })}
+                  aria-label={t('import.readAs', { header: labels[i] ?? header.header })}
                   data={options}
                   value={columns[i] ?? ''}
                   allowDeselect={false}
