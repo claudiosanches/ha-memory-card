@@ -100,8 +100,8 @@ and responds with its `title` and `platforms`.
 | `game_mode` | Game mode slugs. |
 | `min_local_players` | At least this many players on the same screen. |
 
-The slug fields take one slug or a list. Each platform, device and store shows
-its slug in its [Manage](manage.md) form.
+The slug fields take one slug or a list of up to 10. Each platform, device
+and store shows its slug in its [Manage](manage.md) form.
 
 A game night pick for two on the Switch, from Ana's backlog:
 
