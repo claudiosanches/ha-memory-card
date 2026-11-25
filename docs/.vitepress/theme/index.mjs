@@ -29,8 +29,8 @@ function build() {
   dialog.className = 'zoom';
   dialog.innerHTML = `
     <figure tabindex="-1" autofocus><img alt="" draggable="false"><figcaption></figcaption></figure>
-    <button type="button" class="zoom-step" data-step="-1" aria-label="Previous image">&#8249;</button>
-    <button type="button" class="zoom-step" data-step="1" aria-label="Next image">&#8250;</button>`;
+    <button type="button" class="zoom-step" data-step="-1" aria-label="Previous image"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6l6 6"/></svg></button>
+    <button type="button" class="zoom-step" data-step="1" aria-label="Next image"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6l-6 6"/></svg></button>`;
   let swipeFrom = null;
   let swiped = false;
   dialog.addEventListener('pointerdown', (event) => {
