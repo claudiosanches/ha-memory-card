@@ -468,6 +468,21 @@ impl Config {
                 value: format!("{}={}", bad.device, bad.person),
             });
         }
+        // One reader logs play for one person; the first would win silently.
+        if let Some((at, other)) = tag_readers.iter().enumerate().find_map(|(at, reader)| {
+            tag_readers[..at]
+                .iter()
+                .find(|earlier| earlier.device == reader.device && earlier.person != reader.person)
+                .map(|earlier| (at, earlier))
+        }) {
+            return Err(ConfigError::InvalidOption {
+                name: "tag_readers",
+                value: format!(
+                    "{} given to both {} and {}",
+                    other.device, other.person, tag_readers[at].person
+                ),
+            });
+        }
 
         let date_format = match env("MEMORY_CARD_DATE_FORMAT") {
             None => options.date_format.unwrap_or_default(),
@@ -765,7 +780,7 @@ mod tests {
             config.tag_readers,
             [reader("one", "ana"), reader("two", "bo")]
         );
-        for bad in ["one", "one=", "o ne=ana"] {
+        for bad in ["one", "one=", "o ne=ana", "one=ana,one=bo"] {
             assert!(
                 load_with(dir.path(), &[("MEMORY_CARD_TAG_READERS", bad)]).is_err(),
                 "{bad}"
