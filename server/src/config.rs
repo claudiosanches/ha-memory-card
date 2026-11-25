@@ -333,8 +333,11 @@ impl Config {
         // could plant the path that startup clears.
         let tmp_dir =
             env("MEMORY_CARD_TMP_DIR").map_or_else(|| data_dir.join("tmp"), PathBuf::from);
-        // Startup empties it, so it must not hold the data.
-        if lexical(&data_dir).starts_with(lexical(&tmp_dir)) {
+        // Startup empties it, so it must not hold the data or sit among it,
+        // other than as the default `tmp` there.
+        let (data, tmp) = (lexical(&data_dir), lexical(&tmp_dir));
+        if data.starts_with(&tmp) || (tmp.starts_with(&data) && !tmp.starts_with(data.join("tmp")))
+        {
             return Err(ConfigError::InvalidEnv {
                 name: "MEMORY_CARD_TMP_DIR",
                 value: tmp_dir.display().to_string(),
@@ -643,10 +646,17 @@ mod tests {
     }
 
     #[test]
-    fn the_temp_dir_never_holds_the_data() {
+    fn the_temp_dir_never_holds_the_data_or_sits_in_it() {
         let dir = tempfile::tempdir().unwrap();
         let data = dir.path().join("data");
-        for tmp in [data.clone(), dir.path().to_owned(), data.join("..")] {
+        for tmp in [
+            data.clone(),
+            dir.path().to_owned(),
+            data.join(".."),
+            data.join("db"),
+            data.join("covers"),
+            data.join("tmp/.."),
+        ] {
             let vars = HashMap::from([
                 ("MEMORY_CARD_DATA_DIR", data.display().to_string()),
                 ("MEMORY_CARD_TMP_DIR", tmp.display().to_string()),
@@ -663,12 +673,21 @@ mod tests {
                 tmp.display()
             );
         }
-        let elsewhere = dir.path().join("scratch");
-        let vars = HashMap::from([
-            ("MEMORY_CARD_DATA_DIR", data.display().to_string()),
-            ("MEMORY_CARD_TMP_DIR", elsewhere.display().to_string()),
-        ]);
-        assert!(Config::load(|name| vars.get(name).cloned()).is_ok());
+        for tmp in [
+            dir.path().join("scratch"),
+            data.join("tmp"),
+            data.join("tmp/import"),
+        ] {
+            let vars = HashMap::from([
+                ("MEMORY_CARD_DATA_DIR", data.display().to_string()),
+                ("MEMORY_CARD_TMP_DIR", tmp.display().to_string()),
+            ]);
+            assert!(
+                Config::load(|name| vars.get(name).cloned()).is_ok(),
+                "{}",
+                tmp.display()
+            );
+        }
     }
 
     #[test]
