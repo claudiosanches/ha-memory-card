@@ -350,15 +350,16 @@ fn search_hits(hits: Vec<RawHit>) -> Vec<SearchHit> {
 }
 
 impl Igdb {
+    /// The games with these ids; any other game in the answer is left out.
     pub async fn games(&self, ids: &[i64]) -> Result<Vec<GameData>, IgdbError> {
         const LIMIT: usize = 500;
-        let ids: Vec<String> = ids.iter().map(i64::to_string).collect();
+        let list: Vec<String> = ids.iter().map(i64::to_string).collect();
         let body = format!(
             "fields {GAME_FIELDS}; where id = ({}); limit {LIMIT};",
-            ids.join(",")
+            list.join(",")
         );
         let Answer(games) = self.post::<Answer<GameData, LIMIT>>("games", &body).await?;
-        Ok(games)
+        Ok(games.into_iter().filter(|g| ids.contains(&g.id)).collect())
     }
 
     /// Games named exactly `name`, ignoring case.

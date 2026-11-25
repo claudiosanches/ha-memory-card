@@ -58,7 +58,11 @@ async fn games(headers: HeaderMap, body: String) -> (StatusCode, axum::Json<Valu
                {"id": 1, "name": "Super Mario Odyssey", "first_release_date": 1509062400,
                 "platforms": [{"id": 130, "name": "Nintendo Switch", "abbreviation": "Switch"}],
                 "total_rating_count": 900}])
-    } else if body.contains(r#"name ~ "super mario odyssey""#) || body.contains("where id = (1)") {
+    } else if body.contains(r#"name ~ "super mario odyssey""#)
+        || body.contains("where id = (1)")
+        // An answer with a game nobody asked for.
+        || body.contains("where id = (5)")
+    {
         json!([odyssey()])
     } else if body.contains("where bundles = (1)") {
         json!([{"id": 1, "name": "Super Mario Odyssey", "platforms": [{"name": "Nintendo Switch", "abbreviation": "Switch"}]},
@@ -428,6 +432,31 @@ async fn lists_titles_that_differ_from_igdb_until_resolved() {
         .unwrap();
     let (_, list) = app.json("GET", "/api/igdb/titles", None).await;
     assert_eq!(list[0]["igdb_title"], "Super Mario Odyssey Deluxe");
+}
+
+#[tokio::test]
+async fn linking_takes_only_the_game_asked_for() {
+    let app = with_igdb().await;
+    let game = app
+        .json("POST", "/api/games", Some(json!({"title": "Odyssey"})))
+        .await
+        .1["id"]
+        .as_i64()
+        .unwrap();
+    let (status, error) = app
+        .json(
+            "POST",
+            &format!("/api/games/{game}/igdb"),
+            Some(json!({"igdb_id": 5})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{error}");
+    assert_eq!(error["code"], "igdb_not_found");
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM games WHERE igdb_id IS NOT NULL")
+            .await,
+        0
+    );
 }
 
 #[tokio::test]
