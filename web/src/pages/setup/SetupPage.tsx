@@ -186,7 +186,10 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
     condition: has('condition') && copy.format === 'physical' && copy.condition == null,
   });
   const incomplete: OwnedCopy[] = game.releases
-    .flatMap((release) => release.copies.filter((copy) => copy.status === 'owned').map((copy) => ({ copy, release })))
+    // A bundled copy follows its bundle, as the missing-details list does.
+    .flatMap((release) =>
+      release.copies.filter((copy) => copy.status === 'owned' && !copy.bundle).map((copy) => ({ copy, release })),
+    )
     .filter(({ copy }) => Object.values(gaps(copy)).some(Boolean));
   const editCopy = (id: number, edit: CopyEdit) =>
     setCopyEdits((edits) => ({ ...edits, [id]: { ...edits[id], ...edit } }));
