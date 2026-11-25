@@ -4,11 +4,13 @@ Memory Card needs Home Assistant 2026.11 or newer.
 
 ## Install the app
 
-1. In Home Assistant, go to **Settings > Apps > Install app**.
-2. Open the ⋮ menu, choose **Repositories** and add
-   `https://github.com/claudiosanches/ha-memory-card`.
-3. Find **Memory Card** in the list, select it and choose **Install**.
-4. Start the app. **Memory Card** shows in the sidebar.
+[![Open your Home Assistant instance and show the add app repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fclaudiosanches%2Fha-memory-card)
+
+1. Select the button above to add the app's repository to Home Assistant. Or
+   go to **Settings > Apps > Install app**, open the ⋮ menu, choose
+   **Repositories** and add `https://github.com/claudiosanches/ha-memory-card`.
+2. Find **Memory Card** in the list, select it and choose **Install**.
+3. Start the app. **Memory Card** shows in the sidebar.
 
 ## How a household uses it
 

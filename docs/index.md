@@ -10,14 +10,14 @@ hero:
     alt: Memory Card
   actions:
     - theme: brand
+      text: Add to Home Assistant
+      link: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fclaudiosanches%2Fha-memory-card
+    - theme: alt
       text: Get started
       link: /docs/getting-started
     - theme: alt
       text: Read the guide
       link: /docs/
-    - theme: alt
-      text: GitHub
-      link: https://github.com/claudiosanches/ha-memory-card
 
 features:
   - title: Every copy you own
@@ -54,10 +54,12 @@ _Game titles and cover art belong to their respective owners._
 
 Memory Card needs Home Assistant 2026.11 or newer.
 
-1. In Home Assistant, go to **Settings > Apps > Install app**.
-2. Open the ⋮ menu, choose **Repositories** and add
-   `https://github.com/claudiosanches/ha-memory-card`.
-3. Install **Memory Card** and start it. It appears in the sidebar.
+[![Open your Home Assistant instance and show the add app repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fclaudiosanches%2Fha-memory-card)
+
+1. Select the button above to add the app's repository to Home Assistant. Or
+   go to **Settings > Apps > Install app**, open the ⋮ menu, choose
+   **Repositories** and add `https://github.com/claudiosanches/ha-memory-card`.
+2. Install **Memory Card** and start it. It appears in the sidebar.
 
 [Getting started](/docs/getting-started) goes through the setup step by step.
 
