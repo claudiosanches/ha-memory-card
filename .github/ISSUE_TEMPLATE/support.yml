@@ -1,0 +1,32 @@
+name: Support
+description: Ask a question or get help with Memory Card
+labels: ["support"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Need help using or configuring Memory Card? Check the [documentation](https://ha-memory-card.pages.dev/docs/) first, then share the details below.
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+      description: Describe what you are trying to do and what happened.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Memory Card version
+      description: Shown under Settings > Status > About Memory Card.
+      placeholder: e.g. 0.1.0
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: e.g. 2026.11.0
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: If something failed, paste the lines around the problem from the app's Log tab.
+      render: shell

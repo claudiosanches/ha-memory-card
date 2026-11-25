@@ -37,5 +37,5 @@ way in every language, set the app's `date_format` option.
 Assistant user ID. **Copy user ID** copies it, to name a manager in the app's
 options or a person for an NFC reader.
 
-**About Memory Card** shows the version, the license, and where to support
-development.
+**About Memory Card** shows the version, the license, links to the
+documentation and support, and where to support development.

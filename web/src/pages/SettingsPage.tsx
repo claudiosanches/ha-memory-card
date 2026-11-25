@@ -193,6 +193,24 @@ function Status() {
             <dd>{t('settings.authorName')}</dd>
           </div>
           <div>
+            <dt>{t('settings.help')}</dt>
+            <dd>
+              <Group gap="sm">
+                <Anchor href="https://ha-memory-card.pages.dev/docs/" target="_blank" rel="noreferrer">
+                  {t('settings.documentation')}
+                </Anchor>
+                <Divider orientation="vertical" />
+                <Anchor
+                  href="https://github.com/claudiosanches/ha-memory-card/issues/new?template=support.yml"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('settings.getSupport')}
+                </Anchor>
+              </Group>
+            </dd>
+          </div>
+          <div>
             <dt>{t('settings.donations')}</dt>
             <dd>
               <Group gap="sm">

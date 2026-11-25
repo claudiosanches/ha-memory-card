@@ -56,6 +56,19 @@ describe('Settings access', () => {
 });
 
 describe('Settings about', () => {
+  it('links to documentation and the support issue form', async () => {
+    mockApi({});
+    renderAt('/settings?tab=status');
+    expect(await screen.findByRole('link', { name: en.settings.documentation })).toHaveAttribute(
+      'href',
+      'https://ha-memory-card.pages.dev/docs/',
+    );
+    expect(screen.getByRole('link', { name: en.settings.getSupport })).toHaveAttribute(
+      'href',
+      'https://github.com/claudiosanches/ha-memory-card/issues/new?template=support.yml',
+    );
+  });
+
   it('links both ways to support development', async () => {
     mockApi({});
     renderAt('/settings?tab=status');
