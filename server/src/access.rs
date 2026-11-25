@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use axum::Json;
-use axum::body::Body;
+use axum::body::{Body, HttpBody};
 use axum::extract::{FromRequestParts, MatchedPath, Request, State};
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, Method, StatusCode, header};
@@ -156,12 +156,7 @@ pub async fn guard(
     });
     let response = next.run(request).await;
 
-    let streamed = response
-        .headers()
-        .get(header::CONTENT_LENGTH)
-        .and_then(|length| length.to_str().ok()?.parse::<u64>().ok())
-        .is_some_and(|length| length > STREAMED_OVER);
-    if !streamed {
+    if !streamed(&response) {
         return response;
     }
     let Some(streaming) = policy.streaming.enter(&id) else {
@@ -173,6 +168,18 @@ pub async fn guard(
             frame
         }))
     })
+}
+
+/// Whether Home Assistant streams the answer: over `STREAMED_OVER` bytes by
+/// its `Content-Length`, or by its body's exact size for one built in memory,
+/// which gets the header only as it is sent.
+fn streamed(response: &Response) -> bool {
+    response
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|length| length.to_str().ok()?.parse::<u64>().ok())
+        .or_else(|| response.body().size_hint().exact())
+        .is_some_and(|length| length > STREAMED_OVER)
 }
 
 /// What each person has open, up to a limit, so one person cannot take
@@ -386,6 +393,15 @@ mod tests {
             required_role(&Method::GET, "/api/igdb/search", true),
             Role::Manager
         );
+    }
+
+    #[test]
+    fn large_answers_built_in_memory_count_as_streamed() {
+        let large = Json(vec!["x".repeat(STREAMED_OVER as usize)]).into_response();
+        assert!(large.headers().get(header::CONTENT_LENGTH).is_none());
+        assert!(streamed(&large));
+        let small = Json(vec!["x".repeat(1000)]).into_response();
+        assert!(!streamed(&small));
     }
 
     #[test]
