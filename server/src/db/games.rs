@@ -833,7 +833,7 @@ pub async fn add_content(
     Ok(bundle.game_id)
 }
 
-/// Deletes a copy and returns its game id. The release stays.
+/// Deletes a copy and returns its game id, with any release left empty.
 pub async fn delete_copy(pool: &SqlitePool, copy_id: i64) -> ApiResult<(i64, Vec<DroppedRelease>)> {
     let mut tx = crate::db::write_tx(pool).await?;
     let game_id = copy_game(&mut tx, copy_id).await?;

@@ -310,8 +310,6 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
     Ok(rows)
 }
 
-/// Spreadsheets in many locales save CSV with `;`. Picks whichever of `,` and
-/// `;` appears more in the header line.
 /// Whether any record has more than [`MAX_COLUMNS`] fields. Counted field by
 /// field, since the csv reader holds a whole record, at 8 bytes a field,
 /// before its width can be checked.
@@ -339,6 +337,8 @@ fn too_wide(bytes: &[u8], delimiter: u8) -> bool {
     }
 }
 
+/// Spreadsheets in many locales save CSV with `;`. Picks whichever of `,` and
+/// `;` appears more in the header line.
 fn detect_delimiter(text: &str) -> u8 {
     // The reader skips blank lines before the header too.
     let header = text
