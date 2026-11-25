@@ -82,6 +82,25 @@ entities:
   - entity: button.memory_card_roll_pick
 ```
 
+A **Button** card can press it too: set its tap behavior to **Perform
+action**, pick **Press button** and choose **Roll a pick** as the target.
+
+![A Button card that presses Roll a pick](images/integration-roll-button.webp)
+
+The same card in YAML:
+
+```yaml
+type: button
+name: Roll a pick
+icon: mdi:dice-5
+show_state: false
+tap_action:
+  action: perform-action
+  perform_action: button.press
+  target:
+    entity_id: button.memory_card_roll_pick
+```
+
 An automation pressing the button has no person, so it is refused. Use the
 action below instead.
 
