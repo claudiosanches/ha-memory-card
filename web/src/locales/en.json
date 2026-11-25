@@ -953,5 +953,48 @@
     "label": "Slug",
     "description": "Used in library links: {{link}}",
     "changed": "Links with the old slug stop working."
+  },
+  "easterEggs": {
+    "slotOne": {
+      "title": "Memory Card · Slot {{slot}}",
+      "blocks": "{{used}}/{{total}} blocks used",
+      "free": "Free",
+      "hint": "Select a block to jump straight to that game.",
+      "empty": "No save blocks found yet. Add a game to fill Slot 1.",
+      "prevSlot": "Previous memory card",
+      "nextSlot": "Next memory card",
+      "close": "Eject memory card"
+    },
+    "crt": {
+      "deviceLabel": "MC-86 Diagnostic Terminal",
+      "boot": "MEMORY CARD BIOS v{{version}}: SERVICE PORT",
+      "moduleLocked": "HIDDEN MODULE: [ ??? ] · STATUS: LOCKED",
+      "moduleUnlocked": "HIDDEN MODULE: [ {{theme}} ] · STATUS: UNLOCKED",
+      "sequenceLabel": "Access code slots",
+      "dpadLabel": "Directional pad",
+      "pad": {
+        "up": "Up",
+        "down": "Down",
+        "left": "Left",
+        "right": "Right",
+        "b": "B",
+        "a": "A"
+      },
+      "prompt": "ENTER 10-INPUT ACCESS SEQUENCE.",
+      "controlsHint": "USE ARROW KEYS + B / A, OR THE PAD BELOW.",
+      "signalOk": "SIGNAL LOCKED [{{symbol}}] ({{step}}/{{total}})",
+      "signalError": "ERR: WRONG SIGNAL [{{symbol}}] AT STEP {{step}}. BUFFER RESET.",
+      "unknownKey": "UNKNOWN KEY [{{key}}]. USE ARROWS, B, OR A.",
+      "hint1": "HINT: A legendary 10-input cheat code from 1986...",
+      "hint2": "HINT: Aim high twice, then low twice (↑ ↑ ↓ ↓ ...)",
+      "hint3": "HINT: Try ↑ ↑ ↓ ↓ ← → ← → B A",
+      "hintMercy": "30+ MISSES EVEN AFTER ALL THOSE HINTS?! FINE, STOP BRUTE-FORCING. TAKE THE BUTTON AND GO PLAY A GAME.",
+      "accepted": "ACCESS GRANTED! 30 LIVES ADDED.",
+      "mercyGranted": "FINE, HERE YOU GO. NOW PLEASE GO PLAY SOMETHING FROM YOUR BACKLOG.",
+      "mercyButton": "Override & unlock",
+      "unlocked": "UNLOCKED THEME: {{theme}}",
+      "tagline": "Welcome to the Information Superhighway.",
+      "close": "Close"
+    }
   }
 }

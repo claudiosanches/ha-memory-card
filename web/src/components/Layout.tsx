@@ -15,13 +15,14 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { type ComponentType, useEffect } from 'react';
+import { type ComponentType, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, errorMessage } from '../api/errors';
 import { useLiveUpdates } from '../api/events';
 import { useMe, useStatus } from '../api/queries';
 import { followHomeAssistant } from '../i18n';
 import { ColorSchemePicker } from './ColorSchemePicker';
+import { SlotOneModal } from './SlotOneModal';
 import classes from './Layout.module.css';
 
 type NavKey = 'library' | 'backlog' | 'wishlist' | 'stats' | 'household' | 'manage' | 'cleanup' | 'import' | 'settings';
@@ -59,9 +60,22 @@ export function Layout() {
     if (homeAssistantLanguage !== undefined) followHomeAssistant(homeAssistantLanguage);
   }, [homeAssistantLanguage]);
   const [collapsed, setCollapsed] = useLocalStorage({ key: 'memory-card-sidebar-collapsed', defaultValue: false });
+  const [slotOneOpen, setSlotOneOpen] = useState(false);
+  const logoTaps = useRef<{ count: number; lastAt: number }>({ count: 0, lastAt: 0 });
   // Phones open the full menu from the burger, so only wider screens get the icon rail.
   const wide = useMediaQuery('(min-width: 48em)');
   const rail = collapsed && wide;
+
+  const tapLogo = () => {
+    if (!me.data) return;
+    const now = Date.now();
+    const count = now - logoTaps.current.lastAt < 2500 ? logoTaps.current.count + 1 : 1;
+    logoTaps.current = { count, lastAt: now };
+    if (count >= 5) {
+      logoTaps.current = { count: 0, lastAt: 0 };
+      setSlotOneOpen(true);
+    }
+  };
 
   const toggleLabel = collapsed ? t('app.expandSidebar') : t('app.collapseSidebar');
   const ToggleIcon = collapsed ? IconLayoutSidebarLeftExpand : IconLayoutSidebarLeftCollapse;
@@ -108,7 +122,9 @@ export function Layout() {
               aria-expanded={opened}
               aria-controls="app-navigation"
             />
-            <span className={classes.logo}><IconDeviceSdCard size={25} stroke={1.7} /></span>
+            <span className={classes.logo} data-testid="app-logo" onClick={tapLogo}>
+              <IconDeviceSdCard size={25} stroke={1.7} />
+            </span>
             <Text className={classes.brand}>{t('app.title')}</Text>
           </Group>
           <ColorSchemePicker compact />
@@ -174,6 +190,7 @@ export function Layout() {
           )}
         </div>
       </AppShell.Main>
+      {slotOneOpen && <SlotOneModal opened={slotOneOpen} onClose={() => setSlotOneOpen(false)} />}
     </AppShell>
   );
 }

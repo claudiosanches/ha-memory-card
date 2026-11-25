@@ -953,5 +953,48 @@
     "label": "Slug",
     "description": "Se usa en los enlaces de la biblioteca: {{link}}",
     "changed": "Los enlaces con el slug anterior dejan de funcionar."
+  },
+  "easterEggs": {
+    "slotOne": {
+      "title": "Memory Card · Ranura {{slot}}",
+      "blocks": "{{used}}/{{total}} bloques usados",
+      "free": "Libre",
+      "hint": "Elige un bloque para abrir ese juego al instante.",
+      "empty": "Todavía no hay bloques guardados. Añade un juego para llenar la Ranura 1.",
+      "prevSlot": "Tarjeta de memoria anterior",
+      "nextSlot": "Siguiente tarjeta de memoria",
+      "close": "Expulsar tarjeta de memoria"
+    },
+    "crt": {
+      "deviceLabel": "Terminal de diagnóstico MC-86",
+      "boot": "MEMORY CARD BIOS v{{version}}: PUERTO DE SERVICIO",
+      "moduleLocked": "MÓDULO OCULTO: [ ??? ] · ESTADO: BLOQUEADO",
+      "moduleUnlocked": "MÓDULO OCULTO: [ {{theme}} ] · ESTADO: DESBLOQUEADO",
+      "sequenceLabel": "Ranuras del código de acceso",
+      "dpadLabel": "Cruceta",
+      "pad": {
+        "up": "Arriba",
+        "down": "Abajo",
+        "left": "Izquierda",
+        "right": "Derecha",
+        "b": "B",
+        "a": "A"
+      },
+      "prompt": "INTRODUCE LA SECUENCIA DE 10 ENTRADAS.",
+      "controlsHint": "USA LAS FLECHAS + B / A, O EL MANDO DE ABAJO.",
+      "signalOk": "SEÑAL FIJADA [{{symbol}}] ({{step}}/{{total}})",
+      "signalError": "ERR: SEÑAL INCORRECTA [{{symbol}}] EN EL PASO {{step}}. REINICIADO.",
+      "unknownKey": "TECLA DESCONOCIDA [{{key}}]. USA FLECHAS, B O A.",
+      "hint1": "PISTA: Un código de trucos legendario de 10 entradas de 1986...",
+      "hint2": "PISTA: Empieza apuntando arriba dos veces, luego abajo dos veces (↑ ↑ ↓ ↓ ...)",
+      "hint3": "PISTA: Prueba ↑ ↑ ↓ ↓ ← → ← → B A",
+      "hintMercy": "¿MÁS DE 30 FALLOS AUN CON TODAS LAS PISTAS?! VALE, DEJA DE FORZARLO. USA EL BOTÓN Y VE A JUGAR ALGO.",
+      "accepted": "¡ACCESO CONCEDIDO! 30 VIDAS AÑADIDAS.",
+      "mercyGranted": "VALE, AQUÍ LO TIENES. AHORA VE A JUGAR ALGO DE TUS PENDIENTES.",
+      "mercyButton": "Forzar desbloqueo",
+      "unlocked": "TEMA DESBLOQUEADO: {{theme}}",
+      "tagline": "Bienvenido a la autopista de la información.",
+      "close": "Cerrar"
+    }
   }
 }

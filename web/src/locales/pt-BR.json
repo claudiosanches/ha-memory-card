@@ -953,5 +953,48 @@
     "label": "Slug",
     "description": "Usado nos links da biblioteca: {{link}}",
     "changed": "Links com o slug antigo deixam de funcionar."
+  },
+  "easterEggs": {
+    "slotOne": {
+      "title": "Memory Card · Slot {{slot}}",
+      "blocks": "{{used}}/{{total}} blocos usados",
+      "free": "Livre",
+      "hint": "Escolha um bloco para abrir o jogo direto.",
+      "empty": "Nenhum bloco salvo ainda. Adicione um jogo para preencher o Slot 1.",
+      "prevSlot": "Memory card anterior",
+      "nextSlot": "Próximo memory card",
+      "close": "Ejetar memory card"
+    },
+    "crt": {
+      "deviceLabel": "Terminal de diagnóstico MC-86",
+      "boot": "MEMORY CARD BIOS v{{version}}: PORTA DE SERVIÇO",
+      "moduleLocked": "MÓDULO OCULTO: [ ??? ] · STATUS: BLOQUEADO",
+      "moduleUnlocked": "MÓDULO OCULTO: [ {{theme}} ] · STATUS: DESBLOQUEADO",
+      "sequenceLabel": "Espaços do código de acesso",
+      "dpadLabel": "Direcional",
+      "pad": {
+        "up": "Cima",
+        "down": "Baixo",
+        "left": "Esquerda",
+        "right": "Direita",
+        "b": "B",
+        "a": "A"
+      },
+      "prompt": "DIGITE A SEQUÊNCIA DE 10 COMANDOS.",
+      "controlsHint": "USE AS SETAS + B / A, OU O CONTROLE ABAIXO.",
+      "signalOk": "SINAL CONFIRMADO [{{symbol}}] ({{step}}/{{total}})",
+      "signalError": "ERR: SINAL ERRADO [{{symbol}}] NO PASSO {{step}}. REINICIADO.",
+      "unknownKey": "TECLA DESCONHECIDA [{{key}}]. USE SETAS, B OU A.",
+      "hint1": "DICA: Um código secreto lendário de 10 comandos de 1986...",
+      "hint2": "DICA: Comece mirando para cima duas vezes, depois para baixo duas vezes (↑ ↑ ↓ ↓ ...)",
+      "hint3": "DICA: Tente ↑ ↑ ↓ ↓ ← → ← → B A",
+      "hintMercy": "MAIS DE 30 ERROS MESMO COM TODAS AS DICAS?! CHEGA DE FORÇA BRUTA. APERTA O BOTÃO E VAI JOGAR ALGUMA COISA.",
+      "accepted": "ACESSO LIBERADO! 30 VIDAS ADICIONADAS.",
+      "mercyGranted": "PRONTO, TÁ LIBERADO. AGORA VAI JOGAR ALGUMA COISA DO SEU BACKLOG.",
+      "mercyButton": "Desbloquear na marra",
+      "unlocked": "TEMA DESBLOQUEADO: {{theme}}",
+      "tagline": "Bem-vindo à Superestrada da Informação.",
+      "close": "Fechar"
+    }
   }
 }

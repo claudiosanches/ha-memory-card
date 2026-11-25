@@ -19,6 +19,7 @@ import { warmStone } from './warm-stone';
 
 type VisualTheme = {
   id: string;
+  hidden?: boolean;
   palette: Pick<MantineThemeOverride, 'colors' | 'primaryColor' | 'primaryShade' | 'autoContrast'>;
   variables: {
     variables: typeof variables.variables;
@@ -26,6 +27,8 @@ type VisualTheme = {
     dark: typeof variables.light;
   };
 };
+
+export const SECRET_THEME_ID = 'cursed-90s';
 
 export const themes = [
   { id: 'default', palette, variables },
@@ -40,10 +43,20 @@ export const themes = [
   cyberpunk,
   circuit,
   pastelPlush,
-  cursed90s,
+  { ...cursed90s, hidden: true },
 ] as const satisfies readonly VisualTheme[];
 
-const AppearanceContext = createContext<{ themeId: string; selectTheme: (id: string) => void } | null>(null);
+export type AppTheme = (typeof themes)[number];
+
+type AppearanceValue = {
+  themeId: string;
+  selectTheme: (id: string) => void;
+  availableThemes: readonly AppTheme[];
+  isUnlocked: (id: string) => boolean;
+  unlockTheme: (id: string) => void;
+};
+
+const AppearanceContext = createContext<AppearanceValue | null>(null);
 
 export function useAppearance() {
   const value = useContext(AppearanceContext);
@@ -53,7 +66,16 @@ export function useAppearance() {
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [savedId, selectTheme] = useLocalStorage({ key: 'memory-card-theme', defaultValue: 'default' });
+  const [unlockedIds, setUnlockedIds] = useLocalStorage<string[]>({
+    key: 'memory-card-unlocked-themes',
+    defaultValue: [],
+  });
   const selected = themes.find(({ id }) => id === savedId) ?? themes[0];
+  const isUnlocked = (id: string) => unlockedIds.includes(id) || savedId === id;
+  const unlockTheme = (id: string) => {
+    setUnlockedIds((current) => (current.includes(id) ? current : [...current, id]));
+  };
+  const availableThemes = themes.filter((theme) => !('hidden' in theme && theme.hidden) || isUnlocked(theme.id));
 
   // Portaled menus and dialogs share the same theme as the app shell.
   useLayoutEffect(() => {
@@ -62,7 +84,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   }, [selected.id]);
 
   return (
-    <AppearanceContext.Provider value={{ themeId: selected.id, selectTheme }}>
+    <AppearanceContext.Provider value={{ themeId: selected.id, selectTheme, availableThemes, isUnlocked, unlockTheme }}>
       <MantineProvider
         theme={mergeThemeOverrides(sharedTheme, selected.palette)}
         cssVariablesResolver={() => ({

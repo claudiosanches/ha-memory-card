@@ -16,15 +16,16 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { getRouteApi } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMe, useStatus } from '../api/queries';
 import { ColorSchemePicker } from '../components/ColorSchemePicker';
+import { DiagnosticTerminalModal } from '../components/DiagnosticTerminalModal';
 import { PageHeader } from '../components/PageHeader';
 import { ToolSection } from '../components/ToolSection';
 import { ToolTabList } from '../components/ToolTabList';
 import { automaticLanguage, chooseLanguage, type Language, LANGUAGE_NAMES, LANGUAGES, savedLanguage } from '../i18n';
-import { themes, useAppearance } from '../styles/themes/AppearanceProvider';
+import { useAppearance } from '../styles/themes/AppearanceProvider';
 import classes from './Tools.module.css';
 
 export const SETTINGS_TABS = ['appearance', 'status'] as const;
@@ -35,7 +36,7 @@ const route = getRouteApi('/settings');
 export function SettingsPage() {
   const { t } = useTranslation();
   const me = useMe();
-  const { themeId, selectTheme } = useAppearance();
+  const { themeId, selectTheme, availableThemes } = useAppearance();
   const defaultTab: SettingsTab = me.data && !me.data.managers_configured ? 'status' : 'appearance';
   const { tab } = route.useSearch();
   const activeTab = tab && SETTINGS_TABS.includes(tab) ? tab : defaultTab;
@@ -59,7 +60,7 @@ export function SettingsPage() {
                   value={themeId}
                   allowDeselect={false}
                   onChange={(value) => { if (value) selectTheme(value); }}
-                  data={themes.map(({ id }) => ({ value: id, label: t(`settings.themes.${id}`) }))}
+                  data={availableThemes.map(({ id }) => ({ value: id, label: t(`settings.themes.${id}`) }))}
                 />
               }
             />
@@ -107,6 +108,19 @@ function LanguagePicker() {
 function Status() {
   const { t } = useTranslation();
   const status = useStatus();
+  const [terminalOpen, setTerminalOpen] = useState(false);
+  const versionTaps = useRef<{ count: number; lastAt: number }>({ count: 0, lastAt: 0 });
+
+  const tapVersion = () => {
+    const now = Date.now();
+    const count = now - versionTaps.current.lastAt < 2500 ? versionTaps.current.count + 1 : 1;
+    versionTaps.current = { count, lastAt: now };
+    if (count >= 3) {
+      versionTaps.current = { count: 0, lastAt: 0 };
+      setTerminalOpen(true);
+    }
+  };
+
   return (
     <Stack gap="card">
       {status.isPending && <Loader size="sm" />}
@@ -165,7 +179,9 @@ function Status() {
           {status.data && (
             <div>
               <dt>{t('settings.version')}</dt>
-              <dd data-testid="status-version">{status.data.version}</dd>
+              <dd data-testid="status-version" onClick={tapVersion}>
+                {status.data.version}
+              </dd>
             </div>
           )}
           <div>
@@ -192,6 +208,13 @@ function Status() {
           </div>
         </dl>
       </ToolSection>
+      {status.data && terminalOpen && (
+        <DiagnosticTerminalModal
+          opened={terminalOpen}
+          version={status.data.version}
+          onClose={() => setTerminalOpen(false)}
+        />
+      )}
     </Stack>
   );
 }
