@@ -196,7 +196,8 @@ try {
 
   mkdirSync(join(out, 'themes'), { recursive: true });
   for (const theme of themes) {
-    const size = { width: 1280, height: 800, theme };
+    // Themes hide their sidebar picture below 53em (848 pixels) tall.
+    const size = { width: 1280, height: 900, theme };
     await save(
       `themes/${theme}`,
       [await capture('/', { ...size, scheme: 'light' }), await capture('/', { ...size, scheme: 'dark' })],
