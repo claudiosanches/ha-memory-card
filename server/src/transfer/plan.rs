@@ -189,6 +189,8 @@ struct Planner<'a> {
     contents: HashMap<i64, usize>,
     game_statuses: HashMap<Ref, String>,
     release_titles: HashMap<Ref, String>,
+    /// Where each existing release's new title sits in `plan.release_titles`.
+    release_title_at: HashMap<i64, usize>,
     /// Per new device: true while every row using it is digital.
     new_device_digital_only: Vec<bool>,
 }
@@ -241,6 +243,7 @@ impl<'a> Planner<'a> {
                 },
             ),
             statuses_set: HashSet::new(),
+            release_title_at: HashMap::new(),
             platforms,
             devices: snapshot
                 .devices
@@ -736,10 +739,14 @@ impl<'a> Planner<'a> {
             self.release_titles.insert(release, title.clone());
             match release {
                 Ref::New(i) => self.plan.releases[i].title = Some(title),
-                Ref::Existing(id) => {
-                    self.plan.release_titles.retain(|(r, _)| *r != id);
-                    self.plan.release_titles.push((id, title));
-                }
+                Ref::Existing(id) => match self.release_title_at.get(&id) {
+                    Some(&at) => self.plan.release_titles[at].1 = title,
+                    None => {
+                        self.release_title_at
+                            .insert(id, self.plan.release_titles.len());
+                        self.plan.release_titles.push((id, title));
+                    }
+                },
             }
         }
         release
