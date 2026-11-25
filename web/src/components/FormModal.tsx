@@ -7,6 +7,8 @@ type Props = {
   opened: boolean;
   title: string;
   saving: boolean;
+  /** Keeps Save off while another action saves. */
+  submitDisabled?: boolean;
   onClose: () => void;
   onSubmit: (event?: FormEvent<HTMLFormElement>) => void;
   /** Another button next to Save, such as "Save and add another". */
@@ -16,7 +18,17 @@ type Props = {
 };
 
 /** Modal with a form and Save/Cancel buttons; full screen on phones. */
-export function FormModal({ opened, title, saving, onClose, onSubmit, extraAction, submitLabel, children }: Props) {
+export function FormModal({
+  opened,
+  title,
+  saving,
+  submitDisabled,
+  onClose,
+  onSubmit,
+  extraAction,
+  submitLabel,
+  children,
+}: Props) {
   const { t } = useTranslation();
   const phone = useMediaQuery('(max-width: 48em)');
 
@@ -31,7 +43,7 @@ export function FormModal({ opened, title, saving, onClose, onSubmit, extraActio
               {t('common.cancel')}
             </Button>
             {extraAction}
-            <Button type="submit" loading={saving}>
+            <Button type="submit" loading={saving} disabled={submitDisabled}>
               {submitLabel ?? t('common.save')}
             </Button>
           </Group>

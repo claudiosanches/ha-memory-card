@@ -179,6 +179,8 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
 
   const submit = (addAnother: boolean) =>
     form.onSubmit((v) => {
+      // One save at a time, or both buttons could add the copy.
+      if (save.isPending) return;
       const wanted = v.status === 'wanted';
       const body: CopyInput = {
         status: v.status,
@@ -207,11 +209,17 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
       opened
       title={title ?? (copy ? t('game.editCopy') : t('game.addCopy'))}
       saving={save.isPending && !save.variables.another}
+      submitDisabled={save.isPending && save.variables.another}
       onClose={onClose}
       onSubmit={submit(false)}
       extraAction={
         !copy && (
-          <Button variant="light" loading={save.isPending && save.variables.another} onClick={() => submit(true)()}>
+          <Button
+            variant="light"
+            loading={save.isPending && save.variables.another}
+            disabled={save.isPending && !save.variables.another}
+            onClick={() => submit(true)()}
+          >
             {t('game.saveAnother')}
           </Button>
         )

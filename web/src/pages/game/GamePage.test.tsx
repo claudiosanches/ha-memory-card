@@ -394,6 +394,29 @@ describe('Game page', () => {
     expect(within(dialog).getByRole('combobox', { name: en.game.region })).toHaveValue(en.region.jp);
   });
 
+  it('adds a copy once while its save is running', async () => {
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': GAME,
+      'POST /api/games/4/copies': () => new Promise(() => {}),
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.game.addCopy }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.region }));
+    fireEvent.click(await screen.findByRole('option', { name: en.region.jp, hidden: true }));
+    fireEvent.click(within(dialog).getByRole('combobox', { name: en.game.platform }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Nintendo Switch', hidden: true }));
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1));
+
+    fireEvent.click(within(dialog).getByRole('button', { name: en.game.saveAnother }));
+    fireEvent.submit(dialog.querySelector('form') as HTMLFormElement);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1);
+  });
+
   it('prices a copy in the currency used last', async () => {
     const calls = mockApi({
       ...SETUP,
