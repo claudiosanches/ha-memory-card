@@ -217,7 +217,8 @@ function GameView({ game }: { game: GameDetail }) {
       .join(', ');
   const copyNames = new Map(ownedCopies.map(({ copy, release }) => [copy.id, copyLabel(copy, release)]));
   const lastSession = game.sessions[0];
-  const playedToday = lastSession?.played_on === today();
+  // Sessions run newest date first, and one can be dated ahead.
+  const playedToday = game.sessions.some((session) => session.played_on === today());
 
   // The release title only says something when it differs from the game's.
   const regionalTitle = (release: ReleaseDetail) => (release.title === game.title ? null : release.title);

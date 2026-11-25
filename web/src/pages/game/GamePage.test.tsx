@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { GameDetail } from '../../api/types';
 import en from '../../locales/en.json';
 import { json, mockApi, VIEWER } from '../../test/api';
+import { today } from '../../components/status';
 import { renderAt } from '../../test/render';
 
 /** Matches the element whose whole text is `text`, across a bold label. */
@@ -710,6 +711,14 @@ describe('Game page', () => {
     expect(body.copy_id).toBe(21);
     expect(await screen.findByRole('button', { name: en.game.loggedToday })).toBeDisabled();
     expect(within(screen.getByTestId('session-1')).getByText(/Nintendo Switch/)).toBeInTheDocument();
+  });
+
+  it('keeps Played today off when a session dated ahead comes first', async () => {
+    const session = (id: number, played_on: string) => ({ id, played_on, copy_id: 21, minutes: null, notes: null, created_at: '2026-11-02T20:00:00Z' });
+    mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, sessions: [session(2, '2999-01-01'), session(1, today())] } });
+    renderAt('/games/4');
+
+    expect(await screen.findByRole('button', { name: en.game.loggedToday })).toBeDisabled();
   });
 
   it('writes dates in the format the app options name', async () => {
