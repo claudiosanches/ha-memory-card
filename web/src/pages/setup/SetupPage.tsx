@@ -224,6 +224,8 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
           purchased_on: copy.purchased_on,
           price: copy.price,
           currency: copy.currency,
+          estimated_value: copy.estimated_value,
+          estimated_currency: copy.estimated_currency,
           barcode: copy.barcode,
         };
         latest = await call(api.PUT('/api/copies/{id}', { params: { path: { id: copy.id } }, body }));

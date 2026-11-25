@@ -44,7 +44,7 @@ function detail(id: number, title: string): GameDetail {
         local_coop: null,
         online_coop: null,
         copies: [
-          { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: 'Spare', source: 'manual', created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
+          { id: 21, status: 'owned', format: 'physical', device_id: null, store_id: null, condition: 'cib', notes: 'Spare', estimated_value: '40.00', estimated_currency: 'EUR', source: 'manual', created_at: '2026-11-01T10:00:00.000Z', contents: [], photos: [], tags: [] },
         ],
       },
     ],
@@ -91,7 +91,7 @@ describe('Setup wizard', () => {
     expect(await screen.findByText('Tunic')).toBeInTheDocument();
     expect(calls.some((c) => c.method === 'PUT' && c.path === '/api/games/4')).toBe(false);
     const copyBody = calls.find((c) => c.path === '/api/copies/21')?.body;
-    expect(copyBody).toMatchObject({ platform_id: 1, region: 'eu', format: 'physical', store_id: 3, condition: 'cib', notes: 'Spare' });
+    expect(copyBody).toMatchObject({ platform_id: 1, region: 'eu', format: 'physical', store_id: 3, condition: 'cib', notes: 'Spare', estimated_value: '40.00', estimated_currency: 'EUR' });
 
     fireEvent.click(screen.getByRole('button', { name: en.setup.skip }));
     expect(await screen.findByText(en.setup.done)).toBeInTheDocument();
