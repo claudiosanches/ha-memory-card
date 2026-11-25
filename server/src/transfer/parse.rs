@@ -344,7 +344,11 @@ fn too_wide(bytes: &[u8], delimiter: u8) -> bool {
 }
 
 fn detect_delimiter(text: &str) -> u8 {
-    let header = text.lines().next().unwrap_or_default();
+    // The reader skips blank lines before the header too.
+    let header = text
+        .lines()
+        .find(|line| !line.trim().is_empty())
+        .unwrap_or_default();
     let commas = header.matches(',').count();
     let semicolons = header.matches(';').count();
     if semicolons > commas { b';' } else { b',' }
@@ -353,6 +357,13 @@ fn detect_delimiter(text: &str) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn semicolons_are_found_after_blank_lines() {
+        let rows = parse(b"\n\ngame_title;platform\nCeleste;Switch\n").unwrap();
+        assert_eq!(rows[0].game_title.as_deref(), Some("Celeste"));
+        assert_eq!(rows[0].platform.as_deref(), Some("Switch"));
+    }
 
     #[test]
     fn refuses_more_columns_than_the_import_screen_lists() {
