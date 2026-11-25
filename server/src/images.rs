@@ -239,6 +239,7 @@ fn png(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
     let read = |at: usize| Some(u32::from_be_bytes(bytes.get(at..at + 4)?.try_into().ok()?));
     // IHDR comes first and starts with the width and height.
     let size = (read(16)?, read(20)?);
+    let mut drawn = false;
     loop {
         let length =
             usize::try_from(u32::from_be_bytes(bytes.get(at..at + 4)?.try_into().ok()?)).ok()?;
@@ -252,9 +253,11 @@ fn png(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
         if PNG_KEPT.contains(&kind) {
             out.extend(chunk);
         }
+        drawn |= kind == b"IDAT";
         at = end;
         if kind == b"IEND" {
-            return Some((out, size));
+            // Without image data there is nothing to show.
+            return drawn.then_some((out, size));
         }
     }
 }
@@ -265,6 +268,8 @@ const WEBP_KEPT: [&[u8; 4]; 7] = [
 ];
 /// Chunks that draw an animation frame; others may sit in it too.
 const WEBP_FRAME_KEPT: [&[u8; 4]; 3] = [b"ALPH", b"VP8 ", b"VP8L"];
+/// Chunks holding encoded pixels, at the top or in an animation frame.
+const DRAWS: [&[u8; 4]; 2] = [b"VP8 ", b"VP8L"];
 /// A frame's position, size, duration and flags, before its chunks.
 const ANMF_HEADER: usize = 16;
 /// VP8X flags for the EXIF and XMP chunks.
@@ -279,7 +284,9 @@ fn webp(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
     let mut out = b"RIFF".to_vec();
     out.extend([0; 4]);
     out.extend(b"WEBP");
+    let mut drawn = false;
     for (kind, data) in chunks {
+        drawn |= DRAWS.contains(&kind);
         match kind {
             b"VP8X" => {
                 let mut data = data.to_vec();
@@ -289,6 +296,7 @@ fn webp(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
             b"ANMF" => {
                 let mut frame = data.get(..ANMF_HEADER)?.to_vec();
                 for (kind, data) in riff_chunks(&data[ANMF_HEADER..])? {
+                    drawn |= DRAWS.contains(&kind);
                     if WEBP_FRAME_KEPT.contains(&kind) {
                         push_chunk(&mut frame, kind, data)?;
                     }
@@ -298,6 +306,9 @@ fn webp(bytes: &[u8]) -> Option<(Vec<u8>, Size)> {
             _ if WEBP_KEPT.contains(&kind) => push_chunk(&mut out, kind, data)?,
             _ => {}
         }
+    }
+    if !drawn {
+        return None;
     }
     let riff_size = u32::try_from(out.len() - 8).ok()?;
     out[4..8].copy_from_slice(&riff_size.to_le_bytes());
@@ -515,12 +526,14 @@ mod tests {
             chunk
         };
         let iend = [0, 0, 0, 0, b'I', b'E', b'N', b'D', 0, 0, 0, 0];
-        let png = |width, height| [&PHOTOS[1].0[..8], &ihdr(width, height), &iend].concat();
+        let idat = [0, 0, 0, 0, b'I', b'D', b'A', b'T', 0, 0, 0, 0];
+        let png = |width, height| [&PHOTOS[1].0[..8], &ihdr(width, height), &idat, &iend].concat();
         assert!(clean(&png(4_000, 3_000)).is_ok());
         assert_eq!(clean(&png(65_535, 65_535)), Err(Rejected::TooLarge));
 
+        let lossless = chunk(b"VP8L", &[0x2F, 0, 0, 0, 0, 0x10]);
         assert_eq!(
-            clean(&riff(&[vp8x(16_384, 16_384, 0)])),
+            clean(&riff(&[vp8x(16_384, 16_384, 0), lossless])),
             Err(Rejected::TooLarge)
         );
         let lossy = |width: u16, height: u16| {
@@ -538,8 +551,29 @@ mod tests {
             clean(&[&SOI[..], &huge[..huge.len() - 2], &frame(1, 1)].concat()),
             Err(Rejected::Invalid)
         );
-        let twice = [&PHOTOS[1].0[..8], &ihdr(1, 1), &ihdr(1, 1), &iend].concat();
+        let twice = [&PHOTOS[1].0[..8], &ihdr(1, 1), &ihdr(1, 1), &idat, &iend].concat();
         assert_eq!(clean(&twice), Err(Rejected::Invalid));
+    }
+
+    #[test]
+    fn an_image_without_pixel_data_is_not_an_image() {
+        let mut png = PHOTOS[1].0.to_vec();
+        let at = png.windows(4).position(|w| w == b"IDAT").unwrap() - 4;
+        let length = u32::from_be_bytes(png[at..at + 4].try_into().unwrap()) as usize;
+        png.drain(at..at + 12 + length);
+        assert!(!png.windows(4).any(|w| w == b"IDAT"), "one IDAT chunk");
+        assert_eq!(clean(&png), Err(Rejected::Invalid));
+
+        let anim = chunk(b"ANIM", &[0; 6]);
+        assert_eq!(
+            clean(&riff(&[vp8x(1, 1, 0x02), anim.clone()])),
+            Err(Rejected::Invalid)
+        );
+        let empty_frame = chunk(b"ANMF", &[0u8; ANMF_HEADER]);
+        assert_eq!(
+            clean(&riff(&[vp8x(1, 1, 0x02), anim, empty_frame])),
+            Err(Rejected::Invalid)
+        );
     }
 
     #[test]
