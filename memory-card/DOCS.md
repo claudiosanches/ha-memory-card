@@ -350,12 +350,14 @@ The household's:
 | `sensor.memory_card_games` | Games with at least one owned copy | |
 | `sensor.memory_card_copies` | Owned copies | |
 | `sensor.memory_card_wishlist` | Copies on the wishlist | |
-| `sensor.memory_card_playing` | Owned games someone is playing | `games`: their titles, the latest played first |
+| `sensor.memory_card_playing` | Owned games someone is playing | `games`: up to 50 titles, the latest played first |
 | `sensor.memory_card_last_added` | Title of the game whose owned copy was added last | `added_at`, `platform` |
 | `sensor.memory_card_pick` | Title of the latest random pick, from Memory Card or Home Assistant | `suggested_at`, `platforms` of its owned copies, `person` whose pick it is |
 
-Each person who keeps play, up to 16, gets their own sensors, named after
-them, such as `sensor.memory_card_ana_backlog`:
+Each person with a play status or a session gets their own sensors, up to
+16, named after them, such as `sensor.memory_card_ana_backlog`. A person
+Memory Card has no name for, such as one known only from an NFC reader, is
+named by their user ID instead:
 
 | Entity | State | Attributes |
 |---|---|---|
