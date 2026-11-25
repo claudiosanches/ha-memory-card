@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE releases\n         SET title = ?, product_code = ?, release_date = ?, local_max_players = ?,\n             online_max_players = ?, local_coop = ?, online_coop = ?,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?\n         RETURNING game_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b5b6a087b440ef7f9fda7cd7e9fa1f1a993121fb232921c1a85481bdb5129bdd"
+}

@@ -449,6 +449,28 @@ async fn release_details_and_conflicts() {
         .await;
     assert_eq!(status, StatusCode::CONFLICT);
     assert_eq!(body["code"], "release_exists");
+    let (status, body) = app
+        .json(
+            "PUT",
+            &format!("/api/releases/{first}"),
+            Some(json!({"product_code": "rmcp01"})),
+        )
+        .await;
+    assert_eq!(
+        status,
+        StatusCode::CONFLICT,
+        "case does not make another release"
+    );
+    assert_eq!(body["code"], "release_exists");
+
+    let path = format!("/api/releases/{first}");
+    assert_eq!(app.json("DELETE", &path, None).await.0, StatusCode::OK);
+    assert_eq!(
+        app.json("DELETE", &path, None).await.0,
+        StatusCode::NOT_FOUND
+    );
+    let edit = Some(json!({"title": "Gone"}));
+    assert_eq!(app.json("PUT", &path, edit).await.0, StatusCode::NOT_FOUND);
 }
 
 // ---- library ----

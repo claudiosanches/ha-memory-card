@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM releases WHERE id = ? RETURNING game_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "game_id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "releases",
+            "name": "game_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e5beae34ebcc11be94d0c47ba1c4ecb90c56bbbd165cf66da8e3a3c0a010bc15"
+}

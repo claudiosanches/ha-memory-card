@@ -812,14 +812,14 @@ pub async fn update_release(
     release_id: i64,
     fields: &ReleaseFields,
 ) -> ApiResult<i64> {
-    let game_id = release_game(pool, release_id).await?;
     let p = &fields.players;
-    sqlx::query!(
+    sqlx::query_scalar!(
         "UPDATE releases
          SET title = ?, product_code = ?, release_date = ?, local_max_players = ?,
              online_max_players = ?, local_coop = ?, online_coop = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         WHERE id = ?",
+         WHERE id = ?
+         RETURNING game_id",
         fields.title,
         fields.product_code,
         fields.release_date,
@@ -829,19 +829,21 @@ pub async fn update_release(
         p.online_coop,
         release_id
     )
-    .execute(pool)
+    .fetch_optional(pool)
     .await
-    .map_err(|err| ApiError::unique(err, "release_exists"))?;
-    Ok(game_id)
+    .map_err(|err| ApiError::unique(err, "release_exists"))?
+    .ok_or(ApiError::NotFound)
 }
 
 /// Deletes a release with its copies and returns its game id.
 pub async fn delete_release(pool: &SqlitePool, release_id: i64) -> ApiResult<i64> {
-    let game_id = release_game(pool, release_id).await?;
-    sqlx::query!("DELETE FROM releases WHERE id = ?", release_id)
-        .execute(pool)
-        .await?;
-    Ok(game_id)
+    sqlx::query_scalar!(
+        "DELETE FROM releases WHERE id = ? RETURNING game_id",
+        release_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(ApiError::NotFound)
 }
 
 fn money_columns(price: Option<&Price>) -> (Option<i64>, Option<&str>) {
