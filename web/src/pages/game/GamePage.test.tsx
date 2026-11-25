@@ -488,6 +488,43 @@ describe('Game page', () => {
     expect(within(contents).getByRole('link', { name: 'Super Mario 64' })).toBeInTheDocument();
   });
 
+  it('retries only the bundle contents a failed run left out', async () => {
+    let failed = false;
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: true, external_services: true, sensors: 'off' },
+      'GET /api/games/4': { ...GAME, igdb_id: 50 },
+      'GET /api/games/4/igdb-contents': [
+        { igdb_id: 64, name: 'Super Mario 64', year: 1996, platforms: [], game_id: 7 },
+        { igdb_id: 65, name: 'Super Mario Sunshine', year: 2002, platforms: [], game_id: null },
+      ],
+      'POST /api/games': { ...GAME, id: 8, title: 'Super Mario Sunshine' },
+      'POST /api/games/8/igdb': { ...GAME, id: 8 },
+      'POST /api/copies/21/contents': (body: { game_id: number }) => {
+        if (body.game_id !== 8 || failed) return GAME;
+        failed = true;
+        return new Response(JSON.stringify({ code: 'internal' }), { status: 500 });
+      },
+    });
+    renderAt('/games/4');
+
+    await copyAction(21, en.bundle.add);
+    const dialog = await screen.findByRole('dialog');
+    await within(dialog).findByLabelText('Super Mario Sunshine (2002)');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add 2 games' }));
+    await waitFor(() => expect(failed).toBe(true));
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Add 2 games' })).toBeEnabled());
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add 2 games' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(calls.filter((c) => c.path === '/api/games' && c.method === 'POST')).toHaveLength(1);
+    expect(calls.filter((c) => c.path === '/api/copies/21/contents').map((c) => c.body)).toEqual([
+      { game_id: 7 },
+      { game_id: 8 },
+      { game_id: 8 },
+    ]);
+  });
+
   it('shows a copy that came in a bundle with only a remove action', async () => {
     const inside = { ...GAME.releases[0]!.copies[0]!, bundle: { copy_id: 3, game_id: 9, title: 'Mario Pack' } };
     mockApi({ ...SETUP, 'GET /api/games/4': { ...GAME, releases: [{ ...GAME.releases[0]!, copies: [inside] }] } });

@@ -1,10 +1,10 @@
 import { Button, Checkbox, Loader, Stack, Text } from '@mantine/core';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { useStatus } from '../../api/queries';
+import { queryKeys, useStatus } from '../../api/queries';
 import type { CopyDetail, GameDetail } from '../../api/types';
 import { FormModal } from '../../components/FormModal';
 import { notifyError } from '../../components/notify';
@@ -28,23 +28,38 @@ export function BundleContentsModal({ game, copy, onClose }: Props) {
   const picked = checked ?? new Set(offered.map((hit) => hit.igdb_id));
   const [picking, setPicking] = useState(false);
   const saved = useGameSaved();
+  const queryClient = useQueryClient();
+  // What a failed run already did, so a retry neither creates a game again nor adds it twice.
+  const created = useRef(new Map<string, number>());
+  const added = useRef(new Set<number>());
+  const latest = useRef<GameDetail | null>(null);
 
   const add = useMutation({
     mutationFn: async (targets: Target[]) => {
-      let latest: GameDetail | null = null;
       for (const target of targets) {
-        const id = target.kind === 'existing' ? target.id : await createGame(target, t);
-        latest = await call(
+        let id: number;
+        if (target.kind === 'existing') id = target.id;
+        else {
+          const key = target.igdbId != null ? `igdb:${target.igdbId}` : `title:${target.title}`;
+          id = created.current.get(key) ?? (await createGame(target, t));
+          created.current.set(key, id);
+        }
+        if (added.current.has(id)) continue;
+        latest.current = await call(
           api.POST('/api/copies/{id}/contents', { params: { path: { id: copy.id } }, body: { game_id: id } }),
         );
+        added.current.add(id);
       }
-      return latest;
     },
-    onSuccess: (latest) => {
-      if (latest) saved(latest);
+    onSuccess: () => {
+      if (latest.current) saved(latest.current);
       onClose();
     },
-    onError: (error) => notifyError(errorMessage(t, error)),
+    onError: (error) => {
+      if (latest.current) queryClient.setQueryData(queryKeys.game(game.id), latest.current);
+      if (created.current.size > 0) void queryClient.invalidateQueries({ queryKey: queryKeys.games });
+      notifyError(errorMessage(t, error));
+    },
   });
 
   const pending = igdb && game.igdb_id != null && listed.isPending;
