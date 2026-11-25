@@ -35,7 +35,7 @@ test('a viewer browses the collection but cannot change it', async ({ page, requ
   expect(refused.status()).toBe(403);
   expect(await refused.json()).toEqual({ code: 'manager_required' });
 
-  await page.goto(`${PREFIX}/#/settings`);
+  await page.goto(`${PREFIX}/#/settings?tab=status`);
   await expect(page.getByTestId('access-role')).toHaveText(en.settings.roles.viewer);
   await expect(page.getByTestId('user-id')).toHaveText(VIEWER_ID);
 });

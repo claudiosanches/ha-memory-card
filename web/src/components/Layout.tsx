@@ -1,9 +1,8 @@
-import { Alert, Anchor, AppShell, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
+import { Alert, Anchor, AppShell, Box, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
   IconChartBar,
   IconChecklist,
-  IconCopy,
   IconDeviceGamepad2,
   IconDeviceSdCard,
   IconFileImport,
@@ -25,24 +24,27 @@ import { followHomeAssistant } from '../i18n';
 import { ColorSchemePicker } from './ColorSchemePicker';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'backlog' | 'duplicates' | 'wishlist' | 'stats' | 'household' | 'setup' | 'import' | 'manage' | 'settings';
+type NavKey = 'library' | 'backlog' | 'wishlist' | 'stats' | 'household' | 'manage' | 'cleanup' | 'import' | 'settings';
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
   { key: 'library', to: '/', icon: IconLibrary },
   { key: 'backlog', to: '/backlog', icon: IconStack2 },
-  { key: 'duplicates', to: '/duplicates', icon: IconCopy },
   { key: 'wishlist', to: '/wishlist', icon: IconHeart },
+];
+
+const INSIGHTS: NavItem[] = [
   { key: 'stats', to: '/stats', icon: IconChartBar },
   { key: 'household', to: '/household', icon: IconUsers },
 ];
 
 const TOOLS: NavItem[] = [
-  { key: 'setup', to: '/setup', icon: IconChecklist, manager: true },
-  { key: 'import', to: '/import', icon: IconFileImport, manager: true },
   { key: 'manage', to: '/manage', icon: IconDeviceGamepad2, manager: true },
-  { key: 'settings', to: '/settings', icon: IconSettings },
+  { key: 'cleanup', to: '/cleanup', icon: IconChecklist },
+  { key: 'import', to: '/import', icon: IconFileImport, manager: true },
 ];
+
+const SETTINGS: NavItem = { key: 'settings', to: '/settings', icon: IconSettings };
 
 export function Layout() {
   const { t } = useTranslation();
@@ -64,6 +66,11 @@ export function Layout() {
   const toggleLabel = collapsed ? t('app.expandSidebar') : t('app.collapseSidebar');
   const ToggleIcon = collapsed ? IconLayoutSidebarLeftExpand : IconLayoutSidebarLeftCollapse;
 
+  const isActive = (key: NavKey, to: string) =>
+    pathname === to ||
+    (key === 'library' && pathname.startsWith('/games/')) ||
+    (key === 'cleanup' && pathname === '/igdb-matches');
+
   const link = ({ key, to, icon: Icon }: NavItem) => (
     <Tooltip key={key} label={t(`nav.${key}`)} position="right" disabled={!rail}>
       <NavLink
@@ -71,7 +78,7 @@ export function Layout() {
         classNames={{ body: classes.navBody, section: classes.navSection }}
         label={t(`nav.${key}`)}
         leftSection={<Icon size={20} />}
-        active={pathname === to || (key === 'library' && pathname.startsWith('/games/'))}
+        active={isActive(key, to)}
         onClick={close}
         renderRoot={(props) => <Link to={to} {...props} aria-current={pathname === to ? 'page' : undefined} />}
       />
@@ -114,23 +121,28 @@ export function Layout() {
             <>
               <Text className={classes.sectionLabel}>{t('app.collection')}</Text>
               {COLLECTION.map(link)}
-              <Text className={classes.sectionLabel} mt={32}>{t('app.tools')}</Text>
+              <Text className={classes.sectionLabel}>{t('app.insights')}</Text>
+              {INSIGHTS.map(link)}
+              <Text className={classes.sectionLabel}>{t('app.tools')}</Text>
               {TOOLS.filter((item) => canManage || !item.manager).map(link)}
             </>
           )}
         </AppShell.Section>
-        <AppShell.Section visibleFrom="sm">
-          <Tooltip label={toggleLabel} position="right" disabled={!rail}>
-            <NavLink
-              component="button"
-              className={classes.navLink}
-              classNames={{ body: classes.navBody, section: classes.navSection }}
-              label={toggleLabel}
-              leftSection={<ToggleIcon size={20} />}
-              aria-expanded={!collapsed}
-              onClick={() => setCollapsed((value) => !value)}
-            />
-          </Tooltip>
+        <AppShell.Section className={classes.navFooter}>
+          {me.data && link(SETTINGS)}
+          <Box visibleFrom="sm">
+            <Tooltip label={toggleLabel} position="right" disabled={!rail}>
+              <NavLink
+                component="button"
+                className={classes.navLink}
+                classNames={{ body: classes.navBody, section: classes.navSection }}
+                label={toggleLabel}
+                leftSection={<ToggleIcon size={20} />}
+                aria-expanded={!collapsed}
+                onClick={() => setCollapsed((value) => !value)}
+              />
+            </Tooltip>
+          </Box>
         </AppShell.Section>
       </AppShell.Navbar>
 
@@ -143,7 +155,7 @@ export function Layout() {
                 <Alert color="yellow" mb="lg" data-testid="no-managers">
                   {t('app.noManagers')}{' '}
                   {pathname !== '/settings' && (
-                    <Anchor renderRoot={(props) => <Link to="/settings" {...props} />} inherit>
+                    <Anchor renderRoot={(props) => <Link to="/settings" search={{ tab: 'status' }} {...props} />} inherit>
                       {t('app.openSettings')}
                     </Anchor>
                   )}

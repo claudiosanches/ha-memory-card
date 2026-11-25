@@ -37,8 +37,15 @@ describe('App', () => {
     mockApi({ 'GET /api/me': VIEWER, 'GET /api/games': [] });
     renderAt('/');
     expect(await screen.findByRole('link', { name: en.nav.settings })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: en.nav.cleanup })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: en.nav.import })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: en.nav.manage })).not.toBeInTheDocument();
+  });
+
+  it('highlights Cleanup when reviewing IGDB matches', async () => {
+    mockApi({ 'GET /api/igdb/matches': [] });
+    renderAt('/igdb-matches');
+    expect(await screen.findByRole('link', { name: en.nav.cleanup })).toHaveAttribute('data-active', 'true');
   });
 
   it('keeps viewers off manager pages opened by URL', async () => {
@@ -65,20 +72,20 @@ describe('App', () => {
 
   it('shows server status on the settings screen', async () => {
     mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, external_services: true } });
-    renderAt('/settings');
+    renderAt('/settings?tab=status');
     expect(await screen.findByTestId('status-version')).toHaveTextContent('9.9.9');
     expect(screen.getByTestId('igdb-missing')).toHaveTextContent(en.settings.igdbMissing);
   });
 
   it('says when external services are off', async () => {
     mockApi({ 'GET /api/status': { version: '9.9.9', igdb_configured: false, external_services: false } });
-    renderAt('/settings');
+    renderAt('/settings?tab=status');
     expect(await screen.findByTestId('igdb-missing')).toHaveTextContent(en.settings.igdbOffline);
   });
 
   it('reports a failed status request', async () => {
     mockApi({ 'GET /api/status': json({ code: 'internal' }, 500) });
-    renderAt('/settings');
+    renderAt('/settings?tab=status');
     expect(await screen.findByTestId('status-error')).toHaveTextContent(en.settings.loadError);
   });
 });

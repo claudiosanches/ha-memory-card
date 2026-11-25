@@ -4,12 +4,15 @@
 .navbar { background-color: var(--mc-surface); border-color: var(--mc-border); }
 .navLinks { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; margin-inline: -14px; padding-inline: 14px; }
 .navLinks::after { content: ''; flex: 1; min-height: 0; background: var(--mc-nav-image, none) center bottom 12px / auto no-repeat; }
-.sectionLabel { margin: 16px 12px 10px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mc-muted); }
-.navLink { border-radius: 8px; padding: 12px; margin-bottom: 4px; color: var(--mc-muted); }
+.navFooter { border-top: 1px solid var(--mc-border); padding-top: 10px; margin-top: 6px; }
+.navFooter .navLink:last-child { margin-bottom: 0; }
+.sectionLabel { margin: 18px 12px 6px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--mc-muted); }
+.sectionLabel:first-child { margin-top: 4px; }
+.navLink { border-radius: 8px; padding: 9px 12px; margin-bottom: 2px; color: var(--mc-muted); }
 .navLink:where(:not([data-active])):hover { color: var(--mantine-color-text); }
 .navLink[data-active], .navLink[data-active]:hover { background: var(--mc-selected); color: var(--mc-selected-text); font-weight: 650; }
 /* In the rail, section labels become a thin divider. */
-.navbar[data-rail] .sectionLabel { height: 1px; margin: 12px 8px !important; overflow: hidden; color: transparent; background: var(--mc-border); }
+.navbar[data-rail] .sectionLabel { height: 1px; margin: 10px 8px !important; overflow: hidden; color: transparent; background: var(--mc-border); }
 .navbar[data-rail] .sectionLabel:first-child { display: none; }
 .navbar[data-rail] .navLink { justify-content: center; }
 .navbar[data-rail] .navSection { margin: 0; }
@@ -33,6 +36,6 @@
   .navLinks::after { background-image: var(--mc-still-nav-image, var(--mc-nav-image, none)); }
 }
 
-@media (max-height: 53em) {
+@media (max-height: 45em) {
   .navLinks::after { background-image: none; }
 }

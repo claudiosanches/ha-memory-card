@@ -5,6 +5,7 @@
     "collapseSidebar": "Recolher barra lateral",
     "expandSidebar": "Expandir barra lateral",
     "collection": "Coleção",
+    "insights": "Resumo",
     "tools": "Ferramentas",
     "skipNavigation": "Pular para o conteúdo",
     "unidentified": "O Home Assistant não informou quem você é, então o Memory Card não pode abrir. Recarregue a página pela barra lateral.",
@@ -15,13 +16,12 @@
   "nav": {
     "library": "Biblioteca",
     "backlog": "Backlog",
-    "duplicates": "Duplicados",
     "wishlist": "Lista de desejos",
     "stats": "Estatísticas",
     "household": "Casa",
-    "setup": "Detalhes faltando",
-    "import": "Importar e exportar",
     "manage": "Gerenciar",
+    "cleanup": "Limpeza",
+    "import": "Importar / exportar",
     "settings": "Configurações"
   },
   "common": {
@@ -144,8 +144,17 @@
       "cancel": "Movimento de {{name}} cancelado."
     }
   },
+  "cleanup": {
+    "intro": "Preencha detalhes faltando, revise cópias duplicadas e mantenha o IGDB sincronizado.",
+    "viewerIntro": "Revise os jogos com mais de uma cópia na coleção.",
+    "tabs": {
+      "missing": "Detalhes faltando",
+      "duplicates": "Duplicados",
+      "igdb": "IGDB"
+    }
+  },
   "settings": {
-    "intro": "Confira integrações e acesso, ou personalize a aparência.",
+    "intro": "Personalize a aparência ou confira integrações e acesso.",
     "status": "Status",
     "about": "Sobre o Memory Card",
     "version": "Versão",

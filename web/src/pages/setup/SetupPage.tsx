@@ -26,7 +26,6 @@ import {
   type ReleaseDetail,
 } from '../../api/types';
 import { notifyError } from '../../components/notify';
-import { PageHeader } from '../../components/PageHeader';
 import { CoverPicker } from '../game/CoverPicker';
 import { checkedOrNull, CopyForm, gameInput, numberOrNull, PlayerFields } from '../game/forms';
 import { IgdbLinkModal } from '../game/IgdbLink';
@@ -44,7 +43,7 @@ const FIELDS: MissingField[] = [
 ];
 
 /** Walks through games that lack the chosen details, one at a time. */
-export function SetupPage() {
+export function SetupTab() {
   const { t } = useTranslation();
   const missing = useMissingDetails();
   const [wanted, setWanted] = useLocalStorage<MissingField[]>({
@@ -68,8 +67,7 @@ export function SetupPage() {
     const id = run.ids[run.index];
     if (id === undefined) {
       return (
-        <Stack gap="section">
-          <PageHeader title={t('nav.setup')} description={t('setup.intro')} />
+        <Stack gap="md">
           <Text>{t('setup.done')}</Text>
           <Button w="fit-content" onClick={() => setRun(null)}>
             {t('setup.again')}
@@ -91,35 +89,37 @@ export function SetupPage() {
   }
 
   return (
-    <Stack gap="section">
-      <PageHeader title={t('nav.setup')} description={t('setup.intro')} />
-      <Card withBorder radius="md">
-        <Stack gap="md">
+    <Card withBorder radius="md">
+      <Stack gap="md">
+        <div>
           <Text fw={600}>{t('setup.lookFor')}</Text>
-          <Chip.Group multiple value={wanted} onChange={(value) => setWanted(value as MissingField[])}>
-            <Group gap="xs">
-              {FIELDS.filter((field) => counts.has(field)).map((field) => (
-                <Chip key={field} value={field}>
-                  {t(`setup.fields.${field}`)}
-                  {t('common.separator')}
-                  {counts.get(field)}
-                </Chip>
-              ))}
-            </Group>
-          </Chip.Group>
-          {matching.length > 0 ? (
-            <Button
-              w="fit-content"
-              onClick={() => setRun({ ids: matching.map((game) => game.game_id), index: 0 })}
-            >
-              {t('setup.start', { count: matching.length })}
-            </Button>
-          ) : (
-            <Text c="dimmed">{t('setup.nothing')}</Text>
-          )}
-        </Stack>
-      </Card>
-    </Stack>
+          <Text size="sm" c="dimmed">
+            {t('setup.intro')}
+          </Text>
+        </div>
+        <Chip.Group multiple value={wanted} onChange={(value) => setWanted(value as MissingField[])}>
+          <Group gap="xs">
+            {FIELDS.filter((field) => counts.has(field)).map((field) => (
+              <Chip key={field} value={field}>
+                {t(`setup.fields.${field}`)}
+                {t('common.separator')}
+                {counts.get(field)}
+              </Chip>
+            ))}
+          </Group>
+        </Chip.Group>
+        {matching.length > 0 ? (
+          <Button
+            w="fit-content"
+            onClick={() => setRun({ ids: matching.map((game) => game.game_id), index: 0 })}
+          >
+            {t('setup.start', { count: matching.length })}
+          </Button>
+        ) : (
+          <Text c="dimmed">{t('setup.nothing')}</Text>
+        )}
+      </Stack>
+    </Card>
   );
 }
 
@@ -250,9 +250,13 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   };
 
   return (
-    <Stack gap="section">
-      <PageHeader title={t('nav.setup')} description={t('setup.position', { index: index + 1, total })} />
-      <Progress value={(index / total) * 100} aria-hidden />
+    <Stack gap="card">
+      <Stack gap="xs">
+        <Text size="sm" c="dimmed">
+          {t('setup.position', { index: index + 1, total })}
+        </Text>
+        <Progress value={(index / total) * 100} aria-hidden />
+      </Stack>
 
       <Card withBorder radius="md">
         <div className={classes.step}>

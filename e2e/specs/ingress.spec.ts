@@ -28,6 +28,7 @@ test('loads under the ingress prefix and navigates', async ({ page }) => {
   await openNav(page);
   await page.getByRole('link', { name: en.nav.settings }).click();
   await expect(page).toHaveURL(new RegExp(`${PREFIX}/#/settings$`));
+  await page.getByRole('tab', { name: en.settings.status }).click();
   await expect(page.getByTestId('status-version')).toHaveText(/^\d+\.\d+\.\d+/);
   await expect(page.getByTestId('igdb-missing')).toBeVisible();
 

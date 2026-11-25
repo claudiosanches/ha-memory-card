@@ -5,6 +5,7 @@
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
     "collection": "Collection",
+    "insights": "Insights",
     "tools": "Tools",
     "skipNavigation": "Skip to content",
     "unidentified": "Home Assistant did not say who you are, so Memory Card cannot open. Reload the page from the sidebar.",
@@ -15,13 +16,12 @@
   "nav": {
     "library": "Library",
     "backlog": "Backlog",
-    "duplicates": "Duplicates",
     "wishlist": "Wishlist",
     "stats": "Stats",
     "household": "Household",
-    "setup": "Missing details",
-    "import": "Import and export",
     "manage": "Manage",
+    "cleanup": "Cleanup",
+    "import": "Import & export",
     "settings": "Settings"
   },
   "common": {
@@ -144,8 +144,17 @@
       "cancel": "Moving {{name}} was cancelled."
     }
   },
+  "cleanup": {
+    "intro": "Fill in missing details, review duplicate copies, and keep IGDB matches in sync.",
+    "viewerIntro": "Review games with more than one owned copy in the collection.",
+    "tabs": {
+      "missing": "Missing details",
+      "duplicates": "Duplicates",
+      "igdb": "IGDB"
+    }
+  },
   "settings": {
-    "intro": "Check integrations and access, or personalize your appearance.",
+    "intro": "Personalize your appearance, or check integrations and access.",
     "status": "Status",
     "about": "About Memory Card",
     "version": "Version",

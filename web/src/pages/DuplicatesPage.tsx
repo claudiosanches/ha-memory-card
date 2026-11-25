@@ -6,13 +6,12 @@ import { errorMessage } from '../api/errors';
 import { useDevices, useDuplicates, usePlatforms, useStores } from '../api/queries';
 import { DUPLICATE_LABELS, type DuplicateCopy, type DuplicateGroup, type DuplicateLabel } from '../api/types';
 import { FilterBar, FilterButton } from '../components/FilterBar';
-import { PageHeader } from '../components/PageHeader';
 import { Cover } from '../components/Cover';
 import classes from './DuplicatesPage.module.css';
 
 type Names = { platform: Map<number, string>; device: Map<number, string>; store: Map<number, string> };
 
-export function DuplicatesPage() {
+export function DuplicatesTab({ showIntro = true }: { showIntro?: boolean }) {
   const { t } = useTranslation();
   const duplicates = useDuplicates();
   const platforms = usePlatforms();
@@ -33,13 +32,21 @@ export function DuplicatesPage() {
   const counts = new Map(DUPLICATE_LABELS.map((l) => [l, all.filter((g) => g.labels.includes(l)).length]));
 
   return (
-    <Stack gap="section">
-      <PageHeader
-        title={t('nav.duplicates')}
-        description={t('duplicates.intro')}
-        count={duplicates.data && t('duplicates.count', { count: shown.length })}
-        countTestId="duplicates-count"
-      />
+    <Stack gap="card">
+      {(showIntro || duplicates.data) && (
+        <Group justify="space-between" align="baseline" gap="sm">
+          {showIntro && (
+            <Text size="sm" c="dimmed">
+              {t('duplicates.intro')}
+            </Text>
+          )}
+          {duplicates.data && (
+            <Text size="sm" c="dimmed" data-testid="duplicates-count">
+              {t('duplicates.count', { count: shown.length })}
+            </Text>
+          )}
+        </Group>
+      )}
 
       {all.length > 0 && (
         <FilterBar label={t('duplicates.filter')}>

@@ -66,7 +66,7 @@ describe('Live updates', () => {
       'GET /api/igdb/titles': [],
       'GET /api/igdb/sync': { running: false, done: 0, total: 0, linked: 0, updated: 0, unmatched: 0, failed: 0 },
     });
-    renderAt('/settings?tab=igdb');
+    renderAt('/cleanup?tab=igdb');
     await screen.findByText(en.igdb.titlesNone);
     const loaded = (path: string) => calls.filter((c) => c.path === path).length;
     const titles = loaded('/api/igdb/titles');
