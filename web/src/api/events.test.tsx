@@ -56,6 +56,7 @@ describe('Live updates', () => {
     events?.listeners.get('error')?.();
     events?.listeners.get('open')?.();
     await waitFor(() => expect(gamesLoaded()).toBeGreaterThan(before));
+    expect(calls.filter((c) => c.path === '/api/me')).toHaveLength(2);
   });
 
   it('refetches the IGDB title differences', async () => {

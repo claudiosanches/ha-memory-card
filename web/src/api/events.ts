@@ -7,10 +7,10 @@ const IGDB_LOOKUPS = new Set(['igdb-search', 'igdb-matches', 'igdb-contents']);
 
 /**
  * Refetches what the page shows when the collection changes elsewhere, such
- * as a tag scan, another user or the IGDB sync. Who is signed in only changes
- * on restart, and IGDB lookups would ask IGDB again, so those stay. After the
+ * as a tag scan, another user or the IGDB sync. IGDB lookups stay. After the
  * stream drops and the browser reconnects, it refetches too, for the changes
- * made while it was away.
+ * made while it was away, and who is signed in, since a restart may have
+ * changed the roles.
  */
 export function useLiveUpdates() {
   const queryClient = useQueryClient();
@@ -19,21 +19,25 @@ export function useLiveUpdates() {
     const events = new EventSource(`${apiBaseUrl()}/api/events`);
     let timer: number | undefined;
     let dropped = false;
-    const refetch = () => {
+    let withMe = false;
+    const refetch = (reconnected: boolean) => {
+      withMe ||= reconnected;
       // Changes in a row, such as an import, refetch once.
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
+        const me = withMe;
+        withMe = false;
         void queryClient.invalidateQueries({
-          predicate: ({ queryKey: [key] }) => key !== 'me' && !IGDB_LOOKUPS.has(String(key)),
+          predicate: ({ queryKey: [key] }) => (me || key !== 'me') && !IGDB_LOOKUPS.has(String(key)),
         });
       }, 300);
     };
-    events.addEventListener('changed', refetch);
+    events.addEventListener('changed', () => refetch(false));
     events.addEventListener('error', () => {
       dropped = true;
     });
     events.addEventListener('open', () => {
-      if (dropped) refetch();
+      if (dropped) refetch(true);
       dropped = false;
     });
     return () => {
