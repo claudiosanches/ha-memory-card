@@ -68,10 +68,13 @@ export function TagLinkModal({ gameId, copy, onClose }: Props) {
           <Text size="sm" c="red">
             {error}
           </Text>
-        ) : waiting || expiresAt == null ? (
+        ) : expiresAt == null ? (
+          // Scans count only once the app has taken the link.
+          <Loader size="sm" data-testid="tag-starting" />
+        ) : waiting ? (
           <Group gap="sm" wrap="nowrap" data-testid="tag-waiting">
             <Loader size="sm" />
-            <Text size="sm">{t('tags.scanNow', { seconds: seconds ?? 60 })}</Text>
+            <Text size="sm">{t('tags.scanNow', { seconds })}</Text>
           </Group>
         ) : (
           <Text size="sm">{t('tags.expired')}</Text>
