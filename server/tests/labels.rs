@@ -43,6 +43,25 @@ async fn titles(app: &TestApp, query: &str) -> Vec<String> {
 }
 
 #[tokio::test]
+async fn long_names_that_share_a_slug_get_the_next_counter() {
+    let app = TestApp::new().await;
+    // Each slugs to 64 x's, the longest a slug gets.
+    let long = "x".repeat(70);
+    for suffix in ["!", "?", "."] {
+        label(&app, &format!("{long}{suffix}"), "gray").await;
+    }
+    let slugs: Vec<String> = sqlx::query_scalar("SELECT slug FROM labels ORDER BY id")
+        .fetch_all(&app.pool)
+        .await
+        .unwrap();
+    let head = "x".repeat(62);
+    assert_eq!(
+        slugs,
+        ["x".repeat(64), format!("{head}-2"), format!("{head}-3")]
+    );
+}
+
+#[tokio::test]
 async fn labels_are_named_colored_and_counted() {
     let app = TestApp::new().await;
     let couch = label(&app, "Couch co-op", "teal").await;

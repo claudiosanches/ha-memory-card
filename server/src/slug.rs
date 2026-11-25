@@ -58,6 +58,13 @@ pub fn first_free(base: &str, taken: &HashSet<String>, from: u64) -> (String, u6
         .expect("unbounded range")
 }
 
+/// The start every slug `first_free` can give for `base` shares: the head
+/// left beside the longest counter.
+pub fn numbered_prefix(base: &str) -> &str {
+    let longest = format!("-{}", u64::MAX).len();
+    base[..base.len().min(MAX_LEN - longest)].trim_end_matches('-')
+}
+
 /// A slug from user input: trimmed and lowercased, `None` when blank.
 pub fn input(value: Option<&str>) -> ApiResult<Option<String>> {
     match value.map(str::trim).filter(|v| !v.is_empty()) {

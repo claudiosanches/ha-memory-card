@@ -6,7 +6,7 @@ use sqlx::SqliteConnection;
 
 use super::sql::Sql;
 use crate::error::{ApiError, ApiResult};
-use crate::slug::{first_free, slugify, unique};
+use crate::slug::{first_free, numbered_prefix, slugify, unique};
 
 /// Tables with a unique `slug` column.
 #[derive(Debug, Clone, Copy)]
@@ -91,13 +91,12 @@ fn base(table: Table, text: &str) -> String {
 /// A slug for `text` that no row of `table` has yet.
 pub async fn free(conn: &mut SqliteConnection, table: Table, text: &str) -> sqlx::Result<String> {
     let base = base(table, text);
+    // A numbered slug shortens a long base to fit, so look past the full base.
     let mut sql = Sql::new("SELECT slug FROM ");
     sql.push(table.name())
-        .push(" WHERE slug = ")
-        .push_bind(base.clone())
-        .push(" OR slug LIKE ")
-        .push_bind(base.clone())
-        .push(" || '-%'");
+        .push(" WHERE slug LIKE ")
+        .push_bind(numbered_prefix(&base).to_owned())
+        .push(" || '%'");
     let taken: Vec<String> = sql.build_query_scalar().fetch_all(conn).await?;
     Ok(unique(&base, &taken))
 }
