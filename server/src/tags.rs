@@ -107,6 +107,8 @@ enum ListenError {
     Socket(#[from] tokio_tungstenite::tungstenite::Error),
     #[error("Home Assistant refused the token")]
     Auth,
+    #[error("Home Assistant refused the tag_scanned subscription")]
+    Subscribe,
     #[error("Home Assistant closed the connection")]
     Closed,
 }
@@ -115,6 +117,10 @@ enum ListenError {
 struct Incoming {
     #[serde(rename = "type")]
     kind: String,
+    #[serde(default)]
+    id: Option<u64>,
+    #[serde(default)]
+    success: Option<bool>,
     #[serde(default)]
     event: Option<TagEvent>,
 }
@@ -139,6 +145,9 @@ struct Context {
     user_id: Option<String>,
 }
 
+/// The id of the `tag_scanned` subscription request.
+const SUBSCRIPTION: u64 = 1;
+
 /// Authenticates, subscribes to `tag_scanned` and handles events until the connection ends.
 async fn subscribe(state: &AppState, api: &HomeAssistantApi) -> Result<(), ListenError> {
     let (mut socket, _) = tokio_tungstenite::connect_async(api.websocket.as_str()).await?;
@@ -159,10 +168,16 @@ async fn subscribe(state: &AppState, api: &HomeAssistantApi) -> Result<(), Liste
             }
             "auth_invalid" => return Err(ListenError::Auth),
             "auth_ok" if !subscribed => {
-                let request =
-                    json!({"id": 1, "type": "subscribe_events", "event_type": "tag_scanned"});
+                let request = json!({
+                    "id": SUBSCRIPTION, "type": "subscribe_events", "event_type": "tag_scanned",
+                });
                 socket.send(Message::text(request.to_string())).await?;
                 subscribed = true;
+            }
+            "result" if incoming.id == Some(SUBSCRIPTION) => {
+                if incoming.success != Some(true) {
+                    return Err(ListenError::Subscribe);
+                }
                 set_status(state, TagsStatus::Connected);
                 tracing::info!("listening for Home Assistant tag scans");
             }

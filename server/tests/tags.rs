@@ -355,3 +355,63 @@ async fn readers_log_play_for_the_person_the_options_name() {
         Scan::Linked { copy_id: copy }
     );
 }
+
+/// A Home Assistant that signs the listener in, then answers its
+/// `tag_scanned` subscription with `success`.
+async fn home_assistant_socket(success: bool) -> String {
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::tungstenite::Message;
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move {
+        while let Ok((stream, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut socket = tokio_tungstenite::accept_async(stream).await.unwrap();
+                socket
+                    .send(Message::text(r#"{"type": "auth_required"}"#))
+                    .await
+                    .unwrap();
+                socket.next().await;
+                socket
+                    .send(Message::text(r#"{"type": "auth_ok"}"#))
+                    .await
+                    .unwrap();
+                socket.next().await;
+                let result = json!({"id": 1, "type": "result", "success": success});
+                socket
+                    .send(Message::text(result.to_string()))
+                    .await
+                    .unwrap();
+                while socket.next().await.is_some() {}
+            });
+        }
+    });
+    url
+}
+
+async fn listener_status(success: bool) -> TagsStatus {
+    let url = home_assistant_socket(success).await;
+    let app = TestApp::with_env(&[
+        ("MEMORY_CARD_HA_URL", url.as_str()),
+        ("MEMORY_CARD_HA_TOKEN", "token"),
+    ])
+    .await;
+    let listener = tags::Tags::start(app.state.clone()).unwrap();
+    let mut status = TagsStatus::Connecting;
+    for _ in 0..100 {
+        status = *app.state.tag_status.lock().unwrap();
+        if status != TagsStatus::Connecting {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    listener.stop().await;
+    status
+}
+
+#[tokio::test]
+async fn the_listener_is_connected_once_home_assistant_takes_the_subscription() {
+    assert_eq!(listener_status(true).await, TagsStatus::Connected);
+    assert_eq!(listener_status(false).await, TagsStatus::Disconnected);
+}
