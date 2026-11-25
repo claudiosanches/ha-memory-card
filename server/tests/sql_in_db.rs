@@ -5,7 +5,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// `query!(`, `query_as!(`, `query_file_scalar_unchecked!(`... at `at`.
+/// `query!(`, `query_as! {`, `query_file_scalar_unchecked![`... at `at`,
+/// with spaces around the `!` or the delimiter on the next line.
 fn is_query_macro(line: &str, at: usize) -> bool {
     let before = line[..at].chars().next_back();
     if before.is_some_and(|c| c.is_alphanumeric() || c == '_') {
@@ -13,7 +14,11 @@ fn is_query_macro(line: &str, at: usize) -> bool {
     }
     let rest = &line[at + "query".len()..];
     let suffix = rest.trim_start_matches(|c: char| c.is_ascii_lowercase() || c == '_');
-    suffix.starts_with("!(")
+    suffix
+        .trim_start()
+        .strip_prefix('!')
+        .map(str::trim_start)
+        .is_some_and(|after| after.is_empty() || after.starts_with(['(', '[', '{']))
 }
 
 fn has_query_macro(line: &str) -> bool {
@@ -68,10 +73,19 @@ fn finds_query_macros() {
         "sqlx::query!(\"SELECT 1\")",
         "let rows = sqlx::query_as!(Row, \"SELECT 1\")",
         "query_file_scalar_unchecked!(\"a.sql\")",
+        "sqlx::query! { \"SELECT 1\" }",
+        "sqlx::query_scalar![\"SELECT 1\"]",
+        "sqlx::query !(\"SELECT 1\")",
+        "let row = sqlx::query_as!",
     ] {
         assert!(has_query_macro(line), "{line}");
     }
-    for line in ["sqlx::query(\"SELECT 1\")", "subquery!(x)", "// a query"] {
+    for line in [
+        "sqlx::query(\"SELECT 1\")",
+        "subquery!(x)",
+        "// a query",
+        "query != other",
+    ] {
         assert!(!has_query_macro(line), "{line}");
     }
 }
