@@ -228,6 +228,17 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                 )
                 .execute(&mut *conn)
                 .await?;
+                // A copy moved to another game no longer stands for the
+                // first game's sessions.
+                sqlx::query!(
+                    "UPDATE play_sessions SET copy_id = NULL
+                     WHERE copy_id = ?
+                       AND game_id IS NOT (SELECT game_id FROM releases WHERE id = ?)",
+                    id,
+                    release_id
+                )
+                .execute(&mut *conn)
+                .await?;
             }
         }
     }

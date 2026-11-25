@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE play_sessions SET copy_id = NULL\n                     WHERE copy_id = ?\n                       AND game_id IS NOT (SELECT game_id FROM releases WHERE id = ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "0aff3c98c4639180356d2f223642562b68cd4c51bae6d3a7ef53dac709f4df8a"
+}

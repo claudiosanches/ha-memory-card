@@ -254,6 +254,44 @@ async fn edited_export_updates_copies() {
 }
 
 #[tokio::test]
+async fn a_copy_moved_to_another_game_leaves_its_sessions_on_the_first() {
+    let app = TestApp::new().await;
+    app.post_csv(
+        "/api/import",
+        &format!("{HEADER}\n,,,Metroid Dread,,Switch,eu,,,physical,,,,\n"),
+    )
+    .await;
+    let (game, copy): (i64, i64) = sqlx::query_as(
+        "SELECT r.game_id, c.id FROM copies c JOIN releases r ON r.id = c.release_id",
+    )
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+    let (status, _) = app
+        .json(
+            "POST",
+            &format!("/api/games/{game}/sessions"),
+            Some(json!({ "played_on": "2026-01-02", "copy_id": copy })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED);
+
+    let moved = export(&app)
+        .await
+        .replace(",Metroid Dread,", ",Metroid Prime,");
+    let (status, result) = app.post_csv("/api/import", &moved).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(result["summary"]["new_games"], 1, "{result}");
+
+    let (session_game, session_copy): (i64, Option<i64>) =
+        sqlx::query_as("SELECT game_id, copy_id FROM play_sessions")
+            .fetch_one(&app.pool)
+            .await
+            .unwrap();
+    assert_eq!((session_game, session_copy), (game, None));
+}
+
+#[tokio::test]
 async fn names_and_values_match_loosely() {
     let app = TestApp::new().await;
     let wii_u = app.platform_id("wii-u").await;
