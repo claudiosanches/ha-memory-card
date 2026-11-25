@@ -186,7 +186,7 @@ function Status() {
           )}
           <div>
             <dt>{t('settings.license')}</dt>
-            <dd>{t('settings.gpl')}</dd>
+            <dd>{t('settings.licenseName')}</dd>
           </div>
           <div>
             <dt>{t('settings.author')}</dt>

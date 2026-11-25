@@ -1,5 +1,5 @@
 // Fails when a production dependency of the web app has a license that is not
-// on the GPL-3.0 compatible allowlist (same list as deny.toml).
+// on the allowlist (same list as deny.toml).
 import { execFileSync } from 'node:child_process';
 
 const ALLOWED = new Set([

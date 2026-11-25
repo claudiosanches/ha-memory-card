@@ -31,7 +31,7 @@ use crate::AppState;
 #[derive(OpenApi)]
 #[openapi(info(
     title = "Memory Card",
-    license(name = "GPL-3.0-or-later", identifier = "GPL-3.0-or-later")
+    license(name = "Apache-2.0", identifier = "Apache-2.0")
 ))]
 struct ApiDoc;
 

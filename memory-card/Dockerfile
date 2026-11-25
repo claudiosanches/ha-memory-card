@@ -23,5 +23,5 @@ LABEL \
     io.hass.version="${BUILD_VERSION}" \
     org.opencontainers.image.title="Memory Card" \
     org.opencontainers.image.source="https://github.com/claudiosanches/ha-memory-card" \
-    org.opencontainers.image.licenses="GPL-3.0-or-later" \
+    org.opencontainers.image.licenses="Apache-2.0" \
     org.opencontainers.image.version="${BUILD_VERSION}"

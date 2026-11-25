@@ -1,7 +1,7 @@
 {
   "name": "memory-card-e2e",
   "private": true,
-  "license": "GPL-3.0-or-later",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "test": "playwright test",

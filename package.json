@@ -1,7 +1,7 @@
 {
   "name": "ha-memory-card",
   "private": true,
-  "license": "GPL-3.0-or-later",
+  "license": "Apache-2.0",
   "workspaces": [
     "web",
     "e2e"

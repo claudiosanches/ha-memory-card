@@ -44,7 +44,7 @@ step. Questions and bug reports go to
 
 ## License
 
-Memory Card is licensed under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE).
+Memory Card is licensed under the Apache License, version 2.0. See [LICENSE](LICENSE).
 
 [releases-shield]: https://img.shields.io/github/v/release/claudiosanches/ha-memory-card.svg
 [releases]: https://github.com/claudiosanches/ha-memory-card/releases

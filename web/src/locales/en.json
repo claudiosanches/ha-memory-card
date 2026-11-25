@@ -150,7 +150,7 @@
     "about": "About Memory Card",
     "version": "Version",
     "license": "License",
-    "gpl": "GPL v3 or later",
+    "licenseName": "Apache 2.0",
     "author": "Author",
     "authorName": "Claudio Sanches",
     "donations": "Support development",

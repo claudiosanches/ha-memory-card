@@ -4,8 +4,8 @@
     "title": "Memory Card",
     "description": "Video game collection manager for Home Assistant",
     "license": {
-      "name": "GPL-3.0-or-later",
-      "identifier": "GPL-3.0-or-later"
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
     },
     "version": "0.1.0"
   },
