@@ -45,7 +45,9 @@ The row of platforms under the search shows one platform at a time.
 filtered library can be bookmarked or shared with the household.
 
 The sort menu orders games by **Title**, **Recently added** or **Recently
-played**. Recently played follows your own play.
+played**. Recently added counts a game from when you first owned it, so a
+wishlist game marked Got it moves to the top. Recently played follows your own
+play.
 
 ## Buttons
 

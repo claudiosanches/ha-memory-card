@@ -262,7 +262,13 @@ pub fn query(filter: &LibraryFilter) -> Sql {
 
     qb.push(match filter.sort.unwrap_or_default() {
         LibrarySort::Title => " ORDER BY g.sort_title, g.id",
-        LibrarySort::Added => " ORDER BY g.created_at DESC, g.id DESC",
+        // When the game first became owned, so Got it on the wishlist counts.
+        LibrarySort::Added => {
+            " ORDER BY COALESCE((SELECT MIN(c.owned_at) FROM releases r
+                                 JOIN copies c ON c.release_id = r.id
+                                 WHERE r.game_id = g.id AND c.status = 'owned'),
+                                g.created_at) DESC, g.id DESC"
+        }
         LibrarySort::Played => " ORDER BY last_played_at DESC NULLS LAST, g.sort_title",
     });
     qb

@@ -866,6 +866,40 @@ async fn sets_only_the_play_status() {
 }
 
 #[tokio::test]
+async fn a_game_got_from_the_wishlist_is_recently_added() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let wished = new_game(&app, "Hades II").await;
+    let wanted =
+        json!({"status": "wanted", "platform_id": switch, "region": "ww", "format": "physical"});
+    let copy = add_copy(&app, wished, wanted).await["releases"][0]["copies"][0]["id"]
+        .as_i64()
+        .unwrap();
+    let owned = new_game(&app, "Celeste").await;
+    add_copy(
+        &app,
+        owned,
+        json!({"platform_id": switch, "region": "ww", "format": "digital"}),
+    )
+    .await;
+    assert_eq!(titles(&app, "sort=added").await, ["Celeste"]);
+    sqlx::query(
+        "UPDATE copies SET owned_at = '2026-01-01T00:00:00.000Z' WHERE owned_at IS NOT NULL",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
+
+    let got =
+        json!({"status": "owned", "platform_id": switch, "region": "ww", "format": "physical"});
+    let (status, body) = app
+        .json("PUT", &format!("/api/copies/{copy}"), Some(got))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(titles(&app, "sort=added").await, ["Hades II", "Celeste"]);
+}
+
+#[tokio::test]
 async fn wanted_copies_make_a_wishlist() {
     let app = TestApp::new().await;
     let switch = app.platform_id("switch").await;
