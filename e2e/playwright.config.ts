@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // Built by `cargo build` with the web app built first (see README).
+      // Built by `cargo build` with the web app built first (see docs/development.md).
       command: '../target/debug/memory-card serve',
       url: `http://127.0.0.1:${APP_PORT}/api/status`,
       env: {
