@@ -136,6 +136,11 @@ ha-destroy: ## Delete the local Home Assistant and all its data
 seed: ## Fill an empty collection in `make run` with test data
 	node scripts/seed.mjs http://127.0.0.1:$(PORT) $(DEV_USER)
 
+.PHONY: screenshots
+screenshots: web ## Retake docs/images from test data (needs IGDB credentials in .data/options.json)
+	cargo build --locked
+	node scripts/screenshots.mjs
+
 .PHONY: reset-db
 reset-db: ## Delete the local database and covers, keeping options.json
 	rm -rf $(DATA_DIR)/db $(DATA_DIR)/covers $(DATA_DIR)/tmp
