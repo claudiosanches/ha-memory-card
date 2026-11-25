@@ -111,6 +111,30 @@ describe('Settings titles', () => {
   });
 });
 
+describe('Settings title batches', () => {
+  it('sends every IGDB title in batches the API takes', async () => {
+    const many: TitleDifference[] = Array.from({ length: 1001 }, (_, i) => ({
+      game_id: i + 1,
+      title: `Game ${i + 1}`,
+      igdb_title: `IGDB ${i + 1}`,
+      cover_path: null,
+    }));
+    const calls = mockApi({
+      'GET /api/status': STATUS,
+      'GET /api/igdb/sync': { running: false, total: 0, done: 0, linked: 0, unmatched: 0, updated: 0, failed: 0 },
+      'GET /api/igdb/titles': many,
+      'POST /api/igdb/titles': [],
+    });
+    renderAt('/settings?tab=igdb');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.igdb.useAllIgdbTitles }));
+    await waitFor(() => expect(calls.filter((c) => c.method === 'POST')).toHaveLength(2));
+    const sent = calls.filter((c) => c.method === 'POST').map((c) => (c.body as { use_igdb: number[] }).use_igdb);
+    expect(sent.map((ids) => ids.length)).toEqual([1000, 1]);
+    expect(sent[1]).toEqual([1001]);
+  });
+});
+
 describe('Settings language', () => {
   it('switches the app to Portuguese and back to the browser language', async () => {
     mockApi({ 'GET /api/status': STATUS });

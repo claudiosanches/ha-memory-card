@@ -315,13 +315,23 @@ function IgdbSync() {
 
 type TitleChoices = { use_igdb?: number[]; keep?: number[] };
 
+/** The most IDs the API takes in one request. */
+const IDS_MAX = 1000;
+
 function IgdbTitles() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const titles = useTitleDifferences();
 
   const resolve = useMutation({
-    mutationFn: (body: TitleChoices) => call(api.POST('/api/igdb/titles', { body })),
+    mutationFn: async (body: TitleChoices) => {
+      const ids = body.use_igdb ?? [];
+      let left = await call(api.POST('/api/igdb/titles', { body: ids.length ? { ...body, use_igdb: ids.slice(0, IDS_MAX) } : body }));
+      for (let at = IDS_MAX; at < ids.length; at += IDS_MAX) {
+        left = await call(api.POST('/api/igdb/titles', { body: { use_igdb: ids.slice(at, at + IDS_MAX) } }));
+      }
+      return left;
+    },
     onSuccess: (left, body) => {
       queryClient.setQueryData(queryKeys.igdbTitles, left);
       if (body.use_igdb?.length) {
