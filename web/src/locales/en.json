@@ -327,6 +327,8 @@
     "newLabels": "Labels",
     "newDevice": "{{name}} ({{kind}}): {{platforms}}",
     "issuesTitle": "Rows to check",
+    "moreIssues_one": "{{count}} more issue not shown. Fix these and choose the file again.",
+    "moreIssues_other": "{{count}} more issues not shown. Fix these and choose the file again.",
     "line": "Line",
     "game": "Game",
     "column": "Column",

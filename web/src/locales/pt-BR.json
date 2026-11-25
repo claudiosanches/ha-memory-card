@@ -327,6 +327,8 @@
     "newLabels": "Etiquetas",
     "newDevice": "{{name}} ({{kind}}): {{platforms}}",
     "issuesTitle": "Linhas para conferir",
+    "moreIssues_one": "Mais {{count}} problema não mostrado. Corrija estes e escolha o arquivo de novo.",
+    "moreIssues_other": "Mais {{count}} problemas não mostrados. Corrija estes e escolha o arquivo de novo.",
     "line": "Linha",
     "game": "Jogo",
     "column": "Coluna",

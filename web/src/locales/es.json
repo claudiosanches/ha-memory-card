@@ -327,6 +327,8 @@
     "newLabels": "Categorías",
     "newDevice": "{{name}} ({{kind}}): {{platforms}}",
     "issuesTitle": "Filas que revisar",
+    "moreIssues_one": "{{count}} problema más no se muestra. Corrige estos y vuelve a elegir el archivo.",
+    "moreIssues_other": "{{count}} problemas más no se muestran. Corrige estos y vuelve a elegir el archivo.",
     "line": "Línea",
     "game": "Juego",
     "column": "Columna",

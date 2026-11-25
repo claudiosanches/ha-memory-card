@@ -136,6 +136,35 @@ describe('Import page', () => {
     expect(screen.getByRole('button', { name: en.import.confirm })).toBeDisabled();
   });
 
+  it('shows the first problems of a file that flags every row', async () => {
+    const rows = Array.from({ length: 250 }, (_, i) => ({
+      line: i + 2,
+      game_title: `Game ${i}`,
+      platform: null,
+      action: 'error' as const,
+      issues: [{ column: 'region', code: 'required', error: true }],
+    }));
+    mockApi({
+      'POST /api/import/preview': {
+        file_issue: null,
+        headers: [],
+        delimiter: ',',
+        summary: summary({ error_rows: 250 }),
+        new_platforms: [],
+        new_devices: [],
+        new_stores: [],
+        new_labels: [],
+        rows,
+      } satisfies Preview,
+    });
+    renderAt('/import');
+
+    await chooseFile(CSV);
+    const issues = await screen.findByTestId('import-issues');
+    expect(within(issues).getAllByText('region')).toHaveLength(200);
+    expect(screen.getByText(en.import.moreIssues_other.replace('{{count}}', '50'))).toBeInTheDocument();
+  });
+
   it('imports a file that only changes a release title', async () => {
     mockApi({
       'POST /api/import/preview': {

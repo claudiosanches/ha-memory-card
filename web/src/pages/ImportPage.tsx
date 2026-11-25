@@ -47,6 +47,9 @@ const COLUMNS = [
   'bundle_copy_id',
 ] as const;
 
+// A file read with the wrong columns can flag every row; more would stall the page.
+const ISSUES_SHOWN = 200;
+
 const SUMMARY_KEYS = [
   'new_games',
   'updated_games',
@@ -287,7 +290,7 @@ function PreviewResult({
     summary.new_copies +
     summary.updated_copies +
     summary.updated_releases;
-  const flagged = preview.rows.filter((row) => row.issues.length > 0);
+  const issues = preview.rows.flatMap((row) => row.issues.map((issue) => ({ row, issue })));
 
   return (
     <Stack gap="md" data-testid="import-preview">
@@ -346,7 +349,7 @@ function PreviewResult({
         </Stack>
       )}
 
-      {flagged.length > 0 && (
+      {issues.length > 0 && (
         <Stack gap={4}>
           <Text fw={600} size="sm">
             {t('import.issuesTitle')}
@@ -361,8 +364,7 @@ function PreviewResult({
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {flagged.flatMap((row) =>
-                row.issues.map((issue) => (
+              {issues.slice(0, ISSUES_SHOWN).map(({ row, issue }) => (
                   <Table.Tr key={`${row.line}-${issue.column}-${issue.code}`}>
                     <Table.Td data-label={t('import.line')}>{row.line}</Table.Td>
                     <Table.Td data-label={t('import.game')}>{row.game_title}</Table.Td>
@@ -378,10 +380,14 @@ function PreviewResult({
                       </Group>
                     </Table.Td>
                   </Table.Tr>
-                )),
-              )}
+              ))}
             </Table.Tbody>
           </Table>
+          {issues.length > ISSUES_SHOWN && (
+            <Text size="sm" c="dimmed">
+              {t('import.moreIssues', { count: issues.length - ISSUES_SHOWN })}
+            </Text>
+          )}
         </Stack>
       )}
 
