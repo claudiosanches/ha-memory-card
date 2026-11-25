@@ -4,13 +4,12 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use axum::Json;
-use axum::body::{Body, HttpBody};
+use axum::body::{Body, Bytes, HttpBody};
 use axum::extract::{FromRequestParts, MatchedPath, Request, State};
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, Method, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use http_body_util::BodyExt;
 use serde::Serialize;
 use utoipa::ToSchema;
 
@@ -162,12 +161,30 @@ pub async fn guard(
     let Some(streaming) = policy.streaming.enter(&id) else {
         return deny(StatusCode::TOO_MANY_REQUESTS, "too_many_downloads");
     };
-    response.map(|body| {
-        Body::new(body.map_frame(move |frame| {
-            let _held = &streaming;
-            frame
-        }))
-    })
+    response.map(|body| held_while_sent(body, streaming))
+}
+
+/// What Hyper takes from the body at a time. A whole answer in one frame
+/// would let it drop the body, and the slot with it, before sending it.
+const CHUNK: usize = 64 * 1024;
+
+/// `body` in chunks, keeping `held` until Hyper takes the last one.
+fn held_while_sent<T: Send + 'static>(body: Body, held: T) -> Body {
+    use futures_util::StreamExt;
+    let chunks = futures_util::stream::unfold(
+        (body.into_data_stream(), Bytes::new(), held),
+        |(mut data, mut rest, held)| async move {
+            if rest.is_empty() {
+                rest = match data.next().await? {
+                    Ok(bytes) => bytes,
+                    Err(err) => return Some((Err(err), (data, Bytes::new(), held))),
+                };
+            }
+            let chunk = rest.split_to(rest.len().min(CHUNK));
+            Some((Ok(chunk), (data, rest, held)))
+        },
+    );
+    Body::from_stream(chunks)
 }
 
 /// Whether Home Assistant streams the answer: over `STREAMED_OVER` bytes by
@@ -315,6 +332,7 @@ fn text(headers: &HeaderMap, name: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use axum::http::HeaderValue;
+    use http_body_util::BodyExt;
 
     use super::*;
 
@@ -402,6 +420,23 @@ mod tests {
         assert!(streamed(&large));
         let small = Json(vec!["x".repeat(1000)]).into_response();
         assert!(!streamed(&small));
+    }
+
+    #[tokio::test]
+    async fn a_large_answer_keeps_its_slot_until_its_last_chunk_is_taken() {
+        let slots = PerPerson::new(1);
+        let slot = slots.enter("ana").unwrap();
+        let large = Json(vec!["x".repeat(STREAMED_OVER as usize)]).into_response();
+        let mut body = held_while_sent(large.into_body(), slot);
+        let mut chunks = 0;
+        while let Some(frame) = body.frame().await {
+            assert!(frame.unwrap().into_data().unwrap().len() <= CHUNK);
+            assert!(slots.enter("ana").is_none(), "held at chunk {chunks}");
+            chunks += 1;
+        }
+        assert!(chunks > 1);
+        drop(body);
+        assert!(slots.enter("ana").is_some());
     }
 
     #[test]
