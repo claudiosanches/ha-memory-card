@@ -260,7 +260,13 @@ pub async fn run(
         updated_copies = summary.updated_copies,
         "import applied"
     );
-    let unlinked_games = crate::db::igdb::unlinked_count(&state.db).await?;
+    // The import is saved, so a failed count must not report it as failed.
+    let unlinked_games = crate::db::igdb::unlinked_count(&state.db)
+        .await
+        .unwrap_or_else(|err| {
+            tracing::warn!(error = %err, "could not count unlinked games");
+            0
+        });
     Ok(Json(ImportResult {
         summary,
         unlinked_games,
