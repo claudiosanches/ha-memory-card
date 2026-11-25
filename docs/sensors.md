@@ -9,16 +9,9 @@ Pick one of two ways with the `sensors` option.
 
 ### With the Memory Card integration
 
-No MQTT broker is needed.
-
-1. Add the
-   [Memory Card integration](https://my.home-assistant.io/redirect/marketplace_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
-   to the Marketplace as a custom repository, which needs the Marketplace
-   connected to GitHub. Download it and restart Home Assistant.
-2. In the app's **Configuration** tab, set `sensors` to `integration`, save
-   and restart Memory Card.
-3. Under **Settings > Devices & services**, Home Assistant shows Memory Card
-   as discovered. Select **Add**.
+No MQTT broker is needed, and it adds a **Roll a pick** button and an action
+with a response. [Memory Card integration](integration.md) goes through the
+install.
 
 ### With MQTT
 
@@ -65,22 +58,10 @@ and show as unavailable while Memory Card is stopped.
 
 A pick comes from one person's backlog, so a roll names whose.
 
-With the integration:
-
-- The **Roll a pick** button (`button.memory_card_roll_pick`) rolls for
-  whoever presses it.
-- The `memory_card.roll_pick` action rolls for whoever calls it. An
-  automation names the person with `person: person.ana`. It responds with the
-  picked game's `title` and `platforms`.
-
-```yaml
-action: memory_card.roll_pick
-data:
-  person: person.ana
-  device: [switch]
-  min_local_players: 2
-response_variable: pick
-```
+With the integration, the **Roll a pick** button rolls for whoever presses
+it, and the `memory_card.roll_pick` action rolls for whoever calls it or the
+person an automation names. [Memory Card integration](integration.md#the-roll_pick-action)
+has its fields and examples.
 
 With MQTT, which cannot tell who sent a message, publish to
 `memory_card/pick/roll` with the person's user ID. A message without a person

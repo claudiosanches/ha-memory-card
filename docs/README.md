@@ -35,6 +35,8 @@ its options. These pages go through everything step by step.
 - [Barcodes](barcodes.md): check a box in a shop and add it.
 - [NFC tags](nfc-tags.md): scan a tag on a box to log play.
 - [Home Assistant sensors](sensors.md): counts, picks and per-person sensors.
+- [Memory Card integration](integration.md): install, the Roll a pick button
+  and the roll action.
 - [Themes](themes.md): 13 themes, each in light and dark.
 - [Data and backups](data.md): where the collection lives.
 
