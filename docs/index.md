@@ -66,5 +66,4 @@ Memory Card needs Home Assistant 2026.11 or newer.
 Memory Card is free and open source. If it is useful to your household, you
 can support its development on
 [GitHub Sponsors](https://github.com/sponsors/claudiosanches) or
-[Ko-fi](https://ko-fi.com/claudiosanches). [About](/about) has more on the
-project.
+[Ko-fi](https://ko-fi.com/claudiosanches).
