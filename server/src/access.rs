@@ -137,7 +137,7 @@ pub async fn guard(
         tracing::debug!(method = %request.method(), path, "viewer denied");
         return deny(StatusCode::FORBIDDEN, "manager_required");
     }
-    let _writing = if is_read(request.method()) {
+    let writing = if is_read(request.method()) {
         None
     } else {
         let Some(writing) = policy.writing.enter(&user.id) else {
@@ -157,6 +157,11 @@ pub async fn guard(
 
     if !streamed(&response) {
         return response;
+    }
+    // A change has already happened, so its answer goes out on the change's
+    // own slot.
+    if let Some(writing) = writing {
+        return response.map(|body| held_while_sent(body, writing));
     }
     let Some(streaming) = policy.streaming.enter(&id) else {
         return deny(StatusCode::TOO_MANY_REQUESTS, "too_many_downloads");
@@ -437,6 +442,38 @@ mod tests {
         assert!(chunks > 1);
         drop(body);
         assert!(slots.enter("ana").is_some());
+    }
+
+    #[tokio::test]
+    async fn a_change_answers_with_every_download_slot_taken() {
+        use tower::ServiceExt;
+        let policy = Arc::new(Policy {
+            managers: vec!["ana".into()],
+            viewers_track_progress: false,
+            writing: PerPerson::new(1),
+            streaming: PerPerson::new(1),
+        });
+        let _download = policy.streaming.enter("ana").unwrap();
+        let large = || async { Json(vec!["x".repeat(STREAMED_OVER as usize)]) };
+        let app = axum::Router::new()
+            .route("/api/games", axum::routing::get(large).post(large))
+            .layer(axum::middleware::from_fn_with_state(policy.clone(), guard));
+        let request = |method| {
+            Request::builder()
+                .method(method)
+                .uri("/api/games")
+                .header(USER_ID, "ana")
+                .body(Body::empty())
+                .unwrap()
+        };
+
+        let read = app.clone().oneshot(request(Method::GET)).await.unwrap();
+        assert_eq!(read.status(), StatusCode::TOO_MANY_REQUESTS);
+        let change = app.oneshot(request(Method::POST)).await.unwrap();
+        assert_eq!(change.status(), StatusCode::OK);
+        assert!(policy.writing.enter("ana").is_none(), "held while sent");
+        drop(change);
+        assert!(policy.writing.enter("ana").is_some());
     }
 
     #[test]
