@@ -170,7 +170,7 @@ Who can roll:
 - The app's **Log** tab says why the feed could not start.
 - **Download diagnostics** on the integration's page in **Settings > Devices &
   services** gives what the integration holds from the app, without the
-  token. Attach it to a bug report.
+  token, anyone's play or user IDs. Attach it to a bug report.
 
 ## Update and remove
 
