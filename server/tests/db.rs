@@ -27,7 +27,9 @@ async fn fresh_database_has_schema_and_seed() {
     let app = TestApp::new().await;
 
     let tables: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE '\\_%' ESCAPE '\\' ORDER BY name",
+        "SELECT name FROM sqlite_master WHERE type = 'table'
+           AND name NOT LIKE '\\_%' ESCAPE '\\' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\'
+         ORDER BY name",
     )
     .fetch_all(&app.pool)
     .await
