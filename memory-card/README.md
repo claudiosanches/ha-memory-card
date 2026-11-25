@@ -34,7 +34,9 @@ login. Managers you name change the collection; everyone else browses it.
 
 ![Memory Card on a phone][phone]
 
-The **Documentation** tab explains the setup and every feature.
+The **Documentation** tab explains the setup and the options. The
+[full guide](https://github.com/claudiosanches/ha-memory-card/tree/main/docs)
+goes through every page step by step.
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg

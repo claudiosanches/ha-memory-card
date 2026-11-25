@@ -3,6 +3,10 @@
 Memory Card keeps track of the video games you own across consoles, physical
 or digital. It opens from the Home Assistant sidebar.
 
+This page covers the setup and the options. The
+[full guide](https://github.com/claudiosanches/ha-memory-card/tree/main/docs)
+goes through every page step by step, with screenshots and the themes.
+
 ![The library, with covers from IGDB](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/library.webp)
 
 ## Installation
