@@ -10,6 +10,14 @@ import { notifySuccess } from '../../components/notify';
 
 type Props = { gameId: number; copy: CopyDetail; onClose: () => void };
 
+// A cancel sent before its start finishes could clear nothing and leave the copy waiting.
+let last: Promise<unknown> = Promise.resolve();
+function inOrder<T>(request: () => Promise<T>): Promise<T> {
+  const next = last.then(request, request);
+  last = next.catch(() => undefined);
+  return next;
+}
+
 /** Waits for the next tag scanned in Home Assistant and links it to the copy. */
 export function TagLinkModal({ gameId, copy, onClose }: Props) {
   const { t } = useTranslation();
@@ -22,12 +30,12 @@ export function TagLinkModal({ gameId, copy, onClose }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    call(api.POST('/api/copies/{id}/tag-link', { params: { path: { id: copy.id } } }))
+    inOrder(() => call(api.POST('/api/copies/{id}/tag-link', { params: { path: { id: copy.id } } })))
       .then((link) => !cancelled && setExpiresAt(Date.parse(link.expires_at)))
       .catch((err: unknown) => !cancelled && setError(errorMessage(t, err)));
     return () => {
       cancelled = true;
-      void api.DELETE('/api/copies/{id}/tag-link', { params: { path: { id: copy.id } } });
+      void inOrder(() => api.DELETE('/api/copies/{id}/tag-link', { params: { path: { id: copy.id } } }));
     };
   }, [copy.id, t]);
 

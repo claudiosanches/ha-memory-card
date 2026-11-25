@@ -551,6 +551,28 @@ describe('Game page', () => {
     expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/copies/21/tag-link')).toBe(true);
   });
 
+  it('cancels a tag link only after it started', async () => {
+    let start = () => {};
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/status': { version: '0.1.0', igdb_configured: false, external_services: true, sensors: 'off', tags: 'connected' },
+      'GET /api/games/4': GAME,
+      'POST /api/copies/21/tag-link': () =>
+        new Promise((resolve) => (start = () => resolve({ expires_at: new Date(Date.now() + 60_000).toISOString() }))),
+      'DELETE /api/copies/21/tag-link': new Response(null, { status: 204 }),
+    });
+    renderAt('/games/4');
+
+    await copyAction(21, en.tags.link);
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/copies/21/tag-link')).toBe(true));
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: en.common.cancel }));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const links = () => calls.filter((c) => c.path === '/api/copies/21/tag-link').map((c) => c.method);
+    expect(links()).toEqual(['POST']);
+    start();
+    await waitFor(() => expect(links()).toEqual(['POST', 'DELETE']));
+  });
+
   it('offers to delete the game with its last copy', async () => {
     const calls = mockApi({
       ...SETUP,
