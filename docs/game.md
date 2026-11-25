@@ -42,6 +42,8 @@ This part is yours. Everyone in the house has their own.
 - **Play history** lists your sessions, newest first. **Log a session** adds
   one with the day, the copy you played and the minutes. The pencil and trash
   buttons edit or delete one.
+- A session for a game in your backlog, or with no status, sets it to
+  playing. Paused and finished games keep their status.
 - **Others in the house** shows each other person's status for the game,
   their number of sessions and when they last played it. It is read-only.
 

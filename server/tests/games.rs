@@ -323,6 +323,39 @@ async fn sessions_log_play_and_the_latest_is_last_played() {
 }
 
 #[tokio::test]
+async fn a_session_starts_a_game_from_the_backlog() {
+    let app = TestApp::new().await;
+    for (before, after) in [
+        (None, "playing"),
+        (Some("backlog"), "playing"),
+        (Some("playing"), "playing"),
+        (Some("paused"), "paused"),
+        (Some("completed"), "completed"),
+    ] {
+        let game = new_game(&app, "Celeste").await;
+        if let Some(status) = before {
+            let (code, _) = app
+                .json(
+                    "PUT",
+                    &format!("/api/games/{game}/play-status"),
+                    Some(json!({"play_status": status})),
+                )
+                .await;
+            assert_eq!(code, StatusCode::OK);
+        }
+        let (code, detail) = app
+            .json(
+                "POST",
+                &format!("/api/games/{game}/sessions"),
+                Some(json!({"played_on": "2026-11-20"})),
+            )
+            .await;
+        assert_eq!(code, StatusCode::CREATED, "{detail}");
+        assert_eq!(detail["play_status"], after, "from {before:?}");
+    }
+}
+
+#[tokio::test]
 async fn a_person_keeps_5000_sessions_of_a_game_and_logs_200_a_day() {
     let app = TestApp::new().await;
     let game = new_game(&app, "Animal Crossing").await;

@@ -104,7 +104,8 @@ pub async fn household(
         .collect())
 }
 
-/// Logs a session in `by`'s play.
+/// Logs a session in `by`'s play. A game in their backlog, or with no status,
+/// becomes playing; paused and finished games keep their status.
 pub async fn add(
     pool: &SqlitePool,
     game_id: i64,
@@ -133,6 +134,17 @@ pub async fn add(
         fields.played_on,
         fields.minutes,
         fields.notes
+    )
+    .execute(&mut *tx)
+    .await?;
+    sqlx::query!(
+        "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, 'playing')
+         ON CONFLICT (user_id, game_id) DO UPDATE
+         SET play_status = 'playing', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE (SELECT counts_as FROM play_statuses WHERE key = play_progress.play_status)
+               = 'backlog'",
+        by,
+        game_id
     )
     .execute(&mut *tx)
     .await?;

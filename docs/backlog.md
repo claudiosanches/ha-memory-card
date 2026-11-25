@@ -14,6 +14,9 @@ Games you have given no play status wait under **Not sorted yet**. **Sort
 them** goes through them one at a time: pick a status, or **Skip** to leave
 one for later, then **Done**.
 
+Logging a session for a game in your backlog, or with no status, sets it to
+playing. **Played today** on the [game page](game.md) does the same.
+
 ## Pick for me
 
 **Can't decide?** rolls a random game from your backlog.

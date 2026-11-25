@@ -161,7 +161,8 @@ the games waiting for you, with how many you have cleared. It is yours:
 everyone in the house has their own. **Pick for me** rolls a random game
 from your backlog, for one device if you choose one, and skips games picked
 for you in the last day. Games you have given no play status wait under
-**Not sorted yet** until you give them one.
+**Not sorted yet** until you give them one. Logging a session for a game in
+your backlog, or with no status, sets it to playing.
 
 Manage > Play statuses lists the statuses in the order the app shows them.
 The six built-in statuses can be renamed, recolored and reordered, but not
