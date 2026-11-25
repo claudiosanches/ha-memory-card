@@ -40,14 +40,6 @@ its options. These pages go through everything step by step.
 - [Themes](themes.md): 13 themes, each in light and dark.
 - [Data and backups](data.md): where the collection lives.
 
-## Development
-
-- [Development](development.md): build, run and test from this repository.
-- [Local Home Assistant](local-home-assistant.md): a Home Assistant VM with
-  the app from this tree.
-- [Releasing](releasing.md): publish a new version.
-- `make screenshots` retakes every image in these pages from test data.
-
 ## Help
 
 Questions, ideas and bug reports go to
