@@ -60,3 +60,11 @@ Memory Card needs Home Assistant 2026.11 or newer.
 3. Install **Memory Card** and start it. It appears in the sidebar.
 
 [Getting started](/docs/getting-started) goes through the setup step by step.
+
+## Support development
+
+Memory Card is free and open source. If it is useful to your household, you
+can support its development on
+[GitHub Sponsors](https://github.com/sponsors/claudiosanches) or
+[Ko-fi](https://ko-fi.com/claudiosanches). [About](/about) has more on the
+project.

@@ -82,8 +82,8 @@ adding or changing a query.
 
 `docs/` is also the site at https://ha-memory-card.pages.dev, built with
 VitePress from `docs/.vitepress/`. `docs/index.md` is the landing page,
-`docs/README.md` the guide's index at `/docs/`, and the other guide pages sit
-under `/docs/`. The developer pages (this one, Local Home Assistant and
+`docs/about.md` the About page, `docs/README.md` the guide's index at `/docs/`,
+and the other guide pages sit under `/docs/`. The developer pages (this one, Local Home Assistant and
 Releasing) stay out of the site. A new guide page needs a line in
 `docs/README.md` and in the sidebar in `docs/.vitepress/config.mjs`.
 

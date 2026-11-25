@@ -1,12 +1,14 @@
 // The docs site, built with `make docs`. docs/index.md is the landing page,
-// docs/README.md the guide's index, and the guide's pages sit under /docs/.
+// docs/about.md the About page, docs/README.md the guide's index, and the
+// guide's pages sit under /docs/.
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Developer pages stay on GitHub, linked from the root README.
 const developer = ['development.md', 'local-home-assistant.md', 'releasing.md'];
+const site = ['index.md', 'about.md'];
 const guide = readdirSync(fileURLToPath(new URL('..', import.meta.url))).filter(
-  (file) => file.endsWith('.md') && file !== 'index.md' && !developer.includes(file),
+  (file) => file.endsWith('.md') && !site.includes(file) && !developer.includes(file),
 );
 
 const page = (text, file) => ({ text, link: `/docs/${file}` });
@@ -26,6 +28,7 @@ export default {
     nav: [
       { text: 'Guide', link: '/docs/' },
       { text: 'Get started', link: '/docs/getting-started' },
+      { text: 'About', link: '/about' },
     ],
     sidebar: {
       '/docs/': [
