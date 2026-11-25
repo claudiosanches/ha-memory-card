@@ -9,6 +9,7 @@ use utoipa::{IntoParams, ToSchema};
 use crate::AppState;
 use crate::access::Actor;
 use crate::db::games::{self, GameDetail};
+use crate::db::igdb::Expected;
 use crate::db::titles::{self, TitleDifference};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 use crate::igdb::matches::{self, MatchError, MatchGroup};
@@ -142,6 +143,7 @@ pub async fn link(
         id,
         &data,
         input.overwrite,
+        Expected::Any,
     )
     .await?;
     Ok(Json(games::get(&state.db, id, &by).await?))

@@ -13,7 +13,7 @@ use super::{GameData, Igdb, Localization, MultiplayerMode};
 use crate::covers::{self, Owner};
 use crate::db::Pool;
 use crate::db::games::PlayerCounts;
-use crate::db::igdb::{self as db, Covers, GameUpdate, Release, ReleaseUpdate, Tag};
+use crate::db::igdb::{self as db, Covers, Expected, GameUpdate, Release, ReleaseUpdate, Tag};
 use crate::domain::sort_title;
 use crate::error::{ApiError, ApiResult};
 
@@ -32,6 +32,7 @@ pub async fn apply(
     game_id: i64,
     data: &GameData,
     overwrite: bool,
+    expected: Expected,
 ) -> ApiResult<()> {
     let _cover = covers::lock(game_id).await;
     // Checked before downloading covers; the unique index still decides.
@@ -103,7 +104,15 @@ pub async fn apply(
             })
             .collect(),
     };
-    let changed = db::write(pool, game_id, &update, overwrite, &covers).await?;
+    let changed = match db::write(pool, game_id, &update, overwrite, &covers, expected).await {
+        Ok(changed) => changed,
+        Err(err @ ApiError::Conflict("igdb_changed")) => {
+            // The covers just downloaded were never stored.
+            clean_up(covers_dir, db::stored_covers(pool, game_id).await?).await;
+            return Err(err);
+        }
+        Err(err) => return Err(err),
+    };
     clean_up(covers_dir, changed).await;
     Ok(())
 }

@@ -21,6 +21,14 @@ pub async fn linked_elsewhere(pool: &SqlitePool, igdb_id: i64, game_id: i64) -> 
         .await
 }
 
+/// The IGDB link a write needs the game to still have. A sync lists its
+/// games before fetching them, and a manager may relink one meanwhile.
+#[derive(Debug, Clone, Copy)]
+pub enum Expected {
+    Any,
+    Link(Option<i64>),
+}
+
 /// A release, with what IGDB needs to fill it.
 #[derive(sqlx::FromRow)]
 pub struct Release {
@@ -100,6 +108,7 @@ pub async fn write(
     update: &GameUpdate<'_>,
     overwrite: bool,
     covers: &Covers,
+    expected: Expected,
 ) -> ApiResult<Vec<(Owner, Option<String>)>> {
     let mut tx = write_tx(pool).await?;
     let counts = &update.counts;
@@ -132,10 +141,20 @@ pub async fn write(
         .push(NOW)
         .push(" WHERE id = ")
         .push_bind(game_id);
-    game.build()
+    if let Expected::Link(link) = expected {
+        game.push(" AND igdb_id IS ").push_bind(link);
+    }
+    let updated = game
+        .build()
         .execute(&mut *tx)
         .await
         .map_err(|err| ApiError::unique(err, "igdb_linked"))?;
+    if updated.rows_affected() == 0 {
+        return Err(match expected {
+            Expected::Any => ApiError::NotFound,
+            Expected::Link(_) => ApiError::Conflict("igdb_changed"),
+        });
+    }
 
     sqlx::query("DELETE FROM game_names WHERE game_id = ? AND source = 'igdb'")
         .bind(game_id)
@@ -225,6 +244,30 @@ pub async fn write(
     let changed = store_covers(&mut tx, game_id, covers).await?;
     tx.commit().await?;
     Ok(changed)
+}
+
+/// The cover each of the game's owners has stored.
+pub async fn stored_covers(
+    pool: &SqlitePool,
+    game_id: i64,
+) -> sqlx::Result<Vec<(Owner, Option<String>)>> {
+    let game: Option<String> = sqlx::query_scalar("SELECT cover_path FROM games WHERE id = ?")
+        .bind(game_id)
+        .fetch_optional(pool)
+        .await?
+        .flatten();
+    let releases: Vec<(i64, Option<String>)> =
+        sqlx::query_as("SELECT id, cover_path FROM releases WHERE game_id = ?")
+            .bind(game_id)
+            .fetch_all(pool)
+            .await?;
+    Ok(std::iter::once((Owner::Game(game_id), game))
+        .chain(
+            releases
+                .into_iter()
+                .map(|(id, path)| (Owner::Release(id), path)),
+        )
+        .collect())
 }
 
 /// Stores the covers alone. Returns the ones that changed.

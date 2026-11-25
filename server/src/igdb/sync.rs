@@ -10,7 +10,7 @@ use utoipa::ToSchema;
 
 use super::{GameData, Igdb, store};
 use crate::AppState;
-use crate::db::igdb as db;
+use crate::db::igdb::{self as db, Expected};
 use crate::error::{ApiError, ApiResult};
 
 const BATCH: usize = 100;
@@ -120,6 +120,7 @@ async fn run(state: &AppState, igdb: &Arc<Igdb>) -> sqlx::Result<()> {
                         *game_id,
                         data,
                         false,
+                        Expected::Link(Some(*igdb_id)),
                     )
                     .await
                 }
@@ -129,6 +130,8 @@ async fn run(state: &AppState, igdb: &Arc<Igdb>) -> sqlx::Result<()> {
                 s.done += 1;
                 match result {
                     Ok(()) => s.updated += 1,
+                    // Relinked while the sync ran; the new link stands.
+                    Err(ApiError::Conflict("igdb_changed")) => {}
                     Err(err) => {
                         tracing::warn!(game_id, error = %err, "IGDB refresh failed");
                         s.failed += 1;
@@ -155,6 +158,7 @@ async fn match_title(state: &AppState, igdb: &Igdb, game_id: i64, title: &str) -
         game_id,
         &data,
         false,
+        Expected::Link(None),
     )
     .await
     {

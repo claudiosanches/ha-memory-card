@@ -12,6 +12,8 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{get, post};
 use common::TestApp;
 use memory_card::config::IgdbCredentials;
+use memory_card::db::igdb::Expected;
+use memory_card::error::ApiError;
 use memory_card::igdb::{Endpoints, Igdb};
 use serde_json::{Value, json};
 
@@ -426,6 +428,65 @@ async fn lists_titles_that_differ_from_igdb_until_resolved() {
         .unwrap();
     let (_, list) = app.json("GET", "/api/igdb/titles", None).await;
     assert_eq!(list[0]["igdb_title"], "Super Mario Odyssey Deluxe");
+}
+
+#[tokio::test]
+async fn a_stale_sync_leaves_a_game_relinked_meanwhile() {
+    let app = with_igdb().await;
+    let game = app
+        .json("POST", "/api/games", Some(json!({"title": "Odyssey"})))
+        .await
+        .1["id"]
+        .as_i64()
+        .unwrap();
+    let (status, _) = app
+        .json(
+            "POST",
+            &format!("/api/games/{game}/igdb"),
+            Some(json!({"igdb_id": 1})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    // A manager relinks it, with a cover of the new match, while a sync that
+    // listed it under IGDB id 1 is still downloading.
+    let dir = app.config.covers_dir().join(format!("game-{game}"));
+    std::fs::write(dir.join("other.jpg"), common::COVER).unwrap();
+    sqlx::query(
+        "UPDATE games SET igdb_id = 99, summary = 'Relinked.', cover_path = ? WHERE id = ?",
+    )
+    .bind(format!("game-{game}/other.jpg"))
+    .bind(game)
+    .execute(&app.pool)
+    .await
+    .unwrap();
+
+    let data = serde_json::from_value(odyssey()).unwrap();
+    let result = memory_card::igdb::store::apply(
+        &app.pool,
+        &app.config.covers_dir(),
+        app.state.igdb.as_ref().unwrap(),
+        game,
+        &data,
+        false,
+        Expected::Link(Some(1)),
+    )
+    .await;
+    assert!(
+        matches!(result, Err(ApiError::Conflict("igdb_changed"))),
+        "{result:?}"
+    );
+    let (igdb_id, summary): (i64, String) =
+        sqlx::query_as("SELECT igdb_id, summary FROM games WHERE id = ?")
+            .bind(game)
+            .fetch_one(&app.pool)
+            .await
+            .unwrap();
+    assert_eq!((igdb_id, summary.as_str()), (99, "Relinked."));
+    let files: Vec<String> = std::fs::read_dir(&dir)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .collect();
+    assert_eq!(files, ["other.jpg"]);
 }
 
 #[tokio::test]
