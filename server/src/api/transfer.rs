@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use axum::Json;
 use axum::extract::rejection::QueryRejection;
-use axum::extract::{Query, State};
+use axum::extract::{Query, RawQuery, State};
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
@@ -173,8 +173,15 @@ fn csv_download(name: &str, body: Vec<u8>) -> Response {
 pub async fn export_csv(
     State(state): State<AppState>,
     Actor(by): Actor,
+    RawQuery(query): RawQuery,
     filter: Result<Query<LibraryFilter>, QueryRejection>,
 ) -> ApiResult<Response> {
+    // The library sends its filters, so its file is named apart from the whole collection's.
+    let name = if query.is_some_and(|query| !query.is_empty()) {
+        "library"
+    } else {
+        "collection"
+    };
     let Query(mut filter) = filter.map_err(|_| ApiError::Invalid {
         code: "invalid_filter",
         field: None,
@@ -187,7 +194,7 @@ pub async fn export_csv(
             export::ExportError::Database(err) => ApiError::Database(err),
             other => ApiError::Internal(other.to_string()),
         })?;
-    Ok(csv_download("export", body))
+    Ok(csv_download(name, body))
 }
 
 #[utoipa::path(
