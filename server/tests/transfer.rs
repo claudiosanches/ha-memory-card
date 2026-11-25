@@ -402,6 +402,17 @@ async fn conflicting_play_status_is_an_error() {
         issues(&preview, 3),
         [("play_status".into(), "conflicting_play_status".into())]
     );
+
+    // The same when the first row repeats the status the game already has.
+    app.post_csv("/api/import", "game_title,play_status\nCeleste,backlog\n")
+        .await;
+    let csv = "game_title,play_status\nCeleste,backlog\nCeleste,playing\n";
+    let (_, preview) = app.post_csv("/api/import/preview", csv).await;
+    assert_eq!(
+        issues(&preview, 3),
+        [("play_status".into(), "conflicting_play_status".into())],
+        "{preview}"
+    );
 }
 
 #[tokio::test]

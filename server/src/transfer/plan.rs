@@ -677,6 +677,11 @@ impl<'a> Planner<'a> {
             }
         };
 
+        // A status the file names counts even when the game already has it,
+        // so a different one in a later row conflicts.
+        if let (Some(_), Ref::Existing(id)) = (&play_status, game) {
+            self.statuses_set.insert(id);
+        }
         if let Some(status) = play_status
             && self.game_statuses.get(&game) != Some(&status)
         {
