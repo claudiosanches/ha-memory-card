@@ -41,11 +41,14 @@ export function PickGameModal({
   title,
   submitLabel,
   initialTitle = '',
+  saving = false,
   onClose,
   onNext,
 }: {
   title: string;
   submitLabel: string;
+  /** Set while `onNext` saves in place, so the picker takes no second submit. */
+  saving?: boolean;
   /** Starts the title field with this, such as a name read from a barcode. */
   initialTitle?: string;
   onClose: () => void;
@@ -86,10 +89,14 @@ export function PickGameModal({
     <FormModal
       opened
       title={title}
-      saving={false}
+      saving={saving}
+      // Until the collection loads, a title in it would read as a new game.
+      submitDisabled={games.isPending}
       submitLabel={submitLabel}
       onClose={onClose}
-      onSubmit={form.onSubmit((values) => onNext(target(values.title)))}
+      onSubmit={form.onSubmit((values) => {
+        if (!saving && !games.isPending) onNext(target(values.title));
+      })}
     >
       <TextInput
         label={t('game.title')}

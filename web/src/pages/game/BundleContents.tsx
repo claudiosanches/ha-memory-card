@@ -68,6 +68,7 @@ export function BundleContentsModal({ game, copy, onClose }: Props) {
       <PickGameModal
         title={t('bundle.addTitle', { title: game.title })}
         submitLabel={t('bundle.addOne')}
+        saving={add.isPending}
         onClose={onClose}
         onNext={(target) => add.mutate([target])}
       />
