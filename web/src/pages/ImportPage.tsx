@@ -2,7 +2,7 @@ import { Accordion, Alert, Anchor, Badge, Button, Code, FileInput, Group, List, 
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ToolSection } from '../components/ToolSection';
 import { CardPage } from '../components/CardPage';
 import { withColumns } from './importColumns';
@@ -66,6 +66,8 @@ export function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState<string | null>(null);
   const [done, setDone] = useState<Result | null>(null);
+  // Counts choices, so a slow read of an earlier file is dropped.
+  const chosen = useRef(0);
   const igdb = useStatus().data?.igdb_configured ?? false;
 
   const preview = useMutation({
@@ -85,21 +87,30 @@ export function ImportPage() {
     onError: (error) => notifyError(errorMessage(t, error)),
   });
 
-  const choose = async (chosen: File | null) => {
-    setFile(chosen);
+  const choose = async (next: File | null) => {
+    const turn = ++chosen.current;
+    setFile(next);
+    setText(null);
     setDone(null);
     preview.reset();
-    if (!chosen) {
-      setText(null);
-      return;
-    }
-    if (chosen.size > FILE_MAX) {
+    if (!next) return;
+    const refuse = (message: string) => {
       setFile(null);
-      setText(null);
-      notifyError(t('errors.too_large'));
+      notifyError(message);
+    };
+    if (next.size > FILE_MAX) {
+      refuse(t('errors.too_large'));
       return;
     }
-    const content = await chosen.text();
+    let content: string;
+    try {
+      // File.text() would swap bad bytes for U+FFFD, past the server's UTF-8 check.
+      content = new TextDecoder('utf-8', { fatal: true }).decode(await next.arrayBuffer());
+    } catch {
+      if (turn === chosen.current) refuse(t('fileIssues.not_utf8'));
+      return;
+    }
+    if (turn !== chosen.current) return;
     setText(content);
     preview.mutate(content);
   };
@@ -131,7 +142,7 @@ export function ImportPage() {
           accept=".csv,text/csv"
           leftSection={<IconUpload size={16} />}
           value={file}
-          onChange={(chosen) => void choose(chosen)}
+          onChange={(next) => void choose(next)}
           clearable
         />
 

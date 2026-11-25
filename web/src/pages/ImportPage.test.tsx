@@ -142,18 +142,74 @@ describe('Import page', () => {
     await screen.findByRole('heading', { name: en.import.importTitle });
     const file = new File([CSV], 'games.csv', { type: 'text/csv' });
     Object.defineProperty(file, 'size', { value: 16 * 1024 * 1024 + 1 });
-    file.text = () => Promise.reject(new Error('read'));
+    file.arrayBuffer = () => Promise.reject(new Error('read'));
     fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
 
     expect(await screen.findByText(en.errors.too_large)).toBeInTheDocument();
     expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(0);
   });
 
+  it('refuses a file that is not UTF-8 before the preview', async () => {
+    const calls = mockApi({});
+    renderAt('/import');
+    await screen.findByRole('heading', { name: en.import.importTitle });
+    const file = new File([new Uint8Array([0x67, 0x61, 0x6d, 0x65, 0x0a, 0xe9, 0x0a])], 'games.csv', { type: 'text/csv' });
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
+
+    expect(await screen.findByText(en.fileIssues.not_utf8)).toBeInTheDocument();
+    expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(0);
+  });
+
+  it('imports the file chosen last when an earlier one reads slower', async () => {
+    const calls = mockApi({
+      'POST /api/import/preview': {
+        file_issue: null,
+        headers: [],
+        delimiter: ',',
+        summary: summary(),
+        new_platforms: [],
+        new_devices: [],
+        new_stores: [],
+        new_labels: [],
+        rows: [],
+      } satisfies Preview,
+      'POST /api/import': { summary: summary(), unlinked_games: 0 },
+    });
+    renderAt('/import');
+    await screen.findByRole('heading', { name: en.import.importTitle });
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const slow = new File(['game_title\nOld\n'], 'old.csv', { type: 'text/csv' });
+    let finish = () => {};
+    const read = slow.arrayBuffer();
+    slow.arrayBuffer = () => new Promise((resolve) => (finish = () => resolve(read)));
+    fireEvent.change(input, { target: { files: [slow] } });
+    fireEvent.change(input, { target: { files: [new File([CSV], 'games.csv', { type: 'text/csv' })] } });
+
+    fireEvent.click(await screen.findByRole('button', { name: en.import.confirm }));
+    await screen.findByTestId('import-done');
+    finish();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const sent = calls.filter((c) => c.method === 'POST').map((c) => [c.path, c.body]);
+    expect(sent).toEqual([
+      ['/api/import/preview', CSV],
+      ['/api/import', CSV],
+    ]);
+    expect(screen.queryByTestId('import-preview')).not.toBeInTheDocument();
+  });
+
   it('explains a file it cannot read and lets its columns be picked', async () => {
     const calls = mockApi({
-      'POST /api/import/preview': json({
+      'POST /api/import/preview': (body: unknown) => json({
         file_issue: { code: 'missing_column', column: 'game_title' },
-        headers: [{ header: 'Jogo', column: null }],
+        headers: String(body).startsWith('game_title')
+          ? [
+              { header: 'game_title', column: 'game_title' },
+              { header: 'ignored 2', column: null },
+            ]
+          : [
+              { header: 'Jogo', column: null },
+              { header: 'Nota', column: null },
+            ],
         delimiter: ',',
         summary: summary({ rows: 0, new_games: 0, new_releases: 0, new_copies: 0 }),
         new_platforms: [],
@@ -165,12 +221,18 @@ describe('Import page', () => {
     });
     renderAt('/import');
 
-    await chooseFile('Jogo\nZelda\n');
+    await chooseFile('Jogo,Nota\nZelda,5\n');
     expect(await screen.findByTestId('file-issue')).toHaveTextContent('The file needs a game_title column.');
-    fireEvent.click(screen.getByRole('combobox', { name: 'Read Jogo as' }));
-    fireEvent.click(await screen.findByRole('option', { name: 'game_title', hidden: true }));
+    const jogo = screen.getByRole('combobox', { name: 'Read Jogo as' });
+    fireEvent.click(jogo);
+    const options = await waitFor(() => {
+      const list = document.getElementById(jogo.getAttribute('aria-controls') ?? '');
+      expect(list).not.toBeNull();
+      return list as HTMLElement;
+    });
+    fireEvent.click(within(options).getByRole('option', { name: 'game_title', hidden: true }));
     await waitFor(() => expect(calls.filter((c) => c.path === '/api/import/preview')).toHaveLength(2));
-    expect(calls.filter((c) => c.path === '/api/import/preview')[1]?.body).toBe('game_title\nZelda\n');
+    expect(calls.filter((c) => c.path === '/api/import/preview')[1]?.body).toBe('game_title,ignored 2\nZelda,5\n');
   });
 
   it('keeps the confirm button off when nothing changes', async () => {
