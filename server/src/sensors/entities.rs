@@ -218,13 +218,9 @@ fn people(snapshot: &Snapshot) -> Vec<Person<'_>> {
     people
 }
 
-/// Lowercase ASCII letters and digits joined by single underscores.
+/// The name as a slug, accents dropped, with underscores.
 fn slug(name: &str) -> String {
-    name.to_ascii_lowercase()
-        .split(|c: char| !c.is_ascii_alphanumeric())
-        .filter(|part| !part.is_empty())
-        .collect::<Vec<_>>()
-        .join("_")
+    crate::slug::slugify(name).replace('-', "_")
 }
 
 /// The household's entities, then each person's.
@@ -389,7 +385,7 @@ mod tests {
         let backlog = &entities[7];
         assert_eq!(backlog.key, "person_0123abcdef_backlog");
         assert_eq!(backlog.unique_id(), "memory_card_person_0123abcdef_backlog");
-        assert_eq!(backlog.entity_id(), "sensor.memory_card_ana_l_cia_backlog");
+        assert_eq!(backlog.entity_id(), "sensor.memory_card_ana_lucia_backlog");
         assert_eq!(backlog.name, "Ana Lúcia backlog");
         assert_eq!(
             backlog.person,
