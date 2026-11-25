@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT g.title, c.created_at AS added_at, p.name AS platform\n             FROM copies c\n             JOIN releases r ON r.id = c.release_id\n             JOIN games g ON g.id = r.game_id\n             JOIN platforms p ON p.id = r.platform_id\n            WHERE c.status = 'owned'\n            ORDER BY c.created_at DESC, c.id DESC\n            LIMIT 1",
+  "query": "SELECT g.title, COALESCE(c.owned_at, c.created_at) AS \"added_at!: String\", p.name AS platform\n             FROM copies c\n             JOIN releases r ON r.id = c.release_id\n             JOIN games g ON g.id = r.game_id\n             JOIN platforms p ON p.id = r.platform_id\n            WHERE c.status = 'owned'\n            ORDER BY c.owned_at DESC, c.id DESC\n            LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -15,15 +15,10 @@
         }
       },
       {
-        "name": "added_at",
+        "name": "added_at!: String",
         "ordinal": 1,
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "copies",
-            "name": "created_at"
-          }
-        }
+        "origin": "Expression"
       },
       {
         "name": "platform",
@@ -46,5 +41,5 @@
       false
     ]
   },
-  "hash": "09b274d60e60b4970c263b60401bd52e302bca2519be34a99c931349cd7f5d02"
+  "hash": "fb787c362ecc3da6e8f0f673b05b19f4b72f6a6898ffa9ba9455d1a058df79ce"
 }

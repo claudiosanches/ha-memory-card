@@ -99,6 +99,32 @@ async fn sensors_count_owned_copies_and_name_the_latest_games() {
     let pick = sensors::snapshot(&app.pool).await.unwrap().pick.unwrap();
     assert_eq!(pick.title, "Tetris", "the only owned backlog game");
     assert_eq!(pick.platforms, ["PlayStation 4", "Nintendo Switch"]);
+
+    // Got it on the wishlist adds the copy then, not when it was wished for.
+    sqlx::query(
+        "UPDATE copies SET owned_at = '2026-01-01T00:00:00.000Z' WHERE owned_at IS NOT NULL",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
+    let silksong = game_id(&app, "Silksong").await;
+    let (_, detail) = app
+        .json("GET", &format!("/api/games/{silksong}"), None)
+        .await;
+    let wanted = detail["releases"][0]["copies"][0]["id"].as_i64().unwrap();
+    let got =
+        json!({"status": "owned", "platform_id": switch, "region": "ww", "format": "physical"});
+    let (status, body) = app
+        .json("PUT", &format!("/api/copies/{wanted}"), Some(got))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let last_added = sensors::snapshot(&app.pool)
+        .await
+        .unwrap()
+        .last_added
+        .unwrap();
+    assert_eq!(last_added.title, "Silksong");
+    assert!(last_added.added_at.as_str() > "2026-01-01T00:00:00.000Z");
 }
 
 #[tokio::test]

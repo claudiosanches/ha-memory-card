@@ -109,13 +109,13 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
     .await?;
 
     let last_added = sqlx::query!(
-        r#"SELECT g.title, c.created_at AS added_at, p.name AS platform
+        r#"SELECT g.title, COALESCE(c.owned_at, c.created_at) AS "added_at!: String", p.name AS platform
              FROM copies c
              JOIN releases r ON r.id = c.release_id
              JOIN games g ON g.id = r.game_id
              JOIN platforms p ON p.id = r.platform_id
             WHERE c.status = 'owned'
-            ORDER BY c.created_at DESC, c.id DESC
+            ORDER BY c.owned_at DESC, c.id DESC
             LIMIT 1"#
     )
     .fetch_optional(pool)

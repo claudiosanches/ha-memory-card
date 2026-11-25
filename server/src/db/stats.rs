@@ -300,11 +300,11 @@ pub async fn get(pool: &SqlitePool, person: &str) -> sqlx::Result<Stats> {
 
     let added_by_month = sqlx::query_as!(
         PeriodCount,
-        r#"SELECT substr(COALESCE(purchased_on, created_at), 1, 7) AS "period!: String",
+        r#"SELECT substr(COALESCE(purchased_on, owned_at, created_at), 1, 7) AS "period!: String",
                   COUNT(*) AS "copies!: i64"
            FROM copies
            WHERE status = 'owned' AND bundle_id IS NULL
-             AND COALESCE(purchased_on, created_at) >= date('now', 'start of month', '-11 months')
+             AND COALESCE(purchased_on, owned_at, created_at) >= date('now', 'start of month', '-11 months')
            GROUP BY 1 ORDER BY 1"#
     )
     .fetch_all(pool)
@@ -312,7 +312,7 @@ pub async fn get(pool: &SqlitePool, person: &str) -> sqlx::Result<Stats> {
 
     let added_by_year = sqlx::query_as!(
         PeriodCount,
-        r#"SELECT substr(COALESCE(purchased_on, created_at), 1, 4) AS "period!: String",
+        r#"SELECT substr(COALESCE(purchased_on, owned_at, created_at), 1, 4) AS "period!: String",
                   COUNT(*) AS "copies!: i64"
            FROM copies
            WHERE status = 'owned' AND bundle_id IS NULL

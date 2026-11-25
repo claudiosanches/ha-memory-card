@@ -352,7 +352,7 @@ The household's:
 | `sensor.memory_card_copies` | Owned copies | |
 | `sensor.memory_card_wishlist` | Copies on the wishlist | |
 | `sensor.memory_card_playing` | Owned games someone is playing | `games`: up to 50 titles, the latest played first |
-| `sensor.memory_card_last_added` | Title of the game whose owned copy was added last | `added_at`, `platform` |
+| `sensor.memory_card_last_added` | Title of the game whose owned copy was added last. A wishlist copy counts from when you mark it Got it. | `added_at`, `platform` |
 | `sensor.memory_card_pick` | Title of the latest random pick, from Memory Card or Home Assistant | `suggested_at`, `platforms` of its owned copies, `person` whose pick it is |
 
 Each person with a play status or a session gets their own sensors, up to

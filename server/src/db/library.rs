@@ -489,7 +489,7 @@ pub fn copies_query(filter: &LibraryFilter) -> Sql {
     push_game_filters(&mut qb, filter);
     qb.push(match filter.sort.unwrap_or_default() {
         LibrarySort::Title => " ORDER BY g.sort_title, g.id, p.sort_order, r.region, c.id",
-        LibrarySort::Added => " ORDER BY c.created_at DESC, c.id DESC",
+        LibrarySort::Added => " ORDER BY COALESCE(c.owned_at, c.created_at) DESC, c.id DESC",
         LibrarySort::Played => {
             " ORDER BY last_played_at DESC NULLS LAST, g.sort_title, g.id,
                        p.sort_order, c.id"
