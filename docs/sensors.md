@@ -76,6 +76,28 @@ data:
   payload: '{"person": "<user ID>", "device": ["switch"], "min_local_players": 2}'
 ```
 
+A dashboard button can roll for one person. Add a **Button** card, set its
+tap behavior to **Perform action**, pick **MQTT: Publish**, and fill in the
+topic and payload. Each person copies their user ID from Memory Card's
+**Settings**, as in [Name the managers](getting-started.md#name-the-managers).
+
+![A Button card that rolls a pick for one person over MQTT](images/mqtt-roll-button.webp)
+
+The same card in YAML:
+
+```yaml
+type: button
+name: Roll a pick for Ana
+icon: mdi:dice-5
+show_state: false
+tap_action:
+  action: perform-action
+  perform_action: mqtt.publish
+  data:
+    topic: memory_card/pick/roll
+    payload: '{"person": "<user ID>"}'
+```
+
 The filters match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs) and
 `min_local_players`. Each platform, device and store shows its slug in its
