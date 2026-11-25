@@ -47,20 +47,17 @@ pub async fn next(
     limit: i64,
 ) -> Result<Vec<MatchGroup>, MatchError> {
     let games = db::to_review(pool, after, limit).await?;
-    let linked = db::linked(pool).await?;
 
     let mut groups = Vec::with_capacity(games.len());
     for (game_id, title) in games {
         let platforms = db::platform_names(pool, game_id).await?;
-        let mut candidates: Vec<MatchCandidate> = igdb
-            .search(&title)
-            .await?
+        let hits = igdb.search(&title).await?;
+        let ids: Vec<i64> = hits.iter().map(|hit| hit.igdb_id).collect();
+        let linked: HashMap<i64, i64> = db::games_for(pool, &ids).await?.into_iter().collect();
+        let mut candidates: Vec<MatchCandidate> = hits
             .into_iter()
             .map(|mut hit| {
-                hit.game_id = linked
-                    .iter()
-                    .find(|(_, igdb_id)| *igdb_id == hit.igdb_id)
-                    .map(|(id, _)| *id);
+                hit.game_id = linked.get(&hit.igdb_id).copied();
                 MatchCandidate {
                     score: similarity(&title, &hit.name),
                     hit,
