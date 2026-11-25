@@ -136,6 +136,27 @@ describe('Import page', () => {
     expect(screen.getByRole('button', { name: en.import.confirm })).toBeDisabled();
   });
 
+  it('imports a file that only changes a release title', async () => {
+    mockApi({
+      'POST /api/import/preview': {
+        file_issue: null,
+        headers: [],
+        delimiter: ',',
+        summary: summary({ new_games: 0, new_releases: 0, new_copies: 0, unchanged_copies: 1, updated_releases: 1 }),
+        new_platforms: [],
+        new_devices: [],
+        new_stores: [],
+        new_labels: [],
+        rows: [],
+      } satisfies Preview,
+    });
+    renderAt('/import');
+
+    await chooseFile(CSV);
+    expect(await screen.findByText(en.import.summary.updated_releases)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: en.import.confirm })).toBeEnabled();
+  });
+
   it('refuses a file larger than the server reads without reading it', async () => {
     const calls = mockApi({});
     renderAt('/import');

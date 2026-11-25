@@ -50,6 +50,7 @@ const COLUMNS = [
 const SUMMARY_KEYS = [
   'new_games',
   'updated_games',
+  'updated_releases',
   'new_copies',
   'updated_copies',
   'unchanged_copies',
