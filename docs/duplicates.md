@@ -5,6 +5,8 @@ with every copy and what sets them apart.
 
 ![Games owned twice](images/duplicates.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 The tabs at the top narrow the list by how the copies differ:
 
 - **Same release:** two copies of the same release, such as a spare.

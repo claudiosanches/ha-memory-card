@@ -39,6 +39,8 @@ an IGDB link with the closest names IGDB has, each with how close it is.
 
 ![Close matches from IGDB](images/close-matches.webp)
 
+_Game titles belong to their respective owners._
+
 For each game:
 
 - choose the right IGDB game and select **Link**;

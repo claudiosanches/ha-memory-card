@@ -5,6 +5,8 @@ to open its [game page](game.md).
 
 ![The library as a grid of covers](images/library.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ## Views
 
 The buttons to the right of the sort pick how the library looks:
@@ -18,6 +20,8 @@ The buttons to the right of the sort pick how the library looks:
 The view is saved in that browser.
 
 ![The library as a table of copies](images/library-copies.webp)
+
+_Game titles and cover art belong to their respective owners._
 
 ## Search, filters and sorting
 
@@ -57,9 +61,13 @@ game**:
 
 ![Adding a game with matches from IGDB](images/add-game.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ## On a phone
 
 On a phone the sidebar folds into the menu at the top left, and every page
 stacks into one column.
 
 ![The library and a game page on a phone](images/phone.webp)
+
+_Game titles and cover art belong to their respective owners._

@@ -44,7 +44,11 @@ features:
 
 ![The library, with covers from IGDB](images/library.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ![The library and a game page on a phone](images/phone.webp)
+
+_Game titles and cover art belong to their respective owners._
 
 ## Install
 

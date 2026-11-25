@@ -6,6 +6,8 @@ Assistant app and opens from the sidebar.
 
 ![The library, with covers from IGDB](images/library.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 The app's **Documentation** tab in Home Assistant is the short reference for
 its options. These pages go through everything step by step.
 

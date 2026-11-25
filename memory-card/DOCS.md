@@ -9,6 +9,8 @@ goes through every page step by step, with screenshots and the themes.
 
 ![The library, with covers from IGDB](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/library.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ## Installation
 
 1. In Home Assistant, go to **Settings > Apps > Install app**.
@@ -123,6 +125,8 @@ one.
 
 ![A game page with its progress, details and labels](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/game.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 The library shows your games as a grid of covers, a list or a table. The
 filters narrow it by platform, your play status, label, genre, game mode, device,
 store, region, format and players on the same screen, and they stay in the
@@ -147,6 +151,8 @@ never replaces an uploaded cover. Removing it brings back IGDB's.
 ## Backlog and play statuses
 
 ![The backlog with a random pick](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/backlog.webp)
+
+_Game titles and cover art belong to their respective owners._
 
 **Backlog** in the sidebar shows what you are playing, what is on hold and
 the games waiting for you, with how many you have cleared. It is yours:
@@ -295,6 +301,8 @@ names for each game, to link with a click or mark as not on IGDB.
 
 ![Stats in the dark theme](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/stats.webp)
 
+_Game titles belong to their respective owners._
+
 **Stats** in the sidebar sums up the collection and your own play: how many
 games, copies and wishlist copies the house has, your backlog progress and
 your games by play status, your most played games and a calendar of your
@@ -302,6 +310,8 @@ play, copies by platform and by store, and what was paid next to what the
 copies are worth now.
 
 ![The Household page comparing everyone's play this month](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/docs/images/household.webp)
+
+_Game titles and cover art belong to their respective owners._
 
 **Household** in the sidebar puts everyone's play side by side for this
 month, this year or all time: play time, sessions, days played, games

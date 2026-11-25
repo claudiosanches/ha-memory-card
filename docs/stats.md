@@ -5,6 +5,8 @@ at the top count the household's games, copies and wishlist.
 
 ![Stats in the dark version of the Default theme](images/stats.webp)
 
+_Game titles belong to their respective owners._
+
 ## Your backlog and play
 
 This group is yours alone:

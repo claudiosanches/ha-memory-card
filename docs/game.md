@@ -6,6 +6,8 @@ copies.
 
 ![A game page with your progress and the household's](images/game.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ## Header
 
 The header shows the cover, the title and, for a game linked to IGDB, its

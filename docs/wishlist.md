@@ -5,6 +5,8 @@ its platform, region, format, where to buy it and the expected price.
 
 ![The wishlist](images/wishlist.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ## Add a copy you want
 
 Managers add to the wishlist in two ways:

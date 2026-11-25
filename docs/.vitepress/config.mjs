@@ -63,6 +63,10 @@ export default {
     },
     socialLinks: [{ icon: 'github', link: 'https://github.com/claudiosanches/ha-memory-card' }],
     search: { provider: 'local' },
-    footer: { message: 'Released under the Apache License 2.0.' },
+    footer: {
+      message: 'Released under the Apache License 2.0.',
+      copyright:
+        'Game titles, cover art and other trademarks belong to their respective owners. Memory Card is not affiliated with or endorsed by them.',
+    },
   },
 };

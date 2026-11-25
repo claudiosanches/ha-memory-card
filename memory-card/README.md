@@ -13,6 +13,8 @@ Track your video game collection across consoles.
 
 ![The library in Memory Card][library]
 
+_Game titles and cover art belong to their respective owners._
+
 ## About
 
 Memory Card keeps track of the video games you own, physical or digital, on
@@ -33,6 +35,8 @@ login. Managers you name change the collection; everyone else browses it.
 - English, Spanish and Brazilian Portuguese.
 
 ![Memory Card on a phone][phone]
+
+_Game titles and cover art belong to their respective owners._
 
 The **Documentation** tab explains the setup and the options. The
 [full guide](https://github.com/claudiosanches/ha-memory-card/tree/main/docs)

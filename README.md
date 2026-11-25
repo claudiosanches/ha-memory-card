@@ -13,6 +13,8 @@ game, and every copy you have, physical or digital.
 
 ![The library in Memory Card](docs/images/library.webp)
 
+_Game titles and cover art belong to their respective owners._
+
 ## Install
 
 Memory Card needs Home Assistant 2026.11 or newer.
@@ -41,6 +43,9 @@ step. Questions and bug reports go to
 - Interface icons from [Tabler Icons](https://tabler.io/icons) (MIT).
 - Game metadata and covers from [IGDB](https://www.igdb.com), when IGDB credentials are set.
 - Product names for scanned barcodes from [UPCitemdb](https://www.upcitemdb.com).
+
+Game titles, cover art and other trademarks shown in the screenshots belong to
+their respective owners. Memory Card is not affiliated with or endorsed by them.
 
 ## License
 

@@ -14,6 +14,8 @@ The first five keep to quiet colors and let the covers stand out. The rest
 give the whole app a style of its own. Each preview shows the library in light
 and dark.
 
+_Game titles and cover art in the previews belong to their respective owners._
+
 ## Default
 
 Cool slate with teal accents, blue in the dark.
