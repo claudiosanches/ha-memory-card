@@ -119,6 +119,16 @@ async fn moving_and_deleting_copies() {
     )
     .await;
     let copy = detail["releases"][0]["copies"][0]["id"].as_i64().unwrap();
+    let ps4_release = detail["releases"][0]["id"].as_i64().unwrap();
+    let (status, body) = app
+        .put_bytes(&format!("/api/releases/{ps4_release}/cover"), common::PNG)
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let ps4_covers = app
+        .config
+        .covers_dir()
+        .join(format!("release-{ps4_release}"));
+    assert!(ps4_covers.exists());
 
     let (status, detail) = app
         .json(
@@ -129,33 +139,73 @@ async fn moving_and_deleting_copies() {
         .await;
     assert_eq!(status, StatusCode::OK, "{detail}");
     let releases = detail["releases"].as_array().unwrap();
-    assert_eq!(releases.len(), 2, "the PS4 release stays, empty");
-    let ps5_release = releases.iter().find(|r| r["platform_id"] == ps5).unwrap();
-    assert_eq!(ps5_release["copies"][0]["notes"], "Upgrade");
+    assert_eq!(releases.len(), 1, "the emptied PS4 release goes");
+    assert_eq!(releases[0]["platform_id"], ps5);
+    assert_eq!(releases[0]["copies"][0]["notes"], "Upgrade");
+    assert!(!ps4_covers.exists(), "with its cover");
 
     let (status, detail) = app
         .json("DELETE", &format!("/api/copies/{copy}"), None)
         .await;
     assert_eq!(status, StatusCode::OK);
-    assert!(
-        detail["releases"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .all(|r| r["copies"] == json!([]))
-    );
+    assert_eq!(detail["releases"], json!([]), "the game stays");
 
-    let release = releases[0]["id"].as_i64().unwrap();
+    let detail = add_copy(
+        &app,
+        game,
+        json!({"platform_id": ps4, "region": "eu", "format": "physical"}),
+    )
+    .await;
+    let release = detail["releases"][0]["id"].as_i64().unwrap();
     let (status, detail) = app
         .json("DELETE", &format!("/api/releases/{release}"), None)
         .await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(detail["releases"].as_array().unwrap().len(), 1);
+    assert_eq!(detail["releases"], json!([]));
 
+    add_copy(
+        &app,
+        game,
+        json!({"platform_id": ps4, "region": "eu", "format": "physical"}),
+    )
+    .await;
     let (status, _) = app
         .json("DELETE", &format!("/api/games/{game}"), None)
         .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM releases").await, 0);
+}
+
+#[tokio::test]
+async fn deleting_a_bundle_copy_drops_its_contents_releases() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let bundle = new_game(&app, "Super Mario 3D All-Stars").await;
+    let sunshine = new_game(&app, "Super Mario Sunshine").await;
+    let detail = add_copy(
+        &app,
+        bundle,
+        json!({"platform_id": switch, "region": "eu", "format": "physical"}),
+    )
+    .await;
+    let bundle_copy = detail["releases"][0]["copies"][0]["id"].as_i64().unwrap();
+    let (status, body) = app
+        .json(
+            "POST",
+            &format!("/api/copies/{bundle_copy}/contents"),
+            Some(json!({"game_id": sunshine})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+
+    let (status, _) = app
+        .json("DELETE", &format!("/api/copies/{bundle_copy}"), None)
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let (_, detail) = app
+        .json("GET", &format!("/api/games/{sunshine}"), None)
+        .await;
+    assert_eq!(detail["releases"], json!([]));
     assert_eq!(app.scalar("SELECT COUNT(*) FROM releases").await, 0);
 }
 

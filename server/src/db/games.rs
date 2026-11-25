@@ -567,21 +567,58 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &GameFields, by: &str) -
     Ok(())
 }
 
-/// Deletes a game with its releases and copies, and returns the release ids.
-pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<Vec<i64>> {
+/// Deletes a game with its releases and copies, and returns every release
+/// deleted, the emptied ones of other games included.
+pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<Vec<DroppedRelease>> {
     let mut tx = crate::db::write_tx(pool).await?;
-    let releases = sqlx::query_scalar!(
+    let mut releases: Vec<DroppedRelease> = sqlx::query_scalar!(
         r#"DELETE FROM releases WHERE game_id = ? RETURNING id AS "id!""#,
         id
     )
     .fetch_all(&mut *tx)
-    .await?;
+    .await?
+    .into_iter()
+    .map(|release| DroppedRelease {
+        game_id: id,
+        release_id: release,
+    })
+    .collect();
     let result = sqlx::query!("DELETE FROM games WHERE id = ?", id)
         .execute(&mut *tx)
         .await?;
     found(result.rows_affected())?;
+    releases.extend(drop_empty_releases(&mut tx).await?);
     tx.commit().await?;
     Ok(releases)
+}
+
+/// A release deleted with its game or because no copy was left in it, for
+/// removing its cover files.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DroppedRelease {
+    pub game_id: i64,
+    pub release_id: i64,
+}
+
+/// Deletes every release left with no copies. Runs after each write that
+/// moves or deletes copies; a deleted bundle copy takes its contents, in other
+/// games' releases, with it.
+pub(crate) async fn drop_empty_releases(
+    conn: &mut SqliteConnection,
+) -> sqlx::Result<Vec<DroppedRelease>> {
+    Ok(sqlx::query!(
+        r#"DELETE FROM releases
+           WHERE NOT EXISTS (SELECT 1 FROM copies WHERE copies.release_id = releases.id)
+           RETURNING game_id, id AS "id!""#
+    )
+    .fetch_all(conn)
+    .await?
+    .into_iter()
+    .map(|row| DroppedRelease {
+        game_id: row.game_id,
+        release_id: row.id,
+    })
+    .collect())
 }
 
 /// Adds a copy, creating its release when the game has none for that
@@ -642,7 +679,7 @@ pub async fn update_copy(
     copy_id: i64,
     fields: &CopyFields,
     by: &str,
-) -> ApiResult<i64> {
+) -> ApiResult<(i64, Vec<DroppedRelease>)> {
     let mut tx = crate::db::write_tx(pool).await?;
     let game_id = copy_game(&mut tx, copy_id).await?;
     let in_bundle = sqlx::query_scalar!("SELECT bundle_id FROM copies WHERE id = ?", copy_id)
@@ -662,7 +699,7 @@ pub async fn update_copy(
         .execute(&mut *tx)
         .await?;
         tx.commit().await?;
-        return Ok(game_id);
+        return Ok((game_id, Vec::new()));
     }
     check_references(&mut tx, fields).await?;
     let release_id = release_for(&mut tx, game_id, fields).await?;
@@ -696,8 +733,9 @@ pub async fn update_copy(
     .execute(&mut *tx)
     .await?;
     sync_contents(&mut tx, copy_id).await?;
+    let dropped = drop_empty_releases(&mut tx).await?;
     tx.commit().await?;
-    Ok(game_id)
+    Ok((game_id, dropped))
 }
 
 /// Copies the bundle copy's shared fields onto its contents and moves them
@@ -796,14 +834,15 @@ pub async fn add_content(
 }
 
 /// Deletes a copy and returns its game id. The release stays.
-pub async fn delete_copy(pool: &SqlitePool, copy_id: i64) -> ApiResult<i64> {
+pub async fn delete_copy(pool: &SqlitePool, copy_id: i64) -> ApiResult<(i64, Vec<DroppedRelease>)> {
     let mut tx = crate::db::write_tx(pool).await?;
     let game_id = copy_game(&mut tx, copy_id).await?;
     sqlx::query!("DELETE FROM copies WHERE id = ?", copy_id)
         .execute(&mut *tx)
         .await?;
+    let dropped = drop_empty_releases(&mut tx).await?;
     tx.commit().await?;
-    Ok(game_id)
+    Ok((game_id, dropped))
 }
 
 /// Updates a release and returns its game id.
@@ -836,14 +875,21 @@ pub async fn update_release(
 }
 
 /// Deletes a release with its copies and returns its game id.
-pub async fn delete_release(pool: &SqlitePool, release_id: i64) -> ApiResult<i64> {
-    sqlx::query_scalar!(
+pub async fn delete_release(
+    pool: &SqlitePool,
+    release_id: i64,
+) -> ApiResult<(i64, Vec<DroppedRelease>)> {
+    let mut tx = crate::db::write_tx(pool).await?;
+    let game_id = sqlx::query_scalar!(
         "DELETE FROM releases WHERE id = ? RETURNING game_id",
         release_id
     )
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await?
-    .ok_or(ApiError::NotFound)
+    .ok_or(ApiError::NotFound)?;
+    let dropped = drop_empty_releases(&mut tx).await?;
+    tx.commit().await?;
+    Ok((game_id, dropped))
 }
 
 fn money_columns(price: Option<&Price>) -> (Option<i64>, Option<&str>) {

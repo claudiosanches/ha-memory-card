@@ -95,3 +95,6 @@ edit it and a **⋯** menu:
   [NFC tags](nfc-tags.md).
 - **Delete copy** removes it. Deleting the last copy asks whether to delete
   the game too.
+
+A release goes away with its last copy, also when that copy moves to another
+platform, region or product code.

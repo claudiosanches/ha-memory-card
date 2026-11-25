@@ -11,7 +11,8 @@ use crate::AppState;
 use crate::access::Actor;
 use crate::covers::{self, Owner};
 use crate::db::games::{
-    self, CopyFields, GameDetail, GameFields, GameMode, Genre, PlayerCounts, Price, ReleaseFields,
+    self, CopyFields, DroppedRelease, GameDetail, GameFields, GameMode, Genre, PlayerCounts, Price,
+    ReleaseFields,
 };
 use crate::db::library::{self, CopyRow, GameSummary, LibraryFilter};
 use crate::db::{labels, progress};
@@ -401,14 +402,21 @@ pub async fn delete(
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<StatusCode> {
     let releases = games::delete(&state.db, id).await?;
-    let dir = state.config.covers_dir();
-    let _cover = covers::lock(id).await;
-    covers::keep_only(&dir, Owner::Game(id), None).await;
-    for release in releases {
-        covers::keep_only(&dir, Owner::Release(release), None).await;
-    }
+    let cover = covers::lock(id).await;
+    covers::keep_only(&state.config.covers_dir(), Owner::Game(id), None).await;
+    drop(cover);
+    drop_covers(&state, &releases).await;
     super::photos::prune(&state).await;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Removes the cover files of releases the database no longer has.
+pub(crate) async fn drop_covers(state: &AppState, releases: &[DroppedRelease]) {
+    let dir = state.config.covers_dir();
+    for release in releases {
+        let _cover = covers::lock(release.game_id).await;
+        covers::keep_only(&dir, Owner::Release(release.release_id), None).await;
+    }
 }
 
 #[utoipa::path(
@@ -480,7 +488,8 @@ pub async fn update_copy(
     ApiPath(id): ApiPath<i64>,
     ApiJson(input): ApiJson<CopyInput>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = games::update_copy(&state.db, id, &input.validate()?, &by).await?;
+    let (game_id, dropped) = games::update_copy(&state.db, id, &input.validate()?, &by).await?;
+    drop_covers(&state, &dropped).await;
     Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
 
@@ -488,7 +497,7 @@ pub async fn update_copy(
     delete, path = "/copies/{id}", tag = "games", operation_id = "deleteCopy",
     params(("id" = i64, Path)),
     responses(
-        (status = OK, description = "The copy's game; the release stays", body = GameDetail),
+        (status = OK, description = "The copy's game; a release left with no copies is deleted", body = GameDetail),
         (status = NOT_FOUND, body = ErrorBody),
     )
 )]
@@ -497,7 +506,8 @@ pub async fn delete_copy(
     Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = games::delete_copy(&state.db, id).await?;
+    let (game_id, dropped) = games::delete_copy(&state.db, id).await?;
+    drop_covers(&state, &dropped).await;
     super::photos::prune(&state).await;
     Ok(Json(games::get(&state.db, game_id, &by).await?))
 }
@@ -536,10 +546,12 @@ pub async fn delete_release(
     Actor(by): Actor,
     ApiPath(id): ApiPath<i64>,
 ) -> ApiResult<Json<GameDetail>> {
-    let game_id = games::delete_release(&state.db, id).await?;
-    let cover = covers::lock(game_id).await;
-    covers::keep_only(&state.config.covers_dir(), Owner::Release(id), None).await;
-    drop(cover);
+    let (game_id, mut dropped) = games::delete_release(&state.db, id).await?;
+    dropped.push(DroppedRelease {
+        game_id,
+        release_id: id,
+    });
+    drop_covers(&state, &dropped).await;
     super::photos::prune(&state).await;
     Ok(Json(games::get(&state.db, game_id, &by).await?))
 }

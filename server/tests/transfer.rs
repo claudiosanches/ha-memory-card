@@ -777,3 +777,27 @@ async fn a_game_gets_at_most_50_labels_across_rows_and_imports() {
         "counts the labels the game has"
     );
 }
+
+#[tokio::test]
+async fn a_copy_an_import_moves_leaves_no_empty_release() {
+    let app = TestApp::new().await;
+    let (status, body) = app
+        .post_csv(
+            "/api/import",
+            "game_title,platform,region,format\nCeleste,switch,eu,digital\n",
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let copy: i64 = app.scalar("SELECT id FROM copies").await;
+
+    let moved =
+        format!("copy_id,game_title,platform,region,format\n{copy},Celeste,switch,na,digital\n");
+    let (status, body) = app.post_csv("/api/import", &moved).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(app.scalar("SELECT COUNT(*) FROM releases").await, 1);
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM releases WHERE region = 'na'")
+            .await,
+        1
+    );
+}

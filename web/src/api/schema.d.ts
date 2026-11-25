@@ -1983,7 +1983,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The copy's game; the release stays */
+            /** @description The copy's game; a release left with no copies is deleted */
             200: {
                 headers: {
                     [name: string]: unknown;

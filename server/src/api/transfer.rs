@@ -248,7 +248,9 @@ pub async fn run(
         field: None,
     })?;
 
-    let plan = transfer::import(&state.db, &by, |snapshot| plan(&rows, snapshot)).await?;
+    let (plan, dropped) =
+        transfer::import(&state.db, &by, |snapshot| plan(&rows, snapshot)).await?;
+    super::games::drop_covers(&state, &dropped).await;
 
     let summary = summarize(&plan);
     tracing::info!(
