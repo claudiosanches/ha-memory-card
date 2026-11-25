@@ -32,7 +32,7 @@ pub async fn apply(
     game_id: i64,
     data: &GameData,
     overwrite: bool,
-    expected: Expected,
+    expected: Expected<'_>,
 ) -> ApiResult<()> {
     let _cover = covers::lock(game_id).await;
     // Checked before downloading covers; the unique index still decides.
@@ -104,17 +104,29 @@ pub async fn apply(
             })
             .collect(),
     };
-    let changed = match db::write(pool, game_id, &update, overwrite, &covers, expected).await {
-        Ok(changed) => changed,
-        Err(err @ ApiError::Conflict("igdb_changed")) => {
-            // The covers just downloaded were never stored.
-            clean_up(covers_dir, db::stored_covers(pool, game_id).await?).await;
-            return Err(err);
+    let written = db::write(pool, game_id, &update, overwrite, &covers, expected).await;
+    finish(pool, covers_dir, game_id, written).await
+}
+
+/// Clears out the covers a write replaced, or all it downloaded when it was
+/// skipped because the game changed.
+async fn finish(
+    pool: &Pool,
+    covers_dir: &Path,
+    game_id: i64,
+    written: ApiResult<Vec<(Owner, Option<String>)>>,
+) -> ApiResult<()> {
+    match written {
+        Ok(changed) => {
+            clean_up(covers_dir, changed).await;
+            Ok(())
         }
-        Err(err) => return Err(err),
-    };
-    clean_up(covers_dir, changed).await;
-    Ok(())
+        Err(err @ ApiError::Conflict("igdb_changed")) => {
+            clean_up(covers_dir, db::stored_covers(pool, game_id).await?).await;
+            Err(err)
+        }
+        Err(err) => Err(err),
+    }
 }
 
 /// Downloads and stores the game's IGDB covers without touching its other data.
@@ -124,13 +136,13 @@ pub async fn refresh_covers(
     igdb: &Igdb,
     game_id: i64,
     data: &GameData,
+    expected: Expected<'_>,
 ) -> ApiResult<()> {
     let _cover = covers::lock(game_id).await;
     let releases = db::releases(pool, game_id).await?;
     let covers = download_covers(pool, covers_dir, igdb, game_id, data, &releases).await?;
-    let changed = db::write_covers(pool, game_id, &covers).await?;
-    clean_up(covers_dir, changed).await;
-    Ok(())
+    let written = db::write_covers(pool, game_id, &covers, expected).await;
+    finish(pool, covers_dir, game_id, written).await
 }
 
 /// Downloads the covers; uploads are skipped.

@@ -497,7 +497,7 @@ async fn a_stale_sync_leaves_a_game_relinked_meanwhile() {
         game,
         &data,
         false,
-        Expected::Link(Some(1)),
+        Expected::Link(1),
     )
     .await;
     assert!(
@@ -516,6 +516,76 @@ async fn a_stale_sync_leaves_a_game_relinked_meanwhile() {
         .map(|e| e.unwrap().file_name().into_string().unwrap())
         .collect();
     assert_eq!(files, ["other.jpg"]);
+}
+
+#[tokio::test]
+async fn a_stale_title_match_or_cover_restore_changes_nothing() {
+    let app = with_igdb().await;
+    let game = app
+        .json(
+            "POST",
+            "/api/games",
+            Some(json!({"title": "super mario odyssey"})),
+        )
+        .await
+        .1["id"]
+        .as_i64()
+        .unwrap();
+    let data = serde_json::from_value(odyssey()).unwrap();
+    let igdb = app.state.igdb.as_ref().unwrap();
+    let covers_dir = app.config.covers_dir();
+
+    // Renamed by a manager after a sync listed it under its old title.
+    sqlx::query("UPDATE games SET title = 'Odyssey (Switch)' WHERE id = ?")
+        .bind(game)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let matched = memory_card::igdb::store::apply(
+        &app.pool,
+        &covers_dir,
+        igdb,
+        game,
+        &data,
+        false,
+        Expected::Unlinked("super mario odyssey"),
+    )
+    .await;
+    assert!(
+        matches!(matched, Err(ApiError::Conflict("igdb_changed"))),
+        "{matched:?}"
+    );
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM games WHERE igdb_id IS NOT NULL")
+            .await,
+        0
+    );
+
+    // Relinked by a manager while removing an upload brought back IGDB 1's.
+    sqlx::query("UPDATE games SET igdb_id = 99 WHERE id = ?")
+        .bind(game)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let restored = memory_card::igdb::store::refresh_covers(
+        &app.pool,
+        &covers_dir,
+        igdb,
+        game,
+        &data,
+        Expected::Link(1),
+    )
+    .await;
+    assert!(
+        matches!(restored, Err(ApiError::Conflict("igdb_changed"))),
+        "{restored:?}"
+    );
+    assert_eq!(
+        app.scalar("SELECT COUNT(*) FROM games WHERE cover_path IS NOT NULL")
+            .await,
+        0
+    );
+    assert!(!covers_dir.join(format!("game-{game}")).exists());
 }
 
 #[tokio::test]

@@ -21,12 +21,30 @@ pub async fn linked_elsewhere(pool: &SqlitePool, igdb_id: i64, game_id: i64) -> 
         .await
 }
 
-/// The IGDB link a write needs the game to still have. A sync lists its
-/// games before fetching them, and a manager may relink one meanwhile.
+/// What a write needs the game to still be. A sync lists its games before
+/// fetching them, and a manager may relink or rename one meanwhile.
 #[derive(Debug, Clone, Copy)]
-pub enum Expected {
+pub enum Expected<'a> {
+    /// Whatever it is now, for a manager's own link or refresh.
     Any,
-    Link(Option<i64>),
+    /// Linked to this IGDB id.
+    Link(i64),
+    /// Unlinked, with the title it was matched by.
+    Unlinked(&'a str),
+}
+
+/// ` AND ...` for the games that are still as `expected`.
+fn push_expected(sql: &mut Sql, expected: Expected<'_>) {
+    match expected {
+        Expected::Any => {}
+        Expected::Link(igdb_id) => {
+            sql.push(" AND igdb_id = ").push_bind(igdb_id);
+        }
+        Expected::Unlinked(title) => {
+            sql.push(" AND igdb_id IS NULL AND title = ")
+                .push_bind(title.to_owned());
+        }
+    }
 }
 
 /// A release, with what IGDB needs to fill it.
@@ -108,7 +126,7 @@ pub async fn write(
     update: &GameUpdate<'_>,
     overwrite: bool,
     covers: &Covers,
-    expected: Expected,
+    expected: Expected<'_>,
 ) -> ApiResult<Vec<(Owner, Option<String>)>> {
     let mut tx = write_tx(pool).await?;
     let counts = &update.counts;
@@ -141,9 +159,7 @@ pub async fn write(
         .push(NOW)
         .push(" WHERE id = ")
         .push_bind(game_id);
-    if let Expected::Link(link) = expected {
-        game.push(" AND igdb_id IS ").push_bind(link);
-    }
+    push_expected(&mut game, expected);
     let updated = game
         .build()
         .execute(&mut *tx)
@@ -152,7 +168,7 @@ pub async fn write(
     if updated.rows_affected() == 0 {
         return Err(match expected {
             Expected::Any => ApiError::NotFound,
-            Expected::Link(_) => ApiError::Conflict("igdb_changed"),
+            _ => ApiError::Conflict("igdb_changed"),
         });
     }
 
@@ -275,8 +291,20 @@ pub async fn write_covers(
     pool: &SqlitePool,
     game_id: i64,
     covers: &Covers,
-) -> sqlx::Result<Vec<(Owner, Option<String>)>> {
+    expected: Expected<'_>,
+) -> ApiResult<Vec<(Owner, Option<String>)>> {
     let mut tx = write_tx(pool).await?;
+    let mut still = Sql::new("SELECT EXISTS (SELECT 1 FROM games WHERE id = ");
+    still.push_bind(game_id);
+    push_expected(&mut still, expected);
+    still.push(")");
+    if !still
+        .build_query_scalar::<bool>()
+        .fetch_one(&mut *tx)
+        .await?
+    {
+        return Err(ApiError::Conflict("igdb_changed"));
+    }
     let changed = store_covers(&mut tx, game_id, covers).await?;
     tx.commit().await?;
     Ok(changed)

@@ -120,7 +120,7 @@ async fn run(state: &AppState, igdb: &Arc<Igdb>) -> sqlx::Result<()> {
                         *game_id,
                         data,
                         false,
-                        Expected::Link(Some(*igdb_id)),
+                        Expected::Link(*igdb_id),
                     )
                     .await
                 }
@@ -158,7 +158,7 @@ async fn match_title(state: &AppState, igdb: &Igdb, game_id: i64, title: &str) -
         game_id,
         &data,
         false,
-        Expected::Link(None),
+        Expected::Unlinked(title),
     )
     .await
     {

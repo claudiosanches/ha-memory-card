@@ -12,6 +12,7 @@ use crate::AppState;
 use crate::access::Actor;
 use crate::covers::{self, Owner};
 use crate::db::games::{self, GameDetail};
+use crate::db::igdb::Expected;
 use crate::error::{ApiError, ApiPath, ApiResult, ErrorBody};
 use crate::igdb::store;
 use crate::images;
@@ -167,14 +168,23 @@ async fn restore_igdb_covers(state: &AppState, game_id: i64) {
     let result = match igdb.games(&[igdb_id]).await {
         Ok(found) => match found.first() {
             Some(data) => {
-                store::refresh_covers(&state.db, &state.config.covers_dir(), &igdb, game_id, data)
-                    .await
+                store::refresh_covers(
+                    &state.db,
+                    &state.config.covers_dir(),
+                    &igdb,
+                    game_id,
+                    data,
+                    Expected::Link(igdb_id),
+                )
+                .await
             }
             None => return,
         },
         Err(err) => Err(err.into()),
     };
-    if let Err(err) = result {
-        tracing::warn!(game_id, error = %err, "could not restore the IGDB cover");
+    match result {
+        // Relinked meanwhile, which brought its own covers.
+        Ok(()) | Err(ApiError::Conflict("igdb_changed")) => {}
+        Err(err) => tracing::warn!(game_id, error = %err, "could not restore the IGDB cover"),
     }
 }
