@@ -253,7 +253,10 @@ pub async fn write(
         sql.push(", updated_at = ")
             .push(NOW)
             .push(" WHERE id = ")
-            .push_bind(release.id);
+            .push_bind(release.id)
+            // A release deleted meanwhile may have left its id to another game's.
+            .push(" AND game_id = ")
+            .push_bind(game_id);
         sql.build().execute(&mut *tx).await?;
     }
 
@@ -368,10 +371,11 @@ async fn store_covers(
         let result = sqlx::query(
             "UPDATE releases SET cover_path = ?1,
                 cover_source = CASE WHEN ?1 IS NULL THEN NULL ELSE 'igdb_localization' END
-             WHERE id = ?2 AND cover_source IS NOT 'upload'",
+             WHERE id = ?2 AND game_id = ?3 AND cover_source IS NOT 'upload'",
         )
         .bind(path)
         .bind(release_id)
+        .bind(game_id)
         .execute(&mut **tx)
         .await?;
         if result.rows_affected() > 0 {
