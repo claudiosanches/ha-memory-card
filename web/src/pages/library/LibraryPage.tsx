@@ -59,6 +59,12 @@ export function LibraryPage() {
   const [adding, setAdding] = useState(false);
   const [view, setView] = useLocalStorage<LibraryView>({ key: 'memory-card-library-view', defaultValue: 'grid' });
   const [text, setText] = useState(search.q ?? '');
+  // Back and forward change the search without typing; typing updates text first.
+  const [seenQ, setSeenQ] = useState(search.q);
+  if (search.q !== seenQ) {
+    setSeenQ(search.q);
+    if ((search.q ?? '') !== text.trim()) setText(search.q ?? '');
+  }
 
   const query = toApiQuery(search);
   const showCopies = view === 'copies';

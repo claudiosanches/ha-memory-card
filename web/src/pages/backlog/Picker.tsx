@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { useDevices, useGameDevices, usePlatforms } from '../../api/queries';
+import { useAccounts, useDevices, useGameDevices, usePlatforms } from '../../api/queries';
 import type { Suggestion } from '../../api/types';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
@@ -126,6 +126,7 @@ function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
   const { t } = useTranslation();
   const platforms = usePlatforms();
   const devices = useDevices();
+  const accounts = useAccounts();
   const { game, copy_ids } = suggestion;
 
   const where = new Set<string>();
@@ -134,7 +135,8 @@ function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
       if (!copy_ids.includes(copy.id)) continue;
       const platform = platforms.data?.find((p) => p.id === release.platform_id)?.name;
       const device = devices.data?.find((d) => d.id === copy.device_id)?.name;
-      where.add([platform, t(`format.${copy.format}`), device].filter(Boolean).join(t('common.separator')));
+      const account = accounts.data?.find((a) => a.id === copy.account_id)?.name;
+      where.add([platform, t(`format.${copy.format}`), device, account].filter(Boolean).join(t('common.separator')));
     }
   }
 

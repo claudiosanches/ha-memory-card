@@ -37,6 +37,8 @@ export function HardwarePage() {
     mutationFn: (id: number) => call(api.DELETE('/api/devices/{id}', { params: { path: { id } } })),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.devices });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.platforms });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.stats });
       setDeleting(null);
       notifySuccess(t('common.deleted'));
     },

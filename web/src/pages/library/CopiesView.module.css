@@ -2,9 +2,9 @@
 .table { width: 100%; table-layout: fixed; }
 .table td { vertical-align: middle; overflow-wrap: anywhere; }
 .coverColumn { width: 56px; }
-.platformColumn { width: 16%; }
-.shortColumn { width: 11%; }
-.whereColumn { width: 13%; }
+.platformColumn { width: 14%; }
+.shortColumn { width: 10%; }
+.whereColumn { width: 12%; }
 .title { color: inherit; font-weight: 600; text-decoration: none; }
 .title:hover { text-decoration: underline; }
 

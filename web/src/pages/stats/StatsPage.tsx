@@ -41,6 +41,10 @@ function lastMonths(now = new Date()): string[] {
 
 type Money = (amount: string, currency: string) => string;
 
+function hasHardware(stats: Stats) {
+  return stats.hardware.owned > 0 || stats.hardware.wanted > 0;
+}
+
 export function StatsPage() {
   const { t, i18n } = useTranslation();
   const stats = useStats();
@@ -52,7 +56,7 @@ export function StatsPage() {
         <Loader size="sm" />
       ) : stats.isError ? (
         <Text c="red">{errorMessage(t, stats.error)}</Text>
-      ) : stats.data.copies === 0 && stats.data.wishlist === 0 ? (
+      ) : stats.data.copies === 0 && stats.data.wishlist === 0 && !hasHardware(stats.data) ? (
         <Text c="dimmed">{t('stats.empty')}</Text>
       ) : (
         <StatsView stats={stats.data} locale={i18n.language} />

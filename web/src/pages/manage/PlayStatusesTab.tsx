@@ -65,6 +65,7 @@ export function PlayStatusesTab() {
   });
 
   if (statuses.isPending) return <Loader size="sm" />;
+  if (statuses.error) return <Text c="red">{errorMessage(t, statuses.error)}</Text>;
 
   const list =
     dropped?.base === statuses.list

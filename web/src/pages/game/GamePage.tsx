@@ -216,6 +216,7 @@ function GameView({ game }: { game: GameDetail }) {
       names.platform.get(release.platform_id),
       t(`format.${copy.format}`),
       copy.device_id ? names.device.get(copy.device_id) : null,
+      copy.account_id ? names.account.get(copy.account_id) : null,
     ]
       .filter(Boolean)
       .join(', ');

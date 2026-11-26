@@ -37,6 +37,9 @@ export function AccountsTab() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
       void queryClient.invalidateQueries({ queryKey: queryKeys.platforms });
+      // Its copies lose their account.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.missing });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.duplicates });
       setDeleting(null);
       notifySuccess(t('common.deleted'));
     },

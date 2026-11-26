@@ -45,6 +45,7 @@ export function useGameSaved() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.games });
     void queryClient.invalidateQueries({ queryKey: queryKeys.status });
     void queryClient.invalidateQueries({ queryKey: queryKeys.devices });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
     void queryClient.invalidateQueries({ queryKey: queryKeys.stores });
     void queryClient.invalidateQueries({ queryKey: queryKeys.platforms });
     void queryClient.invalidateQueries({ queryKey: queryKeys.missing });
@@ -147,6 +148,10 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
     )
     .map((a) => ({ value: String(a.id), label: a.name }));
 
+  // Until a list loads, its choice is kept as it is.
+  const shown = (list: unknown[] | undefined, options: { value: string }[], value: string) =>
+    Boolean(value) && (list === undefined || options.some((o) => o.value === value));
+
   // "Save and add another" keeps the form open for the same release.
   const save = useMutation({
     mutationFn: async ({ body }: { body: CopyInput; another: boolean }) => {
@@ -198,9 +203,11 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         region: v.region as Region,
         product_code: textOrNull(v.product_code),
         format: v.format,
-        // A copy you do not have yet is on no device.
-        device_id: v.device_id && !wanted ? Number(v.device_id) : null,
-        account_id: v.account_id && v.format === 'digital' ? Number(v.account_id) : null,
+        // A copy you do not have yet is on no device. A choice the new
+        // platform hides from its list is not saved either.
+        device_id: shown(devices.data, deviceOptions, v.device_id) && !wanted ? Number(v.device_id) : null,
+        account_id:
+          shown(accounts.data, accountOptions, v.account_id) && v.format === 'digital' ? Number(v.account_id) : null,
         store_id: v.store_id ? Number(v.store_id) : null,
         condition: v.format === 'physical' && v.condition ? (v.condition as CopyInput['condition']) : null,
         notes: textOrNull(v.notes),

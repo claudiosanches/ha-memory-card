@@ -109,14 +109,13 @@ export function SlotOneModal({ opened, onClose }: Props) {
             <Loader size="sm" color="#ffd859" />
           </div>
         ) : (
-          <div className={classes.grid} role="list">
+          <div className={classes.grid}>
             {blocks.map((game, index) => {
               const num = String(index + 1).padStart(2, '0');
               if (!game) {
                 return (
                   <div
                     key={`free-${index}`}
-                    role="listitem"
                     className={`${classes.block} ${classes.free}`}
                     onMouseEnter={() => setFocused(null)}
                   >
@@ -129,7 +128,6 @@ export function SlotOneModal({ opened, onClose }: Props) {
                 <button
                   key={game.id}
                   type="button"
-                  role="listitem"
                   className={`${classes.block} ${classes.filled}`}
                   aria-label={game.title}
                   onMouseEnter={() => setFocused(game)}

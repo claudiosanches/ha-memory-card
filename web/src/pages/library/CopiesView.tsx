@@ -31,10 +31,8 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
     region: t(`region.${copy.region}`),
     format: t(`format.${copy.format}`),
     condition: copy.condition ? t(`condition.${copy.condition}`) : null,
-    device:
-      [copy.device_id && deviceNames.get(copy.device_id), copy.account_id && accountNames.get(copy.account_id)]
-        .filter(Boolean)
-        .join(t('common.separator')) || null,
+    device: copy.device_id ? (deviceNames.get(copy.device_id) ?? null) : null,
+    account: copy.account_id ? (accountNames.get(copy.account_id) ?? null) : null,
     store: copy.store_id ? (storeNames.get(copy.store_id) ?? null) : null,
   });
   const line = (parts: (string | null)[]) => parts.filter(Boolean).join(t('common.separator'));
@@ -57,7 +55,7 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
       <ul className={classes.list}>
         {copies.map((copy) => {
           const d = describe(copy);
-          const where = line([d.device, d.store]);
+          const where = line([d.device, d.account, d.store]);
           return (
             <li key={copy.copy_id} className={classes.item} data-testid={`copy-row-${copy.copy_id}`}>
               <div className={classes.cover}>
@@ -94,6 +92,7 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
           <col className={classes.shortColumn} />
           <col className={classes.whereColumn} />
           <col className={classes.whereColumn} />
+          <col className={classes.whereColumn} />
         </colgroup>
         <Table.Thead>
           <Table.Tr>
@@ -104,6 +103,7 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
             <Table.Th>{t('game.format')}</Table.Th>
             <Table.Th>{t('game.condition')}</Table.Th>
             <Table.Th>{t('game.device')}</Table.Th>
+            <Table.Th>{t('game.account')}</Table.Th>
             <Table.Th>{wanted ? t('game.buyAt') : t('game.store')}</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -121,6 +121,7 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
                 <Table.Td>{d.format}</Table.Td>
                 <Table.Td>{d.condition}</Table.Td>
                 <Table.Td>{d.device}</Table.Td>
+                <Table.Td>{d.account}</Table.Td>
                 <Table.Td>{d.store}</Table.Td>
               </Table.Tr>
             );

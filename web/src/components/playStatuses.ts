@@ -18,10 +18,11 @@ export function usePlayStatusList() {
     return {
       list,
       isPending: statuses.isPending,
+      error: statuses.error,
       get: (key: string) => byKey.get(key),
       name: (key: string) => byKey.get(key)?.name ?? key,
       color: (key: string) => byKey.get(key)?.color ?? 'gray',
       options: list.map((s) => ({ value: s.key, label: s.name })),
     };
-  }, [statuses.data, statuses.isPending, t]);
+  }, [statuses.data, statuses.isPending, statuses.error, t]);
 }

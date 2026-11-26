@@ -31,6 +31,7 @@ export function StoresTab() {
       call(api.DELETE('/api/stores/{id}', { params: { path: { id } } })),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.stores });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
       setDeleting(null);
       notifySuccess(t('common.deleted'));
     },
@@ -116,6 +117,7 @@ function StoreForm({ store, onClose }: { store?: Store; onClose: () => void }) {
         : call(api.POST('/api/stores', { body })),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.stores });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
       notifySuccess(t('common.saved'));
       onClose();
     },

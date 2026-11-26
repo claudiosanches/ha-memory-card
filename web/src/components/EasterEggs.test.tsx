@@ -47,7 +47,7 @@ describe('Slot 1 Memory Card browser', () => {
     const modal = await screen.findByTestId('slot-one-modal');
     expect(within(modal).getByText('1/15 blocks used')).toBeInTheDocument();
 
-    const block = within(modal).getByRole('listitem', { name: 'Metal Gear Solid' });
+    const block = within(modal).getByRole('button', { name: 'Metal Gear Solid' });
     fireEvent.mouseEnter(block);
     expect(within(modal).getByText('Metal Gear Solid')).toBeInTheDocument();
     expect(within(modal).getByText('PS1')).toBeInTheDocument();
