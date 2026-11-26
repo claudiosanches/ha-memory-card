@@ -148,6 +148,26 @@ describe('Wishlist', () => {
     expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ status: 'owned', store_id: 3, notes: 'Limited Run' });
   });
 
+  it('keeps the account of a digital copy marked Got it', async () => {
+    const wish = { ...WISH, format: 'digital' as const, account_id: 7 };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/accounts': [
+        { id: 7, name: 'Steam', slug: 'steam', store_id: null, person: null, notes: null, active: true, platform_ids: [], copy_count: 1 },
+      ],
+      'GET /api/copies': [wish],
+      'PUT /api/copies/31': detail(8, 'Hades II', 1),
+    });
+    renderAt('/wishlist');
+
+    const item = await screen.findByTestId('wish-31');
+    fireEvent.click(within(item).getByRole('button', { name: en.game.gotIt }));
+    const dialog = await screen.findByRole('dialog', { name: en.game.gotItTitle });
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ format: 'digital', account_id: 7 });
+  });
+
   it('adds a new game to the wishlist only once its copy is saved', async () => {
     const calls = mockApi({
       ...SETUP,

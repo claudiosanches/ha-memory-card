@@ -159,6 +159,7 @@ export function WishlistPage() {
             status: dialog.row.status,
             format: dialog.row.format,
             device_id: dialog.row.device_id,
+            account_id: dialog.row.account_id,
             store_id: dialog.row.store_id,
             condition: dialog.row.condition,
             notes: dialog.row.notes,

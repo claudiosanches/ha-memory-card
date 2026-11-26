@@ -181,7 +181,8 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
     igdb: has('igdb'),
   };
   const gaps = (copy: CopyDetail) => ({
-    device: has('device') && copy.device_id == null,
+    // An account says where a digital copy lives, as on the server.
+    device: has('device') && copy.device_id == null && copy.account_id == null,
     store: has('store') && copy.store_id == null,
     condition: has('condition') && copy.format === 'physical' && copy.condition == null,
   });
@@ -220,6 +221,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
           product_code: release.product_code,
           format: copy.format,
           device_id: edit.device_id ? Number(edit.device_id) : copy.device_id,
+          account_id: copy.account_id,
           store_id: edit.store_id ? Number(edit.store_id) : copy.store_id,
           condition: (edit.condition as CopyInput['condition']) || copy.condition,
           notes: copy.notes,

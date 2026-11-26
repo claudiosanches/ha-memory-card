@@ -76,7 +76,7 @@ describe('Setup wizard', () => {
       'PUT /api/games/4': (body: unknown) => ({ ...detail(4, 'Metroid Dread'), ...(body as object) }),
       'PUT /api/copies/21': () => detail(4, 'Metroid Dread'),
     });
-    renderAt('/setup');
+    renderAt('/cleanup?tab=missing');
 
     fireEvent.click(await screen.findByRole('button', { name: en.setup.start_other.replace('{{count}}', '2') }));
     expect(await screen.findByText('Metroid Dread')).toBeInTheDocument();
@@ -98,9 +98,35 @@ describe('Setup wizard', () => {
     expect(await screen.findByText(en.setup.done)).toBeInTheDocument();
   });
 
+  it('keeps the account of a digital copy it saves', async () => {
+    const game = detail(4, 'Metroid Dread');
+    game.releases[0].copies[0] = {
+      ...game.releases[0].copies[0],
+      format: 'digital',
+      condition: null,
+      account_id: 7,
+    };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/missing-details': [MISSING[0]],
+      'GET /api/games/4': game,
+      'PUT /api/copies/21': () => game,
+    });
+    renderAt('/cleanup?tab=missing');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') }));
+    const copy = await screen.findByTestId('setup-copy-21');
+    fireEvent.click(within(copy).getByRole('combobox', { name: en.game.store }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Amazon', hidden: true }));
+    fireEvent.click(screen.getByRole('button', { name: en.setup.saveNext }));
+
+    expect(await screen.findByText(en.setup.done)).toBeInTheDocument();
+    expect(calls.find((c) => c.path === '/api/copies/21')?.body).toMatchObject({ account_id: 7, store_id: 3 });
+  });
+
   it('only goes through games lacking the chosen details', async () => {
     mockApi(SETUP);
-    renderAt('/setup');
+    renderAt('/cleanup?tab=missing');
 
     fireEvent.click(await screen.findByRole('checkbox', { name: /^Cover/ }));
     expect(screen.getByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') })).toBeInTheDocument();
