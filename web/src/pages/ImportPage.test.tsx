@@ -85,7 +85,7 @@ describe('Import page', () => {
 
     fireEvent.click(screen.getByRole('button', { name: en.import.confirm }));
     expect(await screen.findByTestId('import-done')).toHaveTextContent(
-      'Imported 1 new games and 1 new copies, updated 0 copies.',
+      'Import done. New games: 1. New copies: 1. Updated copies: 0.',
     );
     const sent = calls.filter((c) => c.method === 'POST').map((c) => [c.path, c.body]);
     expect(sent).toEqual([

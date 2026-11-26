@@ -309,11 +309,11 @@
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
     "exportTitle": "Export",
-    "exportText": "Download every copy as a CSV file. Edit it in a spreadsheet and import it again to update your collection.",
+    "exportText": "Download every copy as a CSV file, or a blank template to fill in. Edit it in a spreadsheet and import it again to update your collection.",
     "exportButton": "Export collection",
     "templateButton": "Download blank template",
     "importTitle": "Import",
-    "importText": "One row per copy. A row with only game columns adds a game with no copies. Nothing changes until you confirm.",
+    "importText": "One row per copy, matched by copy_id. A row with only game columns adds a game with no copies. Columns the file does not have keep their values; an empty cell clears one. Nothing changes until you select Import.",
     "file": "CSV file",
     "filePlaceholder": "Choose a file",
     "checking": "Checking the file",
@@ -321,7 +321,7 @@
     "reset": "Choose another file",
     "nothingToDo": "Nothing in this file changes your collection.",
     "hasErrors": "Fix the rows below in your spreadsheet, then choose the file again.",
-    "done": "Imported {{games}} new games and {{copies}} new copies, updated {{updated}} copies.",
+    "done": "Import done. New games: {{games}}. New copies: {{copies}}. Updated copies: {{updated}}.",
     "unlinked_one": "{{count}} game is not linked to IGDB yet.",
     "unlinked_other": "{{count}} games are not linked to IGDB yet.",
     "summary": {
@@ -349,14 +349,14 @@
     "column": "Column",
     "problem": "Problem",
     "columnsTitle": "Columns and accepted values",
-    "columnsText": "Column names are not case sensitive and can be in any order. Only game_title is required in every row. Files saved with ; as separator work too.",
+    "columnsText": "Column names are not case sensitive and can be in any order. Only game_title is required in every row; rows that add a copy also need platform, region and format. Files saved with ; as separator work too.",
     "columns": {
       "copy_id": "Filled in by the export. Keep it to update that copy; leave it empty to add a new one.",
-      "status": "owned or wanted. Empty means owned.",
+      "status": "owned or wanted. Empty means owned. Words other apps use, such as In Collection or Wish List, work too.",
       "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
       "game_title": "Required.",
       "play_status": "Yours: backlog, playing, paused, completed, dropped, mastered. Words other trackers use, such as Unplayed, Unfinished, Beaten or Retired, work too.",
-      "labels": "Label names, separated by commas or semicolons. The game gets them added, and labels that do not exist yet are created.",
+      "labels": "Label names, separated by commas or semicolons. They are added to the game, and labels that do not exist yet are created.",
       "platform": "Platform name, abbreviation or slug, as on the Manage screen. Unknown names are created.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",
       "release_title": "Title on this release, when it differs from the game title.",
@@ -374,7 +374,7 @@
       "barcode": "UPC or EAN digits from the box.",
       "notes": "Free text.",
       "bundle_copy_id": "copy_id of the bundle copy this copy came in, such as a collection on one cartridge. Platform, region, format, device, account, store, condition and status then follow that copy.",
-      "account": "Store account that owns a digital copy, as under Manage > Accounts. Unknown names are created."
+      "account": "Digital copies only: the store account that owns the copy, as under Manage > Accounts. Unknown names are created."
     },
     "columnNames": {
       "copy_id": "Copy ID",
@@ -429,15 +429,20 @@
     "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy.",
     "too_many_labels": "More than 50 labels.",
     "device_holds_no_games": "That device is hardware that holds no games.",
-    "duplicate_row": "Another row has the same name.",
-    "account_physical": "Only digital copies have an account; this one is left out."
+    "duplicate_row": "Another row is for the same hardware.",
+    "account_physical": "Only digital copies have an account; this one is left out.",
+    "unknown_device": "No hardware has this device_id. Leave it empty to add new hardware.",
+    "unknown_platform": "No platform has this name, abbreviation or slug.",
+    "name_taken": "Other hardware already has this name.",
+    "invalid_currency": "Not a three-letter currency code, such as USD.",
+    "invalid_price": "Not an amount, such as 59.99."
   },
   "fileIssues": {
     "not_utf8": "The file is not UTF-8. Save it as \"CSV UTF-8\" and try again.",
     "empty_file": "The file has no rows.",
     "missing_column": "The file needs a {{column}} column.",
     "malformed": "The file could not be read as CSV near line {{line}}.",
-    "too_many_rows": "The file has more than 20,000 rows.",
+    "too_many_rows": "The file has more than {{max}} rows.",
     "too_many_columns": "The file has more than 200 columns."
   },
   "region": {
@@ -1084,20 +1089,20 @@
     "expected": "{{amount}} expected",
     "worth": "Worth {{amount}}",
     "exportTitle": "Export",
-    "exportText": "Download your hardware as a CSV file, or a blank file to fill in.",
+    "exportText": "Download your hardware as a CSV file, or a blank template to fill in. Edit it in a spreadsheet and import it again to update your hardware.",
     "exportButton": "Export hardware",
     "importTitle": "Import",
-    "importText": "Rows update the hardware with the same device_id or name, or add new hardware. Columns the file does not have keep their values; an empty cell clears one. Stores that do not exist yet are added.",
-    "importDone": "Added {{created}}, updated {{updated}}.",
+    "importText": "One row per item, matched by device_id, then by name. Columns the file does not have keep their values; an empty cell clears one. Nothing changes until you select Import.",
+    "importDone": "Import done. New hardware: {{created}}. Updated hardware: {{updated}}.",
     "columnsText": "Column names are not case sensitive and can be in any order. Only name is required in every row, and kind for new hardware. Files saved with ; as separator work too.",
     "columnHelp": {
       "device_id": "Filled in by the export. Keep it to update that hardware; leave it empty to match by name or add new hardware.",
-      "status": "owned or wanted. Empty means owned.",
+      "status": "owned or wanted. Empty means owned. Words other apps use, such as In Collection or Wish List, work too.",
       "name": "Required. A row with no device_id updates the hardware with this name.",
-      "kind": "console, handheld, pc, controller, accessory or toy. Required for new hardware.",
+      "kind": "console, handheld, pc, controller, accessory or toy. Required for new hardware. Words such as gamepad or amiibo work too.",
       "model": "Free text, such as OLED or Slim.",
-      "platform": "What a controller, accessory or toy is for: platform name, abbreviation or slug.",
-      "plays": "What a console, handheld or PC plays: platform names, abbreviations or slugs, separated by semicolons.",
+      "platform": "What a controller, accessory or toy is for: the name, abbreviation or slug of a platform that exists.",
+      "plays": "What a console, handheld or PC plays: names, abbreviations or slugs of platforms that exist, separated by semicolons.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",
       "condition": "sealed, cib, no_manual, loose.",
       "store": "Store name. Unknown names are created.",
@@ -1111,12 +1116,10 @@
       "notes": "Free text.",
       "active": "yes or no. Inactive consoles, handhelds and PCs are left out when choosing where a copy lives."
     },
-    "previewSummary": "{{created}} new, {{updated}} to update.",
-    "previewErrors_one": "{{count}} row needs fixing.",
-    "previewErrors_other": "{{count}} rows need fixing.",
+    "previewSummary": "New hardware: {{created}}. Updated hardware: {{updated}}.",
     "line": "Line",
     "change": "Change",
-    "new": "New",
+    "new": "Add",
     "update": "Update"
   }
 }

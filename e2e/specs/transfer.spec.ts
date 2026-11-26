@@ -32,7 +32,7 @@ test('imports a CSV and exports it back', async ({ page }, testInfo) => {
   await expect(preview).toContainText(`Shop ${p}`);
 
   await page.getByRole('button', { name: en.import.confirm }).click();
-  await expect(page.getByTestId('import-done')).toContainText('Imported 1 new games and 2 new copies');
+  await expect(page.getByTestId('import-done')).toContainText('New games: 1. New copies: 2.');
 
   const downloading = page.waitForEvent('download');
   await page.getByRole('link', { name: en.import.exportButton }).click();

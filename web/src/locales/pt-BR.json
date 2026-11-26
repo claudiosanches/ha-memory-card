@@ -309,11 +309,11 @@
   "import": {
     "intro": "Leve sua coleção entre o Memory Card e uma planilha.",
     "exportTitle": "Exportar",
-    "exportText": "Baixe todas as cópias em um arquivo CSV. Edite em uma planilha e importe de novo para atualizar sua coleção.",
+    "exportText": "Baixe todas as cópias em um arquivo CSV, ou um modelo vazio para preencher. Edite em uma planilha e importe de novo para atualizar sua coleção.",
     "exportButton": "Exportar coleção",
     "templateButton": "Baixar modelo em branco",
     "importTitle": "Importar",
-    "importText": "Uma linha por cópia. Uma linha só com colunas de jogo adiciona um jogo sem cópias. Nada muda até você confirmar.",
+    "importText": "Uma linha por cópia, identificada pelo copy_id. Uma linha só com colunas de jogo adiciona um jogo sem cópias. Colunas que o arquivo não tem mantêm os valores; uma célula vazia apaga um. Nada muda até você selecionar Importar.",
     "file": "Arquivo CSV",
     "filePlaceholder": "Escolha um arquivo",
     "checking": "Conferindo o arquivo",
@@ -321,7 +321,7 @@
     "reset": "Escolher outro arquivo",
     "nothingToDo": "Nada neste arquivo muda sua coleção.",
     "hasErrors": "Corrija as linhas abaixo na sua planilha e escolha o arquivo de novo.",
-    "done": "{{games}} jogos novos e {{copies}} cópias novas importados, {{updated}} cópias atualizadas.",
+    "done": "Importação concluída. Jogos novos: {{games}}. Cópias novas: {{copies}}. Cópias atualizadas: {{updated}}.",
     "unlinked_one": "{{count}} jogo ainda não está vinculado ao IGDB.",
     "unlinked_other": "{{count}} jogos ainda não estão vinculados ao IGDB.",
     "summary": {
@@ -349,10 +349,10 @@
     "column": "Coluna",
     "problem": "Problema",
     "columnsTitle": "Colunas e valores aceitos",
-    "columnsText": "Os nomes das colunas não diferenciam maiúsculas e podem estar em qualquer ordem. Só game_title é obrigatória em toda linha. Arquivos salvos com ; como separador também funcionam.",
+    "columnsText": "Os nomes das colunas não diferenciam maiúsculas e podem estar em qualquer ordem. Só game_title é obrigatória em toda linha; linhas que adicionam uma cópia também precisam de platform, region e format. Arquivos salvos com ; como separador também funcionam.",
     "columns": {
       "copy_id": "Preenchida pela exportação. Mantenha para atualizar a cópia; deixe vazia para adicionar uma nova.",
-      "status": "owned ou wanted. Vazio significa owned.",
+      "status": "owned ou wanted. Vazio significa owned. Palavras de outros apps, como In Collection ou Wish List, também funcionam.",
       "igdb_id": "Id do jogo no IGDB, opcional. Diferencia jogos com o mesmo título.",
       "game_title": "Obrigatória.",
       "play_status": "O seu: backlog, playing, paused, completed, dropped, mastered. Palavras de outros apps, como Unplayed, Unfinished, Beaten ou Retired, também servem.",
@@ -374,7 +374,7 @@
       "barcode": "Números do UPC ou EAN da caixa.",
       "notes": "Texto livre.",
       "bundle_copy_id": "copy_id da cópia da coletânea em que esta cópia veio, como uma coleção em um só cartucho. Plataforma, região, formato, dispositivo, conta, loja, estado e status passam a seguir essa cópia.",
-      "account": "Conta de loja dona de uma cópia digital, como em Gerenciar > Contas. Nomes desconhecidos são criados."
+      "account": "Só cópias digitais: a conta de loja dona da cópia, como em Gerenciar > Contas. Nomes desconhecidos são criados."
     },
     "columnNames": {
       "copy_id": "ID da cópia",
@@ -429,15 +429,20 @@
     "ignored_in_bundle": "Ignorado: preço, valor estimado e data de compra ficam na cópia da coletânea.",
     "too_many_labels": "Mais de 50 etiquetas.",
     "device_holds_no_games": "Esse dispositivo é um hardware sem jogos.",
-    "duplicate_row": "Outra linha tem o mesmo nome.",
-    "account_physical": "Só cópias digitais têm conta; esta fica de fora."
+    "duplicate_row": "Outra linha é para o mesmo hardware.",
+    "account_physical": "Só cópias digitais têm conta; esta fica de fora.",
+    "unknown_device": "Nenhum hardware tem esse device_id. Deixe vazio para adicionar hardware novo.",
+    "unknown_platform": "Nenhuma plataforma tem esse nome, abreviação ou slug.",
+    "name_taken": "Outro hardware já tem esse nome.",
+    "invalid_currency": "Não é um código de moeda de três letras, como BRL.",
+    "invalid_price": "Não é um valor, como 59.99."
   },
   "fileIssues": {
     "not_utf8": "O arquivo não está em UTF-8. Salve como \"CSV UTF-8\" e tente de novo.",
     "empty_file": "O arquivo não tem linhas.",
     "missing_column": "O arquivo precisa de uma coluna {{column}}.",
     "malformed": "Não foi possível ler o arquivo como CSV perto da linha {{line}}.",
-    "too_many_rows": "O arquivo tem mais de 20.000 linhas.",
+    "too_many_rows": "O arquivo tem mais de {{max}} linhas.",
     "too_many_columns": "O arquivo tem mais de 200 colunas."
   },
   "region": {
@@ -1084,20 +1089,20 @@
     "expected": "{{amount}} previsto",
     "worth": "Vale {{amount}}",
     "exportTitle": "Exportar",
-    "exportText": "Baixe seu hardware como arquivo CSV, ou um arquivo vazio para preencher.",
+    "exportText": "Baixe seu hardware em um arquivo CSV, ou um modelo vazio para preencher. Edite em uma planilha e importe de novo para atualizar seu hardware.",
     "exportButton": "Exportar hardware",
     "importTitle": "Importar",
-    "importText": "As linhas atualizam o hardware com o mesmo device_id ou nome, ou adicionam hardware novo. Colunas que o arquivo não tem mantêm os valores; uma célula vazia apaga um. Lojas que ainda não existem são adicionadas.",
-    "importDone": "Adicionados {{created}}, atualizados {{updated}}.",
+    "importText": "Uma linha por item, identificada pelo device_id e depois pelo nome. Colunas que o arquivo não tem mantêm os valores; uma célula vazia apaga um. Nada muda até você selecionar Importar.",
+    "importDone": "Importação concluída. Hardware novo: {{created}}. Hardware atualizado: {{updated}}.",
     "columnsText": "Os nomes das colunas não diferenciam maiúsculas e podem vir em qualquer ordem. Só name é obrigatória em toda linha, e kind para hardware novo. Arquivos salvos com ; como separador também funcionam.",
     "columnHelp": {
       "device_id": "Preenchido pela exportação. Mantenha para atualizar esse hardware; deixe vazio para achar pelo nome ou adicionar hardware novo.",
-      "status": "owned ou wanted. Vazio significa owned.",
+      "status": "owned ou wanted. Vazio significa owned. Palavras de outros apps, como In Collection ou Wish List, também funcionam.",
       "name": "Obrigatória. Uma linha sem device_id atualiza o hardware com esse nome.",
-      "kind": "console, handheld, pc, controller, accessory ou toy. Obrigatória para hardware novo.",
+      "kind": "console, handheld, pc, controller, accessory ou toy. Obrigatória para hardware novo. Palavras como gamepad ou amiibo também funcionam.",
       "model": "Texto livre, como OLED ou Slim.",
-      "platform": "Para que serve um controle, acessório ou boneco: nome, abreviação ou slug da plataforma.",
-      "plays": "O que um console, portátil ou PC roda: nomes, abreviações ou slugs de plataformas, separados por ponto e vírgula.",
+      "platform": "Para que serve um controle, acessório ou boneco: nome, abreviação ou slug de uma plataforma que já existe.",
+      "plays": "O que um console, portátil ou PC roda: nomes, abreviações ou slugs de plataformas que já existem, separados por ponto e vírgula.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial ou sem região). Também NTSC-U, PAL, NTSC-J.",
       "condition": "sealed, cib, no_manual, loose.",
       "store": "Nome da loja. Nomes desconhecidos são criados.",
@@ -1111,12 +1116,10 @@
       "notes": "Texto livre.",
       "active": "yes ou no. Consoles, portáteis e PCs inativos ficam de fora ao escolher onde uma cópia fica."
     },
-    "previewSummary": "{{created}} novos, {{updated}} para atualizar.",
-    "previewErrors_one": "{{count}} linha precisa de correção.",
-    "previewErrors_other": "{{count}} linhas precisam de correção.",
+    "previewSummary": "Hardware novo: {{created}}. Hardware atualizado: {{updated}}.",
     "line": "Linha",
     "change": "Mudança",
-    "new": "Novo",
+    "new": "Adicionar",
     "update": "Atualizar"
   }
 }

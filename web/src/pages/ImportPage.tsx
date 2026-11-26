@@ -23,6 +23,7 @@ type Result = components['schemas']['ImportResult'];
 
 /** The most the server reads of an import. */
 const FILE_MAX = 16 * 1024 * 1024;
+const ROWS_MAX = 20_000;
 
 const COLUMNS = [
   'copy_id',
@@ -292,7 +293,7 @@ function PreviewResult({
   onImport: () => void;
   onReset: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const issue = preview.file_issue;
 
   if (issue) {
@@ -301,6 +302,7 @@ function PreviewResult({
         {t(`fileIssues.${issue.code}` as 'fileIssues.empty_file', {
           column: issue.column ?? '',
           line: issue.line ?? '',
+          max: ROWS_MAX.toLocaleString(i18n.language),
         })}
       </Alert>
     );

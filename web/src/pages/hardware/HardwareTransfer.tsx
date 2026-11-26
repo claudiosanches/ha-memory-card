@@ -15,6 +15,8 @@ type Preview = components['schemas']['HardwarePreview'];
 type Result = components['schemas']['HardwareResult'];
 
 const FILE_MAX = 4 * 1024 * 1024;
+/** The most rows the server reads of a hardware file. */
+const ROWS_MAX = 5_000;
 const asCsv = { bodySerializer: (body: string) => body, headers: { 'Content-Type': 'text/csv' } };
 
 export const HARDWARE_COLUMNS = [
@@ -156,6 +158,7 @@ function HardwarePreviewResult({
         {t(`fileIssues.${issue.code}` as 'fileIssues.missing_column', {
           column: issue.column ?? '',
           line: issue.line ?? '',
+          max: ROWS_MAX.toLocaleString(i18n.language),
         })}
       </Alert>
     );
@@ -164,10 +167,8 @@ function HardwarePreviewResult({
   const created = preview.rows.filter((row) => row.device_id == null).length;
   return (
     <Stack gap="sm" data-testid="hardware-preview">
-      <Text size="sm">
-        {t('hardware.previewSummary', { created, updated: preview.rows.length - created })}
-        {errors > 0 && ` ${t('hardware.previewErrors', { count: errors })}`}
-      </Text>
+      <Text size="sm">{t('hardware.previewSummary', { created, updated: preview.rows.length - created })}</Text>
+      {errors > 0 && <Alert color="red">{t('import.hasErrors')}</Alert>}
       <Table.ScrollContainer minWidth={420}>
         <Table striped>
           <Table.Thead>

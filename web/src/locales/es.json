@@ -309,11 +309,11 @@
   "import": {
     "intro": "Pasa tu colección entre Memory Card y una hoja de cálculo.",
     "exportTitle": "Exportar",
-    "exportText": "Descarga todas las copias en un archivo CSV. Edítalo en una hoja de cálculo e impórtalo de nuevo para actualizar tu colección.",
+    "exportText": "Descarga todas las copias en un archivo CSV, o una plantilla vacía para rellenar. Edítalo en una hoja de cálculo e impórtalo de nuevo para actualizar tu colección.",
     "exportButton": "Exportar colección",
     "templateButton": "Descargar plantilla vacía",
     "importTitle": "Importar",
-    "importText": "Una fila por copia. Una fila solo con columnas del juego añade un juego sin copias. Nada cambia hasta que confirmes.",
+    "importText": "Una fila por copia, emparejada por copy_id. Una fila solo con columnas del juego añade un juego sin copias. Las columnas que el archivo no tiene conservan sus valores; una celda vacía borra uno. Nada cambia hasta que selecciones Importar.",
     "file": "Archivo CSV",
     "filePlaceholder": "Elige un archivo",
     "checking": "Revisando el archivo",
@@ -321,7 +321,7 @@
     "reset": "Elegir otro archivo",
     "nothingToDo": "Nada en este archivo cambia tu colección.",
     "hasErrors": "Corrige las filas de abajo en tu hoja de cálculo y vuelve a elegir el archivo.",
-    "done": "Se importaron {{games}} juegos nuevos y {{copies}} copias nuevas, y se actualizaron {{updated}} copias.",
+    "done": "Importación lista. Juegos nuevos: {{games}}. Copias nuevas: {{copies}}. Copias actualizadas: {{updated}}.",
     "unlinked_one": "{{count}} juego aún no está vinculado a IGDB.",
     "unlinked_other": "{{count}} juegos aún no están vinculados a IGDB.",
     "summary": {
@@ -349,10 +349,10 @@
     "column": "Columna",
     "problem": "Problema",
     "columnsTitle": "Columnas y valores aceptados",
-    "columnsText": "Los nombres de columna no distinguen mayúsculas y pueden ir en cualquier orden. Solo game_title es obligatoria en cada fila. También sirven archivos guardados con ; como separador.",
+    "columnsText": "Los nombres de columna no distinguen mayúsculas y pueden ir en cualquier orden. Solo game_title es obligatoria en cada fila; las filas que añaden una copia también necesitan platform, region y format. También sirven archivos guardados con ; como separador.",
     "columns": {
       "copy_id": "La rellena la exportación. Consérvala para actualizar esa copia; déjala vacía para añadir una nueva.",
-      "status": "owned o wanted. Vacío significa owned.",
+      "status": "owned o wanted. Vacío significa owned. También sirven palabras de otras apps, como In Collection o Wish List.",
       "igdb_id": "Id opcional del juego en IGDB. Distingue juegos con el mismo título.",
       "game_title": "Obligatoria.",
       "play_status": "El tuyo: backlog, playing, paused, completed, dropped, mastered. También sirven palabras de otras apps, como Unplayed, Unfinished, Beaten o Retired.",
@@ -374,7 +374,7 @@
       "barcode": "Dígitos UPC o EAN de la caja.",
       "notes": "Texto libre.",
       "bundle_copy_id": "copy_id de la copia del recopilatorio en el que vino esta copia, como una colección en un solo cartucho. Plataforma, región, formato, dispositivo, cuenta, tienda, estado de conservación y estado pasan a seguir esa copia.",
-      "account": "Cuenta de tienda dueña de una copia digital, como en Gestionar > Cuentas. Los nombres desconocidos se crean."
+      "account": "Solo copias digitales: la cuenta de tienda dueña de la copia, como en Gestionar > Cuentas. Los nombres desconocidos se crean."
     },
     "columnNames": {
       "copy_id": "ID de la copia",
@@ -429,15 +429,20 @@
     "ignored_in_bundle": "Se omite: el precio, el valor estimado y la fecha de compra se quedan en la copia del recopilatorio.",
     "too_many_labels": "Más de 50 categorías.",
     "device_holds_no_games": "Ese dispositivo es hardware sin juegos.",
-    "duplicate_row": "Otra fila tiene el mismo nombre.",
-    "account_physical": "Solo las copias digitales tienen cuenta; esta se omite."
+    "duplicate_row": "Otra fila es para el mismo hardware.",
+    "account_physical": "Solo las copias digitales tienen cuenta; esta se omite.",
+    "unknown_device": "Ningún hardware tiene este device_id. Déjalo vacío para añadir hardware nuevo.",
+    "unknown_platform": "Ninguna plataforma tiene este nombre, abreviatura o slug.",
+    "name_taken": "Otro hardware ya tiene este nombre.",
+    "invalid_currency": "No es un código de moneda de tres letras, como USD.",
+    "invalid_price": "No es un importe, como 59.99."
   },
   "fileIssues": {
     "not_utf8": "El archivo no está en UTF-8. Guárdalo como \"CSV UTF-8\" e inténtalo de nuevo.",
     "empty_file": "El archivo no tiene filas.",
     "missing_column": "El archivo necesita una columna {{column}}.",
     "malformed": "No se pudo leer el archivo como CSV cerca de la línea {{line}}.",
-    "too_many_rows": "El archivo tiene más de 20.000 filas.",
+    "too_many_rows": "El archivo tiene más de {{max}} filas.",
     "too_many_columns": "El archivo tiene más de 200 columnas."
   },
   "region": {
@@ -1084,20 +1089,20 @@
     "expected": "{{amount}} previsto",
     "worth": "Vale {{amount}}",
     "exportTitle": "Exportar",
-    "exportText": "Descarga tu hardware como archivo CSV, o un archivo vacío para rellenar.",
+    "exportText": "Descarga tu hardware en un archivo CSV, o una plantilla vacía para rellenar. Edítalo en una hoja de cálculo e impórtalo de nuevo para actualizar tu hardware.",
     "exportButton": "Exportar hardware",
     "importTitle": "Importar",
-    "importText": "Las filas actualizan el hardware con el mismo device_id o nombre, o añaden hardware nuevo. Las columnas que el archivo no tiene conservan sus valores; una celda vacía borra uno. Las tiendas que aún no existen se añaden.",
-    "importDone": "Añadidos {{created}}, actualizados {{updated}}.",
+    "importText": "Una fila por artículo, emparejada por device_id y luego por nombre. Las columnas que el archivo no tiene conservan sus valores; una celda vacía borra uno. Nada cambia hasta que selecciones Importar.",
+    "importDone": "Importación lista. Hardware nuevo: {{created}}. Hardware actualizado: {{updated}}.",
     "columnsText": "Los nombres de columna no distinguen mayúsculas y pueden ir en cualquier orden. Solo name es obligatoria en cada fila, y kind para el hardware nuevo. También sirven archivos guardados con ; como separador.",
     "columnHelp": {
       "device_id": "Lo rellena la exportación. Mantenlo para actualizar ese hardware; déjalo vacío para buscarlo por nombre o añadir hardware nuevo.",
-      "status": "owned o wanted. Vacío significa owned.",
+      "status": "owned o wanted. Vacío significa owned. También sirven palabras de otras apps, como In Collection o Wish List.",
       "name": "Obligatoria. Una fila sin device_id actualiza el hardware con este nombre.",
-      "kind": "console, handheld, pc, controller, accessory o toy. Obligatoria para el hardware nuevo.",
+      "kind": "console, handheld, pc, controller, accessory o toy. Obligatoria para el hardware nuevo. También sirven palabras como gamepad o amiibo.",
       "model": "Texto libre, como OLED o Slim.",
-      "platform": "Para qué es un mando, accesorio o figura: nombre, abreviatura o slug de la plataforma.",
-      "plays": "Qué ejecuta una consola, portátil o PC: nombres, abreviaturas o slugs de plataformas, separados por punto y coma.",
+      "platform": "Para qué es un mando, accesorio o figura: nombre, abreviatura o slug de una plataforma que ya existe.",
+      "plays": "Qué ejecuta una consola, portátil o PC: nombres, abreviaturas o slugs de plataformas que ya existen, separados por punto y coma.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial o sin región). También NTSC-U, PAL, NTSC-J.",
       "condition": "sealed, cib, no_manual, loose.",
       "store": "Nombre de la tienda. Los nombres desconocidos se crean.",
@@ -1111,12 +1116,10 @@
       "notes": "Texto libre.",
       "active": "yes o no. Las consolas, portátiles y PC inactivos no aparecen al elegir dónde está una copia."
     },
-    "previewSummary": "{{created}} nuevos, {{updated}} por actualizar.",
-    "previewErrors_one": "{{count}} fila necesita arreglo.",
-    "previewErrors_other": "{{count}} filas necesitan arreglo.",
+    "previewSummary": "Hardware nuevo: {{created}}. Hardware actualizado: {{updated}}.",
     "line": "Línea",
     "change": "Cambio",
-    "new": "Nuevo",
+    "new": "Añadir",
     "update": "Actualizar"
   }
 }
