@@ -1,8 +1,8 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
 
 permissions:
   contents: read
@@ -25,10 +25,11 @@ jobs:
       - name: Version matches the tag
         id: version
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.ref_name }}
         run: |
           version=${TAG#v}
           ./scripts/check-version.sh "$version"
+          ./scripts/release-notes.sh "$version" > "$RUNNER_TEMP/notes.md"
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -78,6 +79,12 @@ jobs:
           path: ${{ runner.temp }}/memory-card.tar
           if-no-files-found: error
           retention-days: 1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: notes
+          path: ${{ runner.temp }}/notes.md
+          if-no-files-found: error
+          retention-days: 1
 
   # Pushes the image the build job tested, and runs nothing from the repository.
   publish:
@@ -99,3 +106,23 @@ jobs:
           printf '%s' "$TOKEN" | skopeo login ghcr.io --username "$ACTOR" --password-stdin
           skopeo copy --all --preserve-digests \
             "oci-archive:$RUNNER_TEMP/memory-card.tar" "docker://$IMAGE:$VERSION"
+
+  # Creates the GitHub release once the image is out, with the changelog's entries.
+  release:
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: notes
+          path: ${{ runner.temp }}
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: >-
+          gh api "repos/$REPO/releases" -f tag_name="$TAG" -f name="$TAG"
+          -F body=@"$RUNNER_TEMP/notes.md" --silent
