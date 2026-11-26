@@ -418,8 +418,10 @@ pub async fn run(state: &AppState, stop: &Notify) {
         tokio::select! {
             () = stop.notified() => stopped = true,
             () = state.changes.next_for_sensors() => {
-                tokio::time::sleep(super::DEBOUNCE).await;
-                feed.refresh().await;
+                tokio::select! {
+                    () = stop.notified() => stopped = true,
+                    () = tokio::time::sleep(super::DEBOUNCE) => { feed.refresh().await; }
+                }
             }
         }
     }

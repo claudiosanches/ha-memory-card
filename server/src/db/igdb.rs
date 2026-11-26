@@ -41,7 +41,7 @@ fn push_expected(sql: &mut Sql, expected: Expected<'_>) {
             sql.push(" AND igdb_id = ").push_bind(igdb_id);
         }
         Expected::Unlinked(title) => {
-            sql.push(" AND igdb_id IS NULL AND title = ")
+            sql.push(" AND igdb_id IS NULL AND igdb_skipped = 0 AND title = ")
                 .push_bind(title.to_owned());
         }
     }
@@ -464,15 +464,17 @@ async fn tag_id(
     insert.build_query_scalar().fetch_one(&mut **tx).await
 }
 
-/// Games with no IGDB link, by id.
+/// Games with no IGDB link that no one said are not on IGDB, by id.
 pub async fn unlinked(pool: &SqlitePool) -> sqlx::Result<Vec<(i64, String)>> {
-    sqlx::query_as("SELECT id, title FROM games WHERE igdb_id IS NULL ORDER BY id")
-        .fetch_all(pool)
-        .await
+    sqlx::query_as(
+        "SELECT id, title FROM games WHERE igdb_id IS NULL AND igdb_skipped = 0 ORDER BY id",
+    )
+    .fetch_all(pool)
+    .await
 }
 
 pub async fn unlinked_count(pool: &SqlitePool) -> sqlx::Result<i64> {
-    sqlx::query_scalar("SELECT COUNT(*) FROM games WHERE igdb_id IS NULL")
+    sqlx::query_scalar("SELECT COUNT(*) FROM games WHERE igdb_id IS NULL AND igdb_skipped = 0")
         .fetch_one(pool)
         .await
 }

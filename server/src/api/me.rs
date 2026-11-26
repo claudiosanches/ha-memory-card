@@ -11,7 +11,7 @@ pub struct Me {
     pub role: Role,
     /// False until the app options name a manager; until then nobody can change anything.
     pub managers_configured: bool,
-    /// May change play status and last played.
+    /// May keep their own play: statuses, sessions and picks.
     pub can_track_progress: bool,
 }
 

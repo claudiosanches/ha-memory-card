@@ -15,7 +15,8 @@ pub enum DuplicateLabel {
     CrossPlatform,
     /// More than one region.
     CrossRegion,
-    /// More than one device, not counting copies without one.
+    /// More than one device, or more than one account, not counting copies
+    /// without one.
     CrossDevice,
     /// Both physical and digital.
     PhysicalDigital,

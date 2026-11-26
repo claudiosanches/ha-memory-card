@@ -504,8 +504,6 @@ impl Igdb {
     }
 }
 
-/// Quotes and backslashes escaped; control characters, which could end
-/// the query line, dropped.
 async fn json<T: DeserializeOwned>(response: reqwest::Response) -> Result<T, IgdbError> {
     let bytes = crate::http::body(response, ANSWER_MAX)
         .await?
@@ -513,6 +511,8 @@ async fn json<T: DeserializeOwned>(response: reqwest::Response) -> Result<T, Igd
     Ok(serde_json::from_slice(&bytes)?)
 }
 
+/// Quotes and backslashes escaped; control characters, which could end
+/// the query line, dropped.
 fn escape(text: &str) -> String {
     text.chars()
         .filter(|c| !c.is_control())

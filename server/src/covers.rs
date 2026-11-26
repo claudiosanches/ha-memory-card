@@ -1,6 +1,6 @@
 //! Image files under the covers directory: covers in `game-<id>/` and
-//! `release-<id>/`, copy photos in `copy-<id>/`. Paths stored in the database
-//! are relative to it.
+//! `release-<id>/`, photos in `copy-<id>/` and `device-<id>/`. Paths stored in
+//! the database are relative to it.
 
 use std::io;
 use std::path::Path;

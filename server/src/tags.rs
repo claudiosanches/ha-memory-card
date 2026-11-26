@@ -82,7 +82,7 @@ async fn listen(state: AppState, api: HomeAssistantApi, stop: Arc<Notify>) {
     loop {
         tokio::select! {
             () = stop.notified() => return,
-            result = subscribe(&state, &api) => {
+            result = subscribe(&state, &api, &mut failures) => {
                 if let Err(err) = result {
                     if failures == 0 {
                         tracing::warn!(error = %err, "cannot listen for Home Assistant tag scans, retrying");
@@ -149,7 +149,12 @@ struct Context {
 const SUBSCRIPTION: u64 = 1;
 
 /// Authenticates, subscribes to `tag_scanned` and handles events until the connection ends.
-async fn subscribe(state: &AppState, api: &HomeAssistantApi) -> Result<(), ListenError> {
+/// Clears `failures` once subscribed, so the next drop is reported again.
+async fn subscribe(
+    state: &AppState,
+    api: &HomeAssistantApi,
+    failures: &mut u32,
+) -> Result<(), ListenError> {
     let (mut socket, _) = tokio_tungstenite::connect_async(api.websocket.as_str()).await?;
     let mut subscribed = false;
     while let Some(message) = socket.next().await {
@@ -179,6 +184,7 @@ async fn subscribe(state: &AppState, api: &HomeAssistantApi) -> Result<(), Liste
                     return Err(ListenError::Subscribe);
                 }
                 set_status(state, TagsStatus::Connected);
+                *failures = 0;
                 tracing::info!("listening for Home Assistant tag scans");
             }
             "event" => {
@@ -250,7 +256,7 @@ pub async fn scanned(
                         state.config.tag_scan_finished,
                     )
                     .await
-                    .map(|game_id| Scan::Played { game_id })
+                    .map(|game| game.map_or(Scan::Unknown, |game_id| Scan::Played { game_id }))
                 }
                 Some(_) => {
                     tracing::info!("ignored a tag scan by someone who cannot keep play");

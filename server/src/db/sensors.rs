@@ -114,7 +114,7 @@ pub async fn snapshot(pool: &SqlitePool) -> sqlx::Result<Snapshot> {
              JOIN releases r ON r.id = c.release_id
              JOIN games g ON g.id = r.game_id
              JOIN platforms p ON p.id = r.platform_id
-            WHERE c.status = 'owned'
+            WHERE c.status = 'owned' AND c.bundle_id IS NULL
             ORDER BY c.owned_at DESC, c.id DESC
             LIMIT 1"#
     )

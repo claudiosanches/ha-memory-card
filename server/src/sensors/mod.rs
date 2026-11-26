@@ -7,7 +7,7 @@ pub mod entities;
 pub mod integration;
 pub mod supervisor;
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -36,7 +36,7 @@ const DEBOUNCE: Duration = Duration::from_secs(1);
 /// entity IDs for the MQTT ones.
 const HANDOVER: Duration = Duration::from_secs(5);
 const RETRY: Duration = Duration::from_secs(15);
-/// MQTT names no one, so presses closer together than this are dropped.
+/// A person's rolls closer together than this are dropped.
 const ROLL_GAP: Duration = Duration::from_secs(1);
 const STOP_TIMEOUT: Duration = Duration::from_millis(500);
 const REMOVE_TIMEOUT: Duration = Duration::from_secs(10);
@@ -255,7 +255,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     let slug = broker.ingress_slug.as_deref();
     let mut connected = false;
     let mut sent = Published::default();
-    let mut last_roll: Option<Instant> = None;
+    let mut last_rolls: HashMap<String, Instant> = HashMap::new();
 
     loop {
         tokio::select! {
@@ -278,13 +278,8 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     send_state(&client, state, slug, &mut sent).await;
                     send(&client, AVAILABILITY_TOPIC, "online");
                 }
-                Some(Signal::Roll(_)) if last_roll.is_some_and(|at| at.elapsed() < ROLL_GAP) => {
-                    tracing::debug!("ignored a roll right after another");
-                }
                 Some(Signal::Roll(payload)) => {
-                    last_roll = Some(Instant::now());
-                    roll(state, &payload).await;
-                    if connected {
+                    if roll(state, &payload, &mut last_rolls).await && connected {
                         send_state(&client, state, slug, &mut sent).await;
                     }
                 }
@@ -297,7 +292,10 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                 Some(Signal::Closed) | None => break,
             },
             () = state.changes.next_for_sensors() => {
-                tokio::time::sleep(DEBOUNCE).await;
+                tokio::select! {
+                    () = stop.notified() => break,
+                    () = tokio::time::sleep(DEBOUNCE) => {}
+                }
                 if connected {
                     send_state(&client, state, slug, &mut sent).await;
                 }
@@ -326,12 +324,13 @@ pub(crate) async fn may_roll_for(state: &AppState, person: &str) -> sqlx::Result
 
 /// Picks a game from the named person's backlog, as Pick for me does; the
 /// sensors show it. MQTT cannot tell who sent the roll, so it must name them.
-async fn roll(state: &AppState, payload: &[u8]) {
+/// Rolls a pick for the person the payload names. Returns whether it did.
+async fn roll(state: &AppState, payload: &[u8], last_rolls: &mut HashMap<String, Instant>) -> bool {
     let request = match entities::roll_request(payload) {
         Ok(request) => request,
         Err(err) => {
             tracing::warn!(error = %err, "ignored a pick request with unreadable filters");
-            return;
+            return false;
         }
     };
     let Some(person) = request
@@ -339,22 +338,35 @@ async fn roll(state: &AppState, payload: &[u8]) {
         .filter(|person| crate::access::valid_user_id(person))
     else {
         tracing::info!("ignored a roll from Home Assistant that names no person");
-        return;
+        return false;
     };
+    last_rolls.retain(|_, at| at.elapsed() < ROLL_GAP);
+    if last_rolls.contains_key(&person) {
+        tracing::debug!("ignored a roll right after another");
+        return false;
+    }
     match may_roll_for(state, &person).await {
         Ok(true) => {}
         Ok(false) => {
             tracing::info!("ignored a roll for someone who cannot keep play");
-            return;
+            return false;
         }
         Err(err) => {
             tracing::warn!(error = %err, "cannot check who a roll is for");
-            return;
+            return false;
         }
     }
+    last_rolls.insert(person.clone(), Instant::now());
     match db::suggestions::suggest(&state.db, &person, request.filter).await {
-        Ok(pick) => tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant"),
-        Err(err) => tracing::info!(error = %err, "no game to pick for Home Assistant"),
+        Ok(pick) => {
+            tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant");
+            state.changes.announce();
+            true
+        }
+        Err(err) => {
+            tracing::info!(error = %err, "no game to pick for Home Assistant");
+            false
+        }
     }
 }
 

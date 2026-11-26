@@ -179,7 +179,10 @@ pub async fn delete(pool: &SqlitePool, key: &str, move_to: Option<&str>) -> ApiR
     }
     ensure_exists(&mut *tx, move_to)
         .await
-        .map_err(|_| ApiError::invalid("unknown_play_status", "move_to"))?;
+        .map_err(|err| match err {
+            ApiError::Invalid { code, .. } => ApiError::invalid(code, "move_to"),
+            other => other,
+        })?;
 
     match move_to {
         Some(move_to) => {

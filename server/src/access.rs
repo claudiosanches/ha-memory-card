@@ -111,7 +111,7 @@ pub struct Access {
     pub user: User,
     pub role: Role,
     pub managers_configured: bool,
-    /// May change play status and last played.
+    /// May keep their own play: statuses, sessions and picks.
     pub can_track_progress: bool,
 }
 

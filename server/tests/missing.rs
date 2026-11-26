@@ -107,6 +107,25 @@ async fn player_counts_on_a_release_count() {
 }
 
 #[tokio::test]
+async fn games_said_not_to_be_on_igdb_lack_no_link() {
+    let app = TestApp::new().await;
+    let game = new_game(&app, "Homebrew Quest").await;
+    sqlx::query("UPDATE games SET igdb_skipped = 1 WHERE id = ?")
+        .bind(game)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    let (_, list) = app.json("GET", "/api/missing-details", None).await;
+    let fields = list[0]["fields"].as_array().unwrap();
+    assert!(!fields.contains(&json!("igdb")), "{fields:?}");
+    assert_eq!(
+        memory_card::db::igdb::unlinked(&app.pool).await.unwrap(),
+        [],
+        "IGDB sync leaves it alone"
+    );
+}
+
+#[tokio::test]
 async fn games_only_on_the_wishlist_are_left_out() {
     let app = TestApp::new().await;
     let switch = app.platform_id("switch").await;

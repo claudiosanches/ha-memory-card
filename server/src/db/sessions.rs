@@ -155,14 +155,14 @@ pub async fn add(
 /// What a tag scan does for `person`: logs today's session for the copy, once
 /// a day, and sets the game to playing for them unless their status already
 /// counts as playing, or counts as finished and `finished` says to keep it.
-/// Returns the game id. A wanted copy is left alone.
+/// Returns the game id, or `None` for a wanted copy, which is left alone.
 pub async fn start_from_tag(
     pool: &SqlitePool,
     copy_id: i64,
     today: &str,
     person: &str,
     finished: FinishedScan,
-) -> ApiResult<i64> {
+) -> ApiResult<Option<i64>> {
     let mut tx = super::write_tx(pool).await?;
     let copy = sqlx::query!(
         r#"SELECT r.game_id, c.status,
@@ -178,7 +178,7 @@ pub async fn start_from_tag(
     .await?
     .ok_or(ApiError::NotFound)?;
     if copy.status != "owned" {
-        return Ok(copy.game_id);
+        return Ok(None);
     }
     // Known by ID only until they open Memory Card.
     users::ensure(&mut tx, person).await?;
@@ -223,7 +223,7 @@ pub async fn start_from_tag(
         .await?;
     }
     tx.commit().await?;
-    Ok(copy.game_id)
+    Ok(Some(copy.game_id))
 }
 
 /// Refuses a session past `by`'s limit for the game or for the day.

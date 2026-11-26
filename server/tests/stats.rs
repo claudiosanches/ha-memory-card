@@ -169,3 +169,39 @@ async fn stats_total_the_collection() {
         json!([{"game_id": hades, "title": "Hades", "sessions": 2, "minutes": 60}])
     );
 }
+
+#[tokio::test]
+async fn platform_totals_count_bundled_games_and_the_bundle_once() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let mut games = Vec::new();
+    for title in ["Super Mario 3D All-Stars", "Super Mario Sunshine"] {
+        let (_, game) = app
+            .json("POST", "/api/games", Some(json!({"title": title})))
+            .await;
+        games.push(game["id"].as_i64().unwrap());
+    }
+    let (_, detail) = app
+        .json(
+            "POST",
+            &format!("/api/games/{}/copies", games[0]),
+            Some(json!({"platform_id": switch, "region": "eu", "format": "physical"})),
+        )
+        .await;
+    let bundle = detail["releases"][0]["copies"][0]["id"].as_i64().unwrap();
+    let (status, body) = app
+        .json(
+            "POST",
+            &format!("/api/copies/{bundle}/contents"),
+            Some(json!({"game_id": games[1]})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+
+    let (_, stats) = app.json("GET", "/api/stats", None).await;
+    let platform = &stats["platforms"][0];
+    assert_eq!(platform["games"], stats["games"]);
+    assert_eq!(platform["games"], 2);
+    assert_eq!(platform["copies"], 1);
+    assert_eq!(platform["physical"], 1);
+}

@@ -62,7 +62,7 @@ pub async fn list(pool: &SqlitePool, igdb: bool) -> ApiResult<Vec<MissingDetails
                        AND o.store_id IS NULL) AS "store!: bool",
              EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle
                        AND o.format = 'physical' AND o.condition IS NULL) AS "condition!: bool",
-             g.igdb_id IS NULL AS "igdb!: bool"
+             g.igdb_id IS NULL AND NOT g.igdb_skipped AS "igdb!: bool"
            FROM games g
            -- Games only on the wishlist are not in the collection yet.
            WHERE EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id)

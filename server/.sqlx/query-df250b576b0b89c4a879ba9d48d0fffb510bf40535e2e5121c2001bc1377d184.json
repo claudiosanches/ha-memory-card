@@ -1,0 +1,94 @@
+{
+  "db_name": "SQLite",
+  "query": "WITH owned AS (\n             SELECT r.game_id, c.device_id, c.account_id, c.store_id, c.format, c.condition,\n                    c.bundle_id IS NOT NULL AS in_bundle\n             FROM copies c JOIN releases r ON r.id = c.release_id\n             WHERE c.status = 'owned'\n           )\n           SELECT g.id AS \"id!\", g.title,\n             g.cover_path IS NULL AS \"cover!: bool\",\n             NOT EXISTS (SELECT 1 FROM game_game_modes gm WHERE gm.game_id = g.id) AS \"game_modes!: bool\",\n             (g.local_max_players IS NULL AND g.online_max_players IS NULL\n              AND g.local_coop IS NULL AND g.online_coop IS NULL\n              AND NOT EXISTS (\n                SELECT 1 FROM releases r WHERE r.game_id = g.id\n                  AND (r.local_max_players IS NOT NULL OR r.online_max_players IS NOT NULL\n                       OR r.local_coop IS NOT NULL OR r.online_coop IS NOT NULL))\n              AND NOT (\n                EXISTS (SELECT 1 FROM game_game_modes gm WHERE gm.game_id = g.id)\n                AND NOT EXISTS (\n                  SELECT 1 FROM game_game_modes gm JOIN game_modes m ON m.id = gm.game_mode_id\n                  WHERE gm.game_id = g.id AND m.slug != 'single-player'))\n             ) AS \"players!: bool\",\n             NOT EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id) AS \"copies!: bool\",\n             -- A bundle's contents take these from the bundle copy.\n             EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle\n                       AND o.device_id IS NULL AND o.account_id IS NULL) AS \"device!: bool\",\n             EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle\n                       AND o.store_id IS NULL) AS \"store!: bool\",\n             EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle\n                       AND o.format = 'physical' AND o.condition IS NULL) AS \"condition!: bool\",\n             g.igdb_id IS NULL AND NOT g.igdb_skipped AS \"igdb!: bool\"\n           FROM games g\n           -- Games only on the wishlist are not in the collection yet.\n           WHERE EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id)\n              OR NOT EXISTS (SELECT 1 FROM releases r JOIN copies c ON c.release_id = r.id\n                             WHERE r.game_id = g.id)\n           ORDER BY g.sort_title, g.id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "games",
+            "name": "title"
+          }
+        }
+      },
+      {
+        "name": "cover!: bool",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "game_modes!: bool",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "players!: bool",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copies!: bool",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "device!: bool",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "store!: bool",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "condition!: bool",
+        "ordinal": 8,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "igdb!: bool",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "df250b576b0b89c4a879ba9d48d0fffb510bf40535e2e5121c2001bc1377d184"
+}

@@ -1,4 +1,4 @@
-//! URL names for platforms, devices, stores, genres, game modes and labels: lowercase
+//! URL names for platforms, devices, accounts, stores, genres, game modes and labels: lowercase
 //! ASCII letters, digits and hyphens, starting and ending with a letter or digit.
 
 use std::collections::HashSet;

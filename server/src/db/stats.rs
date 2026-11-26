@@ -274,13 +274,14 @@ pub async fn get(pool: &SqlitePool, person: &str) -> sqlx::Result<Stats> {
 
     let platforms = sqlx::query_as!(
         PlatformTotal,
+        // Games in a bundle count; their copies count once, as the bundle.
         r#"SELECT r.platform_id AS "platform_id!", COUNT(DISTINCT r.game_id) AS "games!: i64",
-                  COUNT(*) AS "copies!: i64",
-                  COUNT(*) FILTER (WHERE c.format = 'physical') AS "physical!: i64",
-                  COUNT(*) FILTER (WHERE c.format = 'digital') AS "digital!: i64"
+                  COUNT(*) FILTER (WHERE c.bundle_id IS NULL) AS "copies!: i64",
+                  COUNT(*) FILTER (WHERE c.bundle_id IS NULL AND c.format = 'physical') AS "physical!: i64",
+                  COUNT(*) FILTER (WHERE c.bundle_id IS NULL AND c.format = 'digital') AS "digital!: i64"
            FROM copies c JOIN releases r ON r.id = c.release_id
            JOIN platforms p ON p.id = r.platform_id
-           WHERE c.status = 'owned' AND c.bundle_id IS NULL
+           WHERE c.status = 'owned'
            GROUP BY r.platform_id
            ORDER BY MIN(p.sort_order), MIN(p.name)"#
     )

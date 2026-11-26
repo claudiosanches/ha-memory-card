@@ -13,6 +13,9 @@ use crate::db::suggestions::SuggestionFilter;
 const MAX_STATE: usize = 255;
 /// The part of a person's user ID their sensors' keys use.
 const PERSON_KEY_MAX: usize = 32;
+/// Leaves room for `_`, the longest sensor kind and a `_NN` suffix within the
+/// integration's 64-character object IDs.
+const PERSON_OBJECT_MAX: usize = 48;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -201,6 +204,11 @@ fn people(snapshot: &Snapshot) -> Vec<Person<'_>> {
             .name
             .as_deref()
             .map(slug)
+            .map(|s| {
+                let mut s: String = s.chars().take(PERSON_OBJECT_MAX).collect();
+                s.truncate(s.trim_end_matches('_').len());
+                s
+            })
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| key.clone());
         let mut object_id = base.clone();
@@ -421,6 +429,19 @@ mod tests {
                 "sensor.memory_card_cc33_backlog",
             ]
         );
+    }
+
+    #[test]
+    fn long_names_keep_object_ids_within_64_characters() {
+        let long = "Maria ".repeat(20);
+        let snapshot = Snapshot {
+            people: vec![person("aa11", Some(&long)), person("bb22", Some(&long))],
+            ..Snapshot::default()
+        };
+        for entity in entities(&snapshot) {
+            assert!(entity.object_id.len() <= 64, "{}", entity.object_id);
+            assert!(!entity.object_id.contains("__"), "{}", entity.object_id);
+        }
     }
 
     #[test]

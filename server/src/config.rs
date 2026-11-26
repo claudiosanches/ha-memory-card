@@ -595,10 +595,14 @@ fn peers(
     };
     raw.split(',')
         .map(|part| {
-            part.trim().parse().map_err(|_| ConfigError::InvalidEnv {
-                name,
-                value: raw.clone(),
-            })
+            // Incoming peers are compared in canonical form, so `::ffff:a.b.c.d` is `a.b.c.d`.
+            part.trim()
+                .parse::<IpAddr>()
+                .map(|ip| ip.to_canonical())
+                .map_err(|_| ConfigError::InvalidEnv {
+                    name,
+                    value: raw.clone(),
+                })
         })
         .collect()
 }
