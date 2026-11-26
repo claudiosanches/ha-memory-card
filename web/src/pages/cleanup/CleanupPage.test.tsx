@@ -52,17 +52,6 @@ describe('Cleanup access and tabs', () => {
     expect(calls.some((c) => c.path.startsWith('/api/igdb'))).toBe(false);
     expect(calls.some((c) => c.path === '/api/missing-details')).toBe(false);
   });
-
-  it('redirects legacy /settings?tab=igdb links to /cleanup?tab=igdb', async () => {
-    mockApi({
-      'GET /api/status': STATUS,
-      'GET /api/igdb/sync': { running: false, total: 0, done: 0, linked: 0, unmatched: 0, updated: 0, failed: 0 },
-      'GET /api/igdb/titles': [],
-    });
-    renderAt('/settings?tab=igdb');
-
-    expect(await screen.findByRole('button', { name: en.igdb.syncButton })).toBeInTheDocument();
-  });
 });
 
 describe('Cleanup IGDB titles', () => {

@@ -26,10 +26,8 @@
     "hardware": "Hardware"
   },
   "common": {
-    "actions": "Acciones",
     "active": "Activo",
     "cancel": "Cancelar",
-    "copies": "Copias",
     "copyCount_one": "{{count}} copia",
     "copyCount_other": "{{count}} copias",
     "delete": "Eliminar",
@@ -37,8 +35,6 @@
     "edit": "Editar",
     "error": "Error",
     "inactive": "Inactivo",
-    "moveDown": "Bajar",
-    "moveUp": "Subir",
     "name": "Nombre",
     "notSet": "Sin definir",
     "notes": "Notas",
@@ -47,9 +43,6 @@
     "saved": "Guardado",
     "warning": "Aviso",
     "separator": " · "
-  },
-  "placeholder": {
-    "notBuilt": "Esta pantalla aún no está hecha."
   },
   "manage": {
     "intro": "Organiza las cuentas, tiendas, plataformas, estados de juego y categorías que usa tu colección.",
@@ -76,9 +69,11 @@
   "accounts": {
     "add": "Añadir cuenta",
     "edit": "Editar cuenta",
+    "deleteTitle": "¿Eliminar {{name}}?",
     "empty": "Aún no hay cuentas. Añade las cuentas de tienda donde están tus juegos digitales, como una Cuenta Nintendo o Steam.",
     "nameDescription": "Cómo eliges esta cuenta para una copia.",
     "namePlaceholder": "Steam",
+    "platforms": "Plataformas",
     "platformsDescription": "Plataformas cuyos juegos guarda esta cuenta.",
     "store": "Tienda",
     "storeDescription": "Dónde compra juegos. Una copia nueva en esta cuenta la toma como tienda.",
@@ -92,7 +87,6 @@
     "console": "Consola",
     "handheld": "Portátil",
     "pc": "PC",
-    "account": "Cuenta",
     "controller": "Mando",
     "accessory": "Accesorio",
     "toy": "Juguete o figura"
@@ -120,8 +114,6 @@
     "add": "Añadir plataforma personalizada",
     "edit": "Editar plataforma",
     "abbreviation": "Abreviatura",
-    "fromIgdb": "Vinculada a IGDB",
-    "inUse": "Hay juegos, dispositivos o cuentas que usan esta plataforma. Desactívala en su lugar.",
     "deleteTitle": "¿Eliminar {{name}}?",
     "yourTitle": "Tus plataformas",
     "yourText": "Se muestran al añadir juegos y dispositivos, en este orden. Arrastra para reordenar.",
@@ -305,13 +297,14 @@
     "too_many_writes": "Todavía se están enviando demasiados cambios tuyos. Espera un momento e inténtalo de nuevo.",
     "too_many_downloads": "Todavía se están descargando demasiados archivos grandes para ti. Espera un momento e inténtalo de nuevo.",
     "label_separator": "Las categorías no pueden contener comas ni punto y coma.",
-    "device_holds_no_games": "Las copias van en una consola, portátil, PC o cuenta, no en otro hardware.",
-    "device_has_copies": "Hay copias en este dispositivo. Muévelas antes, o mantenlo como consola, portátil, PC o cuenta.",
+    "device_holds_no_games": "Las copias van en una consola, portátil o PC, no en otro hardware.",
+    "device_has_copies": "Hay copias en este dispositivo. Muévelas antes, o mantenlo como consola, portátil o PC.",
     "not_for_this_kind": "Esto no aplica a ese tipo de hardware.",
     "unknown_account": "Esa cuenta ya no existe.",
     "invalid_user": "No es un ID de usuario de Home Assistant.",
     "unknown_user": "Memory Card todavía no conoce a esa persona.",
-    "account_physical": "Las copias físicas no tienen cuenta."
+    "account_physical": "Las copias físicas no tienen cuenta.",
+    "too_many": "Demasiados. Quita algunos e inténtalo de nuevo."
   },
   "import": {
     "intro": "Pasa tu colección entre Memory Card y una hoja de cálculo.",
@@ -332,11 +325,9 @@
     "unlinked_one": "{{count}} juego aún no está vinculado a IGDB.",
     "unlinked_other": "{{count}} juegos aún no están vinculados a IGDB.",
     "summary": {
-      "rows": "Filas",
       "new_games": "Juegos nuevos",
       "updated_games": "Juegos actualizados",
       "updated_releases": "Lanzamientos actualizados",
-      "new_releases": "Lanzamientos nuevos",
       "new_copies": "Copias nuevas",
       "updated_copies": "Copias actualizadas",
       "unchanged_copies": "Copias sin cambios",
@@ -562,7 +553,6 @@
       "format": "Formato",
       "anyFormat": "Cualquier formato",
       "minLocalPlayers": "Jugadores en la misma pantalla, como mínimo",
-      "ownership": "Mostrar",
       "owned": "Juegos que tengo",
       "wanted": "Lista de deseos",
       "any": "Todos los juegos",
@@ -684,7 +674,6 @@
     "noDevice": "Sin dispositivo",
     "noStore": "Sin definir",
     "showAllDevices": "Mostrar dispositivos que no tienen esta plataforma",
-    "copyOf": "{{format}} en {{device}}",
     "igdbLinked": "Información de IGDB",
     "releaseHeading": "{{platform}} · {{region}}",
     "datePlaceholder": "AAAA-MM-DD",

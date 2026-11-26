@@ -21,7 +21,7 @@ const PHOTO_TYPES = 'image/jpeg,image/png,image/webp';
 
 type Show = CopyStatus | 'all';
 
-/** The household's hardware: consoles and accounts copies live on, and controllers, accessories and toys. */
+/** The household's hardware: consoles, handhelds and PCs copies live on, and controllers, accessories and toys. */
 export function HardwarePage() {
   const { t } = useTranslation();
   const devices = useDevices();

@@ -12,7 +12,7 @@ test('lists a game owned twice and filters by label', async ({ page, request }, 
   });
   expect(imported.ok()).toBe(true);
 
-  await page.goto(`${PREFIX}/#/duplicates`);
+  await page.goto(`${PREFIX}/#/cleanup?tab=duplicates`);
   const group = page.getByTestId(`duplicate-${title}`);
   await expect(group).toContainText(en.duplicates.label.same_release);
   await expect(group.getByRole('listitem')).toHaveCount(2);

@@ -26,10 +26,8 @@
     "hardware": "Hardware"
   },
   "common": {
-    "actions": "Actions",
     "active": "Active",
     "cancel": "Cancel",
-    "copies": "Copies",
     "copyCount_one": "{{count}} copy",
     "copyCount_other": "{{count}} copies",
     "delete": "Delete",
@@ -37,8 +35,6 @@
     "edit": "Edit",
     "error": "Error",
     "inactive": "Inactive",
-    "moveDown": "Move down",
-    "moveUp": "Move up",
     "name": "Name",
     "notSet": "Not set",
     "notes": "Notes",
@@ -47,9 +43,6 @@
     "saved": "Saved",
     "warning": "Warning",
     "separator": " · "
-  },
-  "placeholder": {
-    "notBuilt": "This screen is not built yet."
   },
   "manage": {
     "intro": "Organize the accounts, stores, platforms, play statuses, and labels used in your collection.",
@@ -76,9 +69,11 @@
   "accounts": {
     "add": "Add account",
     "edit": "Edit account",
+    "deleteTitle": "Delete {{name}}?",
     "empty": "No accounts yet. Add the store accounts your digital games live on, such as a Nintendo Account or Steam.",
     "nameDescription": "How you pick this account for a copy.",
     "namePlaceholder": "Steam",
+    "platforms": "Platforms",
     "platformsDescription": "Platforms whose games this account holds.",
     "store": "Store",
     "storeDescription": "Where it buys games. A new copy on this account takes it as its store.",
@@ -92,7 +87,6 @@
     "console": "Console",
     "handheld": "Handheld",
     "pc": "PC",
-    "account": "Account",
     "controller": "Controller",
     "accessory": "Accessory",
     "toy": "Toy or figure"
@@ -120,8 +114,6 @@
     "add": "Add custom platform",
     "edit": "Edit platform",
     "abbreviation": "Abbreviation",
-    "fromIgdb": "Linked to IGDB",
-    "inUse": "Games, devices or accounts use this platform. Deactivate it instead.",
     "deleteTitle": "Delete {{name}}?",
     "yourTitle": "Your platforms",
     "yourText": "Shown when adding games and devices, in this order. Drag to reorder.",
@@ -305,13 +297,14 @@
     "too_many_writes": "Too many of your changes are still being sent. Wait a moment and try again.",
     "too_many_downloads": "Too many large files are still downloading for you. Wait a moment and try again.",
     "label_separator": "Labels cannot contain commas or semicolons.",
-    "device_holds_no_games": "Copies go on a console, handheld, PC or account, not on other hardware.",
-    "device_has_copies": "Copies are on this device. Move them first, or keep it a console, handheld, PC or account.",
+    "device_holds_no_games": "Copies go on a console, handheld or PC, not on other hardware.",
+    "device_has_copies": "Copies are on this device. Move them first, or keep it a console, handheld or PC.",
     "not_for_this_kind": "This does not apply to that kind of hardware.",
     "unknown_account": "That account no longer exists.",
     "invalid_user": "That is not a Home Assistant user ID.",
     "unknown_user": "Memory Card does not know that person yet.",
-    "account_physical": "Physical copies have no account."
+    "account_physical": "Physical copies have no account.",
+    "too_many": "Too many. Remove some and try again."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -332,11 +325,9 @@
     "unlinked_one": "{{count}} game is not linked to IGDB yet.",
     "unlinked_other": "{{count}} games are not linked to IGDB yet.",
     "summary": {
-      "rows": "Rows",
       "new_games": "New games",
       "updated_games": "Updated games",
       "updated_releases": "Updated releases",
-      "new_releases": "New releases",
       "new_copies": "New copies",
       "updated_copies": "Updated copies",
       "unchanged_copies": "Unchanged copies",
@@ -562,7 +553,6 @@
       "format": "Format",
       "anyFormat": "Any format",
       "minLocalPlayers": "Players on the same screen, at least",
-      "ownership": "Show",
       "owned": "Games I own",
       "wanted": "Wishlist",
       "any": "All games",
@@ -684,7 +674,6 @@
     "noDevice": "No device",
     "noStore": "Not set",
     "showAllDevices": "Show devices that do not list this platform",
-    "copyOf": "{{format}} on {{device}}",
     "igdbLinked": "Info from IGDB",
     "releaseHeading": "{{platform}} · {{region}}",
     "datePlaceholder": "YYYY-MM-DD",

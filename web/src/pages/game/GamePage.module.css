@@ -12,7 +12,6 @@
 .summaryText { line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
 .playControls { flex-wrap: wrap; }
 .playSelect { width: 220px; }
-.copySelect { width: 260px; }
 .lastPlayed { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 8px 12px; border-radius: var(--mantine-radius-md); background: var(--mc-background); }
 .tagRow { flex-wrap: wrap; }
 .tagLink { cursor: pointer; text-decoration: none; transition: background-color 120ms ease; }
@@ -37,7 +36,7 @@
   .manageActions > :global(button[aria-label]) { width: 38px; height: 38px; }
   .metadata { padding: var(--mantine-spacing-md); }
   .playControls { align-items: stretch; flex-direction: column; }
-  .playSelect, .copySelect { width: 100%; }
+  .playSelect { width: 100%; }
   .releasesHeading { align-items: center; }
   .releasesHeading > div { min-width: 0; }
   .releaseHeader { flex-wrap: wrap; }

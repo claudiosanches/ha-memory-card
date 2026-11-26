@@ -41,7 +41,7 @@ describe('Duplicates', () => {
       'GET /api/devices': [],
       'GET /api/stores': [{ id: 5, name: 'Nintendo eShop', notes: null, copy_count: 1 }],
     });
-    renderAt('/duplicates');
+    renderAt('/cleanup?tab=duplicates');
 
     const hades = await screen.findByTestId('duplicate-Hades');
     expect(within(hades).getByText(en.duplicates.label.physical_digital)).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('Duplicates', () => {
 
   it('says when there are no duplicates', async () => {
     mockApi({ 'GET /api/duplicates': [], 'GET /api/platforms': [], 'GET /api/devices': [], 'GET /api/stores': [] });
-    renderAt('/duplicates');
+    renderAt('/cleanup?tab=duplicates');
     expect(await screen.findByText(en.duplicates.empty)).toBeInTheDocument();
   });
 });

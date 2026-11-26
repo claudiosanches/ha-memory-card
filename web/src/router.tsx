@@ -3,7 +3,6 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  redirect,
   type RouterHistory,
 } from '@tanstack/react-router';
 import { Layout } from './components/Layout';
@@ -43,13 +42,6 @@ const routeTree = rootRoute.addChildren([
     validateSearch: (search: Record<string, unknown>): { tab?: CleanupTab } =>
       CLEANUP_TABS.includes(search.tab as CleanupTab) ? { tab: search.tab as CleanupTab } : {},
   }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/duplicates',
-    beforeLoad: () => {
-      throw redirect({ to: '/cleanup', search: { tab: 'duplicates' }, replace: true });
-    },
-  }),
   createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/household', component: HouseholdPage }),
   createRoute({
@@ -60,13 +52,6 @@ const routeTree = rootRoute.addChildren([
         <IgdbMatchesPage />
       </ManagerOnly>
     ),
-  }),
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/setup',
-    beforeLoad: () => {
-      throw redirect({ to: '/cleanup', search: { tab: 'missing' }, replace: true });
-    },
   }),
   createRoute({
     getParentRoute: () => rootRoute,
@@ -92,11 +77,6 @@ const routeTree = rootRoute.addChildren([
     getParentRoute: () => rootRoute,
     path: '/settings',
     component: SettingsPage,
-    beforeLoad: ({ location }) => {
-      if (new URLSearchParams(location.searchStr).get('tab') === 'igdb') {
-        throw redirect({ to: '/cleanup', search: { tab: 'igdb' }, replace: true });
-      }
-    },
     validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } =>
       SETTINGS_TABS.includes(search.tab as SettingsTab) ? { tab: search.tab as SettingsTab } : {},
   }),

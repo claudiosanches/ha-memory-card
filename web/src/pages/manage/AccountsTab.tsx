@@ -96,7 +96,7 @@ export function AccountsTab() {
                 </Group>
               </div>
               <div className={classes.footer}>
-                <Group gap={4} aria-label={t('devices.platforms')}>
+                <Group gap={4} aria-label={t('accounts.platforms')}>
                   {account.platform_ids.map((id) => {
                     const platform = platformsById.get(id);
                     return platform ? (
@@ -120,7 +120,7 @@ export function AccountsTab() {
 
       <ConfirmModal
         opened={deleting !== null}
-        title={t('devices.deleteTitle', { name: deleting?.name ?? '' })}
+        title={t('accounts.deleteTitle', { name: deleting?.name ?? '' })}
         message={deleting?.copy_count ? t('accounts.deleteCopies', { count: deleting.copy_count }) : undefined}
         confirmLabel={t('common.delete')}
         busy={remove.isPending}
@@ -227,7 +227,7 @@ function AccountForm({
         value={form.values.user_id || null}
       />
       <MultiSelect
-        label={t('devices.platforms')}
+        label={t('accounts.platforms')}
         description={t('accounts.platformsDescription')}
         data={platformOptions}
         searchable
