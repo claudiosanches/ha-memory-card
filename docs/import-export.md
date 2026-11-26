@@ -28,7 +28,7 @@ of the file.
    `Comments`. Pick another column for a header it read wrong, or **Not
    imported** to leave one out.
 4. Check the preview: new and updated games and copies, and the platforms,
-   devices, stores and labels it will create.
+   devices, accounts, stores and labels it will create.
 5. Rows with errors block the import. Fix them in the spreadsheet and **Choose
    another file**. Rows with warnings import as they are.
 6. Select **Import**. Nothing changes until you do.

@@ -23,7 +23,8 @@ it to the wishlist when you do not own it. See [Barcodes](barcodes.md).
 ## When you get it
 
 **Got it** moves the copy into the collection and asks for the device it
-lives on, where you bought it and its condition. The trash button removes a
+lives on, the account of a digital copy, where you bought it and its
+condition. The trash button removes a
 copy from the wishlist.
 
 Wishlist copies do not count as owned anywhere else: the library, backlog,

@@ -40,8 +40,8 @@ Memory Card says whether the sensors are connected.
 
 Each person with a play status or a session gets their own sensors, up to
 16, named after them, such as `sensor.memory_card_ana_backlog`. A person
-Memory Card has no name for, such as one known only from an NFC reader, is
-named by their user ID instead:
+Memory Card has no name for, such as one known only from an NFC reader, gets
+entity IDs from their user ID instead, and shows as Someone:
 
 | Entity | State | Attributes |
 |---|---|---|
@@ -100,8 +100,9 @@ tap_action:
 
 The filters match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
-`min_local_players` and `max_hours_to_beat` (hours for the main story). Each platform, device and store shows its slug in its
-[Manage](manage.md) form, and library links use the same slugs.
+`min_local_players` and `max_hours_to_beat` (hours for the main story). Each
+platform shows its slug in its [Manage](manage.md) form and each device in its
+[Hardware](hardware.md) form, and library links use the same slugs.
 
 Rolls need managers set in the options, and the person must be a manager or a
 viewer with `viewers_track_progress` on. A person rolls only for themselves.

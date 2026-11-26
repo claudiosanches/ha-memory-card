@@ -43,5 +43,5 @@ Prices keep their currency. Totals show one line per currency.
 
 When the household keeps [hardware](hardware.md), a **Hardware** group shows
 how many items you own by kind and how many are on the wishlist, what they
-cost and what they would sell for now. Accounts are left out, and the games'
-totals above leave hardware out.
+cost and what they would sell for now. The games' totals above leave hardware
+out.

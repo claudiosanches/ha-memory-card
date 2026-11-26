@@ -5,9 +5,9 @@ The Memory Card integration brings the app's [sensors](sensors.md) and a
 action for automations and scripts. It needs no MQTT broker.
 
 The app does the work: it counts, picks and tells the integration what
-changed. The integration creates the same entities, with the same IDs, as the
+changed. The integration creates the same sensors, with the same IDs, as the
 app's MQTT mode, so you can switch between the two without breaking
-dashboards.
+dashboards. The **Roll a pick** button comes only with the integration.
 
 ## Integration or MQTT
 
@@ -120,8 +120,9 @@ and responds with its `title` and `platforms`.
 | `min_local_players` | At least this many players on the same screen. |
 | `max_hours_to_beat` | At most this many hours for the main story, from IGDB. Games without a time are left out. |
 
-The slug fields take one slug or a list of up to 10. Each platform, device
-and store shows its slug in its [Manage](manage.md) form.
+The slug fields take one slug or a list of up to 10. Each platform shows its
+slug in its [Manage](manage.md) form and each device in its
+[Hardware](hardware.md) form.
 
 A game night pick for two on the Switch, from Ana's backlog:
 
@@ -159,7 +160,7 @@ Who can roll:
 | Memory Card does not keep play for this person. | Make them a manager, or turn on `viewers_track_progress`. A person Memory Card has never seen needs to open it and set a play status first. |
 | This person has no Home Assistant user. | Link the person to a user under **Settings > People**. |
 | No game matches these filters. | Loosen the filters, or add games to the backlog. |
-| Memory Card could not read these filters. | Check the slugs against the Manage forms. |
+| Memory Card could not read these filters. | Check the slugs against the Manage and Hardware forms. |
 | Cannot reach the Memory Card app. | Start the app, and check its **Log** tab. |
 | Memory Card is not set up. | Add Memory Card from **Discovered** under **Settings > Devices & services**. |
 

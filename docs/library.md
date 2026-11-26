@@ -15,7 +15,7 @@ The buttons to the right of the sort pick how the library looks:
   status.
 - **Compact list:** a row per game, for scrolling through a long collection.
 - **Copies table:** a row per copy, with its platform, region, format,
-  condition, device and where it was bought.
+  condition, device, account and where it was bought.
 
 The view is saved in that browser.
 

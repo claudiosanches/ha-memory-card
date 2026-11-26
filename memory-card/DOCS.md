@@ -29,9 +29,9 @@ credentials are optional; without them you enter games by hand.
 Memory Card keeps one collection for the whole household, and each person's
 play apart.
 
-- The collection is shared: games, copies, hardware, stores, platforms,
-  labels, the list of play statuses, NFC tags, photos and covers. Everyone can
-  browse it, and managers change it.
+- The collection is shared: games, copies, hardware, accounts, stores,
+  platforms, labels, the list of play statuses, NFC tags, photos and covers.
+  Everyone can browse it, and managers change it.
 - Play is each person's own: their play status for every game, which makes
   their backlog, their play sessions and their picks from **Pick for me**.
   Only they change it, managers included. Deleting a game removes everyone's
@@ -198,7 +198,7 @@ then the copy. A copy can also go on the wishlist from a game's page:
 choose **On my wishlist** when adding it.
 
 When you get one, **Got it** moves it into your collection and lets you
-fill in the device, Bought at and condition. Wishlist copies do not count as
+fill in the device, the account of a digital copy, Bought at and condition. Wishlist copies do not count as
 owned anywhere else: the library, backlog, duplicates and Missing details
 only look at copies you own. **Show > Wishlist** in the library filters
 lists the games on it.
@@ -379,8 +379,8 @@ The household's:
 
 Each person with a play status or a session gets their own sensors, up to
 16, named after them, such as `sensor.memory_card_ana_backlog`. A person
-Memory Card has no name for, such as one known only from an NFC reader, is
-named by their user ID instead:
+Memory Card has no name for, such as one known only from an NFC reader, gets
+entity IDs from their user ID instead, and shows as Someone:
 
 | Entity | State | Attributes |
 |---|---|---|
@@ -413,8 +413,9 @@ something in it, such as their play status.
 
 The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
-`min_local_players` and `max_hours_to_beat` (hours for the main story). Each platform, device and store shows its slug in
-its Manage form, and library links use the same slugs.
+`min_local_players` and `max_hours_to_beat` (hours for the main story). Each
+platform shows its slug in its Manage form and each device in its Hardware
+form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
 collection and each backlog change. Sensors update a second after each

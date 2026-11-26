@@ -14,7 +14,8 @@ connected, **IGDB**. Viewers see only duplicates.
    rest. Each shows how many games lack it:
    - **Cover**, **Game modes** and **Player counts**.
    - **Copies:** games with no copies yet.
-   - **Device**, **Bought at** and **Condition:** copies that lack them.
+   - **Device**, **Bought at** and **Condition:** copies that lack them. A
+     digital copy on an account has a place, so it does not lack a device.
    - **IGDB link:** games not linked to IGDB.
 2. Select **Go through** to start.
 3. Each game shows what it is missing. Fill in what you know, then **Save and

@@ -17,9 +17,9 @@ Memory Card needs Home Assistant 2026.11 or newer.
 Memory Card keeps one collection for the whole household, and each person's
 play apart.
 
-- The collection is shared: games, copies, devices, stores, platforms,
-  labels, the list of play statuses, NFC tags, photos and covers. Everyone
-  can browse it, and managers change it.
+- The collection is shared: games, copies, hardware, accounts, stores,
+  platforms, labels, the list of play statuses, NFC tags, photos and covers.
+  Everyone can browse it, and managers change it.
 - Play is each person's own: their play status for every game, which makes
   their backlog, their play sessions and their picks. Only they change it,
   managers included.

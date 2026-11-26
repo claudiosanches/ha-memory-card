@@ -5,9 +5,9 @@ managers see it.
 
 ![Manage, on the Platforms tab](https://ha-memory-card.pages.dev/images/manage.webp)
 
-The store, platform and label forms, and the device form on
+The account, store, platform and label forms, and the device form on
 [Hardware](hardware.md), show each one's slug: the short name that library
-links, Home Assistant rolls and CSV files use.
+links and Home Assistant rolls use.
 
 Consoles, handhelds and PCs are on the [Hardware](hardware.md) page, with
 the rest of your hardware.
@@ -37,13 +37,15 @@ copies, with no store.
 
 ## Platforms
 
-**Your platforms** are the ones offered when adding games and devices, in the
-order shown. Drag to reorder them.
+**Your platforms** are the ones offered when adding games, devices and
+accounts, in the order shown. Drag to reorder them.
 
 **All platforms** lists every platform Memory Card knows, by type: consoles,
-handhelds, computers, mobile and arcade. **Add** puts one in your platforms.
-Removing one hides it when adding games and devices; its games and devices
-stay. **Add custom platform** adds one that is not on the list.
+handhelds, computers, mobile, arcade and other. **Add** puts one in your
+platforms. Removing one hides it when adding games, devices and accounts;
+what already uses it stays. **Add custom platform** adds one that is not on
+the list. A custom platform that games, devices or accounts use cannot be
+deleted; remove it from your platforms instead.
 
 ## Play statuses
 
