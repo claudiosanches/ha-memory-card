@@ -47,7 +47,7 @@ import classes from './PlatformsTab.module.css';
 type Editing = { platform?: Platform } | null;
 
 function inUse(platform: Platform) {
-  return platform.game_count > 0 || platform.device_count > 0;
+  return platform.game_count > 0 || platform.device_count > 0 || platform.account_count > 0;
 }
 
 /** Only platforms added by hand or by an import can go; the catalog stays complete. */
@@ -254,6 +254,7 @@ function PlatformName({ platform }: { platform: Platform }) {
     platform.generation ? t('platforms.generation', { generation: platform.generation }) : null,
     platform.game_count ? t('platforms.gameCount', { count: platform.game_count }) : null,
     platform.device_count ? t('platforms.deviceCount', { count: platform.device_count }) : null,
+    platform.account_count ? t('platforms.accountCount', { count: platform.account_count }) : null,
   ].filter(Boolean);
   return (
     <div className={classes.name}>

@@ -26,6 +26,7 @@ const SWITCH: Platform = {
   owned_game_count: 0,
   wanted_game_count: 0,
   device_count: 0,
+  account_count: 0,
 };
 
 const GAME = { id: 9, title: 'Super Mario Odyssey' } as GameDetail;

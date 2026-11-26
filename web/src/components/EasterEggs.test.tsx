@@ -33,7 +33,7 @@ describe('Slot 1 Memory Card browser', () => {
     mockApi({
       'GET /api/games': GAMES,
       'GET /api/platforms': [
-        { id: 1, name: 'PlayStation', abbreviation: 'PS1', slug: 'ps1', active: true, sort_order: 1, game_count: 1, owned_game_count: 1, wanted_game_count: 0, device_count: 0 },
+        { id: 1, name: 'PlayStation', abbreviation: 'PS1', slug: 'ps1', active: true, sort_order: 1, game_count: 1, owned_game_count: 1, wanted_game_count: 0, device_count: 0, account_count: 0 },
       ],
     });
     renderAt('/');

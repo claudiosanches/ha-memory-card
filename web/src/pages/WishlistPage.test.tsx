@@ -20,6 +20,7 @@ const SWITCH = {
   owned_game_count: 1,
   wanted_game_count: 0,
   device_count: 0,
+  account_count: 0,
 };
 
 const WISH: CopyRow = {

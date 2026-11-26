@@ -1653,6 +1653,8 @@ export interface components {
         };
         Platform: {
             abbreviation?: string | null;
+            /** Format: int64 */
+            account_count: number;
             active: boolean;
             category?: components["schemas"]["PlatformCategory"] | null;
             /**
@@ -4336,7 +4338,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description `platform_in_use`: releases or devices use it */
+            /** @description `platform_in_use`: releases, devices or accounts use it */
             409: {
                 headers: {
                     [name: string]: unknown;

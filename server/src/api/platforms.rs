@@ -100,7 +100,7 @@ pub async fn update(
     responses(
         (status = NO_CONTENT),
         (status = NOT_FOUND, body = ErrorBody),
-        (status = CONFLICT, description = "`platform_in_use`: releases or devices use it", body = ErrorBody),
+        (status = CONFLICT, description = "`platform_in_use`: releases, devices or accounts use it", body = ErrorBody),
     )
 )]
 pub async fn delete(

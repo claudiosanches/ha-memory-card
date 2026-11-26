@@ -3090,7 +3090,7 @@
             }
           },
           "409": {
-            "description": "`platform_in_use`: releases or devices use it",
+            "description": "`platform_in_use`: releases, devices or accounts use it",
             "content": {
               "application/json": {
                 "schema": {
@@ -4257,7 +4257,7 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/CopyLink",
-                "description": "The bundle copy this copy came in. Its status, format, device, store,\ncondition, platform and region follow that copy."
+                "description": "The bundle copy this copy came in. Its status, format, device, account,\nstore, condition, platform and region follow that copy."
               },
               {
                 "type": "null"
@@ -6384,7 +6384,8 @@
           "game_count",
           "owned_game_count",
           "wanted_game_count",
-          "device_count"
+          "device_count",
+          "account_count"
         ],
         "properties": {
           "abbreviation": {
@@ -6392,6 +6393,10 @@
               "string",
               "null"
             ]
+          },
+          "account_count": {
+            "type": "integer",
+            "format": "int64"
           },
           "active": {
             "type": "boolean"

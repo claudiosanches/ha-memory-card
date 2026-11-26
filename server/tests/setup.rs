@@ -499,6 +499,41 @@ async fn platform_in_use_cannot_be_deleted() {
 }
 
 #[tokio::test]
+async fn platform_an_account_holds_cannot_be_deleted() {
+    let app = TestApp::new().await;
+    let (_, platform) = app
+        .json(
+            "POST",
+            "/api/platforms",
+            Some(json!({"name": "Homebrew Console"})),
+        )
+        .await;
+    let id = platform["id"].as_i64().unwrap();
+    let (status, _) = app
+        .json(
+            "POST",
+            "/api/accounts",
+            Some(json!({"name": "Homebrew Store", "platform_ids": [id]})),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED);
+
+    let (_, list) = app.json("GET", "/api/platforms", None).await;
+    let listed = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["id"] == id)
+        .unwrap();
+    assert_eq!(listed["account_count"], 1);
+    let (status, body) = app
+        .json("DELETE", &format!("/api/platforms/{id}"), None)
+        .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(body["code"], "platform_in_use");
+}
+
+#[tokio::test]
 async fn shipped_platforms_cannot_be_deleted() {
     let app = TestApp::new().await;
     for slug in ["ps3", "tic-80"] {

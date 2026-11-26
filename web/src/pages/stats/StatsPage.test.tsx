@@ -78,6 +78,7 @@ const PLATFORMS = [1, 2].map((id) => ({
   owned_game_count: 1,
   wanted_game_count: 0,
   device_count: 0,
+  account_count: 0,
 }));
 
 function section(name: string) {
