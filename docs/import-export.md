@@ -94,8 +94,12 @@ opening it is safe.
 ## Hardware
 
 The **Hardware** tab moves your [hardware](hardware.md) to and from its own
-CSV file. Accounts are not in it; they come with the games' file. **Export hardware** downloads every item, and **Download blank
-template** the columns alone.
+CSV file. Accounts are not in it; they come with the games' file. **Export
+hardware** downloads every item, and **Download blank template** the columns
+alone.
+
+**Columns and accepted values** at the bottom of the tab lists the columns in
+the app.
 
 An import shows a preview first. Each row updates the hardware with the same
 `device_id`, or else the same name, and adds new hardware otherwise. Columns
@@ -116,7 +120,7 @@ Stores that do not exist yet are added. Rows with errors block the import.
 | `store` | Store name |
 | `purchased_on` | `YYYY-MM-DD` |
 | `price`, `currency` | Price paid, or expected for wanted hardware, read as for copies |
-| `estimated_value`, `estimated_currency` | What it would sell for now |
+| `estimated_value`, `estimated_currency` | What owned hardware would sell for now. `estimated_value` uses `estimated_currency`, or `currency` when that is empty. |
 | `serial_number` | Free text |
 | `barcode` | UPC or EAN digits |
 | `notes` | Free text |

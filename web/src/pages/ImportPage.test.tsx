@@ -46,6 +46,19 @@ describe('Import page', () => {
     );
   });
 
+  it('lists the hardware columns like the games ones', async () => {
+    mockApi({});
+    renderAt('/import');
+    fireEvent.click(await screen.findByRole('tab', { name: en.nav.hardware }));
+    expect(await screen.findByRole('link', { name: en.hardware.exportButton })).toHaveAttribute(
+      'href',
+      'api/hardware.csv',
+    );
+    fireEvent.click(screen.getByRole('button', { name: en.import.columnsTitle }));
+    expect(await screen.findByText(en.hardware.columnHelp.plays)).toBeInTheDocument();
+    expect(screen.getByText('serial_number')).toBeInTheDocument();
+  });
+
   it('previews a file, then imports it', async () => {
     const preview: Preview = {
       file_issue: null,

@@ -1,4 +1,4 @@
-import { Accordion, Alert, Anchor, Badge, Button, Code, FileInput, Group, List, Select, SimpleGrid, Stack, Table, Tabs, Text } from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Code, FileInput, Group, List, Select, SimpleGrid, Stack, Table, Tabs, Text } from '@mantine/core';
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -7,6 +7,7 @@ import { ToolSection } from '../components/ToolSection';
 import { ToolTabList } from '../components/ToolTabList';
 import { HardwareTransfer } from './hardware/HardwareTransfer';
 import { CardPage } from '../components/CardPage';
+import { ColumnHelp } from '../components/ColumnHelp';
 import { withColumns } from './importColumns';
 import classes from './Tools.module.css';
 import { useTranslation } from 'react-i18next';
@@ -221,7 +222,10 @@ export function ImportPage() {
         )}
       </ToolSection>
 
-      <ColumnHelp />
+      <ColumnHelp
+        intro={t('import.columnsText')}
+        columns={COLUMNS.map((name) => ({ name, help: t(`import.columns.${name}`) }))}
+      />
           </Stack>
         </Tabs.Panel>
       </Tabs>
@@ -432,35 +436,5 @@ function PreviewResult({
         </Anchor>
       </Group>
     </Stack>
-  );
-}
-
-function ColumnHelp() {
-  const { t } = useTranslation();
-  return (
-    <Accordion variant="contained">
-      <Accordion.Item value="columns">
-        <Accordion.Control>{t('import.columnsTitle')}</Accordion.Control>
-        <Accordion.Panel>
-          <Stack gap="xs">
-            <Text size="sm">{t('import.columnsText')}</Text>
-            <Table>
-              <Table.Tbody>
-                {COLUMNS.map((column) => (
-                  <Table.Tr key={column}>
-                    <Table.Td>
-                      <Code>{column}</Code>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">{t(`import.columns.${column}`)}</Text>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Stack>
-        </Accordion.Panel>
-      </Accordion.Item>
-    </Accordion>
   );
 }

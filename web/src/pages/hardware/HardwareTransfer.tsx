@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import type { components } from '../../api/schema';
+import { ColumnHelp } from '../../components/ColumnHelp';
 import { notifyError } from '../../components/notify';
 import { ToolSection } from '../../components/ToolSection';
 import classes from '../Tools.module.css';
@@ -124,10 +125,12 @@ export function HardwareTransfer() {
         {preview.data && text !== null && (
           <HardwarePreviewResult preview={preview.data} importing={run.isPending} onImport={() => run.mutate(text)} />
         )}
-        <Text size="sm" c="dimmed">
-          {t('hardware.columns', { columns: HARDWARE_COLUMNS.join(', ') })}
-        </Text>
       </ToolSection>
+
+      <ColumnHelp
+        intro={t('hardware.columnsText')}
+        columns={HARDWARE_COLUMNS.map((name) => ({ name, help: t(`hardware.columnHelp.${name}`) }))}
+      />
     </Stack>
   );
 }
