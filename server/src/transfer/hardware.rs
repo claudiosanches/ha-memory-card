@@ -14,11 +14,11 @@ use super::export::{plain, unplain};
 use super::parse::{FileIssue, detect_delimiter, too_wide};
 use crate::api::devices::DeviceInput;
 use crate::api::input::{NAME_MAX, required};
-use crate::db::devices::{self, Device, DeviceFields, DeviceKind};
+use crate::db::devices::{self, Device, DeviceFields};
 use crate::db::platforms::{self, Platform};
 use crate::db::stores::{self, Store, StoreFields};
 use crate::db::{Pool, write_tx};
-use crate::domain::{Condition, CopyStatus, Region};
+use crate::domain::{Condition, CopyStatus, DeviceKind, Region};
 use crate::error::{ApiError, ApiResult};
 
 pub const COLUMNS: [&str; 19] = [
@@ -100,7 +100,7 @@ pub async fn export(pool: &Pool) -> ApiResult<Vec<u8>> {
                 d.id.to_string(),
                 d.status.as_str().to_owned(),
                 plain(d.name),
-                kind_text(d.kind).to_owned(),
+                d.kind.as_str().to_owned(),
                 text(d.model),
                 text(d.platform_id.and_then(platform)),
                 plain(
@@ -145,34 +145,6 @@ pub fn template() -> Vec<u8> {
     out.extend_from_slice(COLUMNS.join(",").as_bytes());
     out.extend_from_slice(b"\r\n");
     out
-}
-
-fn kind_text(kind: DeviceKind) -> &'static str {
-    match kind {
-        DeviceKind::Console => "console",
-        DeviceKind::Handheld => "handheld",
-        DeviceKind::Pc => "pc",
-        DeviceKind::Controller => "controller",
-        DeviceKind::Accessory => "accessory",
-        DeviceKind::Toy => "toy",
-    }
-}
-
-fn parse_kind(text: &str) -> Option<DeviceKind> {
-    let key: String = text
-        .chars()
-        .filter(char::is_ascii_alphanumeric)
-        .collect::<String>()
-        .to_lowercase();
-    Some(match key.as_str() {
-        "console" => DeviceKind::Console,
-        "handheld" | "portable" => DeviceKind::Handheld,
-        "pc" | "computer" => DeviceKind::Pc,
-        "controller" | "gamepad" => DeviceKind::Controller,
-        "accessory" => DeviceKind::Accessory,
-        "toy" | "amiibo" | "figure" => DeviceKind::Toy,
-        _ => return None,
-    })
 }
 
 /// Folds case as SQLite's `NOCASE` does, so names it keeps apart stay apart.
@@ -360,7 +332,7 @@ fn plan_row(
     let mut input = existing.map_or_else(DeviceInput::blank, DeviceInput::from_device);
     input.name = name.clone();
     if let Some(text) = cell("kind") {
-        match parse_kind(&text) {
+        match DeviceKind::parse_loose(&text) {
             Some(kind) => input.kind = kind,
             None if text.is_empty() && existing.is_some() => {}
             None => issue(

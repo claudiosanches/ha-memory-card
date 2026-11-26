@@ -329,7 +329,7 @@ async fn device_update_failure_keeps_platforms() {
     app.json(
         "POST",
         "/api/devices",
-        Some(json!({"name": "PSN main", "kind": "handheld"})),
+        Some(json!({"name": "Steam Deck", "kind": "handheld"})),
     )
     .await;
 
@@ -337,7 +337,7 @@ async fn device_update_failure_keeps_platforms() {
         .json(
             "PUT",
             &format!("/api/devices/{}", a["id"]),
-            Some(json!({"name": "psn MAIN", "kind": "console", "platform_ids": []})),
+            Some(json!({"name": "steam DECK", "kind": "console", "platform_ids": []})),
         )
         .await;
     assert_eq!(status, StatusCode::CONFLICT);

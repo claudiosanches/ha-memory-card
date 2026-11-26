@@ -179,17 +179,7 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
 /// Checks the store, the person and the platforms exist.
 /// Returns the platform ids as a JSON array.
 async fn checked(conn: &mut SqliteConnection, fields: &AccountFields) -> ApiResult<String> {
-    if let Some(store_id) = fields.store_id {
-        let exists: bool = sqlx::query_scalar!(
-            r#"SELECT EXISTS (SELECT 1 FROM stores WHERE id = ?) AS "exists!: bool""#,
-            store_id
-        )
-        .fetch_one(&mut *conn)
-        .await?;
-        if !exists {
-            return Err(ApiError::invalid("unknown_store", "store_id"));
-        }
-    }
+    super::stores::check(conn, fields.store_id).await?;
     if let Some(user_id) = &fields.user_id {
         let known: bool = sqlx::query_scalar!(
             r#"SELECT EXISTS (SELECT 1 FROM users WHERE id = ?) AS "known!: bool""#,
@@ -201,21 +191,7 @@ async fn checked(conn: &mut SqliteConnection, fields: &AccountFields) -> ApiResu
             return Err(ApiError::invalid("unknown_user", "user_id"));
         }
     }
-    let mut ids = fields.platform_ids.clone();
-    ids.sort_unstable();
-    ids.dedup();
-    let json = serde_json::to_string(&ids).expect("integers serialize");
-    let known: i64 = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) AS "count!: i64" FROM platforms
-           WHERE id IN (SELECT value FROM json_each(?))"#,
-        json
-    )
-    .fetch_one(&mut *conn)
-    .await?;
-    if known != ids.len() as i64 {
-        return Err(ApiError::invalid("unknown_platform", "platform_ids"));
-    }
-    Ok(json)
+    super::platforms::checked_ids(conn, &fields.platform_ids).await
 }
 
 async fn set_platforms(
@@ -232,22 +208,4 @@ async fn set_platforms(
     .execute(&mut *conn)
     .await?;
     Ok(())
-}
-
-/// The household's people Memory Card knows, by name, for picking whose an
-/// account is.
-pub async fn people(pool: &SqlitePool) -> sqlx::Result<Vec<Person>> {
-    let rows = sqlx::query!(
-        r#"SELECT id AS "id!", COALESCE(display_name, name) AS name FROM users
-           ORDER BY COALESCE(display_name, name, id) COLLATE NOCASE"#
-    )
-    .fetch_all(pool)
-    .await?;
-    Ok(rows
-        .into_iter()
-        .map(|row| Person {
-            id: row.id,
-            name: row.name,
-        })
-        .collect())
 }

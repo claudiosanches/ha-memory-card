@@ -82,7 +82,7 @@ pub struct HardwareStats {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct KindCount {
-    pub kind: super::devices::DeviceKind,
+    pub kind: crate::domain::DeviceKind,
     pub count: i64,
 }
 
@@ -473,7 +473,7 @@ async fn hardware(pool: &SqlitePool) -> sqlx::Result<HardwareStats> {
     .await?;
     let kinds = sqlx::query_as!(
         KindCount,
-        r#"SELECT kind AS "kind!: super::devices::DeviceKind", COUNT(*) AS "count!: i64"
+        r#"SELECT kind AS "kind!: crate::domain::DeviceKind", COUNT(*) AS "count!: i64"
            FROM devices WHERE status = 'owned'
            GROUP BY kind ORDER BY COUNT(*) DESC, kind"#
     )

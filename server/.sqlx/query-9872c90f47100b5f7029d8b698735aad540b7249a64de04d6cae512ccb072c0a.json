@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT d.id AS \"id!\", d.name,\n                  (SELECT json_group_array(platform_id) FROM device_platforms\n                   WHERE device_id = d.id) AS \"platform_ids!: sqlx::types::Json<Vec<i64>>\",\n                  d.kind IN ('console', 'handheld', 'pc') AS \"holds_games!: bool\"\n           FROM devices d",
+  "query": "SELECT d.id AS \"id!\", d.name,\n                  (SELECT json_group_array(platform_id) FROM device_platforms\n                   WHERE device_id = d.id) AS \"platform_ids!: sqlx::types::Json<Vec<i64>>\",\n                  d.kind AS \"kind: DeviceKind\"\n           FROM devices d",
   "describe": {
     "columns": [
       {
@@ -32,10 +32,15 @@
         "origin": "Expression"
       },
       {
-        "name": "holds_games!: bool",
+        "name": "kind: DeviceKind",
         "ordinal": 3,
-        "type_info": "Integer",
-        "origin": "Expression"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "kind"
+          }
+        }
       }
     ],
     "parameters": {
@@ -45,8 +50,8 @@
       false,
       false,
       true,
-      true
+      false
     ]
   },
-  "hash": "f1d86705181a9108311815c913b2da721d7899acaff804c0c5d1541e13b46316"
+  "hash": "9872c90f47100b5f7029d8b698735aad540b7249a64de04d6cae512ccb072c0a"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO devices (name, slug, kind) VALUES (?, ?, ?) RETURNING id AS \"id!\"",
+  "query": "INSERT INTO devices (name, slug, kind) VALUES (?, ?, 'console') RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 2
     },
     "nullable": [
       false
     ]
   },
-  "hash": "447a94b43e441d3b054fe65fcd223d30830d85d1e09558bbfabc0e6242fca14b"
+  "hash": "da6dbc257b15bb123785fabcb2aeb6ae83de31d95e0227a9261e8826adf931f5"
 }

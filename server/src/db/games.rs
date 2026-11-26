@@ -5,14 +5,13 @@ use sqlx::types::Json;
 use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
-use super::devices::DeviceKind;
 use super::found;
 use super::photos::CopyPhoto;
 use super::sessions::{self, PersonPlay, PlaySession};
 use super::tags::CopyTag;
 use super::users::Person;
 use crate::covers::Owner;
-use crate::domain::{Condition, CopySource, CopyStatus, Format, Region, sort_title};
+use crate::domain::{Condition, CopySource, CopyStatus, DeviceKind, Format, Region, sort_title};
 use crate::error::{ApiError, ApiResult};
 use crate::money;
 
@@ -987,17 +986,7 @@ async fn check_references(conn: &mut SqliteConnection, fields: &CopyFields) -> A
             return Err(ApiError::invalid("unknown_account", "account_id"));
         }
     }
-    if let Some(store_id) = fields.store_id {
-        let exists: bool = sqlx::query_scalar!(
-            r#"SELECT EXISTS (SELECT 1 FROM stores WHERE id = ?) AS "exists!: bool""#,
-            store_id
-        )
-        .fetch_one(&mut *conn)
-        .await?;
-        if !exists {
-            return Err(ApiError::invalid("unknown_store", "store_id"));
-        }
-    }
+    super::stores::check(conn, fields.store_id).await?;
     Ok(())
 }
 

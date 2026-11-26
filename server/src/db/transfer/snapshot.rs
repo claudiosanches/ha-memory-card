@@ -3,7 +3,7 @@
 use sqlx::SqliteConnection;
 
 use crate::db::play_statuses::{self, StatusName};
-use crate::domain::{Condition, CopyStatus, Format, Region};
+use crate::domain::{Condition, CopyStatus, DeviceKind, Format, Region};
 
 #[derive(Debug, Clone)]
 pub struct PlatformRow {
@@ -95,7 +95,7 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
         r#"SELECT d.id AS "id!", d.name,
                   (SELECT json_group_array(platform_id) FROM device_platforms
                    WHERE device_id = d.id) AS "platform_ids!: sqlx::types::Json<Vec<i64>>",
-                  d.kind IN ('console', 'handheld', 'pc') AS "holds_games!: bool"
+                  d.kind AS "kind: DeviceKind"
            FROM devices d"#
     )
     .fetch_all(&mut *conn)
@@ -105,7 +105,7 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
         id: row.id,
         name: row.name,
         platform_ids: row.platform_ids.0,
-        holds_games: row.holds_games,
+        holds_games: row.kind.holds_games(),
     })
     .collect();
 

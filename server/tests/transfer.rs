@@ -115,7 +115,7 @@ async fn preview_plans_without_writing() {
         "{HEADER}\n\
          ,,,Super Mario Odyssey,completed,Nintendo Switch,na,,,physical,Switch OLED,Amazon,cib,\n\
          ,,,Super Mario Odyssey,,Switch,eu,,,digital,Switch OLED,Nintendo eShop,,\n\
-         ,,,Mario Kart 8 Deluxe,,switch,eu,,,digital,Nintendo account,Nintendo eShop,,\n\
+         ,,,Mario Kart 8 Deluxe,,switch,eu,,,digital,Switch Lite,Nintendo eShop,,\n\
          ,,,Shenmue,,Sega Dreamcast,jp,,,physical,,,loose,Import\n"
     );
     let (status, preview) = app.post_csv("/api/import/preview", &csv).await;
@@ -134,8 +134,8 @@ async fn preview_plans_without_writing() {
     assert_eq!(
         preview["new_devices"],
         json!([
-            {"name": "Switch OLED", "kind": "console", "platforms": ["Nintendo Switch"]},
-            {"name": "Nintendo account", "kind": "console", "platforms": ["Nintendo Switch"]},
+            {"name": "Switch OLED", "platforms": ["Nintendo Switch"]},
+            {"name": "Switch Lite", "platforms": ["Nintendo Switch"]},
         ])
     );
 

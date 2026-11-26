@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT kind AS \"kind!: super::devices::DeviceKind\", COUNT(*) AS \"count!: i64\"\n           FROM devices WHERE status = 'owned'\n           GROUP BY kind ORDER BY COUNT(*) DESC, kind",
+  "query": "SELECT kind AS \"kind!: crate::domain::DeviceKind\", COUNT(*) AS \"count!: i64\"\n           FROM devices WHERE status = 'owned'\n           GROUP BY kind ORDER BY COUNT(*) DESC, kind",
   "describe": {
     "columns": [
       {
-        "name": "kind!: super::devices::DeviceKind",
+        "name": "kind!: crate::domain::DeviceKind",
         "ordinal": 0,
         "type_info": "Text",
         "origin": {
@@ -29,5 +29,5 @@
       false
     ]
   },
-  "hash": "bb5180e06443476685d4bf6cc3d27ab9b05059bc2610bc03cf8221bb647eef5a"
+  "hash": "88d748f43358c45053b913bc32bd5de8caa2d9b0cc5332fc7d92027af4292dd5"
 }

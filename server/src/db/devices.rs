@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::types::Json;
 use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
@@ -7,29 +7,9 @@ use super::found;
 use super::games::Price;
 use super::photos::CopyPhoto;
 use super::slugs::{self, Table};
-use crate::domain::{Condition, CopyStatus, Region};
+use crate::domain::{Condition, CopyStatus, DeviceKind, Region};
 use crate::error::{ApiError, ApiResult};
 use crate::money;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, sqlx::Type)]
-#[serde(rename_all = "snake_case")]
-#[sqlx(rename_all = "snake_case")]
-pub enum DeviceKind {
-    Console,
-    Handheld,
-    Pc,
-    Controller,
-    Accessory,
-    Toy,
-}
-
-impl DeviceKind {
-    /// Consoles, handhelds and PCs hold copies; the rest is hardware for a
-    /// platform.
-    pub fn holds_games(self) -> bool {
-        matches!(self, Self::Console | Self::Handheld | Self::Pc)
-    }
-}
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Device {
@@ -208,7 +188,7 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
 
 /// Adds a device inside the caller's transaction.
 pub(crate) async fn insert(conn: &mut SqliteConnection, fields: &DeviceFields) -> ApiResult<i64> {
-    let platform_ids = checked_platform_ids(conn, &fields.platform_ids).await?;
+    let platform_ids = super::platforms::checked_ids(conn, &fields.platform_ids).await?;
     check_references(conn, fields).await?;
     slugs::ensure_name_free(conn, Table::Devices, &fields.name, None).await?;
     let slug = slugs::for_new(conn, Table::Devices, fields.slug.as_deref(), &fields.name).await?;
@@ -262,7 +242,7 @@ pub(crate) async fn change(
     fields: &DeviceFields,
 ) -> ApiResult<()> {
     slugs::ensure_name_free(conn, Table::Devices, &fields.name, Some(id)).await?;
-    let platform_ids = checked_platform_ids(conn, &fields.platform_ids).await?;
+    let platform_ids = super::platforms::checked_ids(conn, &fields.platform_ids).await?;
     check_references(conn, fields).await?;
     if !fields.kind.holds_games() {
         let copies: i64 = sqlx::query_scalar!(
@@ -342,38 +322,8 @@ async fn check_references(conn: &mut SqliteConnection, fields: &DeviceFields) ->
             return Err(ApiError::invalid("unknown_platform", "platform_id"));
         }
     }
-    if let Some(store_id) = fields.store_id {
-        let exists: bool = sqlx::query_scalar!(
-            r#"SELECT EXISTS (SELECT 1 FROM stores WHERE id = ?) AS "exists!: bool""#,
-            store_id
-        )
-        .fetch_one(&mut *conn)
-        .await?;
-        if !exists {
-            return Err(ApiError::invalid("unknown_store", "store_id"));
-        }
-    }
+    super::stores::check(conn, fields.store_id).await?;
     Ok(())
-}
-
-/// Deduplicates the ids and checks they all exist. Returns them as a JSON array.
-async fn checked_platform_ids(conn: &mut SqliteConnection, ids: &[i64]) -> ApiResult<String> {
-    let mut ids = ids.to_vec();
-    ids.sort_unstable();
-    ids.dedup();
-    let json = serde_json::to_string(&ids).expect("integers serialize");
-
-    let known: i64 = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) AS "count!: i64" FROM platforms
-           WHERE id IN (SELECT value FROM json_each(?))"#,
-        json
-    )
-    .fetch_one(&mut *conn)
-    .await?;
-    if known != ids.len() as i64 {
-        return Err(ApiError::invalid("unknown_platform", "platform_ids"));
-    }
-    Ok(json)
 }
 
 async fn set_platforms(

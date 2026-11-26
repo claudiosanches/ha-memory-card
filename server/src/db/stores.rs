@@ -57,6 +57,22 @@ pub async fn create(pool: &SqlitePool, fields: &StoreFields) -> ApiResult<i64> {
     Ok(id)
 }
 
+/// Fails with `unknown_store` when the store is set and does not exist.
+pub(crate) async fn check(conn: &mut SqliteConnection, id: Option<i64>) -> ApiResult<()> {
+    let Some(id) = id else { return Ok(()) };
+    let exists: bool = sqlx::query_scalar!(
+        r#"SELECT EXISTS (SELECT 1 FROM stores WHERE id = ?) AS "exists!: bool""#,
+        id
+    )
+    .fetch_one(&mut *conn)
+    .await?;
+    if exists {
+        Ok(())
+    } else {
+        Err(ApiError::invalid("unknown_store", "store_id"))
+    }
+}
+
 /// Adds a store inside the caller's transaction.
 pub(crate) async fn insert(conn: &mut SqliteConnection, fields: &StoreFields) -> ApiResult<i64> {
     slugs::ensure_name_free(conn, Table::Stores, &fields.name, None).await?;

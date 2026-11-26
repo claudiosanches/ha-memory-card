@@ -53,3 +53,21 @@ pub async fn ensure(conn: &mut SqliteConnection, id: &str) -> sqlx::Result<()> {
         .await?;
     Ok(())
 }
+
+/// Everyone Memory Card knows, by name, such as for picking whose an account
+/// is.
+pub async fn people(pool: &SqlitePool) -> sqlx::Result<Vec<Person>> {
+    let rows = sqlx::query!(
+        r#"SELECT id AS "id!", COALESCE(display_name, name) AS name FROM users
+           ORDER BY COALESCE(display_name, name, id) COLLATE NOCASE"#
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| Person {
+            id: row.id,
+            name: row.name,
+        })
+        .collect())
+}

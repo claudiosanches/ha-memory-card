@@ -58,10 +58,9 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
     for device in &plan.devices {
         let slug = slugs.free(conn, &device.name).await?;
         let id = sqlx::query_scalar!(
-            r#"INSERT INTO devices (name, slug, kind) VALUES (?, ?, ?) RETURNING id AS "id!""#,
+            r#"INSERT INTO devices (name, slug, kind) VALUES (?, ?, 'console') RETURNING id AS "id!""#,
             device.name,
-            slug,
-            device.kind
+            slug
         )
         .fetch_one(&mut *conn)
         .await?;

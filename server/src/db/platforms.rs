@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
@@ -212,4 +212,24 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
         .await?;
     tx.commit().await?;
     Ok(())
+}
+
+/// Deduplicates the ids and checks they all exist. Returns them as a JSON array.
+pub(crate) async fn checked_ids(conn: &mut SqliteConnection, ids: &[i64]) -> ApiResult<String> {
+    let mut ids = ids.to_vec();
+    ids.sort_unstable();
+    ids.dedup();
+    let json = serde_json::to_string(&ids).expect("integers serialize");
+
+    let known: i64 = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) AS "count!: i64" FROM platforms
+           WHERE id IN (SELECT value FROM json_each(?))"#,
+        json
+    )
+    .fetch_one(&mut *conn)
+    .await?;
+    if known != ids.len() as i64 {
+        return Err(ApiError::invalid("unknown_platform", "platform_ids"));
+    }
+    Ok(json)
 }

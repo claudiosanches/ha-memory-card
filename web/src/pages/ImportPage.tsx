@@ -349,7 +349,8 @@ function PreviewResult({
                   <List.Item key={device.name}>
                     {t('import.newDevice', {
                       name: device.name,
-                      kind: t(`deviceKind.${device.kind}`),
+                      // An import adds devices as consoles.
+                      kind: t('deviceKind.console'),
                       platforms: device.platforms.join(', '),
                     })}
                   </List.Item>

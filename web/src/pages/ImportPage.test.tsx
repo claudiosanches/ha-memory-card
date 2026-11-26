@@ -53,7 +53,7 @@ describe('Import page', () => {
       delimiter: ',',
       summary: summary(),
       new_platforms: [],
-      new_devices: [{ name: 'Switch OLED', kind: 'console', platforms: ['Nintendo Switch'] }],
+      new_devices: [{ name: 'Switch OLED', platforms: ['Nintendo Switch'] }],
       new_stores: ['Amazon'],
       new_accounts: [],
       new_labels: [],

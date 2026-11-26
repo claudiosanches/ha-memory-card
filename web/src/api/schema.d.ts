@@ -1268,7 +1268,10 @@ export interface components {
             /** Format: int64 */
             store_id?: number | null;
         };
-        /** @enum {string} */
+        /**
+         * @description What a piece of hardware is.
+         * @enum {string}
+         */
         DeviceKind: "console" | "handheld" | "pc" | "controller" | "accessory" | "toy";
         DuplicateCopy: {
             /** Format: int64 */
@@ -1596,8 +1599,8 @@ export interface components {
          * @enum {string}
          */
         MissingField: "cover" | "game_modes" | "players" | "copies" | "device" | "store" | "condition" | "igdb";
+        /** @description A device the import adds as a console. */
         NewDeviceReport: {
-            kind: components["schemas"]["DeviceKind"];
             name: string;
             platforms: string[];
         };

@@ -7,7 +7,6 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use super::parse::RawRow;
-use crate::db::devices::DeviceKind;
 use crate::db::labels::{PER_GAME_MAX, SEPARATORS};
 use crate::db::play_statuses;
 use crate::db::transfer::snapshot::{CopyRow, GameRow, ReleaseRow, Snapshot};
@@ -27,9 +26,9 @@ pub enum Ref {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+/// A device the import adds, always as a console.
 pub struct NewDevice {
     pub name: String,
-    pub kind: DeviceKind,
     pub platforms: Vec<Ref>,
 }
 
@@ -150,7 +149,7 @@ pub fn plan(rows: &[RawRow], snapshot: &Snapshot) -> Plan {
     for row in rows {
         planner.row(row);
     }
-    planner.finish()
+    planner.plan
 }
 
 #[derive(Default)]
@@ -351,10 +350,6 @@ impl<'a> Planner<'a> {
                 .filter_map(|r| r.title.clone().map(|t| (Ref::Existing(r.id), t)))
                 .collect(),
         }
-    }
-
-    fn finish(self) -> Plan {
-        self.plan
     }
 
     /// A row that updates a copy, with the copy columns its file does not
@@ -878,7 +873,6 @@ impl<'a> Planner<'a> {
             let device = Ref::New(self.plan.devices.len());
             self.plan.devices.push(NewDevice {
                 name: name.to_owned(),
-                kind: DeviceKind::Console,
                 platforms: Vec::new(),
             });
             self.devices.insert(key(name), device);

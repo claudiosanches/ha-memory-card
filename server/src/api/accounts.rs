@@ -8,7 +8,7 @@ use super::input::{NAME_MAX, NOTES_MAX, optional, required};
 use crate::AppState;
 use crate::access::valid_user_id;
 use crate::db::accounts::{self, Account, AccountFields};
-use crate::db::users::Person;
+use crate::db::users::{self, Person};
 use crate::error::{ApiError, ApiJson, ApiPath, ApiResult, ErrorBody};
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -126,5 +126,5 @@ pub async fn delete(
     responses((status = OK, description = "Everyone Memory Card knows, by name", body = Vec<Person>))
 )]
 pub async fn people(State(state): State<AppState>) -> ApiResult<Json<Vec<Person>>> {
-    Ok(Json(accounts::people(&state.db).await?))
+    Ok(Json(users::people(&state.db).await?))
 }

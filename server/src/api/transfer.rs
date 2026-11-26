@@ -13,7 +13,6 @@ use utoipa::ToSchema;
 use super::body::CsvBody;
 use crate::AppState;
 use crate::access::Actor;
-use crate::db::devices::DeviceKind;
 use crate::db::library::{LibraryFilter, Ownership};
 use crate::db::transfer::{self, snapshot::Snapshot};
 use crate::error::{ApiError, ApiResult, ErrorBody};
@@ -37,9 +36,9 @@ pub struct ImportSummary {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+/// A device the import adds as a console.
 pub struct NewDeviceReport {
     pub name: String,
-    pub kind: DeviceKind,
     pub platforms: Vec<String>,
 }
 
@@ -119,7 +118,6 @@ fn preview_of(plan: Plan, snapshot: &Snapshot) -> ImportPreview {
             .iter()
             .map(|d| NewDeviceReport {
                 name: d.name.clone(),
-                kind: d.kind,
                 platforms: d.platforms.iter().map(|p| platform_name(*p)).collect(),
             })
             .collect(),

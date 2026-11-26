@@ -5060,6 +5060,7 @@
       },
       "DeviceKind": {
         "type": "string",
+        "description": "What a piece of hardware is.",
         "enum": [
           "console",
           "handheld",
@@ -6217,15 +6218,12 @@
       },
       "NewDeviceReport": {
         "type": "object",
+        "description": "A device the import adds as a console.",
         "required": [
           "name",
-          "kind",
           "platforms"
         ],
         "properties": {
-          "kind": {
-            "$ref": "#/components/schemas/DeviceKind"
-          },
           "name": {
             "type": "string"
           },

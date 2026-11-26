@@ -89,6 +89,26 @@ value_list! {
 }
 
 value_list! {
+    /// What a piece of hardware is.
+    DeviceKind {
+        Console = "console" [],
+        Handheld = "handheld" ["portable"],
+        Pc = "pc" ["computer"],
+        Controller = "controller" ["gamepad"],
+        Accessory = "accessory" [],
+        Toy = "toy" ["amiibo", "figure"],
+    }
+}
+
+impl DeviceKind {
+    /// Consoles, handhelds and PCs hold copies; the rest is hardware for a
+    /// platform.
+    pub fn holds_games(self) -> bool {
+        matches!(self, Self::Console | Self::Handheld | Self::Pc)
+    }
+}
+
+value_list! {
     /// Where a copy came from: added in the app, or by a CSV import.
     CopySource {
         Manual = "manual" [],
