@@ -31,10 +31,13 @@ export type LibrarySearch = {
   play_status?: StatusFilter[];
   format?: Format;
   min_local_players?: number;
+  max_hours_to_beat?: number;
   ownership?: 'any' | 'wanted';
   igdb?: 'linked' | 'unlinked';
   sort?: 'added' | 'played';
 };
+
+export const MAX_HOURS_TO_BEAT = 999;
 
 const SLUG_LISTS = ['platform', 'device', 'store', 'genre', 'game_mode', 'label'] as const;
 
@@ -65,6 +68,8 @@ export function validateLibrarySearch(search: Record<string, unknown>): LibraryS
   if (FORMATS.includes(search.format as Format)) result.format = search.format as Format;
   const players = Number(search.min_local_players);
   if (Number.isInteger(players) && players > 1) result.min_local_players = players;
+  const hours = Number(search.max_hours_to_beat);
+  if (Number.isInteger(hours) && hours >= 1 && hours <= MAX_HOURS_TO_BEAT) result.max_hours_to_beat = hours;
   if (search.ownership === 'any' || search.ownership === 'wanted') result.ownership = search.ownership;
   if (search.igdb === 'linked' || search.igdb === 'unlinked') result.igdb = search.igdb;
   if (search.sort === 'added' || search.sort === 'played') result.sort = search.sort;
@@ -79,6 +84,7 @@ export function activeFilterCount(search: LibrarySearch): number {
     (search.play_status ? 1 : 0) +
     (search.format ? 1 : 0) +
     (search.min_local_players ? 1 : 0) +
+    (search.max_hours_to_beat ? 1 : 0) +
     (search.igdb ? 1 : 0)
   );
 }
@@ -106,6 +112,7 @@ export function toApiQuery(search: LibrarySearch): LibraryQuery {
   if (search.play_status) query.play_status = search.play_status.join(',');
   if (search.format) query.format = search.format;
   if (search.min_local_players) query.min_local_players = search.min_local_players;
+  if (search.max_hours_to_beat) query.max_hours_to_beat = search.max_hours_to_beat;
   if (search.ownership) query.ownership = search.ownership;
   if (search.igdb) query.igdb = search.igdb;
   if (search.sort) query.sort = search.sort;

@@ -44,6 +44,9 @@ pub struct SuggestionFilter {
     /// Local (same screen) players, release value first, then the game's.
     #[serde(default)]
     pub min_local_players: Option<i64>,
+    /// Hours IGDB gives for the main story, at most.
+    #[serde(default)]
+    pub max_hours_to_beat: Option<i64>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -72,6 +75,7 @@ pub async fn suggest(
         genre: filter.genre,
         game_mode: filter.game_mode,
         min_local_players: filter.min_local_players,
+        max_hours_to_beat: filter.max_hours_to_beat,
         ownership: Some(Ownership::Owned),
         person: Some(person.to_owned()),
         ..LibraryFilter::default()

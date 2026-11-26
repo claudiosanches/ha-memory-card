@@ -185,6 +185,15 @@ async fn filters_match_one_owned_copy() {
         "Tetris"
     );
 
+    sqlx::query("UPDATE games SET time_to_beat_main = 120 WHERE title = 'Hades'")
+        .execute(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        title(&app, json!({ "max_hours_to_beat": 2 })).await,
+        "Hades"
+    );
+
     sqlx::query(
         "INSERT INTO game_game_modes (game_id, game_mode_id)
          SELECT g.id, m.id FROM games g, game_modes m WHERE g.title = 'Hades' AND m.slug = 'co-op'",

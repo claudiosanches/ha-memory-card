@@ -10,20 +10,33 @@ import { useDevices, usePlatforms } from '../../api/queries';
 import type { Suggestion } from '../../api/types';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
+import { playTime } from '../stats/StatsPage';
 import classes from './BacklogPage.module.css';
 import { useSetPlayStatus } from './usePlayStatus';
 
-/** Rolls a random game from your own backlog, optionally one a device can play. */
+/** Hours to beat the main story, at most, offered in the picker. */
+const HOUR_LIMITS = [2, 5, 10, 20, 40];
+
+/** Rolls a random game from your own backlog, optionally one a device can play or a short one. */
 export function Picker() {
   const { t } = useTranslation();
   const devices = useDevices();
   const [device, setDevice] = useState<string | null>(null);
+  const [hours, setHours] = useState<string | null>(null);
   // Kept apart from the mutation, which drops its data while the next roll loads.
   const [picked, setPicked] = useState<{ suggestion: Suggestion; roll: number } | null>(null);
   const setStatus = useSetPlayStatus();
 
   const pick = useMutation({
-    mutationFn: () => call(api.POST('/api/suggestions', { body: device ? { device: [device] } : {} })),
+    mutationFn: () =>
+      call(
+        api.POST('/api/suggestions', {
+          body: {
+            ...(device ? { device: [device] } : {}),
+            ...(hours ? { max_hours_to_beat: Number(hours) } : {}),
+          },
+        }),
+      ),
     onSuccess: (suggestion) => setPicked((last) => ({ suggestion, roll: (last?.roll ?? 0) + 1 })),
     onError: () => setPicked(null),
   });
@@ -57,6 +70,15 @@ export function Picker() {
               .map((d) => ({ value: d.slug, label: d.name }))}
             value={device}
             onChange={setDevice}
+            clearable
+            className={classes.deviceSelect}
+          />
+          <Select
+            label={t('backlog.length')}
+            placeholder={t('backlog.anyLength')}
+            data={HOUR_LIMITS.map((count) => ({ value: String(count), label: t('backlog.upToHours', { count }) }))}
+            value={hours}
+            onChange={setHours}
             clearable
             className={classes.deviceSelect}
           />
@@ -130,6 +152,11 @@ function Picked({ suggestion, rolling, starting, onStart }: PickedProps) {
             {line}
           </Text>
         ))}
+        {game.time_to_beat.main != null && (
+          <Text size="sm" c="dimmed">
+            {t('game.beatMain', { time: playTime(game.time_to_beat.main, t) })}
+          </Text>
+        )}
         <Group className={classes.pickedActions}>
           <Button leftSection={<IconPlayerPlay size={16} />} onClick={onStart} loading={starting} disabled={rolling}>
             {t('backlog.start')}

@@ -23,9 +23,11 @@ playing. **Played today** on the [game page](game.md) does the same.
 
 1. Under **Play on**, keep **Any device** or choose the device you want to
    play on.
-2. Select **Pick for me**. A game picked for you in the last day comes up
+2. Under **Time to beat**, keep **Any length** or choose how many hours the
+   main story may take at most. Games IGDB has no time for are left out then.
+3. Select **Pick for me**. A game picked for you in the last day comes up
    again only when nothing else is left.
-3. **Start playing** sets the game to playing. **Pick another** rolls again.
+4. **Start playing** sets the game to playing. **Pick another** rolls again.
 
 The latest pick also shows in Home Assistant's `sensor.memory_card_pick`, and
 Home Assistant can roll one for you. See [sensors](sensors.md).
@@ -35,7 +37,8 @@ Home Assistant can roll one for you. See [sensors](sensors.md).
 - **Now playing:** **Completed**, **Mastered**, **Pause** and **Drop** move a
   game on.
 - **On hold:** **Resume** puts a game back to playing.
-- **In the backlog:** **Start** begins one.
+- **In the backlog:** **Start** begins one. Each card shows IGDB's hours for
+  the main story, when it has them.
 
 Which section a status lands in depends on the group it counts as, which
 managers set under **Manage > Play statuses**:

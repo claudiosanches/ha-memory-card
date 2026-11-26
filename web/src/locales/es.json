@@ -540,7 +540,8 @@
       "igdb": "IGDB",
       "igdbAny": "Vinculado o no",
       "igdbLinked": "Vinculado a IGDB",
-      "igdbUnlinked": "Sin vincular a IGDB"
+      "igdbUnlinked": "Sin vincular a IGDB",
+      "maxHoursToBeat": "Horas para terminar la historia, como máximo"
     },
     "sort": {
       "title": "Título",
@@ -662,7 +663,11 @@
     "genres": "Géneros",
     "cover": "Portada de {{title}}",
     "household": "Otros en casa",
-    "someone": "Alguien"
+    "someone": "Alguien",
+    "timeToBeat": "Tiempo para terminarlo",
+    "beatMain": "{{time}} la historia principal",
+    "beatExtras": "{{time}} con extras",
+    "beatFull": "{{time}} al 100 %"
   },
   "igdb": {
     "link": "Vincular a IGDB",
@@ -744,7 +749,12 @@
     "empty": "No hay nada en pendientes.",
     "cleared": "Pendientes vaciados. Buen trabajo.",
     "moved": "{{title}}: {{status}}",
-    "noPlay": "Tus pendientes aparecen aquí cuando un gestor permite que los lectores lleven su propio registro de juego."
+    "noPlay": "Tus pendientes aparecen aquí cuando un gestor permite que los lectores lleven su propio registro de juego.",
+    "beatTime": "{{time}} para terminarlo",
+    "length": "Duración",
+    "anyLength": "Cualquier duración",
+    "upToHours_one": "Hasta {{count}} hora",
+    "upToHours_other": "Hasta {{count}} horas"
   },
   "duplicates": {
     "intro": "Juegos de los que tienes más de una copia.",

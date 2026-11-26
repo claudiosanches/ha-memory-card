@@ -51,6 +51,7 @@ function detail(id: number, title: string, igdbId: number | null = null): GameDe
     online_max_players: null,
     local_coop: null,
     online_coop: null,
+    time_to_beat: {},
     game_mode_ids: [],
     genre_ids: [],
     labels: [],

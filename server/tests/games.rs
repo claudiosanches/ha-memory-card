@@ -777,6 +777,29 @@ async fn local_players_use_the_release_then_the_game() {
 }
 
 #[tokio::test]
+async fn time_to_beat_filters_on_the_main_story() {
+    let app = library_app().await;
+    for (title, minutes) in [("Splatoon", 300), ("Astro Bot", 601)] {
+        sqlx::query("UPDATE games SET time_to_beat_main = ? WHERE title = ?")
+            .bind(minutes)
+            .bind(title)
+            .execute(&app.pool)
+            .await
+            .unwrap();
+    }
+    assert_eq!(titles(&app, "max_hours_to_beat=5").await, ["Splatoon"]);
+    // Games without a time are left out.
+    assert_eq!(
+        titles(&app, "max_hours_to_beat=11").await,
+        ["Astro Bot", "Splatoon"]
+    );
+    let (_, list) = app
+        .json("GET", "/api/games?max_hours_to_beat=5", None)
+        .await;
+    assert_eq!(list[0]["time_to_beat_main"], 300);
+}
+
+#[tokio::test]
 async fn library_game_mode_filter_and_sorting() {
     let app = library_app().await;
     sqlx::query(

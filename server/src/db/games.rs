@@ -96,6 +96,7 @@ pub struct GameDetail {
     pub online_max_players: Option<i64>,
     pub local_coop: Option<bool>,
     pub online_coop: Option<bool>,
+    pub time_to_beat: TimeToBeat,
     pub game_mode_ids: Vec<i64>,
     pub genre_ids: Vec<i64>,
     /// By name.
@@ -114,6 +115,17 @@ pub struct GameDetail {
     pub versions: Vec<GameVersion>,
     /// Other names the game goes by, which the library search also matches.
     pub names: Vec<GameName>,
+}
+
+/// IGDB's average time to finish the game, in minutes.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
+pub struct TimeToBeat {
+    /// The main story.
+    pub main: Option<i64>,
+    /// The story with some extras.
+    pub extras: Option<i64>,
+    /// Everything.
+    pub full: Option<i64>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -252,6 +264,7 @@ pub async fn get(pool: &SqlitePool, id: i64, viewer: &str) -> ApiResult<GameDeta
                   g.publishers AS "publishers: Json<Vec<String>>",
                   g.local_max_players, g.online_max_players,
                   g.local_coop AS "local_coop: bool", g.online_coop AS "online_coop: bool",
+                  g.time_to_beat_main, g.time_to_beat_extras, g.time_to_beat_full,
                   (SELECT json_group_array(game_mode_id) FROM game_game_modes WHERE game_id = g.id)
                       AS "game_mode_ids!: Json<Vec<i64>>",
                   (SELECT json_group_array(genre_id) FROM game_genres WHERE game_id = g.id)
@@ -446,6 +459,11 @@ pub async fn get(pool: &SqlitePool, id: i64, viewer: &str) -> ApiResult<GameDeta
         online_max_players: game.online_max_players,
         local_coop: game.local_coop,
         online_coop: game.online_coop,
+        time_to_beat: TimeToBeat {
+            main: game.time_to_beat_main,
+            extras: game.time_to_beat_extras,
+            full: game.time_to_beat_full,
+        },
         game_mode_ids,
         genre_ids,
         labels: super::labels::for_game(pool, id).await?,

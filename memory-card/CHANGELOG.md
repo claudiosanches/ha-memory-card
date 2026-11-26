@@ -24,8 +24,9 @@ First release.
 - Manage pages for devices, stores, platforms, play statuses and labels, with
   every IGDB platform ready to switch on.
 - Cleanup: missing details filled in one game at a time, and duplicates.
-- IGDB covers, summaries, genres, game modes, player counts and other names,
-  with regional covers for Japan, Korea and Europe.
+- IGDB covers, summaries, genres, game modes, player counts, other names and
+  time to beat, with regional covers for Japan, Korea and Europe.
+- Hours to beat as a library filter and in **Pick for me**.
 - Sync with IGDB, and reviews of close matches and of titles that differ on
   IGDB.
 - Uploaded covers, which IGDB never replaces.

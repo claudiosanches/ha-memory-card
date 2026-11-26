@@ -60,6 +60,7 @@ import { TagLinkModal } from './TagLink';
 import { Household } from './Household';
 import { defaultCopy, Sessions } from './Sessions';
 import { CoverPicker } from './CoverPicker';
+import { playTime } from '../stats/StatsPage';
 import { describePlayers, effectiveCounts, hasPlayerData } from './players';
 import { CopyForm, GameForm, ReleaseForm, useGameSaved } from './forms';
 import { IgdbLinkModal, useIgdbLink } from './IgdbLink';
@@ -232,6 +233,13 @@ function GameView({ game }: { game: GameDetail }) {
     game.game_mode_ids.length > 0 &&
     game.game_mode_ids.every((id) => names.mode.get(id)?.slug === 'single-player');
 
+  const { main, extras, full } = game.time_to_beat;
+  const beatTimes = [
+    main != null && t('game.beatMain', { time: playTime(main, t) }),
+    extras != null && t('game.beatExtras', { time: playTime(extras, t) }),
+    full != null && t('game.beatFull', { time: playTime(full, t) }),
+  ].filter(Boolean);
+
   return (
     <Stack gap="section" className={classes.page}>
       <BackLink />
@@ -401,6 +409,11 @@ function GameView({ game }: { game: GameDetail }) {
             <Text size="sm">
               <strong>{t('game.players')}:</strong> {singlePlayerOnly ? t('game.singlePlayer') : describePlayers(t, game)}
             </Text>
+            {beatTimes.length > 0 && (
+              <Text size="sm" data-testid="time-to-beat">
+                <strong>{t('game.timeToBeat')}:</strong> {beatTimes.join(', ')}
+              </Text>
+            )}
             {game.names.length > 0 && (
               <Text size="sm" data-testid="names">
                 <strong>{t('game.alsoKnownAs')}:</strong>{' '}

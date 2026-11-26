@@ -51,6 +51,7 @@ pub async fn apply(
         developers,
         publishers,
         counts: game_counts(&data.multiplayer_modes),
+        time_to_beat: data.time_to_beat,
         title: igdb_title
             .filter(|_| overwrite)
             .map(|title| (title, sort_title(title))),

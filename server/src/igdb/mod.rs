@@ -19,6 +19,7 @@ use utoipa::ToSchema;
 
 use crate::api::input::{NAME_MAX, SUMMARY_MAX, TITLE_MAX, cut};
 use crate::config::IgdbCredentials;
+use crate::db::games::TimeToBeat;
 
 const INTERVAL: Duration = Duration::from_millis(250);
 
@@ -117,6 +118,26 @@ pub struct GameData {
     pub ports: Vec<i64>,
     #[serde(default, deserialize_with = "capped")]
     pub alternative_names: Vec<AlternativeName>,
+    /// From IGDB's separate time to beat answer.
+    #[serde(skip)]
+    pub time_to_beat: TimeToBeat,
+}
+
+/// IGDB's average times for a game, in seconds.
+#[derive(Debug, Deserialize)]
+struct RawTimeToBeat {
+    game_id: i64,
+    hastily: Option<i64>,
+    normally: Option<i64>,
+    completely: Option<i64>,
+}
+
+/// Seconds as whole minutes, or `None` for a time no game takes.
+fn minutes(seconds: Option<i64>) -> Option<i64> {
+    const MAX: i64 = 10_000 * 60 * 60;
+    seconds
+        .filter(|s| (1..=MAX).contains(s))
+        .map(|s| ((s + 30) / 60).max(1))
 }
 
 #[derive(Debug, Deserialize)]
@@ -359,7 +380,8 @@ impl Igdb {
             list.join(",")
         );
         let Answer(games) = self.post::<Answer<GameData, LIMIT>>("games", &body).await?;
-        Ok(games.into_iter().filter(|g| ids.contains(&g.id)).collect())
+        let games = games.into_iter().filter(|g| ids.contains(&g.id)).collect();
+        self.with_times(games).await
     }
 
     /// Games named exactly `name`, ignoring case.
@@ -371,10 +393,37 @@ impl Igdb {
         );
         let Answer(games) = self.post::<Answer<GameData, LIMIT>>("games", &body).await?;
         let name = name.to_lowercase();
-        Ok(games
+        let games = games
             .into_iter()
             .filter(|g| g.name.to_lowercase() == name)
-            .collect())
+            .collect();
+        self.with_times(games).await
+    }
+
+    /// Adds IGDB's time to beat to each game that has one.
+    async fn with_times(&self, mut games: Vec<GameData>) -> Result<Vec<GameData>, IgdbError> {
+        const LIMIT: usize = 500;
+        if games.is_empty() {
+            return Ok(games);
+        }
+        let list: Vec<String> = games.iter().map(|g| g.id.to_string()).collect();
+        let body = format!(
+            "fields game_id,hastily,normally,completely; where game_id = ({}); limit {LIMIT};",
+            list.join(",")
+        );
+        let Answer(times) = self
+            .post::<Answer<RawTimeToBeat, LIMIT>>("game_time_to_beats", &body)
+            .await?;
+        for game in &mut games {
+            if let Some(time) = times.iter().find(|t| t.game_id == game.id) {
+                game.time_to_beat = TimeToBeat {
+                    main: minutes(time.hastily),
+                    extras: minutes(time.normally),
+                    full: minutes(time.completely),
+                };
+            }
+        }
+        Ok(games)
     }
 
     pub async fn cover(&self, image_id: &str) -> Result<Vec<u8>, IgdbError> {

@@ -118,6 +118,7 @@ and responds with its `title` and `platforms`.
 | `genre` | Genre slugs. |
 | `game_mode` | Game mode slugs. |
 | `min_local_players` | At least this many players on the same screen. |
+| `max_hours_to_beat` | At most this many hours for the main story, from IGDB. Games without a time are left out. |
 
 The slug fields take one slug or a list of up to 10. Each platform, device
 and store shows its slug in its [Manage](manage.md) form.

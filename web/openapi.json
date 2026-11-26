@@ -157,6 +157,16 @@
             }
           },
           {
+            "name": "max_hours_to_beat",
+            "in": "query",
+            "description": "Hours IGDB gives for the main story, at most; games without a time are left out.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "ownership",
             "in": "query",
             "required": false,
@@ -864,6 +874,16 @@
             }
           },
           {
+            "name": "max_hours_to_beat",
+            "in": "query",
+            "description": "Hours IGDB gives for the main story, at most; games without a time are left out.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "ownership",
             "in": "query",
             "required": false,
@@ -1049,6 +1069,16 @@
             "name": "min_local_players",
             "in": "query",
             "description": "Local (same screen) players, release value first, then the game's.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "max_hours_to_beat",
+            "in": "query",
+            "description": "Hours IGDB gives for the main story, at most; games without a time are left out.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -4452,6 +4482,7 @@
           "cover_uploaded",
           "developers",
           "publishers",
+          "time_to_beat",
           "game_mode_ids",
           "genre_ids",
           "labels",
@@ -4602,6 +4633,9 @@
               "string",
               "null"
             ]
+          },
+          "time_to_beat": {
+            "$ref": "#/components/schemas/TimeToBeat"
           },
           "title": {
             "type": "string"
@@ -4815,6 +4849,14 @@
               "string",
               "null"
             ]
+          },
+          "time_to_beat_main": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "IGDB's minutes for the main story."
           },
           "title": {
             "type": "string"
@@ -6515,6 +6557,14 @@
             },
             "description": "Genre slugs."
           },
+          "max_hours_to_beat": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Hours IGDB gives for the main story, at most."
+          },
           "min_local_players": {
             "type": [
               "integer",
@@ -6610,6 +6660,36 @@
           "connected",
           "disconnected"
         ]
+      },
+      "TimeToBeat": {
+        "type": "object",
+        "description": "IGDB's average time to finish the game, in minutes.",
+        "properties": {
+          "extras": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The story with some extras."
+          },
+          "full": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Everything."
+          },
+          "main": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The main story."
+          }
+        }
       },
       "TitleChoices": {
         "type": "object",

@@ -94,6 +94,8 @@ pub struct LibraryFilter {
     pub format: Option<Format>,
     /// Local (same screen) players, release value first, then the game's.
     pub min_local_players: Option<i64>,
+    /// Hours IGDB gives for the main story, at most; games without a time are left out.
+    pub max_hours_to_beat: Option<i64>,
     #[param(inline)]
     pub ownership: Option<Ownership>,
     /// Whether the game is linked to IGDB.
@@ -214,6 +216,8 @@ pub struct GameSummary {
     pub cover_path: Option<String>,
     pub play_status: Option<String>,
     pub last_played_at: Option<String>,
+    /// IGDB's minutes for the main story.
+    pub time_to_beat_main: Option<i64>,
     pub owned_copies: i64,
     pub wanted_copies: i64,
     /// Platforms with owned copies, or wanted ones on the wishlist, in platform list order.
@@ -228,6 +232,7 @@ struct SummaryRow {
     cover_path: Option<String>,
     play_status: Option<String>,
     last_played_at: Option<String>,
+    time_to_beat_main: Option<i64>,
     owned_copies: i64,
     wanted_copies: i64,
     platforms: Json<Vec<PlatformCount>>,
@@ -235,7 +240,7 @@ struct SummaryRow {
 
 /// Builds the library query. Public so tests can inspect its query plan.
 pub fn query(filter: &LibraryFilter) -> Sql {
-    let mut qb = Sql::new("SELECT g.id, g.title, g.igdb_id, g.cover_path, ");
+    let mut qb = Sql::new("SELECT g.id, g.title, g.igdb_id, g.cover_path, g.time_to_beat_main, ");
     push_play_columns(&mut qb, filter);
     qb.push(
         ",
@@ -334,6 +339,10 @@ pub fn push_game_filters(qb: &mut Sql, filter: &LibraryFilter) {
         qb.push(")");
     }
     push_play_status(qb, filter);
+    if let Some(hours) = filter.max_hours_to_beat {
+        qb.push(" AND g.time_to_beat_main <= ")
+            .push_bind(hours.saturating_mul(60));
+    }
     match filter.igdb {
         Some(IgdbLink::Linked) => qb.push(" AND g.igdb_id IS NOT NULL"),
         Some(IgdbLink::Unlinked) => qb.push(" AND g.igdb_id IS NULL"),
@@ -533,6 +542,7 @@ pub async fn list(pool: &SqlitePool, filter: &LibraryFilter) -> sqlx::Result<Vec
             cover_path: row.cover_path,
             play_status: row.play_status,
             last_played_at: row.last_played_at,
+            time_to_beat_main: row.time_to_beat_main,
             owned_copies: row.owned_copies,
             wanted_copies: row.wanted_copies,
             platforms: row.platforms.0,

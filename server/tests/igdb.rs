@@ -83,6 +83,19 @@ async fn with_igdb() -> TestApp {
         )
         .route("/v4/games", post(games))
         .route(
+            "/v4/game_time_to_beats",
+            post(|body: String| async move {
+                // Seconds; a time no game takes is left out.
+                let times =
+                    json!([{"game_id": 1, "hastily": 40800, "normally": 66908, "completely": -1}]);
+                axum::Json(if body.contains("where game_id = (1)") {
+                    times
+                } else {
+                    json!([])
+                })
+            }),
+        )
+        .route(
             "/img/t_cover_big_2x/co1mxf.jpg",
             get(|| async { common::COVER }),
         )
@@ -254,6 +267,10 @@ async fn linking_fills_metadata_and_keeps_hand_edits() {
     assert_eq!(app.scalar("SELECT COUNT(*) FROM genres").await, 1);
     assert_eq!(detail["releases"][0]["local_max_players"], 2);
     assert_eq!(detail["releases"][0]["local_coop"], true);
+    assert_eq!(
+        detail["time_to_beat"],
+        json!({"main": 680, "extras": 1115, "full": null})
+    );
     let release = |region: &str| {
         detail["releases"]
             .as_array()

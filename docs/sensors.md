@@ -99,8 +99,8 @@ tap_action:
 ```
 
 The filters match the Backlog page's picker: `play_status` (a list of play
-status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs) and
-`min_local_players`. Each platform, device and store shows its slug in its
+status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
+`min_local_players` and `max_hours_to_beat` (hours for the main story). Each platform, device and store shows its slug in its
 [Manage](manage.md) form, and library links use the same slugs.
 
 Rolls need managers set in the options, and the person must be a manager or a

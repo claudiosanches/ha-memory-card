@@ -25,6 +25,7 @@ const GAME: GameDetail = {
   online_max_players: null,
   local_coop: null,
   online_coop: null,
+  time_to_beat: { main: 680, extras: 1115 },
   game_mode_ids: [],
   genre_ids: [],
   labels: [],
@@ -168,6 +169,15 @@ describe('Game page', () => {
     const versions = await screen.findByTestId('versions');
     expect(within(versions).getByRole('link', { name: 'Metroid Prime Remastered' })).toBeInTheDocument();
     expect(versions).toHaveTextContent('(remaster)');
+  });
+
+  it("shows IGDB's time to beat in hours", async () => {
+    mockApi({ ...SETUP, 'GET /api/games/4': GAME });
+    renderAt('/games/4');
+
+    expect(await screen.findByTestId('time-to-beat')).toHaveTextContent(
+      'Time to beat: 11 hours for the main story, 19 hours with extras',
+    );
   });
 
   it('opens the library filtered by a game mode or genre', async () => {

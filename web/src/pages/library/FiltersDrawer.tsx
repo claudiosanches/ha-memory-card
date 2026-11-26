@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDevices, useGameModes, useGenres, useLabels, usePlatforms, useStores } from '../../api/queries';
 import { FORMATS, type Format, REGIONS, type Region } from '../../api/types';
 import { usePlayStatusList } from '../../components/playStatuses';
-import { type LibrarySearch, NO_STATUS, type StatusFilter } from './search';
+import { type LibrarySearch, MAX_HOURS_TO_BEAT, NO_STATUS, type StatusFilter } from './search';
 
 type Props = {
   opened: boolean;
@@ -138,6 +138,18 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
           onChange={(value) => {
             const players = Number(value);
             onChange({ min_local_players: Number.isInteger(players) && players > 1 ? players : undefined });
+          }}
+        />
+        <NumberInput
+          label={t('library.filter.maxHoursToBeat')}
+          min={1}
+          max={MAX_HOURS_TO_BEAT}
+          value={search.max_hours_to_beat ?? ''}
+          onChange={(value) => {
+            const hours = Number(value);
+            onChange({
+              max_hours_to_beat: Number.isInteger(hours) && hours >= 1 && hours <= MAX_HOURS_TO_BEAT ? hours : undefined,
+            });
           }}
         />
         <Button variant="default" onClick={onClear}>

@@ -18,6 +18,7 @@ import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { useFormatDate } from '../../hooks/useFormatDate';
+import { playTime } from '../stats/StatsPage';
 import classes from './BacklogPage.module.css';
 import { Picker } from './Picker';
 import { SortModal } from './SortModal';
@@ -272,6 +273,11 @@ function BacklogCard({
         <Text size="xs" c="dimmed">
           {platformList(game, platformNames).join(t('common.separator'))}
         </Text>
+        {game.time_to_beat_main != null && (
+          <Text size="xs" c="dimmed">
+            {t('backlog.beatTime', { time: playTime(game.time_to_beat_main, t) })}
+          </Text>
+        )}
       </Link>
       {canStart && (
         <Button

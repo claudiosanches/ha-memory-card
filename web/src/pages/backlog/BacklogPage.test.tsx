@@ -45,6 +45,7 @@ function detail(summary: GameSummary, play_status: string | null): GameDetail {
     online_max_players: null,
     local_coop: null,
     online_coop: null,
+    time_to_beat: {},
     game_mode_ids: [],
     genre_ids: [],
     labels: [],

@@ -97,7 +97,9 @@ covers and metadata, give it access to the IGDB API.
 5. Restart the app. Options are read only at startup.
 
 Releases for Japan, Korea and Europe get their regional cover when IGDB has
-one. **Cleanup > IGDB > Sync with IGDB** refreshes every linked game.
+one. IGDB also gives the time to beat a game: the main story, with extras and
+everything, shown on the game page and the backlog. **Cleanup > IGDB > Sync
+with IGDB** refreshes every linked game.
 
 To keep Memory Card from contacting the internet, turn off
 `external_services`. The IGDB credentials are then ignored, games, covers
@@ -131,8 +133,9 @@ _Game titles and cover art belong to their respective owners._
 
 The library shows your games as a grid of covers, a list or a table. The
 filters narrow it by platform, your play status, label, genre, game mode,
-device, store, region, format and players on the same screen, and they stay
-in the address, so a filtered library can be bookmarked. **Show** picks between the
+device, store, region, format, players on the same screen and hours to beat
+the main story, and they stay in the address, so a filtered library can be
+bookmarked. **Show** picks between the
 games you own, the wishlist and both.
 
 The library search finds a game by its title, its release titles and its
@@ -158,11 +161,11 @@ _Game titles and cover art belong to their respective owners._
 **Backlog** in the sidebar shows what you are playing, what is on hold and
 the games waiting for you, with how many you have cleared. It is yours:
 everyone in the house has their own. **Pick for me** rolls a random game
-from your backlog, for one device if you choose one. A game picked for you
-in the last day comes up again only when nothing else is left. Games you have
-given no play status wait under **Not sorted yet** until you give them one.
-Logging a session for a game in your backlog, or with no status, sets it to
-playing.
+from your backlog, for one device or a short game if you choose. A game
+picked for you in the last day comes up again only when nothing else is
+left. Games you have given no play status wait under **Not sorted yet**
+until you give them one. Logging a session for a game in your backlog, or
+with no status, sets it to playing.
 
 Manage > Play statuses lists the statuses in the order the app shows them.
 The six built-in statuses can be renamed, recolored and reordered, but not
@@ -391,8 +394,8 @@ someone Memory Card knows: a manager, or a person who has already changed
 something in it, such as their play status.
 
 The fields match the Backlog page's picker: `play_status` (a list of play
-status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs)
-and `min_local_players`. Each platform, device and store shows its slug in
+status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
+`min_local_players` and `max_hours_to_beat` (hours for the main story). Each platform, device and store shows its slug in
 its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the

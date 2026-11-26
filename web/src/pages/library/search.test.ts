@@ -16,6 +16,9 @@ describe('library search', () => {
       }),
     ).toEqual({ q: 'zelda', platform: ['switch', 'ps5'], region: ['eu'], play_status: ['backlog'], sort: 'played' });
     expect(validateLibrarySearch({ platform: 'itch.io', min_local_players: 4 })).toEqual({ min_local_players: 4 });
+    expect(validateLibrarySearch({ max_hours_to_beat: '10' })).toEqual({ max_hours_to_beat: 10 });
+    expect(validateLibrarySearch({ max_hours_to_beat: 0 })).toEqual({});
+    expect(validateLibrarySearch({ max_hours_to_beat: 1.5 })).toEqual({});
     expect(validateLibrarySearch({ play_status: ['none', 'Not a key!', 3, 'paused'] })).toEqual({
       play_status: ['none', 'paused'],
     });

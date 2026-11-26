@@ -540,7 +540,8 @@
       "igdb": "IGDB",
       "igdbAny": "Linked or not",
       "igdbLinked": "Linked to IGDB",
-      "igdbUnlinked": "Not linked to IGDB"
+      "igdbUnlinked": "Not linked to IGDB",
+      "maxHoursToBeat": "Hours to beat the main story, at most"
     },
     "sort": {
       "title": "Title",
@@ -662,7 +663,11 @@
     "genres": "Genres",
     "cover": "Cover of {{title}}",
     "household": "Others in the house",
-    "someone": "Someone"
+    "someone": "Someone",
+    "timeToBeat": "Time to beat",
+    "beatMain": "{{time}} for the main story",
+    "beatExtras": "{{time}} with extras",
+    "beatFull": "{{time}} for everything"
   },
   "igdb": {
     "link": "Link to IGDB",
@@ -744,7 +749,12 @@
     "empty": "Nothing in the backlog.",
     "cleared": "Backlog cleared. Nice work.",
     "moved": "{{title}}: {{status}}",
-    "noPlay": "Your backlog shows here once a manager lets viewers keep their own play."
+    "noPlay": "Your backlog shows here once a manager lets viewers keep their own play.",
+    "beatTime": "{{time}} to beat",
+    "length": "Time to beat",
+    "anyLength": "Any length",
+    "upToHours_one": "Up to {{count}} hour",
+    "upToHours_other": "Up to {{count}} hours"
   },
   "duplicates": {
     "intro": "Games you own more than one copy of.",

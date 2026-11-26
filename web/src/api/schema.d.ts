@@ -1112,6 +1112,7 @@ export interface components {
             /** @description The viewer's sessions, latest first; the first is when they last played. */
             sessions: components["schemas"]["PlaySession"][];
             summary?: string | null;
+            time_to_beat: components["schemas"]["TimeToBeat"];
             title: string;
             updated_by?: components["schemas"]["Person"] | null;
             /** @description Games in the collection that IGDB names as another version of this one, by title. */
@@ -1166,6 +1167,11 @@ export interface components {
             /** @description Platforms with owned copies, or wanted ones on the wishlist, in platform list order. */
             platforms: components["schemas"]["PlatformCount"][];
             play_status?: string | null;
+            /**
+             * Format: int64
+             * @description IGDB's minutes for the main story.
+             */
+            time_to_beat_main?: number | null;
             title: string;
             /** Format: int64 */
             wanted_copies: number;
@@ -1742,6 +1748,11 @@ export interface components {
             genre?: string[];
             /**
              * Format: int64
+             * @description Hours IGDB gives for the main story, at most.
+             */
+            max_hours_to_beat?: number | null;
+            /**
+             * Format: int64
              * @description Local (same screen) players, release value first, then the game's.
              */
             min_local_players?: number | null;
@@ -1772,6 +1783,24 @@ export interface components {
         };
         /** @enum {string} */
         TagsStatus: "unavailable" | "connecting" | "connected" | "disconnected";
+        /** @description IGDB's average time to finish the game, in minutes. */
+        TimeToBeat: {
+            /**
+             * Format: int64
+             * @description The story with some extras.
+             */
+            extras?: number | null;
+            /**
+             * Format: int64
+             * @description Everything.
+             */
+            full?: number | null;
+            /**
+             * Format: int64
+             * @description The main story.
+             */
+            main?: number | null;
+        };
         TitleChoices: {
             /** @description Games whose title stays; they leave the list until IGDB renames them. */
             keep?: number[];
@@ -1899,6 +1928,8 @@ export interface operations {
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
+                /** @description Hours IGDB gives for the main story, at most; games without a time are left out. */
+                max_hours_to_beat?: number;
                 ownership?: "owned" | "wanted" | "any";
                 /** @description Whether the game is linked to IGDB. */
                 igdb?: "linked" | "unlinked";
@@ -2378,6 +2409,8 @@ export interface operations {
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
+                /** @description Hours IGDB gives for the main story, at most; games without a time are left out. */
+                max_hours_to_beat?: number;
                 ownership?: "owned" | "wanted" | "any";
                 /** @description Whether the game is linked to IGDB. */
                 igdb?: "linked" | "unlinked";
@@ -2452,6 +2485,8 @@ export interface operations {
                 format?: components["schemas"]["Format"];
                 /** @description Local (same screen) players, release value first, then the game's. */
                 min_local_players?: number;
+                /** @description Hours IGDB gives for the main story, at most; games without a time are left out. */
+                max_hours_to_beat?: number;
                 ownership?: "owned" | "wanted" | "any";
                 /** @description Whether the game is linked to IGDB. */
                 igdb?: "linked" | "unlinked";

@@ -39,6 +39,8 @@ The row of platforms under the search shows one platform at a time.
 - **Genre**, **Game mode** and **Label**. A label filter shows games with any
   of the labels you pick.
 - **Players on the same screen, at least**, for a game night.
+- **Hours to beat the main story, at most**, from IGDB's time to beat. Games
+  without one are left out.
 - **IGDB:** linked or not.
 
 **Clear filters** resets them. Filters stay in the page's address, so a

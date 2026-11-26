@@ -56,6 +56,9 @@ play but cannot set their own.
 Game modes, genres, players on the same screen and online, other names and
 the summary come from IGDB or from **Edit**.
 
+**Time to beat** comes from IGDB: the hours for the main story, with extras
+and for everything, as IGDB's players report them.
+
 **Labels** show after the summary. Selecting one opens the library filtered
 by it. Managers create labels under [Manage](manage.md).
 

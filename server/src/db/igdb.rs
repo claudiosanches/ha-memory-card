@@ -3,7 +3,7 @@
 
 use sqlx::{Encode, Sqlite, SqlitePool, Transaction, Type};
 
-use super::games::PlayerCounts;
+use super::games::{PlayerCounts, TimeToBeat};
 use super::slugs::{self, Table};
 use super::sql::Sql;
 use super::write_tx;
@@ -104,6 +104,8 @@ pub struct GameUpdate<'a> {
     pub developers: Vec<String>,
     pub publishers: Vec<String>,
     pub counts: PlayerCounts,
+    /// Replaces the stored one, since only IGDB sets it.
+    pub time_to_beat: TimeToBeat,
     /// Replaces the title, with its sort title.
     pub title: Option<(&'a str, String)>,
     pub igdb_title: Option<&'a str>,
@@ -144,6 +146,12 @@ pub async fn write(
         .push_bind(serde_json::to_string(&update.developers).expect("strings serialize"))
         .push(", publishers = ")
         .push_bind(serde_json::to_string(&update.publishers).expect("strings serialize"))
+        .push(", time_to_beat_main = ")
+        .push_bind(update.time_to_beat.main)
+        .push(", time_to_beat_extras = ")
+        .push_bind(update.time_to_beat.extras)
+        .push(", time_to_beat_full = ")
+        .push_bind(update.time_to_beat.full)
         .push(", ");
     push_counts(&mut game, counts, overwrite);
     let (title, sort_title) = update.title.clone().unzip();

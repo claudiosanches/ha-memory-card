@@ -1,8 +1,8 @@
 # IGDB
 
 [IGDB](https://www.igdb.com) gives Memory Card titles, covers, release dates,
-developers, publishers, genres, game modes, player counts and other names for
-each game. Memory Card works without it: you then enter games by hand.
+developers, publishers, genres, game modes, player counts, other names and
+the time to beat for each game. Memory Card works without it: you then enter games by hand.
 [Getting started](getting-started.md#connect-igdb) explains how to connect
 it.
 

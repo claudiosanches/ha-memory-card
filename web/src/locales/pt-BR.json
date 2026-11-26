@@ -540,7 +540,8 @@
       "igdb": "IGDB",
       "igdbAny": "Vinculado ou não",
       "igdbLinked": "Vinculado ao IGDB",
-      "igdbUnlinked": "Não vinculado ao IGDB"
+      "igdbUnlinked": "Não vinculado ao IGDB",
+      "maxHoursToBeat": "Horas para zerar a história, no máximo"
     },
     "sort": {
       "title": "Título",
@@ -662,7 +663,11 @@
     "genres": "Gêneros",
     "cover": "Capa de {{title}}",
     "household": "Outros na casa",
-    "someone": "Alguém"
+    "someone": "Alguém",
+    "timeToBeat": "Tempo para zerar",
+    "beatMain": "{{time}} na história principal",
+    "beatExtras": "{{time}} com extras",
+    "beatFull": "{{time}} para fazer tudo"
   },
   "igdb": {
     "link": "Vincular ao IGDB",
@@ -744,7 +749,12 @@
     "empty": "Nada no backlog.",
     "cleared": "Backlog esvaziado. Mandou bem.",
     "moved": "{{title}}: {{status}}",
-    "noPlay": "Seu backlog aparece aqui quando um gestor permite que visualizadores registrem as próprias partidas."
+    "noPlay": "Seu backlog aparece aqui quando um gestor permite que visualizadores registrem as próprias partidas.",
+    "beatTime": "{{time}} para zerar",
+    "length": "Duração",
+    "anyLength": "Qualquer duração",
+    "upToHours_one": "Até {{count}} hora",
+    "upToHours_other": "Até {{count}} horas"
   },
   "duplicates": {
     "intro": "Jogos dos quais você tem mais de uma cópia.",
