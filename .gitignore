@@ -7,6 +7,8 @@ node_modules/
 /.data/
 /e2e/test-results/
 /e2e/playwright-report/
+/e2e/.shot.mjs
+*.tsbuildinfo
 .idea/
 .vscode/
 *.sqlite
