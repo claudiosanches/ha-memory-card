@@ -17,6 +17,7 @@ check() {
 check memory-card/config.yaml "$(sed -n 's/^version: "\(.*\)"$/\1/p' memory-card/config.yaml)"
 check Cargo.toml "$(sed -n '/^\[workspace.package\]/,/^\[/s/^version = "\(.*\)"$/\1/p' Cargo.toml)"
 check web/package.json "$(node -p 'require("./web/package.json").version')"
+check web/openapi.json "$(node -p 'require("./web/openapi.json").info.version')"
 version_pattern=$(printf '%s' "$expected" | sed 's/\./\\./g')
 grep -Eq "^## \[$version_pattern\] - [0-9]{4}-[0-9]{2}-[0-9]{2}\$" memory-card/CHANGELOG.md || {
     echo "memory-card/CHANGELOG.md has no '## [$expected] - YYYY-MM-DD' section" >&2

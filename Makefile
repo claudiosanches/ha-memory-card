@@ -120,7 +120,7 @@ smoke: image ## Run the image like Home Assistant and check start, UI, API and s
 
 .PHONY: release
 release: ## Commit and tag the next release on dev (VERSION=X.Y.Z to choose it)
-	./scripts/release.sh $(VERSION)
+	./scripts/release.sh $${VERSION:+"$$VERSION"}
 
 .PHONY: ha-up
 ha-up: ARCHS = amd64
