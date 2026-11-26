@@ -56,4 +56,4 @@ First release.
 - 12 themes, each in light and dark.
 - `date_format` and `currency` options.
 
-[Unreleased]: https://github.com/claudiosanches/ha-memory-card/commits/main
+[Unreleased]: https://github.com/claudiosanches/ha-memory-card/commits/dev

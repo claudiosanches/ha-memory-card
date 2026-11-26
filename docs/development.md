@@ -25,7 +25,7 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make docs-dev` | The docs site with live reload, see [Docs site](#docs-site) |
 | `make docs-deploy` | Builds the docs site and deploys it to Cloudflare Pages |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
-| `make release` | Commits and tags the next release on a release branch, see [Releasing](releasing.md) |
+| `make release` | Commits and tags the next release on `dev`, see [Releasing](releasing.md) |
 
 The server answers only requests that name a Home Assistant user, so open
 the app through `make proxy` or `make web-dev`. Both sign in as `DEV_USER`

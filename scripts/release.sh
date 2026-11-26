@@ -1,7 +1,7 @@
 #!/bin/sh
-# Prepares a release from main: picks the version from the changelog, sets it
-# in every version field, dates the changelog section, then commits and tags
-# on a new release/X.Y.Z branch. Pushing is left to you.
+# Prepares a release on dev: picks the version from the changelog, sets it in
+# every version field, dates the changelog section, then commits and tags.
+# Pushing is left to you; the release workflow moves main once the image is out.
 #
 # The Unreleased entries pick the version: Removed bumps the major version
 # (the minor before 1.0), Added, Changed or Deprecated the minor, and only
@@ -19,7 +19,7 @@ fail() {
 }
 
 [ -z "$(git status --porcelain)" ] || fail "Commit or stash your changes first."
-[ "$(git branch --show-current)" = main ] || fail "Run it on main."
+[ "$(git branch --show-current)" = dev ] || fail "Run it on dev."
 
 unreleased=$(awk '/^## \[Unreleased\]/ { found = 1; next } found && /^## / { exit } found { print }' "$changelog")
 printf '%s\n' "$unreleased" | grep -q '^- ' || fail "$changelog has nothing under Unreleased."
@@ -64,7 +64,6 @@ EOF
 fi
 
 ! git rev-parse -q --verify "refs/tags/v$version" >/dev/null || fail "The tag v$version exists."
-! git rev-parse -q --verify "refs/heads/release/$version" >/dev/null || fail "The branch release/$version exists."
 
 if [ -n "$previous" ]; then
     version_url="$repo_url/compare/v$previous...v$version"
@@ -74,13 +73,13 @@ fi
 awk -v version="$version" -v date="$(date +%F)" -v repo="$repo_url" -v version_url="$version_url" '
     /^## \[Unreleased\]/ { print; print ""; print "## [" version "] - " date; next }
     /^\[Unreleased\]: / {
-        print "[Unreleased]: " repo "/compare/v" version "...HEAD"
+        print "[Unreleased]: " repo "/compare/v" version "...dev"
         print "[" version "]: " version_url
         linked = 1
         next
     }
     { print }
-    END { if (!linked) { print ""; print "[Unreleased]: " repo "/compare/v" version "...HEAD"; print "[" version "]: " version_url } }
+    END { if (!linked) { print ""; print "[Unreleased]: " repo "/compare/v" version "...dev"; print "[" version "]: " version_url } }
 ' "$changelog" >"$changelog.new"
 mv "$changelog.new" "$changelog"
 
@@ -102,15 +101,14 @@ for (const [file, edit] of edits) {
 ' "$version"
 ./scripts/check-version.sh "$version"
 
-git switch -q -c "release/$version"
 git commit -q -am "chore: Release $version"
 git tag -a "v$version" -m "Memory Card $version"
 
 cat <<EOF
-Tagged v$version on release/$version. To publish it:
+Tagged v$version. To publish it:
 
-    git push origin release/$version v$version
+    git push origin dev v$version
 
-The release workflow builds and pushes the image, then creates the GitHub
-release. Merge release/$version into main once it succeeds.
+The release workflow builds and pushes the image, creates the GitHub release,
+then moves main to v$version.
 EOF

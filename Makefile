@@ -119,7 +119,7 @@ smoke: image ## Run the image like Home Assistant and check start, UI, API and s
 	./scripts/smoke-image.sh $(IMAGE)
 
 .PHONY: release
-release: ## Commit and tag the next release on a release branch (VERSION=X.Y.Z to choose it)
+release: ## Commit and tag the next release on dev (VERSION=X.Y.Z to choose it)
 	./scripts/release.sh $(VERSION)
 
 .PHONY: ha-up
