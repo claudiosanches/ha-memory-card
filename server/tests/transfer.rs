@@ -759,6 +759,34 @@ async fn kept_columns_leave_other_values_to_the_file() {
         (Some("loose".into()), 2000, "GBP".into(), 4000, "GBP".into())
     );
 
+    // A value with no currency in the file keeps the value's own currency,
+    // never the price's.
+    let csv = format!("game_title,copy_id,estimated_value\nPokemon Red,{red},45\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    assert_eq!(copy().await.3, 4500);
+    assert_eq!(copy().await.4, "GBP");
+    let blue: i64 = app
+        .scalar(
+            "SELECT c.id FROM copies c JOIN releases r ON r.id = c.release_id WHERE r.title = 'Ao'",
+        )
+        .await;
+    let csv = format!("game_title,copy_id,price,currency\nPokemon Blue,{blue},10,EUR\n");
+    let (status, result) = app.post_csv("/api/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    for csv in [
+        format!("game_title,copy_id,estimated_value\nPokemon Blue,{blue},50\n"),
+        format!("game_title,copy_id,currency,estimated_value\nPokemon Blue,{blue},,50\n"),
+        format!("game_title,copy_id,estimated_value,estimated_currency\nPokemon Blue,{blue},50,\n"),
+    ] {
+        let (_, preview) = app.post_csv("/api/import/preview", &csv).await;
+        assert_eq!(
+            issues(&preview, 2),
+            [("estimated_currency".into(), "required".into())],
+            "{csv}"
+        );
+    }
+
     let csv = format!("game_title,copy_id,format\nPokemon Red,{red},digital\n");
     let (status, result) = app.post_csv("/api/import", &csv).await;
     assert_eq!(status, StatusCode::OK, "{result}");
@@ -773,6 +801,23 @@ async fn kept_columns_leave_other_values_to_the_file() {
         .await
         .unwrap();
     assert_eq!(titles, ["Ao"]);
+}
+
+#[tokio::test]
+async fn a_nul_in_imported_text_is_refused() {
+    let app = TestApp::new().await;
+    let csv = "game_title,platform,region,format,store,labels\n\
+        Celeste,Switch,eu,digital,Shop\0A,Indie\n\
+        Celeste,Switch,eu,digital,Shop,Ind\0ie\n";
+    let (_, preview) = app.post_csv("/api/import/preview", csv).await;
+    assert_eq!(
+        issues(&preview, 2),
+        [("store".into(), "invalid_value".into())]
+    );
+    assert_eq!(
+        issues(&preview, 3),
+        [("labels".into(), "invalid_value".into())]
+    );
 }
 
 #[tokio::test]

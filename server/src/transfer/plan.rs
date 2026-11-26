@@ -399,8 +399,9 @@ impl<'a> Planner<'a> {
                 *cell = value;
             }
         }
-        // A kept amount keeps its own currency, and a file's one currency
-        // column still prices the value it has.
+        // A kept amount keeps its own currency. A value the file has takes
+        // the file's currency, else the value's own, never the price's;
+        // `row` leaves no fallback to a kept price currency.
         if !has("price") {
             row.price = money(copy.price, copy.currency.as_deref());
             row.currency = copy.currency.clone();
@@ -408,12 +409,11 @@ impl<'a> Planner<'a> {
         if !has("estimated_value") {
             row.estimated_value = money(copy.estimated_value, copy.estimated_currency.as_deref());
             row.estimated_currency = copy.estimated_currency.clone();
-        } else if !has("estimated_currency") {
-            row.estimated_currency = if has("currency") {
-                raw.currency.clone()
-            } else {
-                copy.estimated_currency.clone()
-            };
+        } else if raw.estimated_currency.is_none() {
+            row.estimated_currency = raw
+                .currency
+                .clone()
+                .or_else(|| copy.estimated_currency.clone());
         }
         Some(row)
     }
@@ -469,7 +469,8 @@ impl<'a> Planner<'a> {
             &raw.currency,
             "currency",
         );
-        // A sheet with one currency column uses it for the value too.
+        // A sheet with one currency column uses it for the value too. A
+        // kept row's currency may be the copy's, so `kept` picked its value's.
         let (estimated_currency, value_currency_cell) = match &raw.estimated_currency {
             Some(_) => (
                 issues.value(
@@ -480,6 +481,7 @@ impl<'a> Planner<'a> {
                 ),
                 &raw.estimated_currency,
             ),
+            None if kept.is_some() => (None, &raw.estimated_currency),
             None => (currency.clone(), &raw.currency),
         };
         let currency = currency.filter(|_| price.is_some());
@@ -927,6 +929,10 @@ fn label_names(cell: Option<&str>, issues: &mut Issues) -> Vec<String> {
             issues.error("labels", "too_long");
             break;
         }
+        if name.contains('\0') {
+            issues.error("labels", "invalid_value");
+            break;
+        }
         if seen.insert(key(name)) {
             if names.len() == PER_GAME_MAX {
                 issues.error("labels", "too_many_labels");
@@ -1005,6 +1011,12 @@ impl Issues {
             None => None,
             Some(value) if value.chars().count() > max => {
                 self.error(column, "too_long");
+                None
+            }
+            // SQLite compares text only up to a NUL, so two names that
+            // differ after one would collide only when the import runs.
+            Some(value) if value.contains('\0') => {
+                self.error(column, "invalid_value");
                 None
             }
             Some(value) => Some(value.clone()),
