@@ -40,6 +40,10 @@
     border-radius: 12px;
   }
 
+  .mantine-Code-root {
+    border-radius: 8px;
+  }
+
   .mantine-Tabs-list {
     width: fit-content;
     max-width: 100%;

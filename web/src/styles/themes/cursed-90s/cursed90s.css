@@ -73,7 +73,8 @@
     transform: translate(1px, 1px);
   }
 
-  .mantine-Badge-root {
+  .mantine-Badge-root,
+  .mantine-Code-root {
     font-family: 'Courier New', 'Liberation Mono', monospace;
     border: 1px solid var(--w90-lo2);
   }

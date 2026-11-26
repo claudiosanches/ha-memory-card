@@ -41,6 +41,7 @@
   .mantine-SegmentedControl-indicator,
   .mantine-Badge-root:not([data-circle]),
   .mantine-Chip-label,
+  .mantine-Code-root,
   .mantine-Pill-root,
   .mc-filter {
     border-radius: 2px;
