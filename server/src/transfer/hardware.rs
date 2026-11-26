@@ -464,6 +464,10 @@ fn plan_row(
         }
     }
 
+    // As in the games file, a value with no currency of its own takes the price's.
+    if input.estimated_value.is_some() && input.estimated_currency.is_none() {
+        input.estimated_currency = input.currency.clone();
+    }
     let checked: Result<DeviceFields, ApiError> = input.validate();
     if let Err(ApiError::Invalid { code, field }) = &checked {
         let column = match field.unwrap_or("name") {

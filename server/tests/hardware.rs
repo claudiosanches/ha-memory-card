@@ -286,6 +286,25 @@ async fn hardware_import_checks_rows_against_each_other() {
     assert_eq!(moved["kind"], "console");
     assert_eq!(moved["platform_id"], Value::Null);
 
+    // A value with no currency of its own takes the price's.
+    let (status, result) = app
+        .post_csv(
+            "/api/hardware/import",
+            "name,kind,price,currency,estimated_value\nWii,console,99,USD,60\n",
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let (_, devices) = app.json("GET", "/api/devices", None).await;
+    let wii = devices
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["name"] == "Wii")
+        .unwrap()
+        .clone();
+    assert_eq!(wii["estimated_value"], "60.00");
+    assert_eq!(wii["estimated_currency"], "USD");
+
     let long = "x".repeat(300);
     let (_, preview) = app
         .post_csv(
