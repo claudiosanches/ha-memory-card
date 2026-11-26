@@ -18,7 +18,9 @@ pulls the image with that tag, so the image must exist before `main` changes.
    checks the versions, builds both architectures, smoke-tests the image,
    pushes `ghcr.io/claudiosanches/memory-card:X.Y.Z` and creates the GitHub
    release with the changelog's entries.
-3. Once it succeeds, merge the branch into `main`.
+3. Once it succeeds, merge the branch into `main` with a merge commit or
+   `git merge --ff-only`. A squash or rebase merge leaves the tagged commit
+   off `main`.
 
 To undo a release that is not pushed yet, delete the tag and the branch:
 `git tag -d vX.Y.Z` and, from `main`, `git branch -D release/X.Y.Z`.
