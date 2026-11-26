@@ -1,7 +1,9 @@
 .calendar { display: grid; gap: 12px; min-width: 0; }
-.scroller { overflow-x: auto; padding-bottom: 4px; }
+/* The grid's padding leaves room for the hover outline, which the scroll box
+   would clip even when scrolled to its end; the negative margin keeps the grid in place. */
+.scroller { overflow-x: auto; margin: -3px; padding-bottom: 4px; }
 /* Cells grow to fill narrower cards but stop at 16px, where they start to look heavy. */
-.grid { display: grid; grid-template-columns: max-content repeat(53, minmax(12px, 16px)); gap: 3px; }
+.grid { display: grid; grid-template-columns: max-content repeat(53, minmax(12px, 16px)); gap: 3px; width: fit-content; padding: 3px; }
 .month { font-size: .6875rem; line-height: 12px; color: var(--mc-muted); white-space: nowrap; overflow: visible; }
 .weekday { align-self: center; padding-right: 6px; font-size: .6875rem; line-height: 12px; color: var(--mc-muted); }
 .cell { display: block; width: 12px; height: 12px; border-radius: 3px; background: var(--mc-chart-heat-0); }
