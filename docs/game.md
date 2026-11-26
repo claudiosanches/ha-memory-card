@@ -92,8 +92,8 @@ edit it and a **⋯** menu:
   other metadata a phone stores in a photo.
 - **Add games inside this copy** turns the copy into a bundle, such as a
   collection on one cartridge. Each game inside gets a copy that follows
-  this one: change the bundle's platform, region, format, device, store,
-  condition or wishlist status and they change too. When the bundle is
+  this one: change the bundle's platform, region, format, device, account,
+  store, condition or wishlist status and they change too. When the bundle is
   linked to IGDB, Memory Card offers the games IGDB lists in it.
 - **Link NFC tag** makes scanning a tag log play for this copy. See
   [NFC tags](nfc-tags.md).

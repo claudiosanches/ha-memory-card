@@ -41,8 +41,8 @@ pub struct CopyDetail {
     /// UPC or EAN from the box.
     pub barcode: Option<String>,
     pub source: CopySource,
-    /// The bundle copy this copy came in. Its status, format, device, store,
-    /// condition, platform and region follow that copy.
+    /// The bundle copy this copy came in. Its status, format, device, account,
+    /// store, condition, platform and region follow that copy.
     pub bundle: Option<CopyLink>,
     /// Copies of other games that came in this one, by title.
     pub contents: Vec<CopyLink>,

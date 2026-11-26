@@ -380,7 +380,7 @@
       "estimated_currency": "Three-letter code of estimated_value, when it differs from currency.",
       "barcode": "UPC or EAN digits from the box.",
       "notes": "Free text.",
-      "bundle_copy_id": "copy_id of the bundle copy this copy came in, such as a collection on one cartridge. Platform, region, format, device, store, condition and status then follow that copy.",
+      "bundle_copy_id": "copy_id of the bundle copy this copy came in, such as a collection on one cartridge. Platform, region, format, device, account, store, condition and status then follow that copy.",
       "account": "Store account that owns a digital copy, as under Manage > Accounts. Unknown names are created."
     },
     "columnNames": {

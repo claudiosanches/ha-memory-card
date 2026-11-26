@@ -83,7 +83,7 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
 | `estimated_currency` | Three-letter code of `estimated_value`, when it differs from `currency` |
 | `barcode` | UPC or EAN digits from the box |
 | `notes` | Free text |
-| `bundle_copy_id` | `copy_id` of the bundle copy this copy came in. Its platform, region, format, device, store, condition and status then follow that copy, and its own price, estimated value and purchase date are left out. Empty takes the copy out of a bundle. |
+| `bundle_copy_id` | `copy_id` of the bundle copy this copy came in. Its platform, region, format, device, account, store, condition and status then follow that copy, and its own price, estimated value and purchase date are left out. Empty takes the copy out of a bundle. |
 
 **Columns and accepted values** at the bottom of the page lists the same in
 the app.

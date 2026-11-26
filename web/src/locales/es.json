@@ -380,7 +380,7 @@
       "estimated_currency": "Código de tres letras de estimated_value, cuando difiere de currency.",
       "barcode": "Dígitos UPC o EAN de la caja.",
       "notes": "Texto libre.",
-      "bundle_copy_id": "copy_id de la copia del recopilatorio en el que vino esta copia, como una colección en un solo cartucho. Plataforma, región, formato, dispositivo, tienda, estado de conservación y estado pasan a seguir esa copia.",
+      "bundle_copy_id": "copy_id de la copia del recopilatorio en el que vino esta copia, como una colección en un solo cartucho. Plataforma, región, formato, dispositivo, cuenta, tienda, estado de conservación y estado pasan a seguir esa copia.",
       "account": "Cuenta de tienda dueña de una copia digital, como en Gestionar > Cuentas. Los nombres desconocidos se crean."
     },
     "columnNames": {

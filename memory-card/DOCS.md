@@ -252,8 +252,8 @@ Memory Card offers the games IGDB lists in it.
 
 Each game inside gets its own copy, so it shows in the library, the backlog
 and duplicates. Those copies follow the bundle copy: change the bundle's
-platform, region, format, device, store, condition or wishlist status and
-they change too. Price, estimated value and purchase date stay on the bundle
+platform, region, format, device, account, store, condition or wishlist
+status and they change too. Price, estimated value and purchase date stay on the bundle
 copy. Counts of copies, on the stats page and in the Home Assistant sensors,
 count a bundle once. In the CSV, a copy inside a bundle names the
 bundle copy's `copy_id` in its `bundle_copy_id` column.
@@ -320,7 +320,7 @@ names for each game, to link with a click or mark as not on IGDB.
 | `estimated_currency` | Three-letter code of `estimated_value`, when it differs from `currency` |
 | `barcode` | UPC or EAN digits from the box |
 | `notes` | Free text |
-| `bundle_copy_id` | `copy_id` of the bundle copy this copy came in. Its platform, region, format, device, store, condition and status then follow that copy, and its own price, estimated value and purchase date are left out. Empty takes the copy out of a bundle. |
+| `bundle_copy_id` | `copy_id` of the bundle copy this copy came in. Its platform, region, format, device, account, store, condition and status then follow that copy, and its own price, estimated value and purchase date are left out. Empty takes the copy out of a bundle. |
 
 ## Stats
 
