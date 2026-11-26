@@ -1,22 +1,540 @@
-/* The app's indigo, from its icon. */
+/* Match the app's Default theme: ocean teal in light, blue in dark. */
 :root {
-  --vp-c-brand-1: #364fc7;
-  --vp-c-brand-2: #3b5bdb;
-  --vp-c-brand-3: #4263eb;
-  --vp-c-brand-soft: rgba(66, 99, 235, 0.14);
+  --vp-c-brand-1: #087b8f;
+  --vp-c-brand-2: #086578;
+  --vp-c-brand-3: #087b8f;
+  --vp-c-brand-soft: rgba(8, 123, 143, 0.12);
 }
 
 .dark {
-  --vp-c-brand-1: #91a7ff;
-  --vp-c-brand-2: #748ffc;
-  --vp-c-brand-3: #4c6ef5;
-  --vp-c-brand-soft: rgba(116, 143, 252, 0.16);
+  --vp-c-brand-1: #4dabf7;
+  --vp-c-brand-2: #74c0fc;
+  --vp-c-brand-3: #1971c2;
+  --vp-c-brand-soft: rgba(77, 171, 247, 0.16);
+  --vp-button-brand-hover-bg: #1c7ed6;
+  --vp-button-brand-active-bg: #1864ab;
+}
+
+/* Color-scheme specific screenshots. */
+.mc-dark-only {
+  display: none;
+}
+
+.dark .mc-light-only {
+  display: none;
+}
+
+.dark .mc-dark-only {
+  display: block;
+}
+
+/* Centered product-first hero on the landing page. */
+.VPHome .VPHero {
+  position: relative;
+  overflow-x: clip;
+  padding-bottom: 28px;
+}
+
+@media (min-width: 640px) {
+  .VPHome .VPHero {
+    padding-top: calc(var(--vp-nav-height) + var(--vp-layout-top-height, 0px) + 52px);
+    padding-bottom: 36px;
+  }
+}
+
+.VPHome .VPHero::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--vp-nav-height) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, 90vw);
+  height: 300px;
+  background: radial-gradient(
+    ellipse,
+    rgba(8, 123, 143, 0.22) 0%,
+    rgba(32, 170, 189, 0.14) 48%,
+    transparent 72%
+  );
+  filter: blur(56px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .VPHome .VPHero::before {
+  background: radial-gradient(
+    ellipse,
+    rgba(25, 113, 194, 0.34) 0%,
+    rgba(77, 171, 247, 0.14) 48%,
+    transparent 72%
+  );
+}
+
+.VPHome .VPHero .container {
+  justify-content: center;
+  text-align: center;
+}
+
+.VPHome .VPHero .main {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.mc-hero-logo {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  filter: drop-shadow(0 8px 18px rgba(54, 79, 199, 0.22));
+}
+
+.dark .mc-hero-logo {
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55));
+}
+
+.VPHome .VPHero .heading {
+  align-items: center;
+}
+
+.VPHome .VPHero .name,
+.VPHome .VPHero .text {
+  margin: 0 auto;
+  max-width: 100%;
+  text-wrap: balance;
+}
+
+.VPHome .VPHero .name {
+  font-size: clamp(36px, 5.5vw, 52px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.VPHome .VPHero .text {
+  margin-top: 4px;
+  max-width: 700px;
+  font-size: clamp(28px, 4.2vw, 44px);
+  line-height: 1.14;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.VPHome .VPHero .tagline {
+  margin: 0 auto;
+  max-width: 580px;
+  padding-top: 14px;
+  font-size: clamp(16px, 2vw, 19px);
+  line-height: 1.55;
+}
+
+.VPHome .VPHero .actions {
+  justify-content: center;
+  padding-top: 24px;
+}
+
+/* Framed hero screenshot aligned to VitePress's container gutters. */
+.mc-hero-media {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto 48px;
+  padding: 0 24px;
+}
+
+@media (min-width: 640px) {
+  .mc-hero-media {
+    padding: 0 48px;
+  }
+}
+
+@media (min-width: 960px) {
+  .mc-hero-media {
+    padding: 0 64px;
+    margin-bottom: 56px;
+  }
+}
+
+.mc-shot-frame {
+  max-width: 1152px;
+  margin: 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  box-shadow:
+    0 22px 54px -20px rgba(15, 23, 42, 0.22),
+    0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.dark .mc-shot-frame {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 26px 64px -18px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.mc-shot-frame img {
+  display: block;
+  width: 100%;
+  cursor: zoom-in;
+}
+
+.mc-shot-frame img.mc-dark-only,
+.dark .mc-shot-frame img.mc-light-only {
+  display: none;
+}
+
+.dark .mc-shot-frame img.mc-dark-only {
+  display: block;
+}
+
+.mc-trademark {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  text-align: center;
+  color: var(--vp-c-text-3);
+}
+
+/* Feature cards: tinted indigo icons and subtle lift on hover. */
+.VPFeature .icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  color: var(--vp-c-brand-1);
+  background-color: var(--vp-c-brand-soft);
+}
+
+.VPFeature.link {
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.VPFeature.link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.18);
+}
+
+.dark .VPFeature.link:hover {
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.55);
+}
+
+.VPFeature .link-text {
+  padding-top: 12px;
+}
+
+.VPFeature .link-text-value {
+  font-size: 13.5px;
+}
+
+/* Landing page sections inside .vp-doc. */
+.mc-section {
+  margin-top: 64px;
+}
+
+.mc-section-header {
+  max-width: 620px;
+  margin: 0 auto 24px;
+  text-align: center;
+}
+
+.vp-doc .mc-section-header h2 {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.vp-doc .mc-section-header p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--vp-c-text-2);
+}
+
+.mc-theme-trio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 719px) {
+  .mc-theme-trio {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mc-theme-card {
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  transition: border-color 0.2s ease;
+}
+
+.mc-theme-card:hover {
+  border-color: var(--vp-c-brand-1);
+}
+
+.vp-doc .mc-theme-card img {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  cursor: zoom-in;
+}
+
+.mc-theme-card-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.vp-doc .mc-theme-card-label a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.vp-doc .mc-theme-card-label a:hover {
+  color: var(--vp-c-brand-1);
+}
+
+.mc-theme-card-label span {
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc .mc-section-link {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+/* Install card */
+.mc-install-card {
+  padding: 28px;
+  border-radius: 16px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+}
+
+@media (min-width: 640px) {
+  .mc-install-card {
+    padding: 32px;
+  }
+}
+
+.mc-install-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc .mc-install-top h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 24px;
+}
+
+.mc-req-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+}
+
+.vp-doc .mc-ha-badge img {
+  display: block;
+  height: 40px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.mc-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 767px) {
+  .mc-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mc-step {
+  min-width: 0;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.mc-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+}
+
+.vp-doc .mc-step h3 {
+  margin: 0 0 6px;
+  font-size: 15.5px;
+}
+
+.vp-doc .mc-step p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc .mc-step-link {
+  margin-top: 12px;
+}
+
+.mc-copy-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 12px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc .mc-copy-box code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+  color: var(--vp-c-text-1);
+}
+
+.mc-copy-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.mc-copy-btn:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
+}
+
+/* Support banner */
+.mc-support-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 24px 28px;
+  border-radius: 16px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc .mc-support-card h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.vp-doc .mc-support-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+}
+
+.mc-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vp-doc .mc-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.vp-doc .mc-pill-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.vp-doc .mc-pill-btn.primary {
+  color: #fff;
+  background: var(--vp-c-brand-3);
+  border-color: var(--vp-c-brand-3);
+}
+
+.vp-doc .mc-pill-btn.primary:hover {
+  color: #fff;
+  background: var(--vp-button-brand-hover-bg, var(--vp-c-brand-2));
+  border-color: var(--vp-button-brand-hover-bg, var(--vp-c-brand-2));
 }
 
 /* Screenshots, centered and opening full size (theme/index.mjs). Badges in
    links stay put. */
 .vp-doc img:not(a img) {
   margin-inline: auto;
+  border-radius: 10px;
+  border: 1px solid var(--vp-c-divider);
   cursor: zoom-in;
 }
 

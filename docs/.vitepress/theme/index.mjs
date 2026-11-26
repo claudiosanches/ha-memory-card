@@ -1,8 +1,14 @@
 import DefaultTheme from 'vitepress/theme';
+import Layout from './Layout.vue';
+import HomeThemes from './HomeThemes.vue';
+import HomeInstall from './HomeInstall.vue';
 import './style.css';
 
-/** The page's screenshots: images in the docs, but not in links. */
-const screenshots = () => [...document.querySelectorAll('.vp-doc img')].filter((image) => !image.closest('a'));
+/** Visible page screenshots: images in the docs or zoomable home frames, not in links. */
+const screenshots = () =>
+  [...document.querySelectorAll('.vp-doc img, .mc-zoomable img')].filter(
+    (image) => !image.closest('a') && image.offsetParent !== null,
+  );
 
 let dialog;
 let images = [];
@@ -60,7 +66,13 @@ function build() {
 
 function zoom(event) {
   const image = event.target;
-  if (!(image instanceof HTMLImageElement) || !image.closest('.vp-doc') || image.closest('a')) return;
+  if (
+    !(image instanceof HTMLImageElement) ||
+    (!image.closest('.vp-doc') && !image.closest('.mc-zoomable')) ||
+    image.closest('a')
+  ) {
+    return;
+  }
   if (!dialog) build();
   images = screenshots();
   dialog.classList.toggle('single', images.length < 2);
@@ -71,7 +83,10 @@ function zoom(event) {
 
 export default {
   extends: DefaultTheme,
-  enhanceApp() {
+  Layout,
+  enhanceApp({ app }) {
+    app.component('HomeThemes', HomeThemes);
+    app.component('HomeInstall', HomeInstall);
     if (typeof document !== 'undefined') document.addEventListener('click', zoom);
   },
 };
