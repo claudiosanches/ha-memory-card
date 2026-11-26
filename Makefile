@@ -118,6 +118,10 @@ image: binaries ## Build the amd64 image (override IMAGE)
 smoke: image ## Run the image like Home Assistant and check start, UI, API and stop
 	./scripts/smoke-image.sh $(IMAGE)
 
+.PHONY: release
+release: ## Commit and tag the next release on a release branch (VERSION=X.Y.Z to choose it)
+	./scripts/release.sh $(VERSION)
+
 .PHONY: ha-up
 ha-up: ARCHS = amd64
 ha-up: binaries ## Local Home Assistant with the app from this tree (rerun to update it)
