@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+  workflow_call:
   push:
     branches: [dev, main]
 
@@ -147,13 +148,5 @@ jobs:
           context: .
           file: memory-card/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: false
-      - name: Load amd64 image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: memory-card/Dockerfile
-          platforms: linux/amd64
-          load: true
-          tags: memory-card:ci
-      - run: ./scripts/smoke-image.sh memory-card:ci
+          outputs: type=oci,dest=${{ runner.temp }}/memory-card.tar
+      - run: ./scripts/smoke-archive.sh "$RUNNER_TEMP/memory-card.tar"

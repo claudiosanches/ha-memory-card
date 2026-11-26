@@ -13,26 +13,44 @@ env:
   IMAGE: ghcr.io/claudiosanches/memory-card
 
 jobs:
-  # Runs the dependencies and build tools, without the token that can push.
-  build:
+  # Checks the tag and writes the notes before any dependency or build tool runs.
+  notes:
     runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      commit: ${{ steps.version.outputs.commit }}
+      version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Version matches the tag
-        id: version
+          fetch-depth: 0
+      - name: Tag is on dev and matches the versions
+        id: check
         env:
           TAG: ${{ github.ref_name }}
         run: |
           version=${TAG#v}
+          git merge-base --is-ancestor HEAD origin/dev || { echo "$TAG is not on dev" >&2; exit 1; }
           ./scripts/check-version.sh "$version"
           ./scripts/release-notes.sh "$version" > "$RUNNER_TEMP/notes.md"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: notes
+          path: ${{ runner.temp }}/notes.md
+          if-no-files-found: error
+          retention-days: 7
+
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  # Runs the dependencies and build tools, without the token that can push.
+  build:
+    needs: notes
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: rustup toolchain install
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -64,33 +82,19 @@ jobs:
           file: memory-card/Dockerfile
           platforms: linux/amd64,linux/arm64
           outputs: type=oci,dest=${{ runner.temp }}/memory-card.tar
-          build-args: BUILD_VERSION=${{ steps.version.outputs.version }}
-      - name: Load amd64 image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: memory-card/Dockerfile
-          platforms: linux/amd64
-          load: true
-          tags: memory-card:release
-          build-args: BUILD_VERSION=${{ steps.version.outputs.version }}
-      - run: ./scripts/smoke-image.sh memory-card:release
+          build-args: BUILD_VERSION=${{ needs.notes.outputs.version }}
+      - run: ./scripts/smoke-archive.sh "$RUNNER_TEMP/memory-card.tar"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: image
           path: ${{ runner.temp }}/memory-card.tar
           if-no-files-found: error
-          retention-days: 1
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: notes
-          path: ${{ runner.temp }}/notes.md
-          if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
-  # Pushes the image the build job tested, and runs nothing from the repository.
+  # Pushes the image the build job tested, once CI passes, and runs nothing
+  # from the repository. A version already published stays as it is.
   publish:
-    needs: build
+    needs: [notes, build, ci]
     runs-on: ubuntu-24.04
     permissions:
       packages: write
@@ -103,15 +107,21 @@ jobs:
         env:
           ACTOR: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ needs.build.outputs.version }}
+          VERSION: ${{ needs.notes.outputs.version }}
         run: |
           printf '%s' "$TOKEN" | skopeo login ghcr.io --username "$ACTOR" --password-stdin
-          skopeo copy --all --preserve-digests \
-            "oci-archive:$RUNNER_TEMP/memory-card.tar" "docker://$IMAGE:$VERSION"
+          if skopeo inspect --raw "docker://$IMAGE:$VERSION" >/dev/null 2>&1; then
+            echo "::notice::$IMAGE:$VERSION is already published"
+          else
+            skopeo copy --all --preserve-digests \
+              "oci-archive:$RUNNER_TEMP/memory-card.tar" "docker://$IMAGE:$VERSION"
+          fi
 
-  # Creates the GitHub release once the image is out, with the changelog's entries.
+  # Creates the GitHub release once the image is out. Moving main, which makes
+  # Home Assistant offer the update, is left to the maintainer: this job's
+  # token cannot move a branch onto workflow changes.
   release:
-    needs: publish
+    needs: [notes, publish]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -125,22 +135,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-        run: >-
-          gh api "repos/$REPO/releases" -f tag_name="$TAG" -f name="$TAG"
-          -F body=@"$RUNNER_TEMP/notes.md" --silent
-
-  # Home Assistant reads main, so it moves to the release only once the image is out.
-  main:
-    needs: [build, release]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Fast-forward main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          COMMIT: ${{ needs.build.outputs.commit }}
-        run: >-
-          gh api -X PATCH "repos/$REPO/git/refs/heads/main"
-          -f sha="$COMMIT" -F force=false --silent
+        run: |
+          if gh api "repos/$REPO/releases/tags/$TAG" --silent 2>/dev/null; then
+            echo "::notice::The $TAG release exists"
+          else
+            gh api "repos/$REPO/releases" -f tag_name="$TAG" -f name="$TAG" \
+              -F body=@"$RUNNER_TEMP/notes.md" -f make_latest=legacy --silent
+          fi
