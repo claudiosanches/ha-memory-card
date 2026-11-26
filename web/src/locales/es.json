@@ -41,6 +41,7 @@
     "name": "Nombre",
     "notSet": "Sin definir",
     "notes": "Notas",
+    "retry": "Reintentar",
     "save": "Guardar",
     "saved": "Guardado",
     "warning": "Aviso",

@@ -1,4 +1,4 @@
-import { Badge, Button, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
+import { Anchor, Badge, Button, ScrollArea, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconSearch } from '@tabler/icons-react';
 import type { TFunction } from 'i18next';
@@ -91,11 +91,11 @@ export function PickGameModal({
       title={title}
       saving={saving}
       // Until the collection loads, a title in it would read as a new game.
-      submitDisabled={games.isPending}
+      submitDisabled={!games.isSuccess}
       submitLabel={submitLabel}
       onClose={onClose}
       onSubmit={form.onSubmit((values) => {
-        if (!saving && !games.isPending) onNext(target(values.title));
+        if (!saving && games.isSuccess) onNext(target(values.title));
       })}
     >
       <TextInput
@@ -109,6 +109,14 @@ export function PickGameModal({
           setPicked(null);
         }}
       />
+      {games.isError && (
+        <Text size="sm" c="red" role="alert">
+          {errorMessage(t, games.error)}{' '}
+          <Anchor component="button" type="button" size="sm" onClick={() => void games.refetch()}>
+            {t('common.retry')}
+          </Anchor>
+        </Text>
+      )}
       {existing && (
         <Text size="sm" c="dimmed" data-testid="wish-existing">
           {t('wishlist.existing', { title: existing.title })}

@@ -171,6 +171,29 @@ describe('Wishlist', () => {
     expect(calls.find((c) => c.path === '/api/games/9/copies')?.body).toMatchObject({ status: 'wanted', platform_id: 1, region: 'ww' });
   });
 
+  it('waits for the collection before taking a title, and loads it again on request', async () => {
+    let failing = true;
+    mockApi({
+      ...SETUP,
+      'GET /api/copies': [],
+      'GET /api/games': () =>
+        failing
+          ? new Response(JSON.stringify({ code: 'internal' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+          : [CELESTE],
+    });
+    renderAt('/wishlist');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.wishlist.add }));
+    fireEvent.change(await screen.findByRole('textbox', { name: en.game.title }), { target: { value: 'celeste' } });
+    expect(await screen.findByText(en.errors.internal)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: en.wishlist.next })).toBeDisabled();
+
+    failing = false;
+    fireEvent.click(screen.getByRole('button', { name: en.common.retry }));
+    expect(await screen.findByTestId('wish-existing')).toHaveTextContent('Celeste');
+    expect(screen.getByRole('button', { name: en.wishlist.next })).toBeEnabled();
+  });
+
   it('puts the copy on a game already in the collection', async () => {
     const calls = mockApi({ ...SETUP, 'GET /api/copies': [], 'POST /api/games/5/copies': detail(5, 'Celeste', 1) });
     renderAt('/wishlist');
