@@ -22,9 +22,10 @@ of the file.
    too.
 2. Under **CSV file**, choose the file.
 3. **How your columns are read** shows which column each header went to.
-   Memory Card knows its own names and common ones from other spreadsheets,
-   such as `Title`, `Name`, `System`, `Console`, `Serial`, `UPC`, `Price Paid`
-   or `Comments`. Pick another column for a header it read wrong, or **Not
+   Memory Card knows its own names and common ones from other spreadsheets
+   and collection apps, such as `Title`, `Name`, `System`, `Console`,
+   `Serial`, `UPC`, `Price Paid`, `Purchase Price`, `Collection Status` or
+   `Comments`. Pick another column for a header it read wrong, or **Not
    imported** to leave one out.
 4. Check the preview: new and updated games and copies, and the platforms,
    devices, stores and labels it will create.
@@ -60,10 +61,10 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
 | Column | Accepted values |
 |---|---|
 | `copy_id` | Number from the export, or empty |
-| `status` | `owned` or `wanted` (empty means owned). `wishlist` is read as `wanted`. |
+| `status` | `owned` or `wanted` (empty means owned). `In Collection` is read as `owned`, `Wish List` and `On Order` as `wanted`. |
 | `igdb_id` | IGDB game id, optional. Tells apart games with the same title. |
 | `game_title` | Required |
-| `play_status` | Your own: `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status a manager added |
+| `play_status` | Your own: `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status a manager added. Words other trackers use work too, such as `Unplayed`, `Unfinished`, `Beaten` or `Retired`. |
 | `labels` | Label names, up to 50, separated by commas or semicolons. The import adds them to the game and creates the ones that do not exist yet, in gray. Exports write them separated by `; `. |
 | `platform` | Platform name, abbreviation or slug |
 | `region` | `na`, `eu`, `au`, `nz`, `jp`, `cn`, `asia`, `kr`, `br`, `ww` (worldwide or region-free); also `NTSC-U`, `PAL`, `NTSC-J` |

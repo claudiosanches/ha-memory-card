@@ -55,7 +55,8 @@ First release.
 - Home Assistant backups of the collection, covers and photos, and a copy of
   the database before each upgrade that changes its structure.
 - CSV import and export, with a preview, a blank template, common headers
-  from other spreadsheets and updates by `copy_id`.
+  and statuses from other spreadsheets and collection apps, and updates by
+  `copy_id`.
 - English, Spanish and Brazilian Portuguese.
 - 12 themes, each in light and dark.
 - `date_format` and `currency` options.

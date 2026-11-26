@@ -342,7 +342,7 @@
       "status": "owned ou wanted. Vazio significa owned.",
       "igdb_id": "Id do jogo no IGDB, opcional. Diferencia jogos com o mesmo título.",
       "game_title": "Obrigatória.",
-      "play_status": "O seu: backlog, playing, paused, completed, dropped, mastered.",
+      "play_status": "O seu: backlog, playing, paused, completed, dropped, mastered. Palavras de outros apps, como Unplayed, Unfinished, Beaten ou Retired, também servem.",
       "labels": "Nomes das etiquetas, separados por vírgulas ou ponto e vírgula. Elas são adicionadas ao jogo, e as que ainda não existem são criadas.",
       "platform": "Nome, abreviação ou slug da plataforma, como na tela Gerenciar. Nomes desconhecidos são criados.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial ou sem região). Também NTSC-U, PAL, NTSC-J.",

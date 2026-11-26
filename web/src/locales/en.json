@@ -342,7 +342,7 @@
       "status": "owned or wanted. Empty means owned.",
       "igdb_id": "Optional IGDB game id. Tells apart games with the same title.",
       "game_title": "Required.",
-      "play_status": "Yours: backlog, playing, paused, completed, dropped, mastered.",
+      "play_status": "Yours: backlog, playing, paused, completed, dropped, mastered. Words other trackers use, such as Unplayed, Unfinished, Beaten or Retired, work too.",
       "labels": "Label names, separated by commas or semicolons. The game gets them added, and labels that do not exist yet are created.",
       "platform": "Platform name, abbreviation or slug, as on the Manage screen. Unknown names are created.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (worldwide or region-free). Also NTSC-U, PAL, NTSC-J.",

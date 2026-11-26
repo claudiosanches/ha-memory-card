@@ -273,9 +273,11 @@ names for each game, to link with a click or mark as not on IGDB.
 - Column names are not case sensitive and can be in any order. Only
   `game_title` is required in every row; rows that add a copy also need
   `platform`, `region` and `format`.
-- Files from other spreadsheets work too: common headers such as `Title`,
-  `Name`, `System`, `Console`, `Serial`, `UPC`, `Price Paid` or `Comments`
-  are recognized. The preview shows how each header was read; pick another
+- Files from other spreadsheets and collection apps work too: common
+  headers such as `Title`, `Name`, `System`, `Console`, `Serial`, `UPC`,
+  `Price Paid`, `Purchase Price`, `Collection Status` or `Comments` are
+  recognized, and so are play statuses other trackers use, such as
+  `Unplayed`, `Unfinished`, `Beaten` or `Retired`. The preview shows how each header was read; pick another
   column for any it read wrong, or leave one out.
 - Platform, device and store names match what you already have, ignoring
   case. Common platforms and the digital stores (Nintendo eShop, PlayStation
@@ -294,7 +296,7 @@ names for each game, to link with a click or mark as not on IGDB.
 | Column | Accepted values |
 |---|---|
 | `copy_id` | Number from the export, or empty |
-| `status` | `owned` or `wanted` (empty means owned). `wishlist` is read as `wanted`. |
+| `status` | `owned` or `wanted` (empty means owned). `In Collection` is read as `owned`, `Wish List` and `On Order` as `wanted`. |
 | `igdb_id` | IGDB game id, optional |
 | `game_title` | Required |
 | `play_status` | Your own: `backlog`, `playing`, `paused`, `completed`, `dropped`, `mastered`, or the name or key of a status you added. Exports write your key; everyone else's play stays out of the file. |

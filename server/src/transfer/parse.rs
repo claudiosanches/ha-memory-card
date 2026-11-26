@@ -8,17 +8,27 @@ use super::{COLUMNS, MAX_COLUMNS, MAX_ROWS, UTF8_BOM};
 use crate::domain::loose;
 
 /// Header names other spreadsheets use, compared loosely, for each column.
-const ALIASES: [(&str, &[&str]); 18] = [
+const ALIASES: [(&str, &[&str]); 19] = [
+    ("status", &["collectionstatus", "ownership"]),
     ("game_title", &["title", "name", "game", "gamename"]),
     ("igdb_id", &["igdb"]),
-    ("platform", &["system", "console", "platformname"]),
+    (
+        "platform",
+        &["system", "console", "platformname", "gamesystem"],
+    ),
     ("region", &["territory", "zone"]),
     ("release_title", &["localtitle", "regionaltitle"]),
     ("product_code", &["serial", "serialnumber", "productid"]),
     ("format", &["type", "media", "medium"]),
     (
         "play_status",
-        &["progress", "completion", "completionstatus", "playstate"],
+        &[
+            "progress",
+            "completion",
+            "completionstatus",
+            "playstate",
+            "gamestatus",
+        ],
     ),
     (
         "labels",
@@ -27,7 +37,16 @@ const ALIASES: [(&str, &[&str]); 18] = [
     ("device", &["account"]),
     (
         "store",
-        &["shop", "retailer", "seller", "boughtat", "purchasedat"],
+        &[
+            "shop",
+            "retailer",
+            "seller",
+            "boughtat",
+            "purchasedat",
+            "purchasestore",
+            "purchasedfrom",
+            "boughtfrom",
+        ],
     ),
     ("condition", &["completeness"]),
     ("notes", &["note", "comments", "comment", "remarks"]),
@@ -40,9 +59,13 @@ const ALIASES: [(&str, &[&str]); 18] = [
             "bought",
             "boughton",
             "acquired",
+            "dateacquired",
         ],
     ),
-    ("price", &["paid", "cost", "pricepaid", "amount"]),
+    (
+        "price",
+        &["paid", "cost", "pricepaid", "purchaseprice", "amount"],
+    ),
     (
         "estimated_value",
         &["value", "marketvalue", "currentvalue", "worth", "estimate"],
@@ -58,6 +81,10 @@ pub fn column_for(header: &str) -> Option<&'static str> {
         return Some(column);
     }
     let key = loose(header);
+    // Such as "Play Status" or "Purchased On".
+    if let Some(column) = COLUMNS.iter().find(|c| loose(c) == key) {
+        return Some(column);
+    }
     ALIASES
         .iter()
         .find(|(_, aliases)| aliases.contains(&key.as_str()))
@@ -353,6 +380,22 @@ pub(crate) fn detect_delimiter(text: &str) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_headers_from_other_apps() {
+        for (header, column) in [
+            ("Play Status", "play_status"),
+            ("Purchased On", "purchased_on"),
+            ("Game Title", "game_title"),
+            ("Collection Status", "status"),
+            ("Purchase Price", "price"),
+            ("Purchase Store", "store"),
+            ("Console", "platform"),
+        ] {
+            assert_eq!(column_for(header), Some(column), "{header}");
+        }
+        assert_eq!(column_for("Rating"), None);
+    }
 
     #[test]
     fn semicolons_are_found_after_blank_lines() {

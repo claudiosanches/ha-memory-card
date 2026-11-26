@@ -83,8 +83,8 @@ value_list! {
 
 value_list! {
     CopyStatus {
-        Owned = "owned" [],
-        Wanted = "wanted" ["wishlist"],
+        Owned = "owned" ["have", "own", "incollection", "collection"],
+        Wanted = "wanted" ["wishlist", "want", "wanttobuy", "onorder", "preordered"],
     }
 }
 
@@ -99,12 +99,12 @@ value_list! {
 value_list! {
     /// The play statuses every install has. Users can add more; see `play_statuses`.
     BuiltinStatus {
-        Backlog = "backlog" [],
-        Playing = "playing" [],
-        Paused = "paused" ["onhold"],
-        Completed = "completed" ["beaten", "finished"],
-        Dropped = "dropped" ["abandoned"],
-        Mastered = "mastered" ["100", "100%"],
+        Backlog = "backlog" ["unplayed", "notstarted", "notplayed", "toplay", "wanttoplay"],
+        Playing = "playing" ["nowplaying", "currentlyplaying", "inprogress", "started", "endless"],
+        Paused = "paused" ["onhold", "unfinished", "shelved"],
+        Completed = "completed" ["beaten", "finished", "complete", "done"],
+        Dropped = "dropped" ["abandoned", "retired", "quit", "gaveup"],
+        Mastered = "mastered" ["100", "100%", "platinum", "perfected"],
     }
 }
 
@@ -189,6 +189,27 @@ pub fn sort_title(title: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_statuses_other_trackers_use() {
+        for (text, status) in [
+            ("Beaten", BuiltinStatus::Completed),
+            ("Unfinished", BuiltinStatus::Paused),
+            ("Unplayed", BuiltinStatus::Backlog),
+            ("Retired", BuiltinStatus::Dropped),
+            ("Now Playing", BuiltinStatus::Playing),
+        ] {
+            assert_eq!(BuiltinStatus::parse_loose(text), Some(status), "{text}");
+        }
+        assert_eq!(
+            CopyStatus::parse_loose("In Collection"),
+            Some(CopyStatus::Owned)
+        );
+        assert_eq!(
+            CopyStatus::parse_loose("Wish List"),
+            Some(CopyStatus::Wanted)
+        );
+    }
 
     #[test]
     fn parses_names_and_aliases() {

@@ -342,7 +342,7 @@
       "status": "owned o wanted. Vacío significa owned.",
       "igdb_id": "Id opcional del juego en IGDB. Distingue juegos con el mismo título.",
       "game_title": "Obligatoria.",
-      "play_status": "El tuyo: backlog, playing, paused, completed, dropped, mastered.",
+      "play_status": "El tuyo: backlog, playing, paused, completed, dropped, mastered. También sirven palabras de otras apps, como Unplayed, Unfinished, Beaten o Retired.",
       "labels": "Nombres de categorías, separados por comas o punto y coma. Se añaden al juego, y las categorías que aún no existen se crean.",
       "platform": "Nombre, abreviatura o slug de la plataforma, como en la pantalla Gestionar. Los nombres desconocidos se crean.",
       "region": "na, eu, au, nz, jp, cn, asia, kr, br, ww (mundial o sin región). También NTSC-U, PAL, NTSC-J.",
