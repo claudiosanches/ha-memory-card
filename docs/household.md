@@ -3,7 +3,7 @@
 **Household** in the sidebar puts everyone's play side by side. Everyone in
 the house can open it.
 
-![The Household page comparing everyone's play this month](images/household.webp)
+![The Household page comparing everyone's play this month](https://ha-memory-card.pages.dev/images/household.webp)
 
 _Game titles and cover art belong to their respective owners._
 

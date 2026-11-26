@@ -85,7 +85,7 @@ entities:
 A **Button** card can press it too: set its tap behavior to **Perform
 action**, pick **Press button** and choose **Roll a pick** as the target.
 
-![A Button card that presses Roll a pick](images/integration-roll-button.webp)
+![A Button card that presses Roll a pick](https://ha-memory-card.pages.dev/images/integration-roll-button.webp)
 
 The same card in YAML:
 

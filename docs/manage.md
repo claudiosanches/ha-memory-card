@@ -3,7 +3,7 @@
 **Manage** in the sidebar holds the lists the collection is built from. Only
 managers see it.
 
-![Manage, on the Devices tab](images/manage.webp)
+![Manage, on the Devices tab](https://ha-memory-card.pages.dev/images/manage.webp)
 
 The device, store, platform and label forms show each one's slug: the short
 name that library links, Home Assistant rolls and CSV files use.

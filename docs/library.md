@@ -3,7 +3,7 @@
 **Library** in the sidebar lists every game in the collection. Select a game
 to open its [game page](game.md).
 
-![The library as a grid of covers](images/library.webp)
+![The library as a grid of covers](https://ha-memory-card.pages.dev/images/library.webp)
 
 _Game titles and cover art belong to their respective owners._
 
@@ -19,7 +19,7 @@ The buttons to the right of the sort pick how the library looks:
 
 The view is saved in that browser.
 
-![The library as a table of copies](images/library-copies.webp)
+![The library as a table of copies](https://ha-memory-card.pages.dev/images/library-copies.webp)
 
 _Game titles and cover art belong to their respective owners._
 
@@ -61,7 +61,7 @@ game**:
   [Import & export](import-export.md).
 - **Scan barcode:** reads the barcode on a box. See [Barcodes](barcodes.md).
 
-![Adding a game with matches from IGDB](images/add-game.webp)
+![Adding a game with matches from IGDB](https://ha-memory-card.pages.dev/images/add-game.webp)
 
 _Game titles and cover art belong to their respective owners._
 
@@ -70,6 +70,6 @@ _Game titles and cover art belong to their respective owners._
 On a phone the sidebar folds into the menu at the top left, and every page
 stacks into one column.
 
-![The library and a game page on a phone](images/phone.webp)
+![The library and a game page on a phone](https://ha-memory-card.pages.dev/images/phone.webp)
 
 _Game titles and cover art belong to their respective owners._

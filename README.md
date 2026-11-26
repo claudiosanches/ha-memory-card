@@ -11,7 +11,7 @@ A video game collection manager that runs as a Home Assistant app. It tracks
 the games you own across consoles, the platform and region releases of each
 game, and every copy you have, physical or digital.
 
-![The library in Memory Card](docs/images/library.webp)
+![The library in Memory Card](https://ha-memory-card.pages.dev/images/library.webp)
 
 _Game titles and cover art belong to their respective owners._
 

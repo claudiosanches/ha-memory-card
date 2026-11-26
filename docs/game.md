@@ -4,7 +4,7 @@ Select a game in the [Library](library.md) to open its page. It has four
 parts: the header, your progress, the game's details, and its releases and
 copies.
 
-![A game page with your progress and the household's](images/game.webp)
+![A game page with your progress and the household's](https://ha-memory-card.pages.dev/images/game.webp)
 
 _Game titles and cover art belong to their respective owners._
 

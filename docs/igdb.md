@@ -37,7 +37,7 @@ the game.
 **Review close matches**, next to **Sync with IGDB**, lists the games without
 an IGDB link with the closest names IGDB has, each with how close it is.
 
-![Close matches from IGDB](images/close-matches.webp)
+![Close matches from IGDB](https://ha-memory-card.pages.dev/images/close-matches.webp)
 
 _Game titles belong to their respective owners._
 

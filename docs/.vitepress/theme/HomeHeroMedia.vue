@@ -1,7 +1,7 @@
 <script setup>
 import { useData } from 'vitepress';
-import defaultLight from '../../images/themes/default-light.webp';
-import defaultDark from '../../images/themes/default-dark.webp';
+const libraryLight = 'https://ha-memory-card.pages.dev/images/library.webp';
+const libraryDark = 'https://ha-memory-card.pages.dev/images/library-dark.webp';
 
 const { frontmatter } = useData();
 </script>
@@ -11,12 +11,18 @@ const { frontmatter } = useData();
     <div class="mc-shot-frame mc-zoomable">
       <img
         class="mc-light-only"
-        :src="defaultLight"
+        width="1440"
+        height="900"
+        loading="lazy"
+        :src="libraryLight"
         alt="The library in Memory Card, light theme"
       />
       <img
         class="mc-dark-only"
-        :src="defaultDark"
+        width="1440"
+        height="900"
+        loading="lazy"
+        :src="libraryDark"
         alt="The library in Memory Card, dark theme"
       />
     </div>

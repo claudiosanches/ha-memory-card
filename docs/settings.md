@@ -5,7 +5,7 @@
 configured; on a new install, **Status** opens first so you can copy your user
 ID.
 
-![Settings, on the Appearance tab](images/settings.webp)
+![Settings, on the Appearance tab](https://ha-memory-card.pages.dev/images/settings.webp)
 
 ## Appearance
 

@@ -3,6 +3,10 @@ node_modules/
 /web/dist/
 /docs/.vitepress/dist/
 /docs/.vitepress/cache/
+# Screenshots live on the docs site; only the hand-taken ones are kept here.
+/docs/public/images/*
+!/docs/public/images/integration-roll-button.webp
+!/docs/public/images/mqtt-roll-button.webp
 /dist/
 /.data/
 /e2e/test-results/

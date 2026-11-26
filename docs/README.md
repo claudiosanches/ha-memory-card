@@ -4,7 +4,7 @@ Memory Card keeps track of the video games a household owns across consoles,
 physical or digital, and of what each person plays. It runs as a Home
 Assistant app and opens from the sidebar.
 
-![The library, with covers from IGDB](images/library.webp)
+![The library, with covers from IGDB](https://ha-memory-card.pages.dev/images/library.webp)
 
 _Game titles and cover art belong to their respective owners._
 

@@ -4,7 +4,7 @@
 playing, what is on hold and what is waiting for you. It is yours; everyone in
 the house has their own. The bar at the top counts how many you have cleared.
 
-![The backlog with a random pick](images/backlog.webp)
+![The backlog with a random pick](https://ha-memory-card.pages.dev/images/backlog.webp)
 
 _Game titles and cover art belong to their respective owners._
 

@@ -8,7 +8,7 @@ connected, **IGDB**. Viewers see only duplicates.
 
 **Missing details** goes through the games that lack details, one at a time.
 
-![Missing details, ready to go through the games](images/missing-details.webp)
+![Missing details, ready to go through the games](https://ha-memory-card.pages.dev/images/missing-details.webp)
 
 1. Under **Look for**, keep the details you want to fill in and turn off the
    rest. Each shows how many games lack it:
@@ -28,7 +28,7 @@ To upload a missing cover, select the cover. For games with no IGDB link, the
 **Duplicates** lists the games you own more than one copy of, with every copy
 and what sets them apart.
 
-![Games owned twice](images/duplicates.webp)
+![Games owned twice](https://ha-memory-card.pages.dev/images/duplicates.webp)
 
 _Game titles and cover art belong to their respective owners._
 

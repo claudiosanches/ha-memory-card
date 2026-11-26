@@ -144,7 +144,7 @@ seed: ## Fill an empty collection in `make run` with test data
 	node scripts/seed.mjs http://127.0.0.1:$(PORT) $(DEV_USER)
 
 .PHONY: screenshots
-screenshots: web ## Retake docs/images from test data (needs IGDB credentials in .data/options.json; ONLY=themes/ for some)
+screenshots: web ## Take the docs screenshots into docs/public/images from test data (needs IGDB credentials in .data/options.json; ONLY=themes/ for some)
 	cargo build --locked
 	node scripts/screenshots.mjs $(ONLY)
 
@@ -162,6 +162,7 @@ docs-dev: docs/node_modules/.package-lock.json ## Docs site with live reload
 
 .PHONY: docs-deploy
 docs-deploy: docs ## Build the docs site and deploy it to Cloudflare Pages
+	@test -f docs/public/images/library.webp || { echo 'docs/public/images is missing: run make screenshots first, or the deploy removes the site'"'"'s images' >&2; exit 1; }
 	$(DOCS_BIN)/wrangler pages deploy docs/.vitepress/dist --project-name ha-memory-card
 
 .PHONY: reset-db

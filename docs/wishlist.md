@@ -3,7 +3,7 @@
 **Wishlist** in the sidebar lists the copies the household wants, each with
 its platform, region, format, where to buy it and the expected price.
 
-![The wishlist](images/wishlist.webp)
+![The wishlist](https://ha-memory-card.pages.dev/images/wishlist.webp)
 
 _Game titles and cover art belong to their respective owners._
 

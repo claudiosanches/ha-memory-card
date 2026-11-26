@@ -1,5 +1,6 @@
-// Retakes the screenshots in docs/images. Runs its own server with the seed's
-// test data, so it needs `make web`, `cargo build` and IGDB credentials in
+// Takes the docs screenshots into docs/public/images, which only the docs site
+// serves; pages link them by their pages.dev URL. Runs its own server with the
+// seed's test data, so it needs `make web`, `cargo build` and IGDB credentials in
 // .data/options.json for the covers.
 // Usage: node scripts/screenshots.mjs [name prefix...], or `make screenshots`.
 // With prefixes, only matching images are written, such as `themes/`.
@@ -10,7 +11,7 @@ import { join } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const root = join(import.meta.dirname, '..');
-const out = join(root, 'docs/images');
+const out = join(root, 'docs/public/images');
 const data = join(root, 'target/screenshots');
 const user = { 'x-remote-user-id': 'morgan', 'x-remote-user-name': 'morgan', 'x-remote-user-display-name': 'Morgan' };
 const hiddenThemes = new Set(['cursed-90s']);
@@ -35,6 +36,7 @@ const base = `http://127.0.0.1:${port}`;
 
 rmSync(data, { recursive: true, force: true });
 mkdirSync(join(data, 'tmp'), { recursive: true });
+mkdirSync(join(out, 'themes'), { recursive: true });
 copyFileSync(join(root, '.data/options.json'), join(data, 'options.json'));
 chmodSync(join(data, 'options.json'), 0o600);
 const server = spawn(join(root, 'target/debug/memory-card'), ['serve'], {
@@ -79,7 +81,7 @@ try {
   async function capture(path, { width = 1440, height = 900, scheme = 'light', mobile = false, theme, view, before } = {}) {
     const context = await browser.newContext({
       viewport: { width, height },
-      deviceScaleFactor: mobile ? 2 : 1,
+      deviceScaleFactor: 2,
       isMobile: mobile,
       hasTouch: mobile,
       colorScheme: scheme,
@@ -131,7 +133,7 @@ try {
     );
     if (!url.startsWith('data:image/webp')) throw new Error('This Chromium cannot write WebP');
     writeFileSync(join(out, `${name}.webp`), Buffer.from(url.split(',')[1], 'base64'));
-    console.log(`docs/images/${name}.webp`);
+    console.log(`docs/public/images/${name}.webp`);
   }
 
   // The seed leaves a few games for this page. Linking each to its closest
@@ -144,6 +146,7 @@ try {
   const id = (title) => games.find((g) => g.title === title).id;
 
   await save('library', [await capture('/')]);
+  await save('library-dark', [await capture('/', { scheme: 'dark' })]);
   await save('library-copies', [await capture('/', { view: 'copies' })]);
   await save('add-game', [
     await capture('/', {
@@ -200,7 +203,6 @@ try {
     { scale: 0.6, gap: 48, pad: 48 },
   );
 
-  mkdirSync(join(out, 'themes'), { recursive: true });
   for (const theme of themes) {
     for (const scheme of ['light', 'dark']) {
       // Themes hide their sidebar picture below 45em (720 pixels) tall.

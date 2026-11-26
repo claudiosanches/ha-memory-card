@@ -3,7 +3,7 @@
 **Stats** in the sidebar sums up the collection and your own play. The totals
 at the top count the household's games, copies and wishlist.
 
-![Stats in the dark version of the Default theme](images/stats.webp)
+![Stats in the dark version of the Default theme](https://ha-memory-card.pages.dev/images/stats.webp)
 
 _Game titles belong to their respective owners._
 

@@ -1,7 +1,7 @@
 <script setup>
-import retroDark from '../../images/themes/retro-dark.webp';
-import pastelPlushLight from '../../images/themes/pastel-plush-light.webp';
-import cyberpunkDark from '../../images/themes/cyberpunk-dark.webp';
+const retroDark = 'https://ha-memory-card.pages.dev/images/themes/retro-dark.webp';
+const pastelPlushLight = 'https://ha-memory-card.pages.dev/images/themes/pastel-plush-light.webp';
+const cyberpunkDark = 'https://ha-memory-card.pages.dev/images/themes/cyberpunk-dark.webp';
 
 const themes = [
   {
