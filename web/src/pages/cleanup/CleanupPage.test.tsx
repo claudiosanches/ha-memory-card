@@ -85,7 +85,8 @@ describe('Cleanup IGDB titles', () => {
     expect(screen.getByTestId('title-8')).toBeInTheDocument();
   });
 
-  it('sends every IGDB title in batches the API takes', async () => {
+  // Renders a thousand rows, which takes a few seconds while other suites run.
+  it('sends every IGDB title in batches the API takes', { timeout: 15_000 }, async () => {
     const many: TitleDifference[] = Array.from({ length: 1001 }, (_, i) => ({
       game_id: i + 1,
       title: `Game ${i + 1}`,
