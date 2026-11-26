@@ -64,6 +64,7 @@ function build() {
   document.body.append(dialog);
 }
 
+/** Opens the screenshot an event targets; false when it targets none. */
 function zoom(event) {
   const image = event.target;
   if (
@@ -71,7 +72,7 @@ function zoom(event) {
     (!image.closest('.vp-doc') && !image.closest('.mc-zoomable')) ||
     image.closest('a')
   ) {
-    return;
+    return false;
   }
   if (!dialog) build();
   images = screenshots();
@@ -79,6 +80,17 @@ function zoom(event) {
   show(images.indexOf(image));
   document.documentElement.classList.add('zoomed');
   dialog.showModal();
+  return true;
+}
+
+/** Lets the keyboard reach each screenshot, to open it with Enter or Space. */
+function makeFocusable() {
+  for (const image of document.querySelectorAll('.vp-doc img, .mc-zoomable img')) {
+    if (image.closest('a') || image.hasAttribute('tabindex')) continue;
+    image.tabIndex = 0;
+    image.setAttribute('role', 'button');
+    image.setAttribute('aria-haspopup', 'dialog');
+  }
 }
 
 export default {
@@ -87,6 +99,20 @@ export default {
   enhanceApp({ app }) {
     app.component('HomeThemes', HomeThemes);
     app.component('HomeInstall', HomeInstall);
-    if (typeof document !== 'undefined') document.addEventListener('click', zoom);
+    if (typeof document === 'undefined') return;
+    document.addEventListener('click', zoom);
+    document.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && !dialog?.open && zoom(event)) event.preventDefault();
+    });
+    // Pages render and change without a reload, so new screenshots are found as they appear.
+    let queued = false;
+    new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        makeFocusable();
+      });
+    }).observe(document.body, { childList: true, subtree: true });
   },
 };
