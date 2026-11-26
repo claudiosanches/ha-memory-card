@@ -14,9 +14,26 @@
   }
 
   .mantine-Button-root,
+  .mantine-ActionIcon-root,
   .mantine-SegmentedControl-root,
-  .mantine-SegmentedControl-indicator {
+  .mantine-SegmentedControl-indicator,
+  .mc-view-toggle,
+  input.mantine-Input-input,
+  button.mantine-Input-input {
     border-radius: 999px;
+  }
+
+  .mantine-Input-wrapper:has(> input.mantine-Input-input, > button.mantine-Input-input) {
+    --input-padding: 1rem;
+  }
+
+  textarea.mantine-Input-input,
+  div.mantine-Input-input {
+    border-radius: 18px;
+  }
+
+  .mantine-Input-wrapper:has(> textarea.mantine-Input-input, > div.mantine-Input-input) {
+    --input-padding: 0.875rem;
   }
 
   .mantine-NavLink-root {

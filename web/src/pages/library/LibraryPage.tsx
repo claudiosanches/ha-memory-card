@@ -159,7 +159,7 @@ export function LibraryPage() {
             onChange={(value) => setSearch({ sort: value === 'added' || value === 'played' ? value : undefined })}
             allowDeselect={false}
           />
-          <Group gap={4} wrap="nowrap" className={classes.viewToggle} role="group" aria-label={t('library.view')}>
+          <Group gap={4} wrap="nowrap" className={`mc-view-toggle ${classes.viewToggle}`} role="group" aria-label={t('library.view')}>
             <ActionIcon size={34} variant={view === 'grid' ? 'light' : 'subtle'} color={view === 'grid' ? undefined : 'gray'} aria-label={t('library.gridView')} title={t('library.gridView')} aria-pressed={view === 'grid'} onClick={() => setView('grid')}>
               <IconLayoutGrid size={19} />
             </ActionIcon>
