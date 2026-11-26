@@ -6165,7 +6165,7 @@
         "properties": {
           "can_track_progress": {
             "type": "boolean",
-            "description": "May change play status and last played."
+            "description": "May keep their own play: statuses, sessions and picks."
           },
           "managers_configured": {
             "type": "boolean",

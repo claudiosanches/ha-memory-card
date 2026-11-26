@@ -1581,7 +1581,7 @@ export interface components {
             title: string;
         };
         Me: {
-            /** @description May change play status and last played. */
+            /** @description May keep their own play: statuses, sessions and picks. */
             can_track_progress: boolean;
             /** @description False until the app options name a manager; until then nobody can change anything. */
             managers_configured: boolean;
