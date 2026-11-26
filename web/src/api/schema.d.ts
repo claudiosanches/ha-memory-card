@@ -2213,7 +2213,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Includes `unknown_platform`, `unknown_store` and `invalid_user` */
+            /** @description Includes `unknown_platform`, `unknown_store`, `invalid_user` and `unknown_user` */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2264,7 +2264,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Includes `unknown_platform`, `unknown_store` and `invalid_user` */
+            /** @description Includes `unknown_platform`, `unknown_store`, `invalid_user` and `unknown_user` */
             422: {
                 headers: {
                     [name: string]: unknown;

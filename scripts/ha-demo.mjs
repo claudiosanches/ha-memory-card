@@ -8,7 +8,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { seed, seedPlayer } from './seed.mjs';
+import { seed, seedOwners, seedPlayer } from './seed.mjs';
 
 const [base, stateFile] = process.argv.slice(2);
 if (!base || !stateFile) {
@@ -532,6 +532,9 @@ async function main() {
       } finally {
         viewer.close();
       }
+      // The viewer plays as Sam; the owner holds the other accounts.
+      const owner = state.owner.id;
+      await seedOwners(await ingress(ha), { sam: state.viewer.id, alex: owner, jordan: owner, robin: owner });
       state.viewerPlayed = true;
       await saveState(state);
     }

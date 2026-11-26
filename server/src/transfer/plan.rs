@@ -374,7 +374,9 @@ impl<'a> Planner<'a> {
                 .map(|(minor, currency)| money::format(minor, currency))
         };
         let has = |column: &str| !raw.absent.contains(&column);
-        let digital = raw.format.as_deref().and_then(Format::parse_loose) == Some(Format::Digital);
+        let format = raw.format.as_deref().and_then(Format::parse_loose);
+        let digital = format == Some(Format::Digital);
+        let physical = format == Some(Format::Physical);
         let mut row = raw.clone();
         for &column in raw.absent.iter() {
             let value = match column {
@@ -391,6 +393,7 @@ impl<'a> Planner<'a> {
                     .device_id
                     .and_then(|id| snapshot.devices.iter().find(|d| d.id == id))
                     .map(|d| d.name.clone()),
+                "account" if physical => continue,
                 "account" => copy
                     .account_id
                     .and_then(|id| snapshot.accounts.iter().find(|a| a.id == id))

@@ -67,7 +67,7 @@
             }
           },
           "422": {
-            "description": "Includes `unknown_platform`, `unknown_store` and `invalid_user`",
+            "description": "Includes `unknown_platform`, `unknown_store`, `invalid_user` and `unknown_user`",
             "content": {
               "application/json": {
                 "schema": {
@@ -136,7 +136,7 @@
             }
           },
           "422": {
-            "description": "Includes `unknown_platform`, `unknown_store` and `invalid_user`",
+            "description": "Includes `unknown_platform`, `unknown_store`, `invalid_user` and `unknown_user`",
             "content": {
               "application/json": {
                 "schema": {

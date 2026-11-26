@@ -176,7 +176,7 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
     found(result.rows_affected())
 }
 
-/// Checks the store and platforms exist, and makes sure the person has a row.
+/// Checks the store, the person and the platforms exist.
 /// Returns the platform ids as a JSON array.
 async fn checked(conn: &mut SqliteConnection, fields: &AccountFields) -> ApiResult<String> {
     if let Some(store_id) = fields.store_id {
@@ -191,7 +191,15 @@ async fn checked(conn: &mut SqliteConnection, fields: &AccountFields) -> ApiResu
         }
     }
     if let Some(user_id) = &fields.user_id {
-        super::users::ensure(&mut *conn, user_id).await?;
+        let known: bool = sqlx::query_scalar!(
+            r#"SELECT EXISTS (SELECT 1 FROM users WHERE id = ?) AS "known!: bool""#,
+            user_id
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        if !known {
+            return Err(ApiError::invalid("unknown_user", "user_id"));
+        }
     }
     let mut ids = fields.platform_ids.clone();
     ids.sort_unstable();

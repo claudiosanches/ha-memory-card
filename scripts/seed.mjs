@@ -6,9 +6,11 @@
 // scripts/ha-demo.mjs runs it through Home Assistant's ingress, with Sam's
 // play as its viewer's.
 
+import { pathToFileURL } from 'node:url';
+
 /** Calls the API as a manager. */
 export async function seed(api) {
-  if ((await api('GET', '/api/games')).length > 0) {
+  if ((await api('GET', '/api/games?ownership=any')).length > 0) {
     console.log('The collection is not empty, so no test data was added');
     return false;
   }
@@ -21,12 +23,11 @@ export async function seed(api) {
     await api('POST', '/api/devices', { name, kind, platform_id: platforms.get(slug), ...details });
   }
   const stores = new Map((await api('GET', '/api/stores')).map((s) => [s.name, s.id]));
-  for (const [name, slugs, store, , user_id] of ACCOUNTS) {
+  for (const [name, slugs, store] of ACCOUNTS) {
     await api('POST', '/api/accounts', {
       name,
       platform_ids: slugs.map((slug) => platforms.get(slug)),
       store_id: stores.get(store) ?? null,
-      user_id,
     });
   }
   for (const [label, color, counts_as] of STATUSES) {
@@ -38,7 +39,7 @@ export async function seed(api) {
   }
   await api('POST', '/api/import', csv(), 'text/csv');
 
-  const games = new Map((await api('GET', '/api/games')).map((g) => [g.title, g.id]));
+  const games = new Map((await api('GET', '/api/games?ownership=any')).map((g) => [g.title, g.id]));
   const bundle = (await api('GET', '/api/copies')).find((c) => c.title === BUNDLE.title);
   for (const title of BUNDLE.contents) {
     const id = games.get(title) ?? (await api('POST', '/api/games', { title })).id;
@@ -47,11 +48,12 @@ export async function seed(api) {
 
   const random = mulberry32(7);
   for (const [title, count] of SESSIONS) {
-    const ago = new Set();
-    while (ago.size < count) ago.add(Math.floor(random() * 120) + (title === LAST_PLAYED ? 0 : 1));
+    // The last played game was played today; the rest before.
+    const ago = new Set(title === LAST_PLAYED ? [0] : []);
+    while (ago.size < count) ago.add(Math.floor(random() * 120) + 1);
     for (const days of [...ago].sort((a, b) => b - a)) {
       const minutes = 30 + Math.floor(random() * 6) * 15;
-      await api('POST', `/api/games/${games.get(title)}/sessions`, { played_on: daysAgo(title === LAST_PLAYED ? 0 : days), minutes });
+      await api('POST', `/api/games/${games.get(title)}/sessions`, { played_on: daysAgo(days), minutes });
     }
   }
 
@@ -65,13 +67,13 @@ export async function seed(api) {
     console.log(`IGDB linked ${sync.linked}, left ${sync.unmatched} unmatched`);
   }
   await api('POST', '/api/suggestions', {});
-  console.log(`Added ${(await api('GET', '/api/games')).length} games`);
+  console.log(`Added ${(await api('GET', '/api/games?ownership=any')).length} games`);
   return true;
 }
 
 /** Logs one person's own play: their statuses, sessions and a pick. */
 export async function seedPlayer(api, player = PLAYERS.sam) {
-  const games = new Map((await api('GET', '/api/games')).map((g) => [g.title, g.id]));
+  const games = new Map((await api('GET', '/api/games?ownership=any')).map((g) => [g.title, g.id]));
   const random = mulberry32(11);
   for (const [title, play_status, count = 0, newest = 0, oldest = newest] of player.games) {
     const id = games.get(title);
@@ -84,6 +86,27 @@ export async function seedPlayer(api, player = PLAYERS.sam) {
     }
   }
   await api('POST', '/api/suggestions', {});
+}
+
+/**
+ * Names whose each account is, once those people are known. `people` maps the
+ * names in ACCOUNTS to user IDs; accounts of anyone missing keep no owner.
+ */
+export async function seedOwners(api, people) {
+  const accounts = await api('GET', '/api/accounts');
+  for (const [name, , , person] of ACCOUNTS) {
+    const account = accounts.find((a) => a.name === name);
+    const user_id = people[person];
+    if (!account || !user_id) continue;
+    await api('PUT', `/api/accounts/${account.id}`, {
+      name,
+      store_id: account.store_id,
+      user_id,
+      notes: account.notes,
+      active: account.active,
+      platform_ids: account.platform_ids,
+    });
+  }
 }
 
 /**
@@ -175,14 +198,14 @@ const DEVICES = [
   ['New Nintendo 3DS XL', 'handheld', ['3ds']],
 ];
 
-// Store accounts own digital copies; each also names the device its games are
-// installed on, and whose account it is.
+// Store accounts own digital copies: [name, platforms, store, whose account
+// it is].
 const ACCOUNTS = [
-  ['Nintendo Account', ['switch'], 'Nintendo eShop', 'Switch OLED', 'sam'],
-  ['PlayStation Network', ['ps5', 'ps4'], 'PlayStation Store', 'PS5', 'alex'],
-  ['Steam account', ['pc'], 'Steam', 'Gaming PC', 'jordan'],
-  ['GOG account', ['pc'], 'GOG', 'Gaming PC', 'jordan'],
-  ['Microsoft account', ['xbox-series', 'pc'], 'Microsoft Store', 'Xbox Series X', 'robin'],
+  ['Nintendo Account', ['switch'], 'Nintendo eShop', 'sam'],
+  ['PlayStation Network', ['ps5', 'ps4'], 'PlayStation Store', 'alex'],
+  ['Steam account', ['pc'], 'Steam', 'jordan'],
+  ['GOG account', ['pc'], 'GOG', 'jordan'],
+  ['Microsoft account', ['xbox-series', 'pc'], 'Microsoft Store', 'robin'],
 ];
 
 // Controllers, accessories and toys, which hold no games.
@@ -228,15 +251,15 @@ const ROWS = [
   ['The Legend of Zelda: Tears of the Kingdom', 'playing', 'switch', 'eu', 'physical', 'Switch OLED', 'Local game shop', 'cib', '2023-05-12', '1299.90', 'BRL', '1500.00', { edition: "Collector's Edition" }],
   ['Super Mario Odyssey', 'completed', 'switch', 'na', 'physical', 'Switch OLED', 'eBay', 'cib', '2023-08-03', '39.99', 'USD'],
   ['Metroid Dread', 'mastered', 'switch', 'eu', 'physical', 'Switch OLED', 'Amazon', 'cib', '2023-01-20', '89.99', 'EUR', '120.00', { edition: 'Special Edition' }],
-  ['Animal Crossing: New Horizons', 'paused', 'switch', 'br', 'digital', 'Nintendo Account', 'Nintendo eShop', '', '2024-03-15', '299.00', 'BRL'],
+  ['Animal Crossing: New Horizons', 'paused', 'switch', 'br', 'digital', 'Switch OLED', 'Nintendo eShop', '', '2024-03-15', '299.00', 'BRL', '', { account: 'Nintendo Account' }],
   ['Mario Kart 8 Deluxe', 'completed', 'switch', 'br', 'physical', 'Switch OLED', 'Mercado Livre', 'cib', '2023-12-25', '249.90', 'BRL'],
-  ['Hades', 'completed', 'switch', 'ww', 'digital', 'Nintendo Account', 'Nintendo eShop', '', '2024-06-01', '87.49', 'BRL'],
-  ['Hollow Knight', 'backlog', 'switch', 'ww', 'digital', 'Nintendo Account', 'Nintendo eShop', '', '2025-01-10', '27.99', 'BRL'],
+  ['Hades', 'completed', 'switch', 'ww', 'digital', 'Switch OLED', 'Nintendo eShop', '', '2024-06-01', '87.49', 'BRL', '', { account: 'Nintendo Account' }],
+  ['Hollow Knight', 'backlog', 'switch', 'ww', 'digital', 'Switch OLED', 'Nintendo eShop', '', '2025-01-10', '27.99', 'BRL', '', { account: 'Nintendo Account' }],
   ['Xenoblade Chronicles 3', 'backlog', 'switch', 'eu', 'physical', 'Switch OLED', 'Amazon', 'sealed', '2025-07-29', '249.00', 'BRL'],
   ['Fire Emblem: Three Houses', 'dropped', 'switch', 'na', 'physical', 'Switch OLED', 'eBay', 'cib', '2024-02-02', '35.00', 'USD'],
   ['Super Smash Bros. Ultimate', 'completed', 'switch', 'br', 'physical', 'Switch OLED', 'Mercado Livre', 'cib', '2023-12-25', '279.90', 'BRL'],
   ['Metroid Prime Remastered', 'backlog', 'switch', 'jp', 'physical', 'Switch OLED', 'Local game shop', 'cib', '2025-03-02', '5980', 'JPY', '', { release_title: 'メトロイドプライム リマスタード' }],
-  ['Okami HD', 'backlog', 'switch', 'na', 'digital', 'Nintendo Account', 'Nintendo eShop', '', '2024-11-29', '19.99', 'USD'],
+  ['Okami HD', 'backlog', 'switch', 'na', 'digital', 'Switch OLED', 'Nintendo eShop', '', '2024-11-29', '19.99', 'USD', '', { account: 'Nintendo Account' }],
   [BUNDLE.title, 'completed', 'switch', 'na', 'physical', 'Switch OLED', 'eBay', 'cib', '2023-09-18', '59.99', 'USD', '90.00'],
   ['Metroid Prime', 'completed', 'gamecube', 'na', 'physical', 'GameCube', 'eBay', 'no_manual', '2024-08-10', '25.00', 'USD', '35.00'],
   ['The Legend of Zelda: The Wind Waker', 'completed', 'gamecube', 'eu', 'physical', 'GameCube', 'eBay', 'cib', '2024-08-10', '45.00', 'EUR', '70.00'],
@@ -255,16 +278,16 @@ const ROWS = [
   ['Persona 5 Royal', 'dropped', 'ps4', 'na', 'physical', 'PS5', 'Amazon', 'cib', '2024-04-04', '29.99', 'USD'],
   ['Elden Ring', 'playing', 'ps5', 'br', 'physical', 'PS5', 'Amazon', 'cib', '2024-02-25', '249.90', 'BRL'],
   ['Final Fantasy VII Rebirth', 'backlog', 'ps5', 'br', 'physical', 'PS5', 'Amazon', 'sealed', '2024-02-29', '349.90', 'BRL', '', { edition: 'Deluxe Edition' }],
-  ['Astro Bot', 'mastered', 'ps5', 'ww', 'digital', 'PlayStation Network', 'PlayStation Store', '', '2024-09-06', '299.90', 'BRL'],
-  ["Marvel's Spider-Man 2", 'backlog', 'ps5', 'ww', 'digital', 'PlayStation Network', 'PlayStation Store', '', '2025-02-14', '149.95', 'BRL'],
-  ['Hades', 'completed', 'pc', 'ww', 'digital', 'Steam account', 'Steam', '', '2023-07-07', '47.49', 'BRL'],
-  ['Celeste', 'completed', 'pc', 'ww', 'digital', 'Steam account', 'Steam', '', '2023-07-07', '11.99', 'BRL'],
-  ['Stardew Valley', 'playing', 'pc', 'ww', 'digital', 'Steam account', 'Steam', '', '2023-07-07', '24.99', 'BRL'],
-  ['The Witcher 3: Wild Hunt', 'backlog', 'pc', 'ww', 'digital', 'GOG account', 'GOG', '', '2024-12-18', '39.99', 'BRL'],
-  ["Baldur's Gate 3", 'paused', 'pc', 'ww', 'digital', 'Steam account', 'Steam', '', '2024-08-03', '199.99', 'BRL'],
-  ['Disco Elysium', 'backlog', 'pc', 'ww', 'digital', 'GOG account', 'GOG', '', '2025-06-20', '18.49', 'BRL'],
-  ['Forza Horizon 5', 'paused', 'xbox-series', 'ww', 'digital', 'Microsoft account', 'Microsoft Store', '', '2024-10-10', '249.00', 'BRL'],
-  ['Halo Infinite', 'dropped', 'xbox-series', 'ww', 'digital', 'Microsoft account', 'Microsoft Store', '', '', '', ''],
+  ['Astro Bot', 'mastered', 'ps5', 'ww', 'digital', 'PS5', 'PlayStation Store', '', '2024-09-06', '299.90', 'BRL', '', { account: 'PlayStation Network' }],
+  ["Marvel's Spider-Man 2", 'backlog', 'ps5', 'ww', 'digital', 'PS5', 'PlayStation Store', '', '2025-02-14', '149.95', 'BRL', '', { account: 'PlayStation Network' }],
+  ['Hades', 'completed', 'pc', 'ww', 'digital', 'Gaming PC', 'Steam', '', '2023-07-07', '47.49', 'BRL', '', { account: 'Steam account' }],
+  ['Celeste', 'completed', 'pc', 'ww', 'digital', 'Gaming PC', 'Steam', '', '2023-07-07', '11.99', 'BRL', '', { account: 'Steam account' }],
+  ['Stardew Valley', 'playing', 'pc', 'ww', 'digital', 'Gaming PC', 'Steam', '', '2023-07-07', '24.99', 'BRL', '', { account: 'Steam account' }],
+  ['The Witcher 3: Wild Hunt', 'backlog', 'pc', 'ww', 'digital', 'Gaming PC', 'GOG', '', '2024-12-18', '39.99', 'BRL', '', { account: 'GOG account' }],
+  ["Baldur's Gate 3", 'paused', 'pc', 'ww', 'digital', 'Gaming PC', 'Steam', '', '2024-08-03', '199.99', 'BRL', '', { account: 'Steam account' }],
+  ['Disco Elysium', 'backlog', 'pc', 'ww', 'digital', 'Gaming PC', 'GOG', '', '2025-06-20', '18.49', 'BRL', '', { account: 'GOG account' }],
+  ['Forza Horizon 5', 'paused', 'xbox-series', 'ww', 'digital', 'Xbox Series X', 'Microsoft Store', '', '2024-10-10', '249.00', 'BRL', '', { account: 'Microsoft account' }],
+  ['Halo Infinite', 'dropped', 'xbox-series', 'ww', 'digital', 'Xbox Series X', 'Microsoft Store', '', '', '', '', '', { account: 'Microsoft account' }],
   ['Pikmin 4', 'backlog', 'switch', 'eu', 'physical', '', '', '', '', '299.00', 'BRL', '', { status: 'wanted' }],
   ['Metroid Prime 4: Beyond', '', 'switch-2', 'br', 'physical', '', '', '', '', '449.90', 'BRL', '', { status: 'wanted' }],
   ['EarthBound', '', 'snes', 'na', 'physical', '', '', 'loose', '', '250.00', 'USD', '', { status: 'wanted' }],
@@ -295,12 +318,8 @@ function csv() {
   const lines = [COLUMNS.join(',')];
   ROWS.forEach((row, n) => {
     const [title, play_status, platform, region, format, device, store, condition, purchased_on, price, currency, estimated, extra = {}] = row;
-    // A digital copy on an account is installed on the account's device.
-    const account = ACCOUNTS.find(([name]) => name === device);
     const values = {
-      status: 'owned', game_title: title, play_status, labels: GAME_LABELS[title], platform, region, format,
-      device: account ? account[3] : device,
-      account: account ? device : '',
+      status: 'owned', game_title: title, play_status, labels: GAME_LABELS[title], platform, region, format, device,
       store, condition, purchased_on, price, currency,
       estimated_value: estimated,
       barcode: format === 'physical' && n % 3 === 0 ? ean13(`789000${String(n).padStart(6, '0')}`) : '',
@@ -338,7 +357,7 @@ function mulberry32(seed) {
   };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [base, user = 'dev'] = process.argv.slice(2);
   if (!base) {
     console.error('usage: node scripts/seed.mjs <url> [user id]');
@@ -366,6 +385,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       if (!seeded) return;
       for (const [id, player] of Object.entries(PLAYERS)) await seedPlayer(as(id), player);
       console.log(`Logged play for ${Object.keys(PLAYERS).join(', ')}`);
+      await seedOwners(as(user), Object.fromEntries(Object.keys(PLAYERS).map((id) => [id, id])));
     })
     .catch((error) => {
       console.error(error.message);

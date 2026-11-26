@@ -309,7 +309,9 @@
     "device_has_copies": "Copies are on this device. Move them first, or keep it a console, handheld, PC or account.",
     "not_for_this_kind": "This does not apply to that kind of hardware.",
     "unknown_account": "That account no longer exists.",
-    "invalid_user": "That is not a Home Assistant user ID."
+    "invalid_user": "That is not a Home Assistant user ID.",
+    "unknown_user": "Memory Card does not know that person yet.",
+    "account_physical": "Physical copies have no account."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",

@@ -219,6 +219,9 @@ impl CopyInput {
         if self.condition.is_some() && self.format == Format::Digital {
             return Err(ApiError::invalid("condition_digital", "condition"));
         }
+        if self.account_id.is_some() && self.format == Format::Physical {
+            return Err(ApiError::invalid("account_physical", "account_id"));
+        }
         Ok(CopyFields {
             status: self.status,
             platform_id: self.platform_id,
@@ -226,7 +229,7 @@ impl CopyInput {
             product_code: optional(self.product_code.as_deref(), "product_code", CODE_MAX)?,
             format: self.format,
             device_id: self.device_id,
-            account_id: self.account_id.filter(|_| self.format == Format::Digital),
+            account_id: self.account_id,
             store_id: self.store_id,
             condition: self.condition,
             notes: optional(self.notes.as_deref(), "notes", NOTES_MAX)?,

@@ -309,7 +309,9 @@
     "device_has_copies": "Há cópias neste dispositivo. Mova-as antes, ou mantenha-o como console, portátil, PC ou conta.",
     "not_for_this_kind": "Isso não se aplica a esse tipo de hardware.",
     "unknown_account": "Essa conta não existe mais.",
-    "invalid_user": "Não é um ID de usuário do Home Assistant."
+    "invalid_user": "Não é um ID de usuário do Home Assistant.",
+    "unknown_user": "O Memory Card ainda não conhece essa pessoa.",
+    "account_physical": "Cópias físicas não têm conta."
   },
   "import": {
     "intro": "Leve sua coleção entre o Memory Card e uma planilha.",

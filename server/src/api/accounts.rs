@@ -71,7 +71,7 @@ pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<Account>>
     responses(
         (status = CREATED, body = Account),
         (status = CONFLICT, description = "`name_taken`, `slug_taken`", body = ErrorBody),
-        (status = UNPROCESSABLE_ENTITY, description = "Includes `unknown_platform`, `unknown_store` and `invalid_user`", body = ErrorBody),
+        (status = UNPROCESSABLE_ENTITY, description = "Includes `unknown_platform`, `unknown_store`, `invalid_user` and `unknown_user`", body = ErrorBody),
     )
 )]
 pub async fn create(
@@ -93,7 +93,7 @@ pub async fn create(
         (status = OK, body = Account),
         (status = NOT_FOUND, body = ErrorBody),
         (status = CONFLICT, description = "`name_taken`, `slug_taken`", body = ErrorBody),
-        (status = UNPROCESSABLE_ENTITY, description = "Includes `unknown_platform`, `unknown_store` and `invalid_user`", body = ErrorBody),
+        (status = UNPROCESSABLE_ENTITY, description = "Includes `unknown_platform`, `unknown_store`, `invalid_user` and `unknown_user`", body = ErrorBody),
     )
 )]
 pub async fn update(
