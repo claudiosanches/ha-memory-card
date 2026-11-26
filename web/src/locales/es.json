@@ -723,7 +723,7 @@
     "skip": "Saltar",
     "done": "Listo",
     "pickTitle": "¿No te decides?",
-    "pickText": "Sortea un juego de tus pendientes. Los juegos sorteados en el último día se omiten.",
+    "pickText": "Sortea un juego de tus pendientes. Un juego sorteado en el último día solo vuelve a salir cuando no queda otro.",
     "device": "Jugar en",
     "anyDevice": "Cualquier dispositivo",
     "pick": "Elige por mí",

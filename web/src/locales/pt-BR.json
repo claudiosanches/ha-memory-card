@@ -723,7 +723,7 @@
     "skip": "Pular",
     "done": "Pronto",
     "pickTitle": "Não consegue decidir?",
-    "pickText": "Sorteie um jogo do seu backlog. Jogos sorteados no último dia ficam de fora.",
+    "pickText": "Sorteie um jogo do seu backlog. Um jogo sorteado no último dia só volta a sair quando não sobra outro.",
     "device": "Jogar em",
     "anyDevice": "Qualquer dispositivo",
     "pick": "Escolha por mim",

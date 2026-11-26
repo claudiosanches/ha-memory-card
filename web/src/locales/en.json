@@ -723,7 +723,7 @@
     "skip": "Skip",
     "done": "Done",
     "pickTitle": "Can't decide?",
-    "pickText": "Roll a random game from your backlog. Games picked in the last day are skipped.",
+    "pickText": "Roll a random game from your backlog. A game picked in the last day comes up again only when nothing else is left.",
     "device": "Play on",
     "anyDevice": "Any device",
     "pick": "Pick for me",
