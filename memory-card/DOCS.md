@@ -4,7 +4,7 @@ Memory Card keeps track of the video games you own across consoles, physical
 or digital. It opens from the Home Assistant sidebar.
 
 This page covers the setup and the options. The
-[full guide](https://github.com/claudiosanches/ha-memory-card/tree/main/docs)
+[full guide](https://ha-memory-card.pages.dev/docs/)
 goes through every page step by step, with screenshots and the themes.
 
 ![The library, with covers from IGDB](https://ha-memory-card.pages.dev/images/library.webp)
@@ -130,9 +130,9 @@ one.
 _Game titles and cover art belong to their respective owners._
 
 The library shows your games as a grid of covers, a list or a table. The
-filters narrow it by platform, your play status, label, genre, game mode, device,
-store, region, format and players on the same screen, and they stay in the
-address, so a filtered library can be bookmarked. **Show** picks between the
+filters narrow it by platform, your play status, label, genre, game mode,
+device, store, region, format and players on the same screen, and they stay
+in the address, so a filtered library can be bookmarked. **Show** picks between the
 games you own, the wishlist and both.
 
 The library search finds a game by its title, its release titles and its
@@ -143,8 +143,7 @@ acronyms. Add your own under **Also known as** when editing a game.
 When IGDB says two linked games in your collection are versions of each
 other, such as a game and its remaster, remake, port or another edition,
 each game page lists the other under **Other versions**. They stay separate
-games with their own copies and progress. Run a sync to fill this in for
-games linked before this was added.
+games with their own copies and progress.
 
 To use your own cover, click the cover of a game or a release on its page and
 upload a JPEG, PNG or WebP image of up to 10 MB and 100 megapixels. IGDB
@@ -159,10 +158,11 @@ _Game titles and cover art belong to their respective owners._
 **Backlog** in the sidebar shows what you are playing, what is on hold and
 the games waiting for you, with how many you have cleared. It is yours:
 everyone in the house has their own. **Pick for me** rolls a random game
-from your backlog, for one device if you choose one, and skips games picked
-for you in the last day. Games you have given no play status wait under
-**Not sorted yet** until you give them one. Logging a session for a game in
-your backlog, or with no status, sets it to playing.
+from your backlog, for one device if you choose one. A game picked for you
+in the last day comes up again only when nothing else is left. Games you have
+given no play status wait under **Not sorted yet** until you give them one.
+Logging a session for a game in your backlog, or with no status, sets it to
+playing.
 
 Manage > Play statuses lists the statuses in the order the app shows them.
 The six built-in statuses can be renamed, recolored and reordered, but not
@@ -325,8 +325,8 @@ time first.
 ## Home Assistant sensors
 
 Memory Card can add a **Memory Card** device to Home Assistant with the
-sensors below, for the household and for each person. Pick one of two ways with the `sensors` option and
-restart Memory Card. The Status section under Settings in Memory Card says
+sensors below, for the household and for each person. Pick one of two ways
+with the `sensors` option and restart Memory Card. The Status section under Settings in Memory Card says
 whether the sensors are connected.
 
 - **`integration`**: the Memory Card integration, installed from the
@@ -396,16 +396,17 @@ and `min_local_players`. Each platform, device and store shows its slug in
 its Manage form, and library links use the same slugs.
 
 The counts keep long-term statistics, so history graphs show how the
-collection and each backlog change. Sensors update a second after each change and show as
-unavailable while Memory Card is stopped. Setting the `sensors` option back
+collection and each backlog change. Sensors update a second after each
+change and show as unavailable while Memory Card is stopped. Setting the `sensors` option back
 to `off` removes the device on the next start.
 
 ## NFC tags
 
 Put an NFC tag on a game's box, and scanning it with the Home Assistant
 companion app starts that copy for you: Memory Card logs a play session for
-today in your play and sets your status for the game to playing. To link a tag, choose **Link NFC tag** from the
-copy's **⋯** menu on the game page, then scan the tag within a minute. For
+today in your play and sets your status for the game to playing. To link a
+tag, choose **Link NFC tag** from the copy's **⋯** menu on the game page,
+then scan the tag within a minute. For
 the Home Assistant app, write a blank tag first under **Settings >
 Connectivity > Tags > Add tag**. ESPHome readers read any tag as it is.
 
@@ -423,12 +424,12 @@ tag_readers:
 `device` is the reader's Home Assistant device ID: open the reader under
 **Settings > Devices & services > Devices**, and it is the last part of the
 page's address. When a reader no option names scans a linked tag, the app's
-**Log** tab shows its device ID. `person` is a user ID from **Settings > Status** in
-Memory Card, as for `managers`.
+**Log** tab shows its device ID. `person` is a user ID from **Settings >
+Status** in Memory Card, as for `managers`.
 
 A link waits for a scan by the manager who started it, or by a reader with no
-user that `tag_readers` does not give to someone else. Pages open in Memory Card show a scan within a second, like any change
-someone else makes. Scanning the same tag again on the same day does not add
+user that `tag_readers` does not give to someone else. Pages open in Memory
+Card show a scan within a second, like any change someone else makes. Scanning the same tag again on the same day does not add
 another session for that person. A game whose status counts as finished goes
 back to playing too, unless the `tag_scan_finished` option is set to `keep`.
 Memory Card hears scans through the Home Assistant API, which is why the app

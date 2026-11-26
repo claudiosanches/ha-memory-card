@@ -32,7 +32,7 @@ as [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) describes.
    then `make docs-deploy`.
 
 Pushing workflow changes needs the `workflow` scope on your GitHub token:
-`gh auth refresh -h github.com -s workflow` adds it.
+`gh auth refresh --hostname github.com --scopes workflow` adds it.
 
 If a job fails on a flaky step, rerun it. A version already on ghcr.io and a
 release that exists are kept as they are. The tag cannot be moved or deleted,

@@ -24,7 +24,7 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make screenshots` | Takes the screenshots into `docs/public/images` from test data. Only the docs site keeps them, out of git, and every page links them by their `https://ha-memory-card.pages.dev/images/` URL. Needs IGDB credentials in `.data/options.json`. `ONLY=themes/` retakes only the images whose names start with it |
 | `make docs-dev` | The docs site with live reload, see [Docs site](#docs-site) |
 | `make docs-deploy` | Builds the docs site and deploys it to Cloudflare Pages, with the screenshots; refuses to run when a screenshot the docs link is missing |
-| `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
+| `make reset-db` | Deletes the local database and covers, keeping `options.json` |
 | `make release` | Commits and tags the next release on `dev`, see [Releasing](releasing.md) |
 
 The server answers only requests that name a Home Assistant user, so open
@@ -65,9 +65,9 @@ The server reads these variables; `make run` sets the first four,
 
 The connection to `MEMORY_CARD_MQTT_HOST` has no TLS, so the broker password
 and messages cross the network in the clear. Use a broker on the same machine
-or a network you trust. TLS support is planned. Inside Home Assistant this does not
-apply: the Mosquitto app is reached over Home Assistant's internal network,
-and it offers no TLS there.
+or a network you trust. TLS support is planned. Inside Home Assistant this
+does not apply: the Mosquitto app is reached over Home Assistant's internal
+network, and it offers no TLS there.
 
 ## Queries
 
@@ -84,12 +84,12 @@ adding or changing a query.
 `docs/` is also the site at https://ha-memory-card.pages.dev, built with
 VitePress from `docs/.vitepress/`. `docs/index.md` is the landing page,
 `docs/about.md` the About page, `docs/README.md` the guide's index at `/docs/`,
-and the other guide pages sit under `/docs/`. The developer pages (this one, Local Home Assistant and
-Releasing) stay out of the site. A new guide page needs a line in
+and the other guide pages sit under `/docs/`. The developer pages (this one,
+Local Home Assistant and Releasing) stay out of the site. A new guide page needs a line in
 `docs/README.md` and in the sidebar in `docs/.vitepress/config.mjs`.
 
 VitePress and wrangler are locked in `docs/package-lock.json`, apart from the
 app's dependencies; `make docs` installs them with `npm ci`, without install
 scripts. Before the first `make docs-deploy`, sign in to Cloudflare with
-`docs/node_modules/.bin/wrangler login`. A deploy from `main` updates the site; from another
-branch it gets a preview URL.
+`docs/node_modules/.bin/wrangler login`. A deploy from `main` updates the
+site; from another branch it gets a preview URL.

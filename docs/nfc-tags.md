@@ -13,8 +13,8 @@ today in your play and sets your status for the game to playing.
 
 For the Home Assistant app, write a blank tag first: in Home Assistant, go to
 **Settings > Connectivity > Tags**, select **Add tag** and scan the tag with
-the app. ESPHome readers read any tag as it is. A copy can have several tags. **Unlink
-NFC tags** in the same menu removes them.
+the app. ESPHome readers read any tag as it is. A copy can have several
+tags. **Unlink NFC tags** in the same menu removes them.
 
 A link waits for a scan by the manager who started it, or by a reader with
 no user that `tag_readers` does not give to someone else.
@@ -40,8 +40,8 @@ otherwise.
    **Settings > Devices & services > Devices**. The ID is the last part of the
    page's address. A reader no option names also logs its device ID in the
    app's **Log** tab when it scans a linked tag.
-2. Find the person's user ID under **Settings > Status > Your access** in Memory Card,
-   opened as that person.
+2. Find the person's user ID under **Settings > Status > Your access** in
+   Memory Card, opened as that person.
 3. In the app's **Configuration** tab, add the pair to `tag_readers`, save and
    restart the app:
 

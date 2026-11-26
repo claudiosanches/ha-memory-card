@@ -24,8 +24,9 @@ To compare everyone's play, open [Household](household.md).
 
 Copies by platform, by region and by store, the condition of physical
 copies, physical and digital by platform, and **Copies added** over the last
-12 months or by year. A copy counts on the day you bought it. Without a purchase date it counts
-on the day it was added, or the day you marked it Got it on the wishlist. A bundle counts once.
+12 months or by year. A copy counts on the day you bought it. Without a
+purchase date it counts on the day it was added, or the day you marked it
+Got it on the wishlist. A bundle counts once.
 
 ## Spending and value
 

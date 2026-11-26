@@ -23,7 +23,8 @@ playing. **Played today** on the [game page](game.md) does the same.
 
 1. Under **Play on**, keep **Any device** or choose the device you want to
    play on.
-2. Select **Pick for me**. Games picked for you in the last day are skipped.
+2. Select **Pick for me**. A game picked for you in the last day comes up
+   again only when nothing else is left.
 3. **Start playing** sets the game to playing. **Pick another** rolls again.
 
 The latest pick also shows in Home Assistant's `sensor.memory_card_pick`, and

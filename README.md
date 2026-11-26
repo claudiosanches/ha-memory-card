@@ -32,8 +32,8 @@ step. Questions and bug reports go to
 
 ## Documentation
 
-- [The guide](docs/README.md): every page and feature, with screenshots, and
-  the [themes](docs/themes.md).
+- [The guide](https://ha-memory-card.pages.dev/docs/): every page and feature, with screenshots, and
+  the [themes](https://ha-memory-card.pages.dev/docs/themes).
 - [Options](memory-card/DOCS.md): the reference Home Assistant shows in the
   app's **Documentation** tab.
 - [Development](docs/development.md), [Local Home Assistant](docs/local-home-assistant.md)

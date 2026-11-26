@@ -160,6 +160,7 @@ Who can roll:
 | No game matches these filters. | Loosen the filters, or add games to the backlog. |
 | Memory Card could not read these filters. | Check the slugs against the Manage forms. |
 | Cannot reach the Memory Card app. | Start the app, and check its **Log** tab. |
+| Memory Card is not set up. | Add Memory Card from **Discovered** under **Settings > Devices & services**. |
 
 ## Troubleshooting
 

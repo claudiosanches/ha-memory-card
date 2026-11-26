@@ -24,14 +24,16 @@ login. Managers you name change the collection; everyone else browses it.
 
 - Covers, release dates, genres and other details from IGDB, or entered by
   hand.
-- A backlog with play status and play sessions, and a random pick when you
-  cannot decide.
+- Each person's own backlog, play status and play sessions, and a random
+  pick when you cannot decide.
 - A wishlist, and barcode scans from your phone that tell you in a shop
   whether you own a game already.
 - Labels, photos of your copies, bundles and a list of games you own twice.
-- Stats on what you own, what you paid and what you played.
+- Stats on what you own, what you paid and what you played, and a
+  Household page that compares everyone's play.
 - CSV import and export that reads most spreadsheets.
-- Home Assistant sensors over MQTT, and NFC tags that log play when scanned.
+- Home Assistant sensors through the Memory Card integration or MQTT, and
+  NFC tags that log play when scanned.
 - English, Spanish and Brazilian Portuguese.
 
 ![Memory Card on a phone][phone]
@@ -39,7 +41,7 @@ login. Managers you name change the collection; everyone else browses it.
 _Game titles and cover art belong to their respective owners._
 
 The **Documentation** tab explains the setup and the options. The
-[full guide](https://github.com/claudiosanches/ha-memory-card/tree/main/docs)
+[full guide](https://ha-memory-card.pages.dev/docs/)
 goes through every page step by step.
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
