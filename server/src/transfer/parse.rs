@@ -228,7 +228,7 @@ pub struct FileIssue {
 }
 
 impl FileIssue {
-    fn new(code: &'static str) -> Self {
+    pub(crate) fn new(code: &'static str) -> Self {
         Self {
             code,
             column: None,
@@ -256,7 +256,10 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
 
     let headers = reader
         .headers()
-        .map_err(|_| FileIssue::new("malformed"))?
+        .map_err(|_| FileIssue {
+            line: Some(1),
+            ..FileIssue::new("malformed")
+        })?
         .clone();
     let index: HashMap<&'static str, usize> = COLUMNS
         .iter()

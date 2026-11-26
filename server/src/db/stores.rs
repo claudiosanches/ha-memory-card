@@ -1,5 +1,5 @@
 use serde::Serialize;
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
 use super::found;
@@ -24,7 +24,7 @@ pub struct StoreFields {
     pub notes: Option<String>,
 }
 
-pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Store>> {
+pub async fn list<'e>(db: impl sqlx::SqliteExecutor<'e>) -> sqlx::Result<Vec<Store>> {
     sqlx::query_as!(
         Store,
         r#"SELECT s.id AS "id!", s.name, s.slug, s.notes,
@@ -32,7 +32,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Store>> {
            FROM stores s
            ORDER BY s.name COLLATE NOCASE"#
     )
-    .fetch_all(pool)
+    .fetch_all(db)
     .await
 }
 
@@ -52,19 +52,24 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Store> {
 
 pub async fn create(pool: &SqlitePool, fields: &StoreFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slugs::ensure_name_free(&mut tx, Table::Stores, &fields.name, None).await?;
-    let slug = slugs::for_new(&mut tx, Table::Stores, fields.slug.as_deref(), &fields.name).await?;
-    let id = sqlx::query_scalar!(
+    let id = insert(&mut tx, fields).await?;
+    tx.commit().await?;
+    Ok(id)
+}
+
+/// Adds a store inside the caller's transaction.
+pub(crate) async fn insert(conn: &mut SqliteConnection, fields: &StoreFields) -> ApiResult<i64> {
+    slugs::ensure_name_free(conn, Table::Stores, &fields.name, None).await?;
+    let slug = slugs::for_new(conn, Table::Stores, fields.slug.as_deref(), &fields.name).await?;
+    sqlx::query_scalar!(
         r#"INSERT INTO stores (name, slug, notes) VALUES (?, ?, ?) RETURNING id AS "id!""#,
         fields.name,
         slug,
         fields.notes
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut *conn)
     .await
-    .map_err(slugs::conflict)?;
-    tx.commit().await?;
-    Ok(id)
+    .map_err(slugs::conflict)
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &StoreFields) -> ApiResult<()> {

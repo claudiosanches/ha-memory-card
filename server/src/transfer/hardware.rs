@@ -6,16 +6,18 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
+use sqlx::SqliteConnection;
 use utoipa::ToSchema;
 
 use super::UTF8_BOM;
 use super::export::{plain, unplain};
-use super::parse::{detect_delimiter, too_wide};
+use super::parse::{FileIssue, detect_delimiter, too_wide};
 use crate::api::devices::DeviceInput;
-use crate::db::Pool;
+use crate::api::input::{NAME_MAX, required};
 use crate::db::devices::{self, Device, DeviceFields, DeviceKind};
 use crate::db::platforms::{self, Platform};
 use crate::db::stores::{self, Store, StoreFields};
+use crate::db::{Pool, write_tx};
 use crate::domain::{Condition, CopyStatus, Region};
 use crate::error::{ApiError, ApiResult};
 
@@ -47,14 +49,14 @@ const MAX_ROWS: usize = 5_000;
 #[derive(Debug, Serialize, ToSchema)]
 pub struct HardwarePreview {
     /// Why the file cannot be read at all, such as `missing_column`.
-    pub file_issue: Option<String>,
+    pub file_issue: Option<FileIssue>,
     pub rows: Vec<HardwareRow>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct HardwareRow {
     /// The file's line, counting the header as 1.
-    pub line: usize,
+    pub line: u64,
     pub name: String,
     /// The device it updates, or none for a new one.
     pub device_id: Option<i64>,
@@ -100,12 +102,14 @@ pub async fn export(pool: &Pool) -> ApiResult<Vec<u8>> {
                 plain(d.name),
                 kind_text(d.kind).to_owned(),
                 text(d.model),
-                d.platform_id.and_then(platform).unwrap_or_default(),
-                d.platform_ids
-                    .iter()
-                    .filter_map(|id| platform(*id))
-                    .collect::<Vec<_>>()
-                    .join("; "),
+                text(d.platform_id.and_then(platform)),
+                plain(
+                    d.platform_ids
+                        .iter()
+                        .filter_map(|id| platform(*id))
+                        .collect::<Vec<_>>()
+                        .join("; "),
+                ),
                 d.region.map(|r| r.as_str().to_owned()).unwrap_or_default(),
                 d.condition
                     .map(|c| c.as_str().to_owned())
@@ -171,8 +175,9 @@ fn parse_kind(text: &str) -> Option<DeviceKind> {
     })
 }
 
+/// Folds case as SQLite's `NOCASE` does, so names it keeps apart stay apart.
 fn key(text: &str) -> String {
-    text.trim().to_lowercase()
+    text.trim().to_ascii_lowercase()
 }
 
 /// A planned write for one row, once it has no issues.
@@ -184,25 +189,25 @@ pub struct Planned {
 }
 
 pub struct Plan {
-    pub file_issue: Option<&'static str>,
+    pub file_issue: Option<FileIssue>,
     pub rows: Vec<(HardwareRow, Option<Planned>)>,
 }
 
 /// Reads the file and checks every row against what is stored.
-pub async fn plan(pool: &Pool, bytes: &[u8]) -> ApiResult<Plan> {
+pub async fn plan(conn: &mut SqliteConnection, bytes: &[u8]) -> ApiResult<Plan> {
     let records = match read(bytes) {
         Ok(records) => records,
-        Err(code) => {
+        Err(issue) => {
             return Ok(Plan {
-                file_issue: Some(code),
+                file_issue: Some(issue),
                 rows: Vec::new(),
             });
         }
     };
-    let devices = devices::list(pool).await?;
-    let platforms = platforms::list(pool).await?;
-    let stores = stores::list(pool).await?;
-    let mut seen: HashSet<String> = HashSet::new();
+    let devices = devices::list(&mut *conn).await?;
+    let platforms = platforms::list(&mut *conn).await?;
+    let stores = stores::list(&mut *conn).await?;
+    let mut seen = Seen::default();
     let mut rows = Vec::new();
     for (line, cells) in records {
         rows.push(plan_row(
@@ -215,25 +220,47 @@ pub async fn plan(pool: &Pool, bytes: &[u8]) -> ApiResult<Plan> {
     })
 }
 
+/// Plans and writes the file in one transaction, so it lands whole or not at all.
+pub async fn import(pool: &Pool, bytes: &[u8]) -> ApiResult<HardwareResult> {
+    let mut tx = write_tx(pool).await?;
+    let plan = plan(&mut tx, bytes).await?;
+    let result = apply(&mut tx, plan).await?;
+    tx.commit().await?;
+    Ok(result)
+}
+
+/// Names and devices earlier rows already took.
+#[derive(Default)]
+struct Seen {
+    names: HashSet<String>,
+    devices: HashSet<i64>,
+}
+
 type Cells = HashMap<&'static str, String>;
 
 /// The rows by column, with their line numbers, or why the file cannot be read.
-fn read(bytes: &[u8]) -> Result<Vec<(usize, Cells)>, &'static str> {
+fn read(bytes: &[u8]) -> Result<Vec<(u64, Cells)>, FileIssue> {
     let bytes = bytes.strip_prefix(UTF8_BOM).unwrap_or(bytes);
-    let text = std::str::from_utf8(bytes).map_err(|_| "not_utf8")?;
+    let text = std::str::from_utf8(bytes).map_err(|_| FileIssue::new("not_utf8"))?;
     if text.trim().is_empty() {
-        return Err("empty_file");
+        return Err(FileIssue::new("empty_file"));
     }
     let delimiter = detect_delimiter(text);
     if too_wide(text.as_bytes(), delimiter) {
-        return Err("too_many_columns");
+        return Err(FileIssue::new("too_many_columns"));
     }
     let mut reader = csv::ReaderBuilder::new()
         .delimiter(delimiter)
         .flexible(true)
         .trim(csv::Trim::All)
         .from_reader(text.as_bytes());
-    let headers = reader.headers().map_err(|_| "malformed")?.clone();
+    let headers = reader
+        .headers()
+        .map_err(|_| FileIssue {
+            line: Some(1),
+            ..FileIssue::new("malformed")
+        })?
+        .clone();
     let index: Vec<(usize, &'static str)> = headers
         .iter()
         .enumerate()
@@ -243,14 +270,20 @@ fn read(bytes: &[u8]) -> Result<Vec<(usize, Cells)>, &'static str> {
         })
         .collect();
     if !index.iter().any(|(_, c)| *c == "name") {
-        return Err("missing_column");
+        return Err(FileIssue {
+            column: Some("name"),
+            ..FileIssue::new("missing_column")
+        });
     }
     let mut rows = Vec::new();
     for (read, record) in reader.records().enumerate() {
         if read == MAX_ROWS {
-            return Err("too_many_rows");
+            return Err(FileIssue::new("too_many_rows"));
         }
-        let record = record.map_err(|_| "malformed")?;
+        let record = record.map_err(|err| FileIssue {
+            line: err.position().map(|p| p.line()),
+            ..FileIssue::new("malformed")
+        })?;
         if record.iter().all(|cell| cell.trim().is_empty()) {
             continue;
         }
@@ -258,49 +291,62 @@ fn read(bytes: &[u8]) -> Result<Vec<(usize, Cells)>, &'static str> {
             .iter()
             .map(|(at, column)| (*column, record.get(*at).unwrap_or("").to_owned()))
             .collect();
-        rows.push((read + 2, cells));
+        rows.push((record.position().map_or(0, |p| p.line()), cells));
+    }
+    if rows.is_empty() {
+        return Err(FileIssue::new("empty_file"));
     }
     Ok(rows)
 }
 
 fn plan_row(
-    line: usize,
+    line: u64,
     cells: &Cells,
     devices: &[Device],
     platforms: &[Platform],
     stores: &[Store],
-    seen: &mut HashSet<String>,
+    seen: &mut Seen,
 ) -> (HardwareRow, Option<Planned>) {
     let mut issues: Vec<HardwareIssue> = Vec::new();
     let mut issue = |column: &str, code: &str| {
-        issues.push(HardwareIssue {
-            column: column.to_owned(),
-            code: code.to_owned(),
-        });
+        if !issues.iter().any(|i| i.column == column && i.code == code) {
+            issues.push(HardwareIssue {
+                column: column.to_owned(),
+                code: code.to_owned(),
+            });
+        }
     };
     let cell = |column: &str| cells.get(column).map(|v| unplain(v.trim()));
     let filled = |column: &str| cell(column).filter(|v| !v.is_empty());
 
     let name = filled("name").unwrap_or_default();
-    let by_id = match filled("device_id") {
-        None => None,
-        Some(text) => match text
-            .parse::<i64>()
-            .ok()
-            .and_then(|id| devices.iter().find(|d| d.id == id))
-        {
-            Some(device) => Some(device),
-            None => {
+    let by_id = filled("device_id");
+    // A row with an unknown ID matches nothing, not a device of the same name.
+    let existing = match &by_id {
+        Some(text) => {
+            let found = text
+                .parse::<i64>()
+                .ok()
+                .and_then(|id| devices.iter().find(|d| d.id == id));
+            if found.is_none() {
                 issue("device_id", "unknown_device");
-                None
             }
-        },
+            found
+        }
+        None => devices.iter().find(|d| key(&d.name) == key(&name)),
     };
-    let existing = by_id.or_else(|| devices.iter().find(|d| key(&d.name) == key(&name)));
+    if let Some(device) = existing
+        && !seen.devices.insert(device.id)
+    {
+        issue(
+            if by_id.is_some() { "device_id" } else { "name" },
+            "duplicate_row",
+        );
+    }
     if name.is_empty() {
         issue("name", "required");
     } else {
-        if !seen.insert(key(&name)) {
+        if !seen.names.insert(key(&name)) {
             issue("name", "duplicate_row");
         }
         if devices
@@ -342,28 +388,32 @@ fn plan_row(
             }
         };
     }
-    let platform_id = |text: &str| {
-        platforms
+    // A name or slug first; an abbreviation only when one platform has it.
+    let platform_id = |text: &str| -> Result<i64, &'static str> {
+        let k = key(text);
+        if let Some(found) = platforms
             .iter()
-            .find(|p| {
-                key(&p.name) == key(text)
-                    || p.abbreviation
-                        .as_deref()
-                        .is_some_and(|a| key(a) == key(text))
-                    || key(&p.slug) == key(text)
-            })
-            .map(|p| p.id)
+            .find(|p| key(&p.name) == k || key(&p.slug) == k)
+        {
+            return Ok(found.id);
+        }
+        let mut by_abbreviation = platforms
+            .iter()
+            .filter(|p| p.abbreviation.as_deref().is_some_and(|a| key(a) == k));
+        match (by_abbreviation.next(), by_abbreviation.next()) {
+            (Some(found), None) => Ok(found.id),
+            (Some(_), Some(_)) => Err("ambiguous_platform"),
+            _ => Err("unknown_platform"),
+        }
     };
     if let Some(text) = cell("platform") {
-        input.platform_id = if text.is_empty() {
-            None
-        } else {
-            let found = platform_id(&text);
-            if found.is_none() {
-                issue("platform", "unknown_platform");
+        input.platform_id = None;
+        if !text.is_empty() {
+            match platform_id(&text) {
+                Ok(id) => input.platform_id = Some(id),
+                Err(code) => issue("platform", code),
             }
-            found
-        };
+        }
     }
     if let Some(text) = cell("plays") {
         let mut ids = Vec::new();
@@ -373,11 +423,19 @@ fn plan_row(
             .filter(|p| !p.is_empty())
         {
             match platform_id(part) {
-                Some(id) => ids.push(id),
-                None => issue("plays", "unknown_platform"),
+                Ok(id) => ids.push(id),
+                Err(code) => issue("plays", code),
             }
         }
         input.platform_ids = ids;
+    }
+    // A new kind drops the kept platform field it does not use.
+    if input.kind.holds_games() {
+        if cell("platform").is_none() {
+            input.platform_id = None;
+        }
+    } else if cell("plays").is_none() {
+        input.platform_ids.clear();
     }
     if let Some(text) = cell("region") {
         input.region = None;
@@ -403,7 +461,11 @@ fn plan_row(
         if !text.is_empty() {
             match stores.iter().find(|s| key(&s.name) == key(&text)) {
                 Some(store) => input.store_id = Some(store.id),
-                None => new_store = Some(text),
+                None => match required(&text, "store", NAME_MAX) {
+                    Ok(name) => new_store = Some(name),
+                    Err(ApiError::Invalid { code, .. }) => issue("store", code),
+                    Err(_) => issue("store", "invalid_value"),
+                },
             }
         }
     }
@@ -432,7 +494,13 @@ fn plan_row(
 
     let checked: Result<DeviceFields, ApiError> = input.validate();
     if let Err(ApiError::Invalid { code, field }) = &checked {
-        issue(field.unwrap_or("name"), code);
+        let column = match field.unwrap_or("name") {
+            "platform_ids" => "plays",
+            "platform_id" => "platform",
+            "store_id" => "store",
+            other => other,
+        };
+        issue(column, code);
     }
     if let Some(device) = existing
         && device.copy_count > 0
@@ -457,13 +525,13 @@ fn plan_row(
 
 pub fn preview(plan: Plan) -> HardwarePreview {
     HardwarePreview {
-        file_issue: plan.file_issue.map(str::to_owned),
+        file_issue: plan.file_issue,
         rows: plan.rows.into_iter().map(|(row, _)| row).collect(),
     }
 }
 
 /// Writes every row, once none has an issue.
-pub async fn apply(pool: &Pool, plan: Plan) -> ApiResult<HardwareResult> {
+async fn apply(conn: &mut SqliteConnection, plan: Plan) -> ApiResult<HardwareResult> {
     if plan.file_issue.is_some() || plan.rows.iter().any(|(_, planned)| planned.is_none()) {
         return Err(ApiError::Invalid {
             code: "import_invalid",
@@ -482,8 +550,8 @@ pub async fn apply(pool: &Pool, plan: Plan) -> ApiResult<HardwareResult> {
             let id = match added_stores.get(&key(&name)) {
                 Some(id) => *id,
                 None => {
-                    let id = stores::create(
-                        pool,
+                    let id = stores::insert(
+                        conn,
                         &StoreFields {
                             name: name.clone(),
                             slug: None,
@@ -501,11 +569,11 @@ pub async fn apply(pool: &Pool, plan: Plan) -> ApiResult<HardwareResult> {
         let fields = planned.input.validate()?;
         match planned.device_id {
             Some(id) => {
-                devices::update(pool, id, &fields).await?;
+                devices::change(conn, id, &fields).await?;
                 result.updated += 1;
             }
             None => {
-                devices::create(pool, &fields).await?;
+                devices::insert(conn, &fields).await?;
                 result.created += 1;
             }
         }

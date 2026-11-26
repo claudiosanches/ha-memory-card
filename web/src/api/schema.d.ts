@@ -1434,8 +1434,7 @@ export interface components {
             column: string;
         };
         HardwarePreview: {
-            /** @description Why the file cannot be read at all, such as `missing_column`. */
-            file_issue?: string | null;
+            file_issue?: components["schemas"]["FileIssue"] | null;
             rows: components["schemas"]["HardwareRow"][];
         };
         HardwareResult: {
@@ -1451,7 +1450,10 @@ export interface components {
              */
             device_id?: number | null;
             issues: components["schemas"]["HardwareIssue"][];
-            /** @description The file's line, counting the header as 1. */
+            /**
+             * Format: int64
+             * @description The file's line, counting the header as 1.
+             */
             line: number;
             name: string;
         };

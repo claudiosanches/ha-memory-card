@@ -146,10 +146,14 @@ function HardwarePreviewResult({
     i18n.exists(`importIssues.${code}`)
       ? t(`importIssues.${code}` as 'importIssues.required')
       : t(`errors.${code}` as 'errors.required');
-  if (preview.file_issue) {
+  const issue = preview.file_issue;
+  if (issue) {
     return (
       <Alert color="red" data-testid="hardware-file-issue">
-        {t(`fileIssues.${preview.file_issue}` as 'fileIssues.missing_column', { column: 'name' })}
+        {t(`fileIssues.${issue.code}` as 'fileIssues.missing_column', {
+          column: issue.column ?? '',
+          line: issue.line ?? '',
+        })}
       </Alert>
     );
   }

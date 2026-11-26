@@ -167,12 +167,6 @@ async fn hardware_csv_round_trips_and_updates_by_name() {
     assert!(csv.contains("Switch,console,,,Nintendo Switch"), "{csv}");
     // Formulas are escaped.
     assert!(csv.contains("'=SUM(A1)"), "{csv}");
-    // Accounts are not hardware.
-    let (_, preview) = app
-        .post_csv("/api/hardware/import/preview", "name,kind\nOld,account\n")
-        .await;
-    assert_eq!(preview["rows"][0]["issues"][0]["code"], "invalid_value");
-
     // Reimporting the export changes nothing it would not keep.
     let (status, preview) = app.post_csv("/api/hardware/import/preview", &csv).await;
     assert_eq!(status, StatusCode::OK);
@@ -223,5 +217,119 @@ async fn hardware_csv_round_trips_and_updates_by_name() {
     let (_, preview) = app
         .post_csv("/api/hardware/import/preview", "kind\nconsole\n")
         .await;
-    assert_eq!(preview["file_issue"], "missing_column");
+    assert_eq!(
+        preview["file_issue"],
+        json!({"code": "missing_column", "column": "name"})
+    );
+    let (_, preview) = app
+        .post_csv("/api/hardware/import/preview", "name,kind\n")
+        .await;
+    assert_eq!(preview["file_issue"]["code"], "empty_file");
+}
+
+#[tokio::test]
+async fn hardware_import_checks_rows_against_each_other() {
+    let app = TestApp::new().await;
+    let switch = app.platform_id("switch").await;
+    let console = add(
+        &app,
+        json!({"name": "Switch", "kind": "console", "platform_ids": [switch]}),
+    )
+    .await;
+    let id = console["id"].as_i64().unwrap();
+    let pad = add(
+        &app,
+        json!({"name": "Pad", "kind": "controller", "platform_id": switch}),
+    )
+    .await;
+
+    let issues = |preview: &Value, row: usize| -> Vec<(String, String)> {
+        preview["rows"][row]["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|i| {
+                (
+                    i["column"].as_str().unwrap().to_owned(),
+                    i["code"].as_str().unwrap().to_owned(),
+                )
+            })
+            .collect()
+    };
+    let file = format!("device_id,name\n{id},Switch One\n{id},Switch Two\n9999,Pad\n");
+    let (_, preview) = app.post_csv("/api/hardware/import/preview", &file).await;
+    assert_eq!(issues(&preview, 0), []);
+    assert_eq!(
+        issues(&preview, 1),
+        [("device_id".into(), "duplicate_row".into())]
+    );
+    assert_eq!(
+        preview["rows"][2]["device_id"],
+        Value::Null,
+        "an unknown ID matches no device by name"
+    );
+    assert!(issues(&preview, 2).contains(&("device_id".into(), "unknown_device".into())));
+
+    // A controller that becomes a console drops the platform it was for.
+    let pad_id = pad["id"].as_i64().unwrap();
+    let file = format!("device_id,name,kind\n{pad_id},Pad,console\n");
+    let (status, result) = app.post_csv("/api/hardware/import", &file).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let (_, devices) = app.json("GET", "/api/devices", None).await;
+    let moved = devices
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["id"] == pad_id)
+        .unwrap()
+        .clone();
+    assert_eq!(moved["kind"], "console");
+    assert_eq!(moved["platform_id"], Value::Null);
+
+    let long = "x".repeat(300);
+    let (_, preview) = app
+        .post_csv(
+            "/api/hardware/import/preview",
+            &format!("name,kind,store\nWii,console,{long}\n"),
+        )
+        .await;
+    assert_eq!(issues(&preview, 0), [("store".into(), "too_long".into())]);
+    let (_, preview) = app
+        .post_csv(
+            "/api/hardware/import/preview",
+            "name,kind,plays\nWii,console,Atlantis\n,controller,\n",
+        )
+        .await;
+    assert_eq!(
+        issues(&preview, 0),
+        [("plays".into(), "unknown_platform".into())]
+    );
+    assert_eq!(issues(&preview, 1), [("name".into(), "required".into())]);
+}
+
+#[tokio::test]
+async fn hardware_export_escapes_platform_names() {
+    let app = TestApp::new().await;
+    let (_, platform) = app
+        .json(
+            "POST",
+            "/api/platforms",
+            Some(json!({"name": "=HYPERLINK(1)"})),
+        )
+        .await;
+    let id = platform["id"].as_i64().unwrap();
+    add(
+        &app,
+        json!({"name": "Box", "kind": "console", "platform_ids": [id]}),
+    )
+    .await;
+    add(
+        &app,
+        json!({"name": "Stick", "kind": "controller", "platform_id": id}),
+    )
+    .await;
+    let (_, bytes) = app.get("/api/hardware.csv").await;
+    let csv = String::from_utf8(bytes).unwrap();
+    assert!(!csv.contains(",=HYPERLINK"), "{csv}");
+    assert_eq!(csv.matches("'=HYPERLINK(1)").count(), 2, "{csv}");
 }

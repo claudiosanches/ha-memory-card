@@ -53,7 +53,7 @@ pub struct PlatformFields {
     pub active: bool,
 }
 
-pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Platform>> {
+pub async fn list<'e>(db: impl sqlx::SqliteExecutor<'e>) -> sqlx::Result<Vec<Platform>> {
     sqlx::query_as!(
         Platform,
         r#"SELECT p.id AS "id!", p.igdb_platform_id, p.name, p.abbreviation, p.slug,
@@ -69,7 +69,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Platform>> {
            FROM platforms p
            ORDER BY p.sort_order, p.name COLLATE NOCASE"#
     )
-    .fetch_all(pool)
+    .fetch_all(db)
     .await
 }
 

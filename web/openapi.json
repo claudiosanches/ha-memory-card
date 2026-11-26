@@ -5702,11 +5702,15 @@
         ],
         "properties": {
           "file_issue": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Why the file cannot be read at all, such as `missing_column`."
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FileIssue",
+                "description": "Why the file cannot be read at all, such as `missing_column`."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "rows": {
             "type": "array",
@@ -5763,6 +5767,7 @@
           },
           "line": {
             "type": "integer",
+            "format": "int64",
             "description": "The file's line, counting the header as 1.",
             "minimum": 0
           },

@@ -145,7 +145,7 @@ impl From<DeviceRow> for Device {
     }
 }
 
-pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Device>> {
+pub async fn list<'e>(db: impl sqlx::SqliteExecutor<'e>) -> sqlx::Result<Vec<Device>> {
     let rows = sqlx::query_as!(
         DeviceRow,
         r#"SELECT d.id AS "id!", d.name, d.slug, d.kind AS "kind: DeviceKind", d.model, d.notes,
@@ -166,7 +166,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Device>> {
            FROM devices d
            ORDER BY d.name COLLATE NOCASE"#
     )
-    .fetch_all(pool)
+    .fetch_all(db)
     .await?;
     Ok(rows.into_iter().map(Device::from).collect())
 }
@@ -201,16 +201,17 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Device> {
 
 pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> {
     let mut tx = crate::db::write_tx(pool).await?;
-    let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
-    check_references(&mut tx, fields).await?;
-    slugs::ensure_name_free(&mut tx, Table::Devices, &fields.name, None).await?;
-    let slug = slugs::for_new(
-        &mut tx,
-        Table::Devices,
-        fields.slug.as_deref(),
-        &fields.name,
-    )
-    .await?;
+    let id = insert(&mut tx, fields).await?;
+    tx.commit().await?;
+    Ok(id)
+}
+
+/// Adds a device inside the caller's transaction.
+pub(crate) async fn insert(conn: &mut SqliteConnection, fields: &DeviceFields) -> ApiResult<i64> {
+    let platform_ids = checked_platform_ids(conn, &fields.platform_ids).await?;
+    check_references(conn, fields).await?;
+    slugs::ensure_name_free(conn, Table::Devices, &fields.name, None).await?;
+    let slug = slugs::for_new(conn, Table::Devices, fields.slug.as_deref(), &fields.name).await?;
 
     let (price, currency) = split(fields.price.as_ref());
     let (estimated, estimated_currency) = split(fields.estimated_value.as_ref());
@@ -239,26 +240,36 @@ pub async fn create(pool: &SqlitePool, fields: &DeviceFields) -> ApiResult<i64> 
         fields.serial_number,
         fields.barcode
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut *conn)
     .await
     .map_err(slugs::conflict)?;
 
-    set_platforms(&mut tx, id, &platform_ids).await?;
-    tx.commit().await?;
+    set_platforms(conn, id, &platform_ids).await?;
     Ok(id)
 }
 
 pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiResult<()> {
     let mut tx = crate::db::write_tx(pool).await?;
-    slugs::ensure_name_free(&mut tx, Table::Devices, &fields.name, Some(id)).await?;
-    let platform_ids = checked_platform_ids(&mut tx, &fields.platform_ids).await?;
-    check_references(&mut tx, fields).await?;
+    change(&mut tx, id, fields).await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+/// Changes a device inside the caller's transaction.
+pub(crate) async fn change(
+    conn: &mut SqliteConnection,
+    id: i64,
+    fields: &DeviceFields,
+) -> ApiResult<()> {
+    slugs::ensure_name_free(conn, Table::Devices, &fields.name, Some(id)).await?;
+    let platform_ids = checked_platform_ids(conn, &fields.platform_ids).await?;
+    check_references(conn, fields).await?;
     if !fields.kind.holds_games() {
         let copies: i64 = sqlx::query_scalar!(
             r#"SELECT COUNT(*) AS "n!: i64" FROM copies WHERE device_id = ?"#,
             id
         )
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut *conn)
         .await?;
         if copies > 0 {
             return Err(ApiError::invalid("device_has_copies", "kind"));
@@ -295,32 +306,24 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &DeviceFields) -> ApiRes
         fields.barcode,
         id
     )
-    .execute(&mut *tx)
+    .execute(&mut *conn)
     .await
     .map_err(slugs::conflict)?;
     found(result.rows_affected())?;
 
     sqlx::query!("DELETE FROM device_platforms WHERE device_id = ?", id)
-        .execute(&mut *tx)
+        .execute(&mut *conn)
         .await?;
-    set_platforms(&mut tx, id, &platform_ids).await?;
-    tx.commit().await?;
-    Ok(())
+    set_platforms(conn, id, &platform_ids).await
 }
 
-/// Copies on the device keep existing with no device. Returns the paths of
-/// its photos, for the caller to remove.
-pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<Vec<String>> {
-    let mut tx = crate::db::write_tx(pool).await?;
-    let photos = sqlx::query_scalar!("SELECT path FROM device_photos WHERE device_id = ?", id)
-        .fetch_all(&mut *tx)
-        .await?;
+/// Copies on the device keep existing with no device. The caller removes its
+/// photo folder.
+pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
     let result = sqlx::query!("DELETE FROM devices WHERE id = ?", id)
-        .execute(&mut *tx)
+        .execute(pool)
         .await?;
-    found(result.rows_affected())?;
-    tx.commit().await?;
-    Ok(photos)
+    found(result.rows_affected())
 }
 
 fn split(price: Option<&Price>) -> (Option<i64>, Option<&str>) {

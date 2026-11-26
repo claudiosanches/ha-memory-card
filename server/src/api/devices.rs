@@ -351,8 +351,9 @@ pub async fn preview_import(
     State(state): State<AppState>,
     CsvBody(body): CsvBody,
 ) -> ApiResult<Json<HardwarePreview>> {
+    let mut conn = state.db.acquire().await?;
     Ok(Json(hardware::preview(
-        hardware::plan(&state.db, &body).await?,
+        hardware::plan(&mut conn, &body).await?,
     )))
 }
 
@@ -368,7 +369,5 @@ pub async fn run_import(
     State(state): State<AppState>,
     CsvBody(body): CsvBody,
 ) -> ApiResult<Json<HardwareResult>> {
-    let plan = hardware::plan(&state.db, &body).await?;
-    let result = hardware::apply(&state.db, plan).await?;
-    Ok(Json(result))
+    Ok(Json(hardware::import(&state.db, &body).await?))
 }
