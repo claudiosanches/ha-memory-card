@@ -99,12 +99,13 @@ describe('Setup wizard', () => {
   });
 
   it('keeps the account of a digital copy it saves', async () => {
-    const game = detail(4, 'Metroid Dread');
-    game.releases[0].copies[0] = {
-      ...game.releases[0].copies[0],
-      format: 'digital',
-      condition: null,
-      account_id: 7,
+    const base = detail(4, 'Metroid Dread');
+    const game: GameDetail = {
+      ...base,
+      releases: base.releases.map((release) => ({
+        ...release,
+        copies: release.copies.map((copy) => ({ ...copy, format: 'digital' as const, condition: null, account_id: 7 })),
+      })),
     };
     const calls = mockApi({
       ...SETUP,
