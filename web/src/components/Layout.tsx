@@ -1,18 +1,17 @@
 import { Alert, Anchor, AppShell, Box, Burger, Group, Loader, NavLink, Text, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
+  IconAdjustments,
   IconChartBar,
-  IconDevices,
   IconChecklist,
-  IconDeviceGamepad2,
   IconDeviceSdCard,
   IconFileImport,
   IconHeart,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
-  IconLibrary,
   IconSettings,
   IconStack2,
+  IconTreasureChest,
   IconUsers,
 } from '@tabler/icons-react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
@@ -22,6 +21,7 @@ import { ApiError, errorMessage } from '../api/errors';
 import { useLiveUpdates } from '../api/events';
 import { useMe, useStatus } from '../api/queries';
 import { followHomeAssistant } from '../i18n';
+import { HARDWARE_NAV_ICON } from '../pages/hardware/deviceIcons';
 import { ColorSchemePicker } from './ColorSchemePicker';
 import { SlotOneModal } from './SlotOneModal';
 import classes from './Layout.module.css';
@@ -30,10 +30,10 @@ type NavKey = 'library' | 'backlog' | 'wishlist' | 'hardware' | 'stats' | 'house
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
-  { key: 'library', to: '/', icon: IconLibrary },
+  { key: 'library', to: '/', icon: IconTreasureChest },
   { key: 'backlog', to: '/backlog', icon: IconStack2 },
   { key: 'wishlist', to: '/wishlist', icon: IconHeart },
-  { key: 'hardware', to: '/hardware', icon: IconDevices },
+  { key: 'hardware', to: '/hardware', icon: HARDWARE_NAV_ICON },
 ];
 
 const INSIGHTS: NavItem[] = [
@@ -42,7 +42,7 @@ const INSIGHTS: NavItem[] = [
 ];
 
 const TOOLS: NavItem[] = [
-  { key: 'manage', to: '/manage', icon: IconDeviceGamepad2, manager: true },
+  { key: 'manage', to: '/manage', icon: IconAdjustments, manager: true },
   { key: 'cleanup', to: '/cleanup', icon: IconChecklist },
   { key: 'import', to: '/import', icon: IconFileImport, manager: true },
 ];

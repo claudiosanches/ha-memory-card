@@ -215,8 +215,8 @@ account it is and the platforms it holds. Controllers, accessories and
 toys hold no games and name the platform they are for. Each item keeps its
 region, condition, where and when it was bought, what it cost and what it
 would sell for now, serial number, barcode, notes and up to 20 photos.
-Hardware on the wishlist also shows on the Wishlist page, and **Stats** sums
-up the hardware apart from the games.
+Switch to **Wishlist** on the Hardware page to see hardware you want, and
+**Stats** sums up your hardware apart from the games.
 
 ## Barcodes
 

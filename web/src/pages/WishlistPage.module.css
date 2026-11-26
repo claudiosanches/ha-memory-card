@@ -2,8 +2,8 @@
 .item { display: flex; gap: 16px; align-items: flex-start; padding: 12px; border-radius: var(--mantine-radius-lg); background: var(--mc-surface); border: 1px solid var(--mc-border); }
 .cover { width: 66px; flex-shrink: 0; }
 .details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
-.title { color: inherit; font-weight: 650; text-decoration: none; }
-.title:hover { text-decoration: underline; }
+.title { color: inherit; font-weight: 650; text-decoration: none; transition: color 120ms ease; }
+.title:hover, .item:has(.cover:hover) .title { color: var(--mantine-primary-color-light-color); }
 .actions { flex-shrink: 0; }
 .empty { padding: 48px 16px; border: 1px dashed var(--mc-border); border-radius: var(--mantine-radius-lg); color: var(--mc-muted); }
 

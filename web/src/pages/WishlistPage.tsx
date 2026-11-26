@@ -16,7 +16,6 @@ import { notifyError, notifySuccess } from '../components/notify';
 import { createGame, PickGameModal, type Target } from '../components/PickGame';
 import { ScanBarcodeButton } from '../components/ScanBarcode';
 import { CopyForm, useGameSaved } from './game/forms';
-import { WishlistHardware } from './hardware/WishlistHardware';
 import classes from './WishlistPage.module.css';
 
 type Dialog =
@@ -139,8 +138,6 @@ export function WishlistPage() {
           })}
         </ul>
       )}
-
-      <WishlistHardware />
 
       {dialog?.kind === 'pickGame' && (
         <PickGameModal

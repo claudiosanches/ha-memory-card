@@ -1,6 +1,19 @@
-import { ActionIcon, Badge, Button, Group, Loader, SegmentedControl, Select, Stack, Text } from '@mantine/core';
-import { IconCamera, IconDeviceGamepad, IconDevices, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Card,
+  Group,
+  Loader,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  Tooltip,
+} from '@mantine/core';
+import { IconCamera, IconPencil, IconPlus, IconSearch, IconTrash, IconX } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
@@ -8,14 +21,15 @@ import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useCanManage, useDevices, usePlatforms, useStores } from '../../api/queries';
 import { type CopyStatus, type Device, type DeviceKind, DEVICE_KINDS, holdsGames } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { FilterBar, FilterButton } from '../../components/FilterBar';
 import { formatMoney } from '../../components/money';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { PageHeader } from '../../components/PageHeader';
 import { useFormatDate } from '../../hooks/useFormatDate';
-import copyClasses from '../game/Copies.module.css';
 import { PhotoViewer } from '../game/PhotoViewer';
-import classes from '../manage/ManageList.module.css';
+import { DEVICE_KIND_ICON } from './deviceIcons';
 import { HardwareForm } from './HardwareForm';
+import classes from './HardwarePage.module.css';
 
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp';
 
@@ -29,6 +43,7 @@ export function HardwarePage() {
   const canManage = useCanManage();
   const [show, setShow] = useState<Show>('owned');
   const [kind, setKind] = useState<DeviceKind | null>(null);
+  const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<{ device?: Device } | null>(null);
   const [deleting, setDeleting] = useState<Device | null>(null);
   const queryClient = useQueryClient();
@@ -45,58 +60,170 @@ export function HardwarePage() {
     onError: (error) => notifyError(errorMessage(t, error)),
   });
 
-  const shown = (devices.data ?? []).filter(
-    (d) => (show === 'all' || d.status === show) && (!kind || d.kind === kind),
+  const platformSearchText = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of platforms.data ?? []) {
+      map.set(p.id, [p.name, p.abbreviation].filter(Boolean).join(' ').toLowerCase());
+    }
+    return map;
+  }, [platforms.data]);
+
+  const needle = query.trim().toLowerCase();
+
+  // Filtered by ownership and search, before the kind tab filter, so kind counts stay accurate.
+  const matchingStatusAndQuery = useMemo(() => {
+    return (devices.data ?? []).filter((d) => {
+      if (show !== 'all' && d.status !== show) return false;
+      if (!needle) return true;
+      const pids = holdsGames(d.kind) ? d.platform_ids : d.platform_id ? [d.platform_id] : [];
+      const haystack = [
+        d.name,
+        d.model,
+        d.notes,
+        d.serial_number,
+        d.barcode,
+        t(`deviceKind.${d.kind}`),
+        ...pids.map((id) => platformSearchText.get(id) ?? ''),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [devices.data, show, needle, platformSearchText, t]);
+
+  const kindCounts = useMemo(() => {
+    const counts = new Map<DeviceKind, number>();
+    for (const d of matchingStatusAndQuery) {
+      counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
+    }
+    return counts;
+  }, [matchingStatusAndQuery]);
+
+  const visibleKinds = DEVICE_KINDS.filter((k) => (kindCounts.get(k) ?? 0) > 0 || kind === k);
+
+  const shown = useMemo(
+    () => (kind ? matchingStatusAndQuery.filter((d) => d.kind === kind) : matchingStatusAndQuery),
+    [matchingStatusAndQuery, kind],
+  );
+
+  const groups = useMemo(() => {
+    const byKind = new Map<DeviceKind, Device[]>();
+    for (const device of shown) {
+      const list = byKind.get(device.kind);
+      if (list) list.push(device);
+      else byKind.set(device.kind, [device]);
+    }
+    return DEVICE_KINDS.filter((k) => byKind.has(k)).map((k) => ({ kind: k, items: byKind.get(k)! }));
+  }, [shown]);
+
+  const showGroups = !kind && groups.length > 1;
+  const hasFilter = Boolean(needle || kind);
+
+  const renderCard = (device: Device) => (
+    <HardwareCard
+      key={device.id}
+      device={device}
+      canManage={canManage}
+      onEdit={(status) => setEditing({ device: status ? { ...device, status } : device })}
+      onDelete={() => setDeleting(device)}
+    />
   );
 
   return (
     <Stack gap="section">
-      <PageHeader title={t('nav.hardware')} description={t('hardware.intro')}>
+      <PageHeader
+        title={t('nav.hardware')}
+        description={t('hardware.intro')}
+        count={devices.data && t('hardware.count', { count: shown.length })}
+        countTestId="hardware-count"
+      >
         {canManage && (
-          <Button leftSection={<IconPlus size={16} />} onClick={() => setEditing({})}>
+          <Button leftSection={<IconPlus size={18} />} onClick={() => setEditing({})}>
             {t('hardware.add')}
           </Button>
         )}
       </PageHeader>
-      <Group gap="sm" align="flex-end">
-        <SegmentedControl
-          value={show}
-          onChange={(value) => setShow(value as Show)}
-          data={[
-            { value: 'owned', label: t('hardware.showOwned') },
-            { value: 'wanted', label: t('nav.wishlist') },
-            { value: 'all', label: t('hardware.showAll') },
-          ]}
-        />
-        <Select
-          aria-label={t('devices.kind')}
-          placeholder={t('hardware.allKinds')}
-          data={DEVICE_KINDS.map((k) => ({ value: k, label: t(`deviceKind.${k}`) }))}
-          value={kind}
-          onChange={(value) => setKind(value as DeviceKind | null)}
-          clearable
-          w={200}
-        />
-      </Group>
+
+      <div className={classes.controls}>
+        <div className={classes.toolbar}>
+          <TextInput
+            className={classes.search}
+            size="md"
+            leftSection={<IconSearch size={18} />}
+            placeholder={t('hardware.searchPlaceholder')}
+            aria-label={t('hardware.searchPlaceholder')}
+            value={query}
+            rightSection={
+              query ? (
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  aria-label={t('library.clearSearch')}
+                  onClick={() => setQuery('')}
+                >
+                  <IconX size={16} />
+                </ActionIcon>
+              ) : null
+            }
+            onChange={(event) => setQuery(event.currentTarget.value)}
+          />
+          <Select
+            size="md"
+            className={classes.ownership}
+            aria-label={t('hardware.show')}
+            value={show}
+            onChange={(value) => value && setShow(value as Show)}
+            allowDeselect={false}
+            data={[
+              { value: 'owned', label: t('hardware.showOwned') },
+              { value: 'wanted', label: t('nav.wishlist') },
+              { value: 'all', label: t('hardware.showAll') },
+            ]}
+          />
+        </div>
+
+        {visibleKinds.length > 0 && (
+          <FilterBar label={t('devices.kind')}>
+            <FilterButton selected={kind === null} onClick={() => setKind(null)}>
+              {t('hardware.allKinds')}
+            </FilterButton>
+            {visibleKinds.map((k) => (
+              <FilterButton key={k} selected={kind === k} onClick={() => setKind(k)}>
+                {t(`deviceKind.${k}`)}
+              </FilterButton>
+            ))}
+          </FilterBar>
+        )}
+      </div>
 
       {devices.isPending || platforms.isPending ? (
         <Loader size="sm" />
       ) : devices.isError ? (
         <Text c="red">{errorMessage(t, devices.error)}</Text>
       ) : shown.length === 0 ? (
-        <div className={classes.empty}>{t('hardware.empty')}</div>
+        <div className={classes.empty}>{hasFilter ? t('hardware.noMatches') : t('hardware.empty')}</div>
+      ) : showGroups ? (
+        <div className={classes.groups}>
+          {groups.map(({ kind: groupKind, items }) => {
+            const GroupIcon = DEVICE_KIND_ICON[groupKind];
+            return (
+              <section key={groupKind} className={classes.group}>
+                <div className={classes.groupHeader}>
+                  <span className={classes.groupIcon} aria-hidden>
+                    <GroupIcon size={17} stroke={1.7} />
+                  </span>
+                  <Text className={classes.groupTitle}>{t(`deviceKind.${groupKind}`)}</Text>
+                  <span className={classes.groupCount}>{items.length}</span>
+                </div>
+                <ul className={classes.grid}>{items.map(renderCard)}</ul>
+              </section>
+            );
+          })}
+        </div>
       ) : (
-        <ul className={classes.grid}>
-          {shown.map((device) => (
-            <HardwareCard
-              key={device.id}
-              device={device}
-              canManage={canManage}
-              onEdit={(status) => setEditing({ device: status ? { ...device, status } : device })}
-              onDelete={() => setDeleting(device)}
-            />
-          ))}
-        </ul>
+        <ul className={classes.grid}>{shown.map(renderCard)}</ul>
       )}
 
       {editing && <HardwareForm device={editing.device} onClose={() => setEditing(null)} />}
@@ -132,7 +259,10 @@ function HardwareCard({
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [viewing, setViewing] = useState<number | null>(null);
-  const platformName = useMemo(() => new Map((platforms.data ?? []).map((p) => [p.id, p.abbreviation ?? p.name])), [platforms.data]);
+  const platformName = useMemo(
+    () => new Map((platforms.data ?? []).map((p) => [p.id, p.abbreviation ?? p.name])),
+    [platforms.data],
+  );
   const wanted = device.status === 'wanted';
   const refresh = () => void queryClient.invalidateQueries({ queryKey: queryKeys.devices });
 
@@ -175,14 +305,19 @@ function HardwareCard({
     price && (wanted ? t('hardware.expected', { amount: price }) : t('hardware.paid', { amount: price })),
     value && t('hardware.worth', { amount: value }),
   ].filter(Boolean);
-  const Icon = device.kind === 'controller' ? IconDeviceGamepad : IconDevices;
+  const Icon = DEVICE_KIND_ICON[device.kind];
+  const platformIds = holdsGames(device.kind) ? device.platform_ids : device.platform_id ? [device.platform_id] : [];
+  const hasBody = details.length > 0 || prices.length > 0 || Boolean(device.notes) || device.photos.length > 0;
+  const hasFooter = platformIds.length > 0 || holdsGames(device.kind);
 
   return (
-    <li className={classes.card} data-testid={`device-${device.name}`}>
-      <div className={classes.top}>
-        <Icon size={20} stroke={1.5} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
-        <div className={classes.main}>
-          <Group gap="xs">
+    <Card component="li" withBorder padding="md" className={classes.card} data-testid={`device-${device.name}`}>
+      <div className={classes.header}>
+        <div className={classes.emblem} aria-hidden>
+          <Icon size={20} stroke={1.6} />
+        </div>
+        <div className={classes.heading}>
+          <div className={classes.titleRow}>
             <Text className={classes.name}>{device.name}</Text>
             {wanted && (
               <Badge size="xs" variant="light">
@@ -194,43 +329,52 @@ function HardwareCard({
                 {t('common.inactive')}
               </Badge>
             )}
-          </Group>
-          <Text size="sm" c="dimmed">
+          </div>
+          <Text size="xs" c="dimmed">
             {[t(`deviceKind.${device.kind}`), device.model].filter(Boolean).join(t('common.separator'))}
           </Text>
-          {details.length > 0 && (
-            <Text size="xs" c="dimmed">
-              {details.join(t('common.separator'))}
-            </Text>
-          )}
-          {prices.length > 0 && <Text size="xs">{prices.join(t('common.separator'))}</Text>}
-          {device.notes && (
-            <Text size="xs" c="dimmed" className={classes.notes}>
-              {device.notes}
-            </Text>
-          )}
         </div>
         {canManage && (
-          <Group gap={4} wrap="nowrap" className={classes.actions}>
+          <Group gap={2} wrap="nowrap" className={classes.actions}>
             {wanted && (
-              <Button size="compact-xs" variant="light" onClick={() => onEdit('owned')}>
+              <Button size="compact-xs" variant="light" color="green" onClick={() => onEdit('owned')}>
                 {t('game.gotIt')}
               </Button>
             )}
-            <ActionIcon
-              variant="subtle"
-              aria-label={t('photos.add')}
-              loading={upload.isPending}
-              onClick={() => input.current?.click()}
-            >
-              <IconCamera size={16} />
-            </ActionIcon>
-            <ActionIcon variant="subtle" aria-label={t('common.edit')} onClick={() => onEdit()}>
-              <IconPencil size={16} />
-            </ActionIcon>
-            <ActionIcon variant="subtle" color="red" aria-label={t('common.delete')} onClick={onDelete}>
-              <IconTrash size={16} />
-            </ActionIcon>
+            <Tooltip label={t('photos.add')}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                className={classes.actionBtn}
+                aria-label={t('photos.add')}
+                loading={upload.isPending}
+                onClick={() => input.current?.click()}
+              >
+                <IconCamera size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('common.edit')}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                className={classes.actionBtn}
+                aria-label={t('common.edit')}
+                onClick={() => onEdit()}
+              >
+                <IconPencil size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('common.delete')}>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                className={classes.deleteBtn}
+                aria-label={t('common.delete')}
+                onClick={onDelete}
+              >
+                <IconTrash size={16} />
+              </ActionIcon>
+            </Tooltip>
             <input
               ref={input}
               type="file"
@@ -247,35 +391,64 @@ function HardwareCard({
           </Group>
         )}
       </div>
-      {device.photos.length > 0 && (
-        <div className={copyClasses.photos}>
-          {device.photos.map((photo, i) => (
-            <button
-              key={photo.id}
-              type="button"
-              className={copyClasses.thumb}
-              aria-label={t('photos.open', { number: i + 1 })}
-              onClick={() => setViewing(i)}
-            >
-              <img src={`covers/${photo.path}`} alt="" loading="lazy" decoding="async" />
-            </button>
-          ))}
+
+      {hasBody && (
+        <div className={classes.body}>
+          {details.length > 0 && (
+            <Text size="xs" c="dimmed">
+              {details.join(t('common.separator'))}
+            </Text>
+          )}
+          {prices.length > 0 && (
+            <Text size="xs" className={classes.prices}>
+              {prices.join(t('common.separator'))}
+            </Text>
+          )}
+          {device.notes && (
+            <Text size="xs" c="dimmed" className={classes.notes}>
+              {device.notes}
+            </Text>
+          )}
+          {device.photos.length > 0 && (
+            <div className={classes.photos}>
+              {device.photos.map((photo, i) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  className={classes.thumb}
+                  aria-label={t('photos.open', { number: i + 1 })}
+                  onClick={() => setViewing(i)}
+                >
+                  <img src={`covers/${photo.path}`} alt="" loading="lazy" decoding="async" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
-      <div className={classes.footer}>
-        <Group gap={4}>
-          {(holdsGames(device.kind) ? device.platform_ids : device.platform_id ? [device.platform_id] : []).map((id) => (
-            <Badge key={id} variant="outline" size="sm" tt="none">
-              {platformName.get(id)}
-            </Badge>
-          ))}
-        </Group>
-        {holdsGames(device.kind) && (
-          <Text size="xs" c="dimmed" className={classes.count}>
-            {t('common.copyCount', { count: device.copy_count })}
-          </Text>
-        )}
-      </div>
+
+      {hasFooter && (
+        <div className={classes.footer}>
+          <div className={classes.platforms}>
+            {platformIds.map((id) => (
+              <span key={id} className={classes.platformLabel}>
+                {platformName.get(id)}
+              </span>
+            ))}
+          </div>
+          {holdsGames(device.kind) &&
+            (device.copy_count > 0 ? (
+              <Link to="/" search={{ device: [device.slug] }} className={classes.copyLink}>
+                {t('common.copyCount', { count: device.copy_count })}
+              </Link>
+            ) : (
+              <Text size="xs" c="dimmed" className={classes.count}>
+                {t('common.copyCount', { count: device.copy_count })}
+              </Text>
+            ))}
+        </div>
+      )}
+
       {viewing != null && (
         <PhotoViewer
           photos={device.photos}
@@ -288,6 +461,6 @@ function HardwareCard({
           }}
         />
       )}
-    </li>
+    </Card>
   );
 }

@@ -47,12 +47,10 @@ describe('Duplicates', () => {
     expect(within(hades).getByText(en.duplicates.label.physical_digital)).toBeInTheDocument();
     expect(await within(hades).findByText('PlayStation 4 · Europe (PAL)')).toBeInTheDocument();
     expect(await within(hades).findByText('Digital · Nintendo eShop')).toBeInTheDocument();
-    expect(screen.getByTestId('duplicates-count')).toHaveTextContent('2 games');
 
     fireEvent.click(screen.getByRole('button', { name: new RegExp(en.duplicates.label.same_release) }));
     expect(screen.queryByTestId('duplicate-Hades')).not.toBeInTheDocument();
     expect(screen.getByTestId('duplicate-Tetris')).toBeInTheDocument();
-    expect(screen.getByTestId('duplicates-count')).toHaveTextContent('1 game');
   });
 
   it('says when there are no duplicates', async () => {

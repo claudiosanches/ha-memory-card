@@ -6,14 +6,16 @@ managers add and change it.
 
 ![Hardware, with consoles, controllers and amiibo](https://ha-memory-card.pages.dev/images/hardware.webp)
 
-**Show** picks between what you own, the wishlist and both, and the kind
-filter narrows the list to one kind.
+Search by name, model, platform or notes, use the dropdown to switch between
+what you own, the wishlist and all hardware, and pick a kind tab to narrow
+the list. Selecting the copy count on a console, handheld or PC opens those
+games in the [Library](library.md).
 
 ## Kinds
 
 - **Console**, **Handheld** and **PC** hold games: each copy can say which
   one it lives on. **Plays** lists the platforms whose games it runs, so a
-  Wii U plays Wii U and Wii.
+  PS5 plays PS5 and PS4.
 - **Controller**, **Accessory** and **Toy or figure**, such as amiibo, hold
   no games. **For** names the platform they go with.
 
@@ -47,9 +49,9 @@ copies.
 
 ## Wishlist and stats
 
-Hardware on the wishlist also shows on the [Wishlist](wishlist.md) page.
-**Got it** opens the form as owned, to fill in where you bought it and what
-you paid.
+Switch to **Wishlist** at the top of the Hardware page to see hardware you
+want. **Got it** opens the form as owned, to fill in where you bought it and
+what you paid.
 
 [Stats](stats.md) has a **Hardware** group with how many items you own by
 kind, what they cost and what they are worth now, apart from the games.

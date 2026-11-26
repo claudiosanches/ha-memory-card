@@ -40,19 +40,10 @@ export function DuplicatesTab({ showIntro = true }: { showIntro?: boolean }) {
 
   return (
     <Stack gap="card">
-      {(showIntro || duplicates.data) && (
-        <Group justify="space-between" align="baseline" gap="sm">
-          {showIntro && (
-            <Text size="sm" c="dimmed">
-              {t('duplicates.intro')}
-            </Text>
-          )}
-          {duplicates.data && (
-            <Text size="sm" c="dimmed" data-testid="duplicates-count">
-              {t('duplicates.count', { count: shown.length })}
-            </Text>
-          )}
-        </Group>
+      {showIntro && (
+        <Text size="sm" c="dimmed">
+          {t('duplicates.intro')}
+        </Text>
       )}
 
       {all.length > 0 && (
