@@ -23,16 +23,44 @@ CREATE TABLE platforms (
     sort_order       INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE devices (
+CREATE TABLE stores (
     id         INTEGER PRIMARY KEY,
-    name       TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-    slug       TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-    kind       TEXT    NOT NULL,
-    model      TEXT,
+    name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    slug       TEXT NOT NULL UNIQUE COLLATE NOCASE,
     notes      TEXT,
-    active     INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-    updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- The household's hardware. Consoles, handhelds and PCs hold copies and list
+-- the platforms they play in device_platforms; controllers, accessories and
+-- toys do not, and name the platform they are for in platform_id.
+CREATE TABLE devices (
+    id                 INTEGER PRIMARY KEY,
+    name               TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    slug               TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    kind               TEXT    NOT NULL,
+    model              TEXT,
+    notes              TEXT,
+    active             INTEGER NOT NULL DEFAULT 1,
+    platform_id        INTEGER REFERENCES platforms (id) ON DELETE SET NULL,
+    -- `owned`, or `wanted` for the wishlist.
+    status             TEXT    NOT NULL DEFAULT 'owned',
+    region             TEXT,
+    condition          TEXT,
+    store_id           INTEGER REFERENCES stores (id) ON DELETE SET NULL,
+    -- YYYY-MM-DD.
+    purchased_on       TEXT,
+    -- Minor units and ISO 4217 codes, as on copies.
+    price              INTEGER,
+    currency           TEXT,
+    estimated_value    INTEGER,
+    estimated_currency TEXT,
+    serial_number      TEXT,
+    -- UPC or EAN printed on the box, digits only.
+    barcode            TEXT,
+    created_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 CREATE TABLE device_platforms (
@@ -42,15 +70,6 @@ CREATE TABLE device_platforms (
 ) WITHOUT ROWID;
 
 CREATE INDEX device_platforms_platform ON device_platforms (platform_id);
-
-CREATE TABLE stores (
-    id         INTEGER PRIMARY KEY,
-    name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    slug       TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    notes      TEXT,
-    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
 
 CREATE TABLE genres (
     id            INTEGER PRIMARY KEY,
@@ -72,6 +91,32 @@ CREATE TABLE users (
     name         TEXT,
     display_name TEXT
 ) WITHOUT ROWID;
+
+-- Store accounts own digital copies, apart from the device a copy is on: a
+-- game bought on a PlayStation Network account and installed on a PS5 names
+-- both.
+CREATE TABLE accounts (
+    id         INTEGER PRIMARY KEY,
+    name       TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    slug       TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    -- The store it buys from, such as Nintendo eShop.
+    store_id   INTEGER REFERENCES stores (id) ON DELETE SET NULL,
+    -- Whose account it is in the household.
+    user_id    TEXT    REFERENCES users (id) ON DELETE SET NULL,
+    notes      TEXT,
+    active     INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- The platforms whose games an account holds.
+CREATE TABLE account_platforms (
+    account_id  INTEGER NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+    platform_id INTEGER NOT NULL REFERENCES platforms (id) ON DELETE RESTRICT,
+    PRIMARY KEY (account_id, platform_id)
+) WITHOUT ROWID;
+
+CREATE INDEX account_platforms_platform ON account_platforms (platform_id);
 
 -- Player count columns on games and releases: NULL means unknown. A release
 -- value wins over the game value; local and online are never mixed.
@@ -95,6 +140,11 @@ CREATE TABLE games (
     online_max_players  INTEGER,
     local_coop          INTEGER,
     online_coop         INTEGER,
+    -- IGDB's average time to beat, in minutes: the main story, with extras,
+    -- and everything.
+    time_to_beat_main   INTEGER,
+    time_to_beat_extras INTEGER,
+    time_to_beat_full   INTEGER,
     igdb_synced_at      TEXT,
     created_by          TEXT    REFERENCES users (id) ON DELETE SET NULL,
     updated_by          TEXT    REFERENCES users (id) ON DELETE SET NULL,
@@ -199,6 +249,8 @@ CREATE TABLE copies (
     bundle_id          INTEGER REFERENCES copies (id) ON DELETE CASCADE,
     status             TEXT    NOT NULL DEFAULT 'owned',
     device_id          INTEGER REFERENCES devices (id) ON DELETE SET NULL,
+    -- The store account that owns a digital copy.
+    account_id         INTEGER REFERENCES accounts (id) ON DELETE SET NULL,
     format             TEXT    NOT NULL,
     store_id           INTEGER REFERENCES stores (id) ON DELETE SET NULL,
     condition          TEXT,
@@ -235,6 +287,7 @@ CREATE TABLE copies (
 CREATE INDEX copies_release_status_format ON copies (release_id, status, format);
 CREATE INDEX copies_bundle ON copies (bundle_id);
 CREATE INDEX copies_device ON copies (device_id);
+CREATE INDEX copies_account ON copies (account_id);
 CREATE INDEX copies_store ON copies (store_id);
 CREATE INDEX copies_barcode ON copies (barcode);
 CREATE UNIQUE INDEX copies_source_ref ON copies (source, source_ref) WHERE source_ref IS NOT NULL;
@@ -265,6 +318,17 @@ CREATE TABLE copy_photos (
 );
 
 CREATE INDEX copy_photos_copy ON copy_photos (copy_id, id);
+
+-- Photos of a device, with paths under the covers directory as for copies.
+CREATE TABLE device_photos (
+    id         INTEGER PRIMARY KEY,
+    device_id  INTEGER NOT NULL REFERENCES devices (id) ON DELETE CASCADE,
+    path       TEXT    NOT NULL,
+    created_by TEXT    REFERENCES users (id) ON DELETE SET NULL,
+    created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX device_photos_device ON device_photos (device_id, id);
 
 -- Home Assistant tags linked to copies. Scanning one logs play on its copy for
 -- the person who scanned it.
