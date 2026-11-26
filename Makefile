@@ -162,7 +162,7 @@ docs-dev: docs/node_modules/.package-lock.json ## Docs site with live reload
 
 .PHONY: docs-deploy
 docs-deploy: docs ## Build the docs site and deploy it to Cloudflare Pages
-	@test -f docs/public/images/library.webp || { echo 'docs/public/images is missing: run make screenshots first, or the deploy removes the site'"'"'s images' >&2; exit 1; }
+	./scripts/check-docs-images.sh
 	$(DOCS_BIN)/wrangler pages deploy docs/.vitepress/dist --project-name ha-memory-card
 
 .PHONY: reset-db

@@ -23,7 +23,7 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make seed` | Fills an empty collection in `make run` with test data, plus play for `sam`, `alex`, `jordan` and `robin` |
 | `make screenshots` | Takes the screenshots into `docs/public/images` from test data. Only the docs site keeps them, out of git, and every page links them by their `https://ha-memory-card.pages.dev/images/` URL. Needs IGDB credentials in `.data/options.json`. `ONLY=themes/` retakes only the images whose names start with it |
 | `make docs-dev` | The docs site with live reload, see [Docs site](#docs-site) |
-| `make docs-deploy` | Builds the docs site and deploys it to Cloudflare Pages, with the screenshots; refuses to run without them |
+| `make docs-deploy` | Builds the docs site and deploys it to Cloudflare Pages, with the screenshots; refuses to run when a screenshot the docs link is missing |
 | `make reset-db` | Deletes the local database and covers, keeping `options.json`. Needed after a migration changes before 0.1 |
 | `make release` | Commits and tags the next release on `dev`, see [Releasing](releasing.md) |
 
