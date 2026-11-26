@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE accounts\n         SET name = ?, slug = COALESCE(?, slug), store_id = ?, user_id = ?, notes = ?,\n             active = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "01ba362e11f84e4e4ddb840d67de2c5fa9011ab1bf44d9cdc986b2d68ea2eb60"
+}

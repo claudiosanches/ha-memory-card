@@ -18,20 +18,16 @@ pub enum DeviceKind {
     Console,
     Handheld,
     Pc,
-    Account,
     Controller,
     Accessory,
     Toy,
 }
 
 impl DeviceKind {
-    /// Consoles, handhelds, PCs and accounts hold copies; the rest is hardware
-    /// for a platform.
+    /// Consoles, handhelds and PCs hold copies; the rest is hardware for a
+    /// platform.
     pub fn holds_games(self) -> bool {
-        matches!(
-            self,
-            Self::Console | Self::Handheld | Self::Pc | Self::Account
-        )
+        matches!(self, Self::Console | Self::Handheld | Self::Pc)
     }
 }
 

@@ -23,6 +23,7 @@ export type LibrarySearch = {
   /** Slugs, like the rest of these lists. */
   platform?: string[];
   device?: string[];
+  account?: string[];
   store?: string[];
   genre?: string[];
   game_mode?: string[];
@@ -39,7 +40,7 @@ export type LibrarySearch = {
 
 export const MAX_HOURS_TO_BEAT = 999;
 
-const SLUG_LISTS = ['platform', 'device', 'store', 'genre', 'game_mode', 'label'] as const;
+const SLUG_LISTS = ['platform', 'device', 'account', 'store', 'genre', 'game_mode', 'label'] as const;
 
 function slugs(value: unknown): string[] | undefined {
   const list = listParam(value)

@@ -66,8 +66,8 @@ starts read-only. To name a manager:
 
 Everyone else is a viewer. Viewers browse the library, game pages, the
 backlog, duplicates, stats and the household. They cannot change the
-collection or its hardware, import or export CSV files, manage stores,
-platforms, play statuses and labels, or sync with IGDB. Requests that Home Assistant
+collection or its hardware, import or export CSV files, manage accounts,
+stores, platforms, play statuses and labels, or sync with IGDB. Requests that Home Assistant
 does not tie to a user are refused.
 
 Managers keep their own play. To let viewers keep theirs, turn on
@@ -133,10 +133,10 @@ _Game titles and cover art belong to their respective owners._
 
 The library shows your games as a grid of covers, a list or a table. The
 filters narrow it by platform, your play status, label, genre, game mode,
-device, store, region, format, players on the same screen and hours to beat
-the main story, and they stay in the address, so a filtered library can be
-bookmarked. **Show** picks between the
-games you own, the wishlist and both.
+device, account, store, region, format, players on the same screen and hours
+to beat the main story, and they stay in the address, so a filtered library
+can be bookmarked. **Show** picks between the games you own, the wishlist and
+both.
 
 The library search finds a game by its title, its release titles and its
 other names, ignoring case and accents, so `pokemon` finds `Pokémon`.
@@ -205,10 +205,13 @@ lists the games on it.
 
 ## Hardware
 
-**Hardware** in the sidebar lists the consoles, accounts, controllers,
-accessories and toys, such as amiibo, the household owns or wants. Consoles,
-handhelds, PCs and accounts hold games: each copy can say which one it lives
-on, and **Plays** lists the platforms they run. Controllers, accessories and
+**Hardware** in the sidebar lists the consoles, controllers, accessories and
+toys, such as amiibo, the household owns or wants. Consoles, handhelds and
+PCs hold games: each copy can say which one it lives on, and **Plays** lists
+the platforms they run. Store accounts, such as Steam, are under **Manage >
+Accounts**: a digital copy names the account that owns it and, apart from
+that, the device it is installed on. Each account can name its store, whose
+account it is and the platforms it holds. Controllers, accessories and
 toys hold no games and name the platform they are for. Each item keeps its
 region, condition, where and when it was bought, what it cost and what it
 would sell for now, serial number, barcode, notes and up to 20 photos.
@@ -279,12 +282,11 @@ names for each game, to link with a click or mark as not on IGDB.
   recognized, and so are play statuses other trackers use, such as
   `Unplayed`, `Unfinished`, `Beaten` or `Retired`. The preview shows how each header was read; pick another
   column for any it read wrong, or leave one out.
-- Platform, device and store names match what you already have, ignoring
-  case. Common platforms and the digital stores (Nintendo eShop, PlayStation
-  Store, Microsoft Store, Steam, Epic Games Store, GOG, itch.io) exist from
-  the start. Names that match nothing are created. A new device is an account
-  when all its copies are digital, otherwise a console; change it on the
-  Hardware page.
+- Platform, device, account and store names match what you already have,
+  ignoring case. Common platforms and the digital stores (Nintendo eShop,
+  PlayStation Store, Microsoft Store, Steam, Epic Games Store, GOG, itch.io)
+  exist from the start. Names that match nothing are created; a new device
+  is a console, which you can change on the Hardware page.
 - The export fills `copy_id`. Keep it to update that copy when importing the
   file again; leave it empty to add a new copy. Columns the file does not
   have keep that copy's values, while an empty cell clears one. Importing an
@@ -307,7 +309,8 @@ names for each game, to link with a click or mark as not on IGDB.
 | `product_code` | Serial or product code |
 | `format` | `physical` or `digital` |
 | `edition` | Free text, such as `Collector's Edition` |
-| `device` | Device name |
+| `device` | Console, handheld or PC the copy is on |
+| `account` | Digital only: the store account that owns it |
 | `store` | Store name |
 | `condition` | Physical only: `sealed`, `cib`, `no_manual`, `loose` |
 | `purchased_on` | Date bought, `YYYY-MM-DD` |

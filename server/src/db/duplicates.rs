@@ -32,6 +32,7 @@ pub struct DuplicateCopy {
     pub release_title: Option<String>,
     pub format: Format,
     pub device_id: Option<i64>,
+    pub account_id: Option<i64>,
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
@@ -59,6 +60,7 @@ struct Row {
     release_title: Option<String>,
     format: Format,
     device_id: Option<i64>,
+    account_id: Option<i64>,
     store_id: Option<i64>,
     condition: Option<Condition>,
     notes: Option<String>,
@@ -67,7 +69,7 @@ struct Row {
 pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<DuplicateGroup>> {
     let rows: Vec<Row> = sqlx::query_as(
         "SELECT g.id AS game_id, g.title, g.cover_path, c.id, c.release_id, r.platform_id,
-                r.region, r.title AS release_title, c.format, c.device_id, c.store_id,
+                r.region, r.title AS release_title, c.format, c.device_id, c.account_id, c.store_id,
                 c.condition, c.notes
          FROM copies c
          JOIN releases r ON r.id = c.release_id
@@ -101,6 +103,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<DuplicateGroup>> {
             release_title: row.release_title,
             format: row.format,
             device_id: row.device_id,
+            account_id: row.account_id,
             store_id: row.store_id,
             condition: row.condition,
             notes: row.notes,
@@ -124,7 +127,13 @@ fn labels(copies: &[DuplicateCopy]) -> Vec<DuplicateLabel> {
         ),
         (
             DuplicateLabel::CrossDevice,
-            distinct(copies.iter().filter_map(|c| c.device_id)) > 1,
+            // Devices and accounts both say where a copy lives.
+            distinct(
+                copies
+                    .iter()
+                    .filter(|c| c.device_id.is_some() || c.account_id.is_some())
+                    .map(|c| (c.device_id, c.account_id)),
+            ) > 1,
         ),
         (
             DuplicateLabel::PhysicalDigital,

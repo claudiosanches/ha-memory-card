@@ -18,7 +18,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call } from '../../api/errors';
-import { queryKeys, useGameDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
+import { queryKeys, useAccounts, useGameDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
 import {
   CONDITIONS,
   type CopyDetail,
@@ -89,6 +89,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
   const { t, i18n } = useTranslation();
   const platforms = usePlatforms();
   const devices = useGameDevices();
+  const accounts = useAccounts();
   const stores = useStores();
   const appStatus = useStatus();
   const saved = useGameSaved();
@@ -105,6 +106,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
       product_code: release?.product_code ?? '',
       format: (copy?.format ?? 'physical') as Format,
       device_id: copy?.device_id ? String(copy.device_id) : '',
+      account_id: copy?.account_id ? String(copy.account_id) : '',
       store_id: copy?.store_id ? String(copy.store_id) : '',
       condition: copy?.condition ?? '',
       notes: copy?.notes ?? '',
@@ -137,6 +139,13 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         (d.active && (!platformId || d.platform_ids.includes(platformId))),
     )
     .map((d) => ({ value: String(d.id), label: d.name }));
+  const accountOptions = (accounts.data ?? [])
+    .filter(
+      (a) =>
+        a.id === copy?.account_id ||
+        (a.active && (!platformId || a.platform_ids.length === 0 || a.platform_ids.includes(platformId))),
+    )
+    .map((a) => ({ value: String(a.id), label: a.name }));
 
   // "Save and add another" keeps the form open for the same release.
   const save = useMutation({
@@ -164,6 +173,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         estimated_currency,
         estimated_value: '',
         device_id: '',
+        account_id: '',
         store_id: '',
         condition: '',
         notes: '',
@@ -190,6 +200,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         format: v.format,
         // A copy you do not have yet is on no device.
         device_id: v.device_id && !wanted ? Number(v.device_id) : null,
+        account_id: v.account_id && v.format === 'digital' ? Number(v.account_id) : null,
         store_id: v.store_id ? Number(v.store_id) : null,
         condition: v.format === 'physical' && v.condition ? (v.condition as CopyInput['condition']) : null,
         notes: textOrNull(v.notes),
@@ -270,6 +281,25 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
             onChange={(event) => setAllDevices(event.currentTarget.checked)}
           />
         </>
+      )}
+      {values.format === 'digital' && (
+        <Select
+          key={`account-${round}`}
+          label={t('game.account')}
+          description={t('game.accountDescription')}
+          placeholder={t('game.noAccount')}
+          data={accountOptions}
+          clearable
+          searchable
+          {...form.getInputProps('account_id')}
+          onChange={(value) => {
+            form.setFieldValue('account_id', value ?? '');
+            // An account's store fills in an empty one.
+            const store = accounts.data?.find((a) => String(a.id) === value)?.store_id;
+            if (store && !form.getValues().store_id) form.setFieldValue('store_id', String(store));
+          }}
+          value={form.values.account_id || null}
+        />
       )}
       <Select
         key={`store-${round}`}

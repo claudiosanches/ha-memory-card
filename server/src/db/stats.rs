@@ -63,13 +63,12 @@ pub struct Stats {
     pub total_minutes: i64,
     /// The person's, by session count, then minutes.
     pub most_played: Vec<PlayedGame>,
-    /// Owned hardware other than accounts.
+    /// Owned hardware.
     pub hardware: HardwareStats,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct HardwareStats {
-    /// Owned items, not counting accounts.
     pub owned: i64,
     /// Hardware on the wishlist.
     pub wanted: i64,
@@ -468,14 +467,14 @@ async fn hardware(pool: &SqlitePool) -> sqlx::Result<HardwareStats> {
     let counts = sqlx::query!(
         r#"SELECT COALESCE(SUM(status = 'owned'), 0) AS "owned!: i64",
                   COALESCE(SUM(status = 'wanted'), 0) AS "wanted!: i64"
-           FROM devices WHERE kind != 'account'"#
+           FROM devices"#
     )
     .fetch_one(pool)
     .await?;
     let kinds = sqlx::query_as!(
         KindCount,
         r#"SELECT kind AS "kind!: super::devices::DeviceKind", COUNT(*) AS "count!: i64"
-           FROM devices WHERE status = 'owned' AND kind != 'account'
+           FROM devices WHERE status = 'owned'
            GROUP BY kind ORDER BY COUNT(*) DESC, kind"#
     )
     .fetch_all(pool)

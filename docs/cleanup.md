@@ -37,7 +37,7 @@ The filters at the top narrow the list by how the copies differ:
 - **Same release:** two copies of the same release, such as a spare.
 - **Different platforms:** the game on two platforms.
 - **Different regions:** two regional releases.
-- **Different devices:** copies on two devices or accounts.
+- **Different devices or accounts:** copies on two devices or accounts.
 - **Physical and digital:** a boxed copy and a digital one.
 
 A game can show under several filters. Copies on the wishlist are left out.

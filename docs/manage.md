@@ -9,8 +9,25 @@ The store, platform and label forms, and the device form on
 [Hardware](hardware.md), show each one's slug: the short name that library
 links, Home Assistant rolls and CSV files use.
 
-Consoles, handhelds, PCs and accounts are on the [Hardware](hardware.md)
-page, with the rest of your hardware.
+Consoles, handhelds and PCs are on the [Hardware](hardware.md) page, with
+the rest of your hardware.
+
+## Accounts
+
+The store accounts that own your digital games, such as a Nintendo Account,
+PlayStation Network or Steam. A digital copy names its account apart from
+the device it is installed on, so a game bought on a PlayStation Network
+account and played on the PS5 has both. **Add account** asks for:
+
+- a name, which picks the account for a copy;
+- **Store:** where it buys games. A new copy on the account takes it as its
+  store;
+- **Person:** whose account it is in the household;
+- **Plays:** the platforms whose games it holds. Copies on other platforms
+  are not offered it.
+
+Inactive accounts are left out when choosing the account of a copy. Deleting
+an account keeps its copies, with no account.
 
 ## Stores
 

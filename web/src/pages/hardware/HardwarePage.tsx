@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useCanManage, useDevices, usePlatforms, useStores } from '../../api/queries';
-import { type CopyStatus, DEVICE_KINDS, type Device, type DeviceKind, holdsGames } from '../../api/types';
+import { type CopyStatus, type Device, type DeviceKind, DEVICE_KINDS, holdsGames } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { formatMoney } from '../../components/money';
 import { notifyError, notifySuccess } from '../../components/notify';

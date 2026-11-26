@@ -33,6 +33,7 @@ import { ApiError, call, errorMessage } from '../../api/errors';
 import {
   queryKeys,
   useCanManage,
+  useAccounts,
   useCanTrackProgress,
   useDevices,
   useGame,
@@ -136,6 +137,7 @@ function GameView({ game }: { game: GameDetail }) {
   const refresh = useIgdbLink(game);
   const platforms = usePlatforms();
   const devices = useDevices();
+  const accounts = useAccounts();
   const stores = useStores();
   const canManage = useCanManage();
   const canTrack = useCanTrackProgress();
@@ -144,11 +146,12 @@ function GameView({ game }: { game: GameDetail }) {
     () => ({
       platform: new Map((platforms.data ?? []).map((p) => [p.id, p.name])),
       device: new Map((devices.data ?? []).map((d) => [d.id, d.name])),
+      account: new Map((accounts.data ?? []).map((a) => [a.id, a.name])),
       store: new Map((stores.data ?? []).map((s) => [s.id, s.name])),
       mode: new Map((gameModes.data ?? []).map((m) => [m.id, m])),
       genre: new Map((genres.data ?? []).map((g) => [g.id, g])),
     }),
-    [platforms.data, devices.data, stores.data, gameModes.data, genres.data],
+    [platforms.data, devices.data, accounts.data, stores.data, gameModes.data, genres.data],
   );
 
   const allCopies = game.releases.flatMap((release) => release.copies.map((copy) => ({ copy, release })));
@@ -567,6 +570,7 @@ function GameView({ game }: { game: GameDetail }) {
                 <Copies
                   copies={release.copies}
                   devices={names.device}
+                  accounts={names.account}
                   stores={names.store}
                   onEdit={canManage ? (copy) => setDialog({ kind: 'editCopy', copy, release }) : undefined}
                   onDelete={canManage ? (copy) => setDialog({ kind: 'deleteCopy', copy }) : undefined}

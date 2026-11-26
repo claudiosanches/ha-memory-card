@@ -34,7 +34,7 @@ pub struct MissingDetails {
 pub async fn list(pool: &SqlitePool, igdb: bool) -> ApiResult<Vec<MissingDetails>> {
     let rows = sqlx::query!(
         r#"WITH owned AS (
-             SELECT r.game_id, c.device_id, c.store_id, c.format, c.condition,
+             SELECT r.game_id, c.device_id, c.account_id, c.store_id, c.format, c.condition,
                     c.bundle_id IS NOT NULL AS in_bundle
              FROM copies c JOIN releases r ON r.id = c.release_id
              WHERE c.status = 'owned'
@@ -57,7 +57,7 @@ pub async fn list(pool: &SqlitePool, igdb: bool) -> ApiResult<Vec<MissingDetails
              NOT EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id) AS "copies!: bool",
              -- A bundle's contents take these from the bundle copy.
              EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle
-                       AND o.device_id IS NULL) AS "device!: bool",
+                       AND o.device_id IS NULL AND o.account_id IS NULL) AS "device!: bool",
              EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle
                        AND o.store_id IS NULL) AS "store!: bool",
              EXISTS (SELECT 1 FROM owned o WHERE o.game_id = g.id AND NOT o.in_bundle

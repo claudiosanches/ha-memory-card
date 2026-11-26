@@ -55,6 +55,8 @@ pub struct ImportPreview {
     pub new_platforms: Vec<String>,
     pub new_devices: Vec<NewDeviceReport>,
     pub new_stores: Vec<String>,
+    /// Accounts to add, by name.
+    pub new_accounts: Vec<String>,
     pub new_labels: Vec<String>,
     pub rows: Vec<RowReport>,
 }
@@ -123,6 +125,7 @@ fn preview_of(plan: Plan, snapshot: &Snapshot) -> ImportPreview {
             .collect(),
         new_platforms: plan.platforms.clone(),
         new_stores: plan.stores.clone(),
+        new_accounts: plan.accounts.iter().map(|a| a.name.clone()).collect(),
         new_labels: plan.labels.clone(),
         rows: plan.rows,
     }
@@ -137,6 +140,7 @@ fn file_problem(issue: FileIssue) -> ImportPreview {
         new_platforms: Vec::new(),
         new_devices: Vec::new(),
         new_stores: Vec::new(),
+        new_accounts: Vec::new(),
         new_labels: Vec::new(),
         rows: Vec::new(),
     }

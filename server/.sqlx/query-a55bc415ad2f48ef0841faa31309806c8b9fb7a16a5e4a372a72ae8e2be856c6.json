@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM account_platforms WHERE account_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "a55bc415ad2f48ef0841faa31309806c8b9fb7a16a5e4a372a72ae8e2be856c6"
+}

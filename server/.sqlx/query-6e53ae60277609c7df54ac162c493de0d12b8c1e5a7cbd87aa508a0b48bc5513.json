@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO account_platforms (account_id, platform_id)\n         SELECT ?, value FROM json_each(?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "6e53ae60277609c7df54ac162c493de0d12b8c1e5a7cbd87aa508a0b48bc5513"
+}

@@ -18,6 +18,7 @@ import { PhotoViewer } from './PhotoViewer';
 type Props = {
   copies: CopyDetail[];
   devices: Map<number, string>;
+  accounts: Map<number, string>;
   stores: Map<number, string>;
   /** Without handlers, the copies are read only. */
   onEdit?: (copy: CopyDetail) => void;
@@ -62,7 +63,7 @@ export function Copies(props: Props) {
   );
 }
 
-function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddContents, onLinkTag }: Props & { copy: CopyDetail }) {
+function CopyItem({ copy, devices, accounts, stores, onEdit, onDelete, onGotIt, onAddContents, onLinkTag }: Props & { copy: CopyDetail }) {
   const { t, i18n } = useTranslation();
   const formatDate = useFormatDate();
   const saved = useGameSaved();
@@ -106,6 +107,7 @@ function CopyItem({ copy, devices, stores, onEdit, onDelete, onGotIt, onAddConte
   const store = copy.store_id ? stores.get(copy.store_id) : null;
   const where = [
     copy.device_id ? devices.get(copy.device_id) : null,
+    copy.account_id ? accounts.get(copy.account_id) : null,
     store && (wanted ? t('wishlist.store', { store }) : store),
     copy.purchased_on && t('game.boughtOn', { date: formatDate(copy.purchased_on) }),
     copy.price && copy.currency && formatMoney(copy.price, copy.currency, i18n.language),

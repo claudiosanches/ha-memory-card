@@ -52,6 +52,7 @@ pub struct CopyRow {
     pub release_id: i64,
     pub status: CopyStatus,
     pub device_id: Option<i64>,
+    pub account_id: Option<i64>,
     pub format: Format,
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
@@ -71,6 +72,7 @@ pub struct Snapshot {
     pub platforms: Vec<PlatformRow>,
     pub devices: Vec<DeviceRow>,
     pub stores: Vec<NamedRow>,
+    pub accounts: Vec<NamedRow>,
     pub games: Vec<GameRow>,
     pub releases: Vec<ReleaseRow>,
     pub copies: Vec<CopyRow>,
@@ -93,7 +95,7 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
         r#"SELECT d.id AS "id!", d.name,
                   (SELECT json_group_array(platform_id) FROM device_platforms
                    WHERE device_id = d.id) AS "platform_ids!: sqlx::types::Json<Vec<i64>>",
-                  d.kind IN ('console', 'handheld', 'pc', 'account') AS "holds_games!: bool"
+                  d.kind IN ('console', 'handheld', 'pc') AS "holds_games!: bool"
            FROM devices d"#
     )
     .fetch_all(&mut *conn)
@@ -108,6 +110,9 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
     .collect();
 
     let stores = sqlx::query_as!(NamedRow, r#"SELECT id AS "id!", name FROM stores"#)
+        .fetch_all(&mut *conn)
+        .await?;
+    let accounts = sqlx::query_as!(NamedRow, r#"SELECT id AS "id!", name FROM accounts"#)
         .fetch_all(&mut *conn)
         .await?;
 
@@ -131,7 +136,7 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
     let copies = sqlx::query_as!(
         CopyRow,
         r#"SELECT id AS "id!", release_id, status AS "status: CopyStatus", device_id,
-                  format AS "format: Format", store_id, condition AS "condition: Condition", notes,
+                  account_id, format AS "format: Format", store_id, condition AS "condition: Condition", notes,
                   edition, purchased_on, price, currency, estimated_value, estimated_currency,
                   barcode, bundle_id
            FROM copies"#
@@ -155,6 +160,7 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
         platforms,
         devices,
         stores,
+        accounts,
         games,
         releases,
         copies,

@@ -58,14 +58,6 @@ async fn hardware_keeps_what_it_cost_and_what_it_is_worth() {
         .await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(body["code"], "not_for_this_kind");
-    let (status, _) = app
-        .json(
-            "POST",
-            "/api/devices",
-            Some(json!({"name": "eShop", "kind": "account", "condition": "cib"})),
-        )
-        .await;
-    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
 
     let (_, stats) = app.json("GET", "/api/stats", None).await;
     let hardware = &stats["hardware"];
@@ -175,6 +167,11 @@ async fn hardware_csv_round_trips_and_updates_by_name() {
     assert!(csv.contains("Switch,console,,,Nintendo Switch"), "{csv}");
     // Formulas are escaped.
     assert!(csv.contains("'=SUM(A1)"), "{csv}");
+    // Accounts are not hardware.
+    let (_, preview) = app
+        .post_csv("/api/hardware/import/preview", "name,kind\nOld,account\n")
+        .await;
+    assert_eq!(preview["rows"][0]["issues"][0]["code"], "invalid_value");
 
     // Reimporting the export changes nothing it would not keep.
     let (status, preview) = app.post_csv("/api/hardware/import/preview", &csv).await;

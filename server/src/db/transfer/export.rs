@@ -19,6 +19,7 @@ pub struct ExportRow {
     pub product_code: Option<String>,
     pub format: Option<Format>,
     pub device: Option<String>,
+    pub account: Option<String>,
     pub store: Option<String>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
@@ -41,7 +42,7 @@ pub fn query(filter: &LibraryFilter) -> Sql {
                  FROM game_labels gl JOIN labels l ON l.id = gl.label_id
                  WHERE gl.game_id = rows.game_id) AS labels,
                 platform, region,
-                release_title, product_code, format, device, store, condition, notes,
+                release_title, product_code, format, device, account, store, condition, notes,
                 edition, purchased_on, price, currency, estimated_value, estimated_currency,
                 barcode, bundle_copy_id
          FROM (
@@ -51,7 +52,7 @@ pub fn query(filter: &LibraryFilter) -> Sql {
     qb.push_bind(filter.person.clone()).push(
         " AND game_id = g.id) AS play_status,
                     p.name AS platform, r.region, r.title AS release_title, r.product_code,
-                    c.format, d.name AS device, s.name AS store, c.condition, c.notes,
+                    c.format, d.name AS device, a.name AS account, s.name AS store, c.condition, c.notes,
                     c.edition, c.purchased_on, c.price, c.currency, c.estimated_value,
                     c.estimated_currency, c.barcode, c.bundle_id AS bundle_copy_id,
                     g.sort_title, g.id AS game_id, p.sort_order AS platform_order
@@ -60,6 +61,7 @@ pub fn query(filter: &LibraryFilter) -> Sql {
              JOIN games g ON g.id = r.game_id
              JOIN platforms p ON p.id = r.platform_id
              LEFT JOIN devices d ON d.id = c.device_id
+             LEFT JOIN accounts a ON a.id = c.account_id
              LEFT JOIN stores s ON s.id = c.store_id
              WHERE 1 = 1",
     );
@@ -74,7 +76,7 @@ pub fn query(filter: &LibraryFilter) -> Sql {
         qb.push_bind(filter.person.clone()).push(
             " AND game_id = g.id),
                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                     g.sort_title, g.id, NULL
              FROM games g
              WHERE NOT EXISTS (

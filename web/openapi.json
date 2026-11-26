@@ -10,6 +10,175 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/accounts": {
+      "get": {
+        "tags": [
+          "accounts"
+        ],
+        "operationId": "listAccounts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Account"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounts"
+        ],
+        "operationId": "createAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`name_taken`, `slug_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Includes `unknown_platform`, `unknown_store` and `invalid_user`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/{id}": {
+      "put": {
+        "tags": [
+          "accounts"
+        ],
+        "operationId": "updateAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`name_taken`, `slug_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Includes `unknown_platform`, `unknown_store` and `invalid_user`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "accounts"
+        ],
+        "operationId": "deleteAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted; its copies keep existing with no account"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/barcodes/{code}": {
       "get": {
         "tags": [
@@ -79,6 +248,15 @@
             "name": "device",
             "in": "query",
             "description": "Device slugs.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "account",
+            "in": "query",
+            "description": "Account slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -911,6 +1089,15 @@
             }
           },
           {
+            "name": "account",
+            "in": "query",
+            "description": "Account slugs.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "store",
             "in": "query",
             "description": "Store slugs.",
@@ -1107,6 +1294,15 @@
             "name": "device",
             "in": "query",
             "description": "Device slugs.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "account",
+            "in": "query",
+            "description": "Account slugs.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2625,6 +2821,29 @@
         }
       }
     },
+    "/api/people": {
+      "get": {
+        "tags": [
+          "accounts"
+        ],
+        "operationId": "listPeople",
+        "responses": {
+          "200": {
+            "description": "Everyone Memory Card knows, by name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Person"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/photos/{id}": {
       "delete": {
         "tags": [
@@ -3758,6 +3977,120 @@
   },
   "components": {
     "schemas": {
+      "Account": {
+        "type": "object",
+        "description": "A store account that owns digital copies, such as a Nintendo Account.",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "active",
+          "platform_ids",
+          "copy_count"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "copy_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Copies the account owns, of any status."
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "person": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person",
+                "description": "Whose account it is."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platform_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Platforms whose games it holds, in platform list order."
+          },
+          "slug": {
+            "type": "string",
+            "description": "Names the account in library links."
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The store it buys from."
+          }
+        }
+      },
+      "AccountInput": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Names it in library links. Blank makes one from the name for a new\none and keeps the current one on update."
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Home Assistant user whose account it is."
+          }
+        }
+      },
       "Amount": {
         "type": "object",
         "required": [
@@ -3905,6 +4238,14 @@
           "created_at"
         ],
         "properties": {
+          "account_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The store account that owns a digital copy."
+          },
           "barcode": {
             "type": [
               "string",
@@ -4061,6 +4402,14 @@
           "format"
         ],
         "properties": {
+          "account_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The store account that owns it; digital copies only."
+          },
           "barcode": {
             "type": [
               "string",
@@ -4226,6 +4575,13 @@
           "format"
         ],
         "properties": {
+          "account_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
           "barcode": {
             "type": [
               "string",
@@ -4585,8 +4941,7 @@
           "condition": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/Condition",
-                "description": "Not for accounts."
+                "$ref": "#/components/schemas/Condition"
               },
               {
                 "type": "null"
@@ -4644,7 +4999,7 @@
               "type": "integer",
               "format": "int64"
             },
-            "description": "Platforms a console, handheld, PC or account plays."
+            "description": "Platforms a console, handheld or PC plays."
           },
           "price": {
             "type": [
@@ -4709,7 +5064,6 @@
           "console",
           "handheld",
           "pc",
-          "account",
           "controller",
           "accessory",
           "toy"
@@ -4725,6 +5079,13 @@
           "format"
         ],
         "properties": {
+          "account_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
           "condition": {
             "oneOf": [
               {
@@ -5436,8 +5797,7 @@
           },
           "owned": {
             "type": "integer",
-            "format": "int64",
-            "description": "Owned items, not counting accounts."
+            "format": "int64"
           },
           "spent": {
             "type": "array",
@@ -5485,6 +5845,7 @@
           "new_platforms",
           "new_devices",
           "new_stores",
+          "new_accounts",
           "new_labels",
           "rows"
         ],
@@ -5510,6 +5871,13 @@
               "$ref": "#/components/schemas/HeaderMatch"
             },
             "description": "How each header of the file was read, in file order."
+          },
+          "new_accounts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Accounts to add, by name."
           },
           "new_devices": {
             "type": "array",
@@ -6789,7 +7157,7 @@
           },
           "hardware": {
             "$ref": "#/components/schemas/HardwareStats",
-            "description": "Owned hardware other than accounts."
+            "description": "Owned hardware."
           },
           "most_played": {
             "type": "array",

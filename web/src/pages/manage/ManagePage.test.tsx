@@ -32,6 +32,40 @@ const PLATFORMS = [
   platform(3, 'Nintendo 3DS', { abbreviation: '3DS', custom: true }),
 ];
 
+describe('Manage accounts', () => {
+  it('lists accounts with their store and person, and adds one', async () => {
+    const steam = {
+      id: 3,
+      name: 'Steam',
+      slug: 'steam',
+      store_id: 5,
+      person: { id: 'ana', name: 'Ana' },
+      notes: null,
+      active: true,
+      platform_ids: [],
+      copy_count: 2,
+    };
+    const calls = mockApi({
+      'GET /api/accounts': [steam],
+      'GET /api/platforms': PLATFORMS,
+      'GET /api/stores': [{ id: 5, name: 'Steam store', slug: 'steam-store', notes: null, copy_count: 0 }],
+      'GET /api/people': [{ id: 'ana', name: 'Ana' }],
+      'POST /api/accounts': (body: unknown) => json({ ...steam, ...(body as object), id: 9 }, 201),
+    });
+    renderAt('/manage');
+
+    const row = await screen.findByTestId('account-Steam');
+    expect(row).toHaveTextContent('2 copies');
+    await waitFor(() => expect(row).toHaveTextContent(`Steam store${en.common.separator}Ana`));
+
+    fireEvent.click(screen.getByRole('button', { name: en.accounts.add }));
+    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'GOG' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ name: 'GOG', store_id: null, user_id: null });
+  });
+});
+
 describe('Manage stores', () => {
   it('opens on the tab named in the URL', async () => {
     const stores: Store[] = [{ id: 1, name: 'Amazon', slug: 'amazon', notes: 'Prime', copy_count: 0 }];

@@ -13,6 +13,7 @@ use crate::slug::{first_free, numbered_prefix, slugify, unique};
 pub enum Table {
     Platforms,
     Devices,
+    Accounts,
     Stores,
     Genres,
     GameModes,
@@ -24,6 +25,7 @@ impl Table {
         match self {
             Self::Platforms => "platforms",
             Self::Devices => "devices",
+            Self::Accounts => "accounts",
             Self::Stores => "stores",
             Self::Genres => "genres",
             Self::GameModes => "game_modes",
@@ -36,6 +38,7 @@ impl Table {
         match self {
             Self::Platforms => "platform",
             Self::Devices => "device",
+            Self::Accounts => "account",
             Self::Stores => "store",
             Self::Genres => "genre",
             Self::GameModes => "game-mode",

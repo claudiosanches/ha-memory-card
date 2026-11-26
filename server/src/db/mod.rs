@@ -2,6 +2,7 @@
 
 #![allow(clippy::disallowed_methods)]
 
+pub mod accounts;
 pub mod devices;
 pub mod duplicates;
 pub mod games;

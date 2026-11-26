@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!\", COALESCE(display_name, name) AS name FROM users\n           ORDER BY COALESCE(display_name, name, id) COLLATE NOCASE",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "c74aa3aeb824111fa54d36b41c1131e2352e28fdbcbb7c2234fe60eb3a165a64"
+}

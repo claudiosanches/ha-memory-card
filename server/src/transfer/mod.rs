@@ -7,7 +7,7 @@ pub mod parse;
 pub mod plan;
 
 /// Column order for export and the blank template.
-pub const COLUMNS: [&str; 23] = [
+pub const COLUMNS: [&str; 24] = [
     "copy_id",
     "status",
     "igdb_id",
@@ -21,6 +21,7 @@ pub const COLUMNS: [&str; 23] = [
     "format",
     "edition",
     "device",
+    "account",
     "store",
     "condition",
     "purchased_on",

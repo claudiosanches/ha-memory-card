@@ -44,17 +44,26 @@ test('platforms: add from the catalog, reorder, remove, delete a custom one', as
   const dreamcast = yours.filter({ hasText: 'Dreamcast' });
   await expect(yours.last()).toContainText('Dreamcast');
 
-  // Drag the grip onto the platform above it.
+  // Drag the grip onto the platform above it. Other specs can add platforms
+  // at the end meanwhile, so the check is that Dreamcast now comes right
+  // before that platform.
+  const neighbour = await yours.nth(-2).getAttribute('data-testid');
+  const moved = await dreamcast.getAttribute('data-testid');
   const grip = await dreamcast.getByRole('button', { name: 'Move Dreamcast', exact: true }).boundingBox();
   const above = await yours.nth(-2).boundingBox();
-  if (!grip || !above) throw new Error('rows are not visible');
+  if (!grip || !above || !neighbour || !moved) throw new Error('rows are not visible');
   await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
   await page.mouse.down();
   await page.mouse.move(grip.x + grip.width / 2, above.y + above.height / 2, { steps: 12 });
   await page.mouse.up();
-  await expect(yours.nth(-2)).toContainText('Dreamcast');
+  const before = async () => {
+    const ids = await yours.evaluateAll((rows) => rows.map((row) => row.getAttribute('data-testid')));
+    return ids.indexOf(neighbour) - ids.indexOf(moved);
+  };
+  await expect.poll(before).toBe(1);
   await page.reload();
-  await expect(yours.nth(-2)).toContainText('Dreamcast');
+  await expect(dreamcast).toHaveCount(1);
+  await expect.poll(before).toBe(1);
 
   await dreamcast.getByRole('button', { name: 'Remove Dreamcast from your platforms' }).click();
   await expect(dreamcast).toHaveCount(0);

@@ -8,6 +8,8 @@ export const queryKeys = {
   status: ['status'],
   platforms: ['platforms'],
   devices: ['devices'],
+  accounts: ['accounts'],
+  people: ['people'],
   stores: ['stores'],
   labels: ['labels'],
   playStatuses: ['play-statuses'],
@@ -56,7 +58,15 @@ export function useDevices() {
   return useQuery({ queryKey: queryKeys.devices, queryFn: () => call(api.GET('/api/devices')) });
 }
 
-/** Owned devices copies can live on: consoles, handhelds, PCs and accounts. */
+export function useAccounts() {
+  return useQuery({ queryKey: queryKeys.accounts, queryFn: () => call(api.GET('/api/accounts')) });
+}
+
+export function usePeople() {
+  return useQuery({ queryKey: queryKeys.people, queryFn: () => call(api.GET('/api/people')) });
+}
+
+/** Owned devices copies can live on: consoles, handhelds and PCs. */
 export function useGameDevices() {
   return useQuery({
     queryKey: queryKeys.devices,

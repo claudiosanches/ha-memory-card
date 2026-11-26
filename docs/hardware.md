@@ -1,7 +1,7 @@
 # Hardware
 
-**Hardware** in the sidebar lists the consoles, accounts, controllers,
-accessories and toys the household owns or wants. Everyone can browse it;
+**Hardware** in the sidebar lists the consoles, controllers, accessories and
+toys the household owns or wants. Everyone can browse it;
 managers add and change it.
 
 ![Hardware, with consoles, controllers and amiibo](https://ha-memory-card.pages.dev/images/hardware.webp)
@@ -11,13 +11,16 @@ filter narrows the list to one kind.
 
 ## Kinds
 
-- **Console**, **Handheld**, **PC** and **Account** hold games: each copy
-  can say which one it lives on. **Plays** lists the platforms whose games it
-  runs, so a Wii U plays Wii U and Wii.
+- **Console**, **Handheld** and **PC** hold games: each copy can say which
+  one it lives on. **Plays** lists the platforms whose games it runs, so a
+  Wii U plays Wii U and Wii.
 - **Controller**, **Accessory** and **Toy or figure**, such as amiibo, hold
   no games. **For** names the platform they go with.
 
 A device with copies on it cannot become a controller, accessory or toy.
+
+Store accounts, such as a Nintendo Account or Steam, are not hardware. They
+are under **Manage > Accounts**. See [Manage](manage.md#accounts).
 
 ## Add hardware
 
@@ -29,11 +32,10 @@ A device with copies on it cannot become a controller, accessory or toy.
 - the kind and the model, such as "Switch OLED";
 - the platforms it plays, or the platform it is for;
 - region, condition, where it was bought and when, what it cost and what it
-  would sell for now, serial number and barcode, as for copies. Accounts have
-  no condition, serial number or barcode;
+  would sell for now, serial number and barcode, as for copies;
 - notes.
 
-Inactive consoles and accounts are left out when choosing where a copy lives.
+Inactive consoles are left out when choosing where a copy lives.
 Deleting a device keeps its copies, with no device.
 
 ## Photos

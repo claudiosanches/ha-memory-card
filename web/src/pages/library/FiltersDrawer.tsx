@@ -1,6 +1,6 @@
 import { Button, Drawer, MultiSelect, NumberInput, SegmentedControl, Select, Stack } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
-import { useGameDevices, useGameModes, useGenres, useLabels, usePlatforms, useStores } from '../../api/queries';
+import { useAccounts, useGameDevices, useGameModes, useGenres, useLabels, usePlatforms, useStores } from '../../api/queries';
 import { FORMATS, type Format, REGIONS, type Region } from '../../api/types';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { type LibrarySearch, MAX_HOURS_TO_BEAT, NO_STATUS, type StatusFilter } from './search';
@@ -20,6 +20,7 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
   const statuses = usePlayStatusList();
   const platforms = usePlatforms();
   const devices = useGameDevices();
+  const accounts = useAccounts();
   const stores = useStores();
   const gameModes = useGameModes();
   const genres = useGenres();
@@ -75,6 +76,16 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
           searchable
           clearable
         />
+        {(accounts.data?.length ?? 0) > 0 && (
+          <MultiSelect
+            label={t('library.filter.account')}
+            data={(accounts.data ?? []).map((a) => ({ value: a.slug, label: a.name }))}
+            value={search.account ?? []}
+            onChange={(values) => onChange({ account: orUndefined(values) })}
+            searchable
+            clearable
+          />
+        )}
         <Select
           label={t('library.filter.format')}
           data={[

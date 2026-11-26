@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAccounts"];
+        put?: never;
+        post: operations["createAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateAccount"];
+        post?: never;
+        delete: operations["deleteAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/barcodes/{code}": {
         parameters: {
             query?: never;
@@ -656,6 +688,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPeople"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/photos/{id}": {
         parameters: {
             query?: never;
@@ -916,6 +964,44 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description A store account that owns digital copies, such as a Nintendo Account. */
+        Account: {
+            active: boolean;
+            /**
+             * Format: int64
+             * @description Copies the account owns, of any status.
+             */
+            copy_count: number;
+            /** Format: int64 */
+            id: number;
+            name: string;
+            notes?: string | null;
+            person?: components["schemas"]["Person"] | null;
+            /** @description Platforms whose games it holds, in platform list order. */
+            platform_ids: number[];
+            /** @description Names the account in library links. */
+            slug: string;
+            /**
+             * Format: int64
+             * @description The store it buys from.
+             */
+            store_id?: number | null;
+        };
+        AccountInput: {
+            active?: boolean;
+            name: string;
+            notes?: string | null;
+            platform_ids?: number[];
+            /**
+             * @description Names it in library links. Blank makes one from the name for a new
+             *     one and keeps the current one on update.
+             */
+            slug?: string | null;
+            /** Format: int64 */
+            store_id?: number | null;
+            /** @description The Home Assistant user whose account it is. */
+            user_id?: string | null;
+        };
         Amount: {
             /** @description Decimal text, such as `59.99`. */
             amount: string;
@@ -957,6 +1043,11 @@ export interface components {
             game_id: number;
         };
         CopyDetail: {
+            /**
+             * Format: int64
+             * @description The store account that owns a digital copy.
+             */
+            account_id?: number | null;
             /** @description UPC or EAN from the box. */
             barcode?: string | null;
             bundle?: components["schemas"]["CopyLink"] | null;
@@ -993,6 +1084,11 @@ export interface components {
             updated_by?: components["schemas"]["Person"] | null;
         };
         CopyInput: {
+            /**
+             * Format: int64
+             * @description The store account that owns it; digital copies only.
+             */
+            account_id?: number | null;
             /** @description UPC or EAN; spaces and hyphens are ignored. */
             barcode?: string | null;
             condition?: components["schemas"]["Condition"] | null;
@@ -1036,6 +1132,8 @@ export interface components {
         };
         /** @description One copy in the copies view, with its release and game. */
         CopyRow: {
+            /** Format: int64 */
+            account_id?: number | null;
             barcode?: string | null;
             /**
              * Format: int64
@@ -1153,7 +1251,7 @@ export interface components {
              * @description The platform a controller, accessory or toy is for.
              */
             platform_id?: number | null;
-            /** @description Platforms a console, handheld, PC or account plays. */
+            /** @description Platforms a console, handheld or PC plays. */
             platform_ids?: number[];
             /** @description Decimal text such as `299.99`; needs `currency`. */
             price?: string | null;
@@ -1171,8 +1269,10 @@ export interface components {
             store_id?: number | null;
         };
         /** @enum {string} */
-        DeviceKind: "console" | "handheld" | "pc" | "account" | "controller" | "accessory" | "toy";
+        DeviceKind: "console" | "handheld" | "pc" | "controller" | "accessory" | "toy";
         DuplicateCopy: {
+            /** Format: int64 */
+            account_id?: number | null;
             condition?: components["schemas"]["Condition"] | null;
             /** Format: int64 */
             device_id?: number | null;
@@ -1360,10 +1460,7 @@ export interface components {
             estimated: components["schemas"]["Amount"][];
             /** @description Owned items per kind, largest first. */
             kinds: components["schemas"]["KindCount"][];
-            /**
-             * Format: int64
-             * @description Owned items, not counting accounts.
-             */
+            /** Format: int64 */
             owned: number;
             /** @description What owned items cost, per currency; `copies` counts items. */
             spent: components["schemas"]["Amount"][];
@@ -1392,6 +1489,8 @@ export interface components {
             file_issue?: components["schemas"]["FileIssue"] | null;
             /** @description How each header of the file was read, in file order. */
             headers: components["schemas"]["HeaderMatch"][];
+            /** @description Accounts to add, by name. */
+            new_accounts: string[];
             new_devices: components["schemas"]["NewDeviceReport"][];
             new_labels: string[];
             new_platforms: string[];
@@ -1796,7 +1895,7 @@ export interface components {
              * @description Games with an owned copy.
              */
             games: number;
-            /** @description Owned hardware other than accounts. */
+            /** @description Owned hardware. */
             hardware: components["schemas"]["HardwareStats"];
             /** @description The person's, by session count, then minutes. */
             most_played: components["schemas"]["PlayedGame"][];
@@ -2063,6 +2162,145 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"][];
+                };
+            };
+        };
+    };
+    createAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountInput"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            /** @description `name_taken`, `slug_taken` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Includes `unknown_platform`, `unknown_store` and `invalid_user` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    updateAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `name_taken`, `slug_taken` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Includes `unknown_platform`, `unknown_store` and `invalid_user` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted; its copies keep existing with no account */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     lookUpBarcode: {
         parameters: {
             query?: never;
@@ -2103,6 +2341,8 @@ export interface operations {
                 platform?: string;
                 /** @description Device slugs. */
                 device?: string;
+                /** @description Account slugs. */
+                account?: string;
                 /** @description Store slugs. */
                 store?: string;
                 /** @description Region codes. */
@@ -2665,6 +2905,8 @@ export interface operations {
                 platform?: string;
                 /** @description Device slugs. */
                 device?: string;
+                /** @description Account slugs. */
+                account?: string;
                 /** @description Store slugs. */
                 store?: string;
                 /** @description Region codes. */
@@ -2741,6 +2983,8 @@ export interface operations {
                 platform?: string;
                 /** @description Device slugs. */
                 device?: string;
+                /** @description Account slugs. */
+                account?: string;
                 /** @description Store slugs. */
                 store?: string;
                 /** @description Region codes. */
@@ -3871,6 +4115,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MissingDetails"][];
+                };
+            };
+        };
+    };
+    listPeople: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Everyone Memory Card knows, by name */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Person"][];
                 };
             };
         };

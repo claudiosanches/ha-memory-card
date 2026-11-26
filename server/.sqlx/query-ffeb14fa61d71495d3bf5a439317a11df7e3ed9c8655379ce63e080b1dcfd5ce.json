@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COALESCE(SUM(status = 'owned'), 0) AS \"owned!: i64\",\n                  COALESCE(SUM(status = 'wanted'), 0) AS \"wanted!: i64\"\n           FROM devices WHERE kind != 'account'",
+  "query": "SELECT COALESCE(SUM(status = 'owned'), 0) AS \"owned!: i64\",\n                  COALESCE(SUM(status = 'wanted'), 0) AS \"wanted!: i64\"\n           FROM devices",
   "describe": {
     "columns": [
       {
@@ -24,5 +24,5 @@
       false
     ]
   },
-  "hash": "74b88b026fefa5f5342f13a24e49a68f99552ae780867374a8c84a3311ca1a2c"
+  "hash": "ffeb14fa61d71495d3bf5a439317a11df7e3ed9c8655379ce63e080b1dcfd5ce"
 }

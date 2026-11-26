@@ -78,6 +78,30 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
         devices.push(id);
     }
 
+    let mut accounts = Vec::with_capacity(plan.accounts.len());
+    let mut slugs = slugs::Allocator::new(Table::Accounts);
+    for account in &plan.accounts {
+        let slug = slugs.free(conn, &account.name).await?;
+        let id = sqlx::query_scalar!(
+            r#"INSERT INTO accounts (name, slug) VALUES (?, ?) RETURNING id AS "id!""#,
+            account.name,
+            slug
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        for platform in &account.platforms {
+            let platform_id = resolve(*platform, &platforms);
+            sqlx::query!(
+                "INSERT OR IGNORE INTO account_platforms (account_id, platform_id) VALUES (?, ?)",
+                id,
+                platform_id
+            )
+            .execute(&mut *conn)
+            .await?;
+        }
+        accounts.push(id);
+    }
+
     let mut games = Vec::with_capacity(plan.games.len());
     for game in &plan.games {
         let sort = sort_title(&game.title);
@@ -169,18 +193,20 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
     for copy in &plan.copies {
         let release_id = resolve(copy.release, &releases);
         let device_id = copy.device.map(|d| resolve(d, &devices));
+        let account_id = copy.account.map(|a| resolve(a, &accounts));
         let store_id = copy.store.map(|s| resolve(s, &stores));
         match copy.existing {
             None => {
                 sqlx::query!(
-                    "INSERT INTO copies (release_id, status, device_id, format, store_id, condition,
-                                         notes, edition, purchased_on, price, currency,
+                    "INSERT INTO copies (release_id, status, device_id, account_id, format, store_id,
+                                         condition, notes, edition, purchased_on, price, currency,
                                          estimated_value, estimated_currency, barcode,
                                          bundle_id, created_by, updated_by, source)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'csv')",
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'csv')",
                     release_id,
                     copy.status,
                     device_id,
+                    account_id,
                     copy.format,
                     store_id,
                     copy.condition,
@@ -202,7 +228,8 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
             Some(id) => {
                 sqlx::query!(
                     "UPDATE copies
-                     SET release_id = ?, status = ?, device_id = ?, format = ?, store_id = ?,
+                     SET release_id = ?, status = ?, device_id = ?, account_id = ?, format = ?,
+                         store_id = ?,
                          condition = ?, notes = ?, edition = ?, purchased_on = ?, price = ?,
                          currency = ?, estimated_value = ?, estimated_currency = ?,
                          barcode = ?, bundle_id = ?, updated_by = ?,
@@ -211,6 +238,7 @@ pub async fn apply(conn: &mut SqliteConnection, plan: &Plan, by: &str) -> sqlx::
                     release_id,
                     copy.status,
                     device_id,
+                    account_id,
                     copy.format,
                     store_id,
                     copy.condition,

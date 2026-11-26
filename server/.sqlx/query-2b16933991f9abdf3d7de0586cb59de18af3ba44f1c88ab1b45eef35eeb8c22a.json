@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE copies\n         SET status = b.status, format = b.format, device_id = b.device_id,\n             account_id = b.account_id, store_id = b.store_id, condition = b.condition,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         FROM (SELECT status, format, device_id, account_id, store_id, condition\n               FROM copies WHERE id = ?1) AS b\n         WHERE copies.bundle_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "2b16933991f9abdf3d7de0586cb59de18af3ba44f1c88ab1b45eef35eeb8c22a"
+}

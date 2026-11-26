@@ -3,7 +3,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import { Link } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDevices, useStores } from '../../api/queries';
+import { useAccounts, useDevices, useStores } from '../../api/queries';
 import type { CopyRow, Platform } from '../../api/types';
 import { Cover } from '../../components/Cover';
 import classes from './CopiesView.module.css';
@@ -20,7 +20,9 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
   const { t } = useTranslation();
   const phone = useMediaQuery('(max-width: 48em)');
   const devices = useDevices();
+  const accounts = useAccounts();
   const stores = useStores();
+  const accountNames = useMemo(() => new Map((accounts.data ?? []).map((a) => [a.id, a.name])), [accounts.data]);
   const deviceNames = useMemo(() => new Map((devices.data ?? []).map((d) => [d.id, d.name])), [devices.data]);
   const storeNames = useMemo(() => new Map((stores.data ?? []).map((s) => [s.id, s.name])), [stores.data]);
 
@@ -29,7 +31,10 @@ export function CopiesView({ copies, platformsById, wanted = false }: Props) {
     region: t(`region.${copy.region}`),
     format: t(`format.${copy.format}`),
     condition: copy.condition ? t(`condition.${copy.condition}`) : null,
-    device: copy.device_id ? (deviceNames.get(copy.device_id) ?? null) : null,
+    device:
+      [copy.device_id && deviceNames.get(copy.device_id), copy.account_id && accountNames.get(copy.account_id)]
+        .filter(Boolean)
+        .join(t('common.separator')) || null,
     store: copy.store_id ? (storeNames.get(copy.store_id) ?? null) : null,
   });
   const line = (parts: (string | null)[]) => parts.filter(Boolean).join(t('common.separator'));

@@ -3,28 +3,35 @@ import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../api/errors';
-import { useDevices, useDuplicates, usePlatforms, useStores } from '../api/queries';
+import { useAccounts, useDevices, useDuplicates, usePlatforms, useStores } from '../api/queries';
 import { DUPLICATE_LABELS, type DuplicateCopy, type DuplicateGroup, type DuplicateLabel } from '../api/types';
 import { FilterBar, FilterButton } from '../components/FilterBar';
 import { Cover } from '../components/Cover';
 import classes from './DuplicatesPage.module.css';
 
-type Names = { platform: Map<number, string>; device: Map<number, string>; store: Map<number, string> };
+type Names = {
+  platform: Map<number, string>;
+  device: Map<number, string>;
+  account: Map<number, string>;
+  store: Map<number, string>;
+};
 
 export function DuplicatesTab({ showIntro = true }: { showIntro?: boolean }) {
   const { t } = useTranslation();
   const duplicates = useDuplicates();
   const platforms = usePlatforms();
   const devices = useDevices();
+  const accounts = useAccounts();
   const stores = useStores();
   const [label, setLabel] = useState<DuplicateLabel | null>(null);
   const names = useMemo<Names>(
     () => ({
       platform: new Map((platforms.data ?? []).map((p) => [p.id, p.name])),
       device: new Map((devices.data ?? []).map((d) => [d.id, d.name])),
+      account: new Map((accounts.data ?? []).map((a) => [a.id, a.name])),
       store: new Map((stores.data ?? []).map((s) => [s.id, s.name])),
     }),
-    [platforms.data, devices.data, stores.data],
+    [platforms.data, devices.data, accounts.data, stores.data],
   );
 
   const all = duplicates.data ?? [];
@@ -119,6 +126,7 @@ function CopyLine({ copy, names }: { copy: DuplicateCopy; names: Names }) {
   const details = [
     t(`format.${copy.format}`),
     copy.device_id ? names.device.get(copy.device_id) : null,
+    copy.account_id ? names.account.get(copy.account_id) : null,
     copy.store_id ? names.store.get(copy.store_id) : null,
     copy.condition ? t(`condition.${copy.condition}`) : null,
     copy.release_title,

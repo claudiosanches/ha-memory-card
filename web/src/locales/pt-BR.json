@@ -52,8 +52,9 @@
     "notBuilt": "Esta tela ainda não foi feita."
   },
   "manage": {
-    "intro": "Organize as lojas, plataformas, status de jogo e etiquetas usados na sua coleção.",
+    "intro": "Organize as contas, lojas, plataformas, status de jogo e etiquetas usados na sua coleção.",
     "tabs": {
+      "accounts": "Contas",
       "stores": "Lojas",
       "platforms": "Plataformas",
       "playStatuses": "Status de jogo",
@@ -71,6 +72,21 @@
     "deleteTitle": "Excluir {{name}}?",
     "deleteCopies_one": "{{count}} cópia está neste dispositivo. Ela será mantida sem dispositivo.",
     "deleteCopies_other": "{{count}} cópias estão neste dispositivo. Elas serão mantidas sem dispositivo."
+  },
+  "accounts": {
+    "add": "Adicionar conta",
+    "edit": "Editar conta",
+    "empty": "Nenhuma conta ainda. Adicione as contas de loja onde ficam seus jogos digitais, como uma Conta Nintendo ou a Steam.",
+    "nameDescription": "Como você escolhe esta conta para uma cópia.",
+    "namePlaceholder": "Steam",
+    "platformsDescription": "Plataformas cujos jogos esta conta guarda.",
+    "store": "Loja",
+    "storeDescription": "Onde compra jogos. Uma cópia nova nesta conta a usa como loja.",
+    "person": "Pessoa",
+    "personDescription": "De quem é a conta na casa.",
+    "deleteCopies_one": "{{count}} cópia está nesta conta. Ela será mantida sem conta.",
+    "deleteCopies_other": "{{count}} cópias estão nesta conta. Elas serão mantidas sem conta.",
+    "activeDescription": "Contas inativas ficam de fora ao escolher a conta de uma cópia."
   },
   "deviceKind": {
     "console": "Console",
@@ -289,7 +305,9 @@
     "label_separator": "Etiquetas não podem ter vírgulas nem ponto e vírgula.",
     "device_holds_no_games": "Cópias ficam em um console, portátil, PC ou conta, não em outro hardware.",
     "device_has_copies": "Há cópias neste dispositivo. Mova-as antes, ou mantenha-o como console, portátil, PC ou conta.",
-    "not_for_this_kind": "Isso não se aplica a esse tipo de hardware."
+    "not_for_this_kind": "Isso não se aplica a esse tipo de hardware.",
+    "unknown_account": "Essa conta não existe mais.",
+    "invalid_user": "Não é um ID de usuário do Home Assistant."
   },
   "import": {
     "intro": "Leve sua coleção entre o Memory Card e uma planilha.",
@@ -350,7 +368,7 @@
       "product_code": "Código do produto ou serial impresso na caixa.",
       "format": "physical ou digital.",
       "edition": "Texto livre, como Edição de Colecionador ou Steelbook.",
-      "device": "Nome do dispositivo, como na tela Gerenciar. Nomes desconhecidos são criados.",
+      "device": "Console, portátil ou PC onde a cópia está, como na página Hardware. Nomes desconhecidos são criados como consoles.",
       "store": "Nome da loja. Nomes desconhecidos são criados.",
       "condition": "Só cópias físicas: sealed, cib, no_manual, loose.",
       "purchased_on": "Data da compra, como AAAA-MM-DD.",
@@ -360,7 +378,8 @@
       "estimated_currency": "Código de três letras de estimated_value, quando difere de currency.",
       "barcode": "Números do UPC ou EAN da caixa.",
       "notes": "Texto livre.",
-      "bundle_copy_id": "copy_id da cópia da coletânea em que esta cópia veio, como uma coleção em um só cartucho. Plataforma, região, formato, dispositivo, loja, estado e status passam a seguir essa cópia."
+      "bundle_copy_id": "copy_id da cópia da coletânea em que esta cópia veio, como uma coleção em um só cartucho. Plataforma, região, formato, dispositivo, loja, estado e status passam a seguir essa cópia.",
+      "account": "Conta de loja dona de uma cópia digital, como em Gerenciar > Contas. Nomes desconhecidos são criados."
     },
     "columnNames": {
       "copy_id": "ID da cópia",
@@ -385,7 +404,8 @@
       "estimated_currency": "Moeda do valor estimado",
       "barcode": "Código de barras",
       "notes": "Observações",
-      "bundle_copy_id": "ID da cópia da coletânea"
+      "bundle_copy_id": "ID da cópia da coletânea",
+      "account": "Conta"
     },
     "columnsRead": "Como suas colunas foram lidas",
     "columnsReadHint": "O Memory Card reconhece os próprios nomes de coluna e nomes comuns de outras planilhas. Escolha outra coluna para um cabeçalho lido errado, ou deixe-o de fora.",
@@ -393,7 +413,8 @@
     "readAs": "Ler {{header}} como",
     "noHeader": "(sem cabeçalho)",
     "reviewMatches": "Revisar correspondências do IGDB",
-    "tabGames": "Jogos"
+    "tabGames": "Jogos",
+    "newAccounts": "Contas"
   },
   "importIssues": {
     "required": "Precisa de um valor.",
@@ -413,7 +434,8 @@
     "ignored_in_bundle": "Ignorado: preço, valor estimado e data de compra ficam na cópia da coletânea.",
     "too_many_labels": "Mais de 50 etiquetas.",
     "device_holds_no_games": "Esse dispositivo é um hardware sem jogos.",
-    "duplicate_row": "Outra linha tem o mesmo nome."
+    "duplicate_row": "Outra linha tem o mesmo nome.",
+    "account_physical": "Só cópias digitais têm conta; esta fica de fora."
   },
   "fileIssues": {
     "not_utf8": "O arquivo não está em UTF-8. Salve como \"CSV UTF-8\" e tente de novo.",
@@ -545,7 +567,8 @@
       "igdbAny": "Vinculado ou não",
       "igdbLinked": "Vinculado ao IGDB",
       "igdbUnlinked": "Não vinculado ao IGDB",
-      "maxHoursToBeat": "Horas para zerar a história, no máximo"
+      "maxHoursToBeat": "Horas para zerar a história, no máximo",
+      "account": "Conta"
     },
     "sort": {
       "title": "Título",
@@ -671,7 +694,10 @@
     "timeToBeat": "Tempo para zerar",
     "beatMain": "{{time}} na história principal",
     "beatExtras": "{{time}} com extras",
-    "beatFull": "{{time}} para fazer tudo"
+    "beatFull": "{{time}} para fazer tudo",
+    "account": "Conta",
+    "accountDescription": "A conta de loja dona desta cópia.",
+    "noAccount": "Sem conta"
   },
   "igdb": {
     "link": "Vincular ao IGDB",
@@ -771,7 +797,7 @@
       "same_release": "Mesmo lançamento",
       "cross_platform": "Plataformas diferentes",
       "cross_region": "Regiões diferentes",
-      "cross_device": "Dispositivos diferentes",
+      "cross_device": "Dispositivos ou contas diferentes",
       "physical_digital": "Física e digital"
     }
   },
@@ -1047,12 +1073,12 @@
     }
   },
   "hardware": {
-    "intro": "Consoles, contas, controles, acessórios e brinquedos que a casa tem ou quer.",
+    "intro": "Consoles, controles, acessórios e brinquedos que a casa tem ou quer.",
     "add": "Adicionar hardware",
     "edit": "Editar hardware",
     "holdsGames": "Guarda jogos",
     "other": "Outro hardware",
-    "nameDescription": "Diferencia dos demais e escolhe o console ou a conta de uma cópia.",
+    "nameDescription": "Diferencia dos demais e escolhe o console de uma cópia.",
     "modelDescription": "Opcional. O modelo ou a edição, como uma cor.",
     "for": "Para",
     "forDescription": "A plataforma com que ele funciona.",
@@ -1070,7 +1096,7 @@
     "importTitle": "Importar",
     "importText": "As linhas atualizam o hardware com o mesmo device_id ou nome, ou adicionam hardware novo. Colunas que o arquivo não tem mantêm os valores; uma célula vazia apaga um. Lojas que ainda não existem são adicionadas.",
     "importDone": "Adicionados {{created}}, atualizados {{updated}}.",
-    "columns": "Colunas: {{columns}}. kind é console, handheld, pc, account, controller, accessory ou toy; plays lista plataformas separadas por ponto e vírgula.",
+    "columns": "Colunas: {{columns}}. kind é console, handheld, pc, controller, accessory ou toy; plays lista plataformas separadas por ponto e vírgula.",
     "previewSummary": "{{created}} novos, {{updated}} para atualizar.",
     "previewErrors_one": "{{count}} linha precisa de correção.",
     "previewErrors_other": "{{count}} linhas precisam de correção.",

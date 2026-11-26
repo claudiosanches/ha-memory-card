@@ -41,8 +41,8 @@ test('imports a CSV and exports it back', async ({ page }, testInfo) => {
   const library = await page.request.get(`${PREFIX}/api/export.csv?ownership=owned`);
   expect(library.headers()['content-disposition']).toMatch(/filename="memory-card-library-\d{8}\.csv"/);
   const exported = await readFile(await download.path(), 'utf8');
-  expect(exported).toContain(`Ingress Quest ${p},backlog,,Nintendo Switch,eu,,,physical,,Console ${p},Shop ${p},cib,,,,`);
-  expect(exported).toContain(`Ingress Quest ${p},backlog,,Wii U,na,,,digital,,Console ${p},,,,,,,,,"Bought on sale, 2015"`);
+  expect(exported).toContain(`Ingress Quest ${p},backlog,,Nintendo Switch,eu,,,physical,,Console ${p},,Shop ${p},cib,,,,`);
+  expect(exported).toContain(`Ingress Quest ${p},backlog,,Wii U,na,,,digital,,Console ${p},,,,,,,,,,"Bought on sale, 2015"`);
 
   await page.goto(`${PREFIX}/#/hardware`);
   await expect(page.getByTestId(`device-Console ${p}`)).toContainText('Wii U');

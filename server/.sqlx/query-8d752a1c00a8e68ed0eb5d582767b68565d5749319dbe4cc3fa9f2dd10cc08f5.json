@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id AS \"id!\", release_id, status AS \"status: CopyStatus\", device_id,\n                  format AS \"format: Format\", store_id, condition AS \"condition: Condition\", notes,\n                  edition, purchased_on, price, currency, estimated_value, estimated_currency,\n                  barcode, bundle_id\n           FROM copies",
+  "query": "SELECT id AS \"id!\", release_id, status AS \"status: CopyStatus\", device_id,\n                  account_id, format AS \"format: Format\", store_id, condition AS \"condition: Condition\", notes,\n                  edition, purchased_on, price, currency, estimated_value, estimated_currency,\n                  barcode, bundle_id\n           FROM copies",
   "describe": {
     "columns": [
       {
@@ -48,8 +48,19 @@
         }
       },
       {
-        "name": "format: Format",
+        "name": "account_id",
         "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "copies",
+            "name": "account_id"
+          }
+        }
+      },
+      {
+        "name": "format: Format",
+        "ordinal": 5,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -60,7 +71,7 @@
       },
       {
         "name": "store_id",
-        "ordinal": 5,
+        "ordinal": 6,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -71,7 +82,7 @@
       },
       {
         "name": "condition: Condition",
-        "ordinal": 6,
+        "ordinal": 7,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -82,7 +93,7 @@
       },
       {
         "name": "notes",
-        "ordinal": 7,
+        "ordinal": 8,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -93,7 +104,7 @@
       },
       {
         "name": "edition",
-        "ordinal": 8,
+        "ordinal": 9,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -104,7 +115,7 @@
       },
       {
         "name": "purchased_on",
-        "ordinal": 9,
+        "ordinal": 10,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -115,7 +126,7 @@
       },
       {
         "name": "price",
-        "ordinal": 10,
+        "ordinal": 11,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -126,7 +137,7 @@
       },
       {
         "name": "currency",
-        "ordinal": 11,
+        "ordinal": 12,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -137,7 +148,7 @@
       },
       {
         "name": "estimated_value",
-        "ordinal": 12,
+        "ordinal": 13,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -148,7 +159,7 @@
       },
       {
         "name": "estimated_currency",
-        "ordinal": 13,
+        "ordinal": 14,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -159,7 +170,7 @@
       },
       {
         "name": "barcode",
-        "ordinal": 14,
+        "ordinal": 15,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -170,7 +181,7 @@
       },
       {
         "name": "bundle_id",
-        "ordinal": 15,
+        "ordinal": 16,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -188,6 +199,7 @@
       false,
       false,
       true,
+      true,
       false,
       true,
       true,
@@ -202,5 +214,5 @@
       true
     ]
   },
-  "hash": "624ac6093df5eb12262b438b8f2d50afa42107e667d3b2dbcc7338f6eb35cb4d"
+  "hash": "8d752a1c00a8e68ed0eb5d582767b68565d5749319dbe4cc3fa9f2dd10cc08f5"
 }

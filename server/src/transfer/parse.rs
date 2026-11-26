@@ -34,7 +34,7 @@ const ALIASES: [(&str, &[&str]); 19] = [
         "labels",
         &["label", "tags", "tag", "categories", "category"],
     ),
-    ("device", &["account"]),
+    ("account", &["storeaccount", "useraccount"]),
     (
         "store",
         &[
@@ -148,6 +148,8 @@ pub struct RawRow {
     pub product_code: Option<String>,
     pub format: Option<String>,
     pub device: Option<String>,
+    /// The store account that owns a digital copy.
+    pub account: Option<String>,
     pub store: Option<String>,
     pub condition: Option<String>,
     pub notes: Option<String>,
@@ -173,6 +175,7 @@ impl RawRow {
             "product_code" => &mut self.product_code,
             "format" => &mut self.format,
             "device" => &mut self.device,
+            "account" => &mut self.account,
             "store" => &mut self.store,
             "condition" => &mut self.condition,
             "notes" => &mut self.notes,
@@ -196,6 +199,7 @@ impl RawRow {
             &self.product_code,
             &self.format,
             &self.device,
+            &self.account,
             &self.store,
             &self.condition,
             &self.notes,
@@ -307,6 +311,7 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             product_code: cell("product_code"),
             format: cell("format"),
             device: cell("device"),
+            account: cell("account"),
             store: cell("store"),
             condition: cell("condition"),
             notes: cell("notes"),

@@ -37,6 +37,8 @@ async fn fresh_database_has_schema_and_seed() {
     assert_eq!(
         tables,
         [
+            "account_platforms",
+            "accounts",
             "copies",
             "copy_photos",
             "device_photos",

@@ -68,6 +68,9 @@ pub struct CopyInput {
     pub format: Format,
     #[serde(default)]
     pub device_id: Option<i64>,
+    /// The store account that owns it; digital copies only.
+    #[serde(default)]
+    pub account_id: Option<i64>,
     #[serde(default)]
     pub store_id: Option<i64>,
     /// Physical copies only.
@@ -223,6 +226,7 @@ impl CopyInput {
             product_code: optional(self.product_code.as_deref(), "product_code", CODE_MAX)?,
             format: self.format,
             device_id: self.device_id,
+            account_id: self.account_id.filter(|_| self.format == Format::Digital),
             store_id: self.store_id,
             condition: self.condition,
             notes: optional(self.notes.as_deref(), "notes", NOTES_MAX)?,

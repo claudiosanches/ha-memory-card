@@ -9,11 +9,10 @@ import { queryKeys, usePlatforms, useStatus, useStores } from '../../api/queries
 import {
   CONDITIONS,
   type CopyStatus,
-  DEVICE_KINDS,
   type Device,
   type DeviceInput,
   type DeviceKind,
-  GAME_DEVICE_KINDS,
+  DEVICE_KINDS,
   holdsGames,
   REGIONS,
 } from '../../api/types';
@@ -26,7 +25,7 @@ import { trimSlug } from '../../slug';
 
 const text = (value: string) => value.trim() || null;
 
-/** Adds or edits a device: a console or account copies live on, or a controller, accessory or toy. */
+/** Adds or edits hardware: a console copies live on, or a controller, accessory or toy. */
 export function HardwareForm({
   device,
   status,
@@ -75,7 +74,6 @@ export function HardwareForm({
   const onApiError = useApiErrorHandler(form);
   const values = form.getValues();
   const games = holdsGames(values.kind);
-  const account = values.kind === 'account';
   const owned = values.status === 'owned';
 
   // Inactive platforms stay listed when the device already uses them.
@@ -110,20 +108,20 @@ export function HardwareForm({
       platform_ids: games ? v.platform_ids.map(Number) : [],
       platform_id: !games && v.platform_id ? Number(v.platform_id) : null,
       region: (v.region || null) as DeviceInput['region'],
-      condition: !account && v.condition ? (v.condition as DeviceInput['condition']) : null,
+      condition: v.condition ? (v.condition as DeviceInput['condition']) : null,
       store_id: v.store_id ? Number(v.store_id) : null,
       purchased_on: owned ? text(v.purchased_on) : null,
       price: text(v.price),
       currency: v.currency,
       estimated_value: owned ? text(v.estimated_value) : null,
       estimated_currency: v.estimated_currency,
-      serial_number: account ? null : text(v.serial_number),
-      barcode: account ? null : text(v.barcode),
+      serial_number: text(v.serial_number),
+      barcode: text(v.barcode),
     }),
   );
 
   const kindGroups = [
-    { group: t('hardware.holdsGames'), items: GAME_DEVICE_KINDS },
+    { group: t('hardware.holdsGames'), items: DEVICE_KINDS.filter(holdsGames) },
     { group: t('hardware.other'), items: DEVICE_KINDS.filter((k) => !holdsGames(k)) },
   ].map(({ group, items }) => ({ group, items: items.map((kind) => ({ value: kind, label: t(`deviceKind.${kind}`) })) }));
 
@@ -186,15 +184,13 @@ export function HardwareForm({
         {...form.getInputProps('region')}
         value={values.region || null}
       />
-      {!account && (
-        <Select
-          label={t('game.condition')}
-          data={CONDITIONS.map((c) => ({ value: c, label: t(`condition.${c}`) }))}
-          clearable
-          {...form.getInputProps('condition')}
-          value={values.condition || null}
-        />
-      )}
+      <Select
+        label={t('game.condition')}
+        data={CONDITIONS.map((c) => ({ value: c, label: t(`condition.${c}`) }))}
+        clearable
+        {...form.getInputProps('condition')}
+        value={values.condition || null}
+      />
       <Select
         label={owned ? t('game.store') : t('game.buyAt')}
         placeholder={t('game.noStore')}
@@ -239,12 +235,10 @@ export function HardwareForm({
           />
         </Group>
       )}
-      {!account && (
-        <Group grow align="flex-start">
-          <TextInput label={t('hardware.serialNumber')} {...form.getInputProps('serial_number')} />
-          <TextInput label={t('game.barcode')} inputMode="numeric" {...form.getInputProps('barcode')} />
-        </Group>
-      )}
+      <Group grow align="flex-start">
+        <TextInput label={t('hardware.serialNumber')} {...form.getInputProps('serial_number')} />
+        <TextInput label={t('game.barcode')} inputMode="numeric" {...form.getInputProps('barcode')} />
+      </Group>
       <Textarea label={t('common.notes')} autosize minRows={2} {...form.getInputProps('notes')} />
       {games && (
         <Switch

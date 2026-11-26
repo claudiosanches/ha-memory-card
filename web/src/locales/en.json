@@ -52,8 +52,9 @@
     "notBuilt": "This screen is not built yet."
   },
   "manage": {
-    "intro": "Organize the stores, platforms, play statuses, and labels used in your collection.",
+    "intro": "Organize the accounts, stores, platforms, play statuses, and labels used in your collection.",
     "tabs": {
+      "accounts": "Accounts",
       "stores": "Stores",
       "platforms": "Platforms",
       "playStatuses": "Play statuses",
@@ -71,6 +72,21 @@
     "deleteTitle": "Delete {{name}}?",
     "deleteCopies_one": "{{count}} copy is on this device. It will be kept with no device.",
     "deleteCopies_other": "{{count}} copies are on this device. They will be kept with no device."
+  },
+  "accounts": {
+    "add": "Add account",
+    "edit": "Edit account",
+    "empty": "No accounts yet. Add the store accounts your digital games live on, such as a Nintendo Account or Steam.",
+    "nameDescription": "How you pick this account for a copy.",
+    "namePlaceholder": "Steam",
+    "platformsDescription": "Platforms whose games this account holds.",
+    "store": "Store",
+    "storeDescription": "Where it buys games. A new copy on this account takes it as its store.",
+    "person": "Person",
+    "personDescription": "Whose account it is in the household.",
+    "deleteCopies_one": "{{count}} copy is on this account. It will be kept with no account.",
+    "deleteCopies_other": "{{count}} copies are on this account. They will be kept with no account.",
+    "activeDescription": "Inactive accounts are left out when choosing the account of a copy."
   },
   "deviceKind": {
     "console": "Console",
@@ -289,7 +305,9 @@
     "label_separator": "Labels cannot contain commas or semicolons.",
     "device_holds_no_games": "Copies go on a console, handheld, PC or account, not on other hardware.",
     "device_has_copies": "Copies are on this device. Move them first, or keep it a console, handheld, PC or account.",
-    "not_for_this_kind": "This does not apply to that kind of hardware."
+    "not_for_this_kind": "This does not apply to that kind of hardware.",
+    "unknown_account": "That account no longer exists.",
+    "invalid_user": "That is not a Home Assistant user ID."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -350,7 +368,7 @@
       "product_code": "Serial or product code printed on the box.",
       "format": "physical or digital.",
       "edition": "Free text, such as Collector's Edition or Steelbook.",
-      "device": "Device name, as on the Manage screen. Unknown names are created.",
+      "device": "Console, handheld or PC the copy is on, as on the Hardware page. Unknown names are created as consoles.",
       "store": "Store name. Unknown names are created.",
       "condition": "Physical copies only: sealed, cib, no_manual, loose.",
       "purchased_on": "Date bought, as YYYY-MM-DD.",
@@ -360,7 +378,8 @@
       "estimated_currency": "Three-letter code of estimated_value, when it differs from currency.",
       "barcode": "UPC or EAN digits from the box.",
       "notes": "Free text.",
-      "bundle_copy_id": "copy_id of the bundle copy this copy came in, such as a collection on one cartridge. Platform, region, format, device, store, condition and status then follow that copy."
+      "bundle_copy_id": "copy_id of the bundle copy this copy came in, such as a collection on one cartridge. Platform, region, format, device, store, condition and status then follow that copy.",
+      "account": "Store account that owns a digital copy, as under Manage > Accounts. Unknown names are created."
     },
     "columnNames": {
       "copy_id": "Copy ID",
@@ -385,7 +404,8 @@
       "estimated_currency": "Currency of the estimated value",
       "barcode": "Barcode",
       "notes": "Notes",
-      "bundle_copy_id": "Bundle copy ID"
+      "bundle_copy_id": "Bundle copy ID",
+      "account": "Account"
     },
     "columnsRead": "How your columns are read",
     "columnsReadHint": "Memory Card recognizes its own column names and common ones from other spreadsheets. Pick another column for any header it read wrong, or leave one out.",
@@ -393,7 +413,8 @@
     "readAs": "Read {{header}} as",
     "noHeader": "(no header)",
     "reviewMatches": "Review IGDB matches",
-    "tabGames": "Games"
+    "tabGames": "Games",
+    "newAccounts": "Accounts"
   },
   "importIssues": {
     "required": "Needs a value.",
@@ -413,7 +434,8 @@
     "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy.",
     "too_many_labels": "More than 50 labels.",
     "device_holds_no_games": "That device is hardware that holds no games.",
-    "duplicate_row": "Another row has the same name."
+    "duplicate_row": "Another row has the same name.",
+    "account_physical": "Only digital copies have an account; this one is left out."
   },
   "fileIssues": {
     "not_utf8": "The file is not UTF-8. Save it as \"CSV UTF-8\" and try again.",
@@ -545,7 +567,8 @@
       "igdbAny": "Linked or not",
       "igdbLinked": "Linked to IGDB",
       "igdbUnlinked": "Not linked to IGDB",
-      "maxHoursToBeat": "Hours to beat the main story, at most"
+      "maxHoursToBeat": "Hours to beat the main story, at most",
+      "account": "Account"
     },
     "sort": {
       "title": "Title",
@@ -671,7 +694,10 @@
     "timeToBeat": "Time to beat",
     "beatMain": "{{time}} for the main story",
     "beatExtras": "{{time}} with extras",
-    "beatFull": "{{time}} for everything"
+    "beatFull": "{{time}} for everything",
+    "account": "Account",
+    "accountDescription": "The store account that owns this copy.",
+    "noAccount": "No account"
   },
   "igdb": {
     "link": "Link to IGDB",
@@ -771,7 +797,7 @@
       "same_release": "Same release",
       "cross_platform": "Different platforms",
       "cross_region": "Different regions",
-      "cross_device": "Different devices",
+      "cross_device": "Different devices or accounts",
       "physical_digital": "Physical and digital"
     }
   },
@@ -1047,12 +1073,12 @@
     }
   },
   "hardware": {
-    "intro": "Consoles, accounts, controllers, accessories and toys the household owns or wants.",
+    "intro": "Consoles, controllers, accessories and toys the household owns or wants.",
     "add": "Add hardware",
     "edit": "Edit hardware",
     "holdsGames": "Holds games",
     "other": "Other hardware",
-    "nameDescription": "Tells it apart from the rest, and picks a console or account for a copy.",
+    "nameDescription": "Tells it apart from the rest, and picks a console for a copy.",
     "modelDescription": "Optional. The model or edition, such as a color.",
     "for": "For",
     "forDescription": "The platform it goes with.",
@@ -1070,7 +1096,7 @@
     "importTitle": "Import",
     "importText": "Rows update the hardware with the same device_id or name, or add new hardware. Columns the file does not have keep their values; an empty cell clears one. Stores that do not exist yet are added.",
     "importDone": "Added {{created}}, updated {{updated}}.",
-    "columns": "Columns: {{columns}}. kind is console, handheld, pc, account, controller, accessory or toy; plays lists platforms separated by semicolons.",
+    "columns": "Columns: {{columns}}. kind is console, handheld, pc, controller, accessory or toy; plays lists platforms separated by semicolons.",
     "previewSummary": "{{created}} new, {{updated}} to update.",
     "previewErrors_one": "{{count}} row needs fixing.",
     "previewErrors_other": "{{count}} rows need fixing.",

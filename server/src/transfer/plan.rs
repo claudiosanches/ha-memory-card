@@ -34,6 +34,12 @@ pub struct NewDevice {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct NewAccount {
+    pub name: String,
+    pub platforms: Vec<Ref>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct NewGame {
     pub igdb_id: Option<i64>,
     pub title: String,
@@ -56,6 +62,7 @@ pub struct CopyWrite {
     pub release: Ref,
     pub status: CopyStatus,
     pub device: Option<Ref>,
+    pub account: Option<Ref>,
     pub format: Format,
     pub store: Option<Ref>,
     pub condition: Option<Condition>,
@@ -104,6 +111,7 @@ pub struct Plan {
     pub platforms: Vec<String>,
     pub stores: Vec<String>,
     pub devices: Vec<NewDevice>,
+    pub accounts: Vec<NewAccount>,
     pub games: Vec<NewGame>,
     pub releases: Vec<NewRelease>,
     /// Existing games whose play status changes.
@@ -178,6 +186,9 @@ struct Planner<'a> {
     /// The platforms each new device plays, by its index in the plan.
     new_device_platforms: HashSet<(usize, Ref)>,
     stores: HashMap<String, Ref>,
+    accounts: HashMap<String, Ref>,
+    /// The platforms each new account holds, by its index in the plan.
+    new_account_platforms: HashSet<(usize, Ref)>,
     labels: HashMap<String, Ref>,
     game_labels: HashSet<(Ref, Ref)>,
     label_counts: HashMap<Ref, usize>,
@@ -200,8 +211,6 @@ struct Planner<'a> {
     release_titles: HashMap<Ref, String>,
     /// Where each existing release's new title sits in `plan.release_titles`.
     release_title_at: HashMap<i64, usize>,
-    /// Per new device: true while every row using it is digital.
-    new_device_digital_only: Vec<bool>,
 }
 
 impl<'a> Planner<'a> {
@@ -276,6 +285,12 @@ impl<'a> Planner<'a> {
                 .iter()
                 .map(|s| (key(&s.name), Ref::Existing(s.id)))
                 .collect(),
+            accounts: snapshot
+                .accounts
+                .iter()
+                .map(|a| (key(&a.name), Ref::Existing(a.id)))
+                .collect(),
+            new_account_platforms: HashSet::new(),
             labels: snapshot
                 .labels
                 .iter()
@@ -335,23 +350,10 @@ impl<'a> Planner<'a> {
                 .iter()
                 .filter_map(|r| r.title.clone().map(|t| (Ref::Existing(r.id), t)))
                 .collect(),
-            new_device_digital_only: Vec::new(),
         }
     }
 
-    fn finish(mut self) -> Plan {
-        for (device, digital_only) in self
-            .plan
-            .devices
-            .iter_mut()
-            .zip(&self.new_device_digital_only)
-        {
-            device.kind = if *digital_only {
-                DeviceKind::Account
-            } else {
-                DeviceKind::Console
-            };
-        }
+    fn finish(self) -> Plan {
         self.plan
     }
 
@@ -389,6 +391,10 @@ impl<'a> Planner<'a> {
                     .device_id
                     .and_then(|id| snapshot.devices.iter().find(|d| d.id == id))
                     .map(|d| d.name.clone()),
+                "account" => copy
+                    .account_id
+                    .and_then(|id| snapshot.accounts.iter().find(|a| a.id == id))
+                    .map(|a| a.name.clone()),
                 "store" => copy
                     .store_id
                     .and_then(|id| snapshot.stores.iter().find(|s| s.id == id))
@@ -467,6 +473,11 @@ impl<'a> Planner<'a> {
         {
             issues.error("device", "device_holds_no_games");
             device_name = None;
+        }
+        let mut account_name = issues.text(&raw.account, "account", NAME_MAX, false);
+        if account_name.is_some() && format == Some(Format::Physical) {
+            issues.warning("account", "account_physical");
+            account_name = None;
         }
         let store_name = issues.text(&raw.store, "store", NAME_MAX, false);
         let condition = issues.value(&raw.condition, "condition", Condition::parse_loose, false);
@@ -639,7 +650,8 @@ impl<'a> Planner<'a> {
         };
         let platform = platform.unwrap_or_else(|| self.new_platform(&platform_name));
         let release = self.ensure_release(game, platform, region, product_code, release_title);
-        let device = device_name.map(|name| self.ensure_device(device, &name, platform, format));
+        let device = device_name.map(|name| self.ensure_device(device, &name, platform));
+        let account = account_name.map(|name| self.ensure_account(&name, platform));
         let store = store_name.map(|name| self.ensure_store(&name));
 
         let write = CopyWrite {
@@ -647,6 +659,7 @@ impl<'a> Planner<'a> {
             release,
             status,
             device,
+            account,
             format,
             store,
             condition,
@@ -857,13 +870,7 @@ impl<'a> Planner<'a> {
         release
     }
 
-    fn ensure_device(
-        &mut self,
-        found: Option<Ref>,
-        name: &str,
-        platform: Ref,
-        format: Format,
-    ) -> Ref {
+    fn ensure_device(&mut self, found: Option<Ref>, name: &str, platform: Ref) -> Ref {
         let device = found.unwrap_or_else(|| {
             let device = Ref::New(self.plan.devices.len());
             self.plan.devices.push(NewDevice {
@@ -871,17 +878,13 @@ impl<'a> Planner<'a> {
                 kind: DeviceKind::Console,
                 platforms: Vec::new(),
             });
-            self.new_device_digital_only.push(true);
             self.devices.insert(key(name), device);
             device
         });
-        if let Ref::New(i) = device {
-            if self.new_device_platforms.insert((i, platform)) {
-                self.plan.devices[i].platforms.push(platform);
-            }
-            if format == Format::Physical {
-                self.new_device_digital_only[i] = false;
-            }
+        if let Ref::New(i) = device
+            && self.new_device_platforms.insert((i, platform))
+        {
+            self.plan.devices[i].platforms.push(platform);
         }
         device
     }
@@ -917,6 +920,27 @@ impl<'a> Planner<'a> {
                 *self.label_counts.entry(game).or_default() += 1;
             }
         }
+    }
+
+    fn ensure_account(&mut self, name: &str, platform: Ref) -> Ref {
+        let account = match self.accounts.get(&key(name)) {
+            Some(found) => *found,
+            None => {
+                let account = Ref::New(self.plan.accounts.len());
+                self.plan.accounts.push(NewAccount {
+                    name: name.to_owned(),
+                    platforms: Vec::new(),
+                });
+                self.accounts.insert(key(name), account);
+                account
+            }
+        };
+        if let Ref::New(i) = account
+            && self.new_account_platforms.insert((i, platform))
+        {
+            self.plan.accounts[i].platforms.push(platform);
+        }
+        account
     }
 
     fn ensure_store(&mut self, name: &str) -> Ref {
@@ -963,6 +987,7 @@ fn same_copy(copy: &CopyRow, write: &CopyWrite) -> bool {
     write.release == Ref::Existing(copy.release_id)
         && write.status == copy.status
         && write.device == copy.device_id.map(Ref::Existing)
+        && write.account == copy.account_id.map(Ref::Existing)
         && write.format == copy.format
         && write.store == copy.store_id.map(Ref::Existing)
         && write.condition == copy.condition

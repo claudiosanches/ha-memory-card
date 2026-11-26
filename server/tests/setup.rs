@@ -329,7 +329,7 @@ async fn device_update_failure_keeps_platforms() {
     app.json(
         "POST",
         "/api/devices",
-        Some(json!({"name": "PSN main", "kind": "account"})),
+        Some(json!({"name": "PSN main", "kind": "handheld"})),
     )
     .await;
 

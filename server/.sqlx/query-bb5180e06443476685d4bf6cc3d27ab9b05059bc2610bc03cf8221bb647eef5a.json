@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT kind AS \"kind!: super::devices::DeviceKind\", COUNT(*) AS \"count!: i64\"\n           FROM devices WHERE status = 'owned' AND kind != 'account'\n           GROUP BY kind ORDER BY COUNT(*) DESC, kind",
+  "query": "SELECT kind AS \"kind!: super::devices::DeviceKind\", COUNT(*) AS \"count!: i64\"\n           FROM devices WHERE status = 'owned'\n           GROUP BY kind ORDER BY COUNT(*) DESC, kind",
   "describe": {
     "columns": [
       {
@@ -29,5 +29,5 @@
       false
     ]
   },
-  "hash": "fd4e6cb59434ebee2640756c66cb29ed52a323215eb6d3859aff02d3cf89ce36"
+  "hash": "bb5180e06443476685d4bf6cc3d27ab9b05059bc2610bc03cf8221bb647eef5a"
 }

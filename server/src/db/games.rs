@@ -22,6 +22,8 @@ pub struct CopyDetail {
     pub status: CopyStatus,
     pub format: Format,
     pub device_id: Option<i64>,
+    /// The store account that owns a digital copy.
+    pub account_id: Option<i64>,
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
@@ -232,6 +234,7 @@ pub struct CopyFields {
     pub product_code: Option<String>,
     pub format: Format,
     pub device_id: Option<i64>,
+    pub account_id: Option<i64>,
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
@@ -298,7 +301,7 @@ pub async fn get(pool: &SqlitePool, id: i64, viewer: &str) -> ApiResult<GameDeta
 
     let copies = sqlx::query!(
         r#"SELECT c.id AS "id!", c.release_id, c.status AS "status: CopyStatus",
-                  c.format AS "format: Format", c.device_id, c.store_id,
+                  c.format AS "format: Format", c.device_id, c.account_id, c.store_id,
                   c.condition AS "condition: Condition", c.notes, c.edition, c.purchased_on,
                   c.price, c.currency, c.estimated_value, c.estimated_currency,
                   c.barcode, c.source AS "source: CopySource", c.created_at,
@@ -410,6 +413,7 @@ pub async fn get(pool: &SqlitePool, id: i64, viewer: &str) -> ApiResult<GameDeta
                         status: c.status,
                         format: c.format,
                         device_id: c.device_id,
+                        account_id: c.account_id,
                         store_id: c.store_id,
                         condition: c.condition,
                         notes: c.notes,
@@ -664,14 +668,15 @@ pub async fn add_copy(
     let (price, currency) = money_columns(fields.price.as_ref());
     let (value, value_currency) = money_columns(fields.estimated_value.as_ref());
     sqlx::query!(
-        "INSERT INTO copies (release_id, status, format, device_id, store_id, condition, notes,
-                             edition, purchased_on, price, currency, estimated_value,
-                             estimated_currency, barcode, created_by, updated_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO copies (release_id, status, format, device_id, account_id, store_id,
+                             condition, notes, edition, purchased_on, price, currency,
+                             estimated_value, estimated_currency, barcode, created_by, updated_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         release_id,
         status,
         fields.format,
         fields.device_id,
+        fields.account_id,
         fields.store_id,
         fields.condition,
         fields.notes,
@@ -727,7 +732,8 @@ pub async fn update_copy(
     sqlx::query!(
         "UPDATE copies
          SET release_id = ?, status = COALESCE(?, status), format = ?, device_id = ?,
-             store_id = ?, condition = ?, notes = ?, edition = ?, purchased_on = ?,
+             account_id = ?, store_id = ?, condition = ?, notes = ?, edition = ?,
+             purchased_on = ?,
              price = ?, currency = ?, estimated_value = ?, estimated_currency = ?,
              barcode = ?, updated_by = ?,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
@@ -736,6 +742,7 @@ pub async fn update_copy(
         fields.status,
         fields.format,
         fields.device_id,
+        fields.account_id,
         fields.store_id,
         fields.condition,
         fields.notes,
@@ -763,9 +770,10 @@ pub(crate) async fn sync_contents(conn: &mut SqliteConnection, bundle_id: i64) -
     sqlx::query!(
         "UPDATE copies
          SET status = b.status, format = b.format, device_id = b.device_id,
-             store_id = b.store_id, condition = b.condition,
+             account_id = b.account_id, store_id = b.store_id, condition = b.condition,
              updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         FROM (SELECT status, format, device_id, store_id, condition FROM copies WHERE id = ?1) AS b
+         FROM (SELECT status, format, device_id, account_id, store_id, condition
+               FROM copies WHERE id = ?1) AS b
          WHERE copies.bundle_id = ?1",
         bundle_id
     )
@@ -837,9 +845,9 @@ pub async fn add_content(
     }
     let release = release_id(&mut tx, game_id, bundle.platform_id, bundle.region, None).await?;
     sqlx::query!(
-        "INSERT INTO copies (release_id, status, format, device_id, store_id, condition,
-                             bundle_id, created_by, updated_by)
-         SELECT ?, status, format, device_id, store_id, condition, id, ?, ?
+        "INSERT INTO copies (release_id, status, format, device_id, account_id, store_id,
+                             condition, bundle_id, created_by, updated_by)
+         SELECT ?, status, format, device_id, account_id, store_id, condition, id, ?, ?
          FROM copies WHERE id = ?",
         release,
         by,
@@ -966,6 +974,17 @@ async fn check_references(conn: &mut SqliteConnection, fields: &CopyFields) -> A
         .ok_or(ApiError::invalid("unknown_device", "device_id"))?;
         if !kind.holds_games() {
             return Err(ApiError::invalid("device_holds_no_games", "device_id"));
+        }
+    }
+    if let Some(account_id) = fields.account_id {
+        let exists: bool = sqlx::query_scalar!(
+            r#"SELECT EXISTS (SELECT 1 FROM accounts WHERE id = ?) AS "exists!: bool""#,
+            account_id
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        if !exists {
+            return Err(ApiError::invalid("unknown_account", "account_id"));
         }
     }
     if let Some(store_id) = fields.store_id {

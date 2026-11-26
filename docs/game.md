@@ -76,7 +76,8 @@ Managers add and change them:
 
 1. **Add copy** asks for the platform, region and format, and whether you own
    it (**I own it**) or want it (**On my wishlist**).
-2. Fill in what you know: product code, edition, device, where you bought it,
+2. Fill in what you know: product code, edition, the device it is on, for a
+   digital copy the account that owns it, where you bought it,
    condition, the day you bought it, the price paid, what it would sell for
    now, the barcode and notes.
 3. **Save and add another** keeps the form open for the next copy.

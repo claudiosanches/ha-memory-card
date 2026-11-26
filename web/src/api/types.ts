@@ -8,6 +8,8 @@ export type CopyDetail = Schemas['CopyDetail'];
 export type CopyInput = Schemas['CopyInput'];
 export type CopyPhoto = Schemas['CopyPhoto'];
 export type CopyStatus = Schemas['CopyStatus'];
+export type Account = Schemas['Account'];
+export type AccountInput = Schemas['AccountInput'];
 export type Device = Schemas['Device'];
 export type DeviceInput = Schemas['DeviceInput'];
 export type DeviceKind = Schemas['DeviceKind'];
@@ -50,9 +52,9 @@ export type MissingField = Schemas['MissingField'];
 export type Role = Schemas['Role'];
 export type LibraryQuery = NonNullable<operations['listGames']['parameters']['query']>;
 
-export const DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account', 'controller', 'accessory', 'toy'];
+export const DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'controller', 'accessory', 'toy'];
 /** Kinds that hold copies; the rest is hardware for a platform. */
-export const GAME_DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account'];
+export const GAME_DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc'];
 export const holdsGames = (kind: DeviceKind) => GAME_DEVICE_KINDS.includes(kind);
 export const REGIONS: readonly Region[] = ['na', 'eu', 'au', 'nz', 'jp', 'cn', 'asia', 'kr', 'br', 'ww'];
 export const FORMATS: readonly Format[] = ['physical', 'digital'];

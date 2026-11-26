@@ -41,7 +41,7 @@ pub struct DeviceInput {
     pub notes: Option<String>,
     #[serde(default = "default_active")]
     pub active: bool,
-    /// Platforms a console, handheld, PC or account plays.
+    /// Platforms a console, handheld or PC plays.
     #[serde(default, deserialize_with = "super::input::id_list")]
     pub platform_ids: Vec<i64>,
     /// The platform a controller, accessory or toy is for.
@@ -52,7 +52,6 @@ pub struct DeviceInput {
     pub status: Option<CopyStatus>,
     #[serde(default)]
     pub region: Option<Region>,
-    /// Not for accounts.
     #[serde(default)]
     pub condition: Option<Condition>,
     #[serde(default)]
@@ -139,9 +138,6 @@ impl DeviceInput {
             }
         } else if !self.platform_ids.is_empty() {
             return Err(ApiError::invalid("not_for_this_kind", "platform_ids"));
-        }
-        if self.kind == DeviceKind::Account && self.condition.is_some() {
-            return Err(ApiError::invalid("not_for_this_kind", "condition"));
         }
         Ok(DeviceFields {
             name: required(&self.name, "name", NAME_MAX)?,

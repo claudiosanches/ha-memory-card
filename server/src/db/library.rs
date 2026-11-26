@@ -67,6 +67,10 @@ pub struct LibraryFilter {
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
     pub device: Vec<Slug>,
+    /// Account slugs.
+    #[serde(default, deserialize_with = "comma_list")]
+    #[param(value_type = Option<String>)]
+    pub account: Vec<Slug>,
     /// Store slugs.
     #[serde(default, deserialize_with = "comma_list")]
     #[param(value_type = Option<String>)]
@@ -302,6 +306,7 @@ pub fn has_copy_filters(filter: &LibraryFilter) -> bool {
     filter.ownership.unwrap_or_default() != Ownership::Any
         || !filter.platform.is_empty()
         || !filter.device.is_empty()
+        || !filter.account.is_empty()
         || !filter.store.is_empty()
         || !filter.region.is_empty()
         || filter.format.is_some()
@@ -381,6 +386,7 @@ pub fn push_copy_filters(qb: &mut Sql, filter: &LibraryFilter, device: DeviceMat
         }
         DeviceMatch::Playable => {}
     }
+    push_slugs(qb, "c.account_id", Table::Accounts, &filter.account);
     push_slugs(qb, "c.store_id", Table::Stores, &filter.store);
     push_in(qb, "r.region", &filter.region);
     if let Some(format) = filter.format {
@@ -463,6 +469,7 @@ pub struct CopyRow {
     pub status: CopyStatus,
     pub format: Format,
     pub device_id: Option<i64>,
+    pub account_id: Option<i64>,
     pub store_id: Option<i64>,
     pub condition: Option<Condition>,
     pub notes: Option<String>,
@@ -487,7 +494,7 @@ pub fn copies_query(filter: &LibraryFilter) -> Sql {
         "SELECT c.id AS copy_id, g.id AS game_id, g.title,
                 COALESCE(r.cover_path, g.cover_path) AS cover_path,
                 r.id AS release_id, r.platform_id, r.region, r.title AS release_title,
-                r.product_code, c.status, c.format, c.device_id, c.store_id, c.condition, c.notes,
+                r.product_code, c.status, c.format, c.device_id, c.account_id, c.store_id, c.condition, c.notes,
                 c.edition, c.purchased_on, c.price AS price_minor, c.currency,
                 c.bundle_id AS bundle_copy_id, c.barcode, ",
     );

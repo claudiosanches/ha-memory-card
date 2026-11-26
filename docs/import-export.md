@@ -43,13 +43,13 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
 - Column names are not case sensitive and can be in any order. Only
   `game_title` is required in every row; rows that add a copy also need
   `platform`, `region` and `format`.
-- Platform, device and store names match the ones you have, ignoring case.
-  Common platforms and the digital stores (Nintendo eShop, PlayStation Store,
-  Microsoft Store, Steam, Epic Games Store, GOG, itch.io) exist from the
-  start. Names that match nothing are created. A new device is an account
-  when all its copies are digital, otherwise a console; change it under
-  [Hardware](hardware.md). A row cannot put a copy on a controller,
-  accessory or toy.
+- Platform, device, account and store names match the ones you have,
+  ignoring case. Common platforms and the digital stores (Nintendo eShop,
+  PlayStation Store, Microsoft Store, Steam, Epic Games Store, GOG, itch.io)
+  exist from the start. Names that match nothing are created: a new device
+  is a console, which you can change under [Hardware](hardware.md), and a
+  new account shows under [Manage > Accounts](manage.md#accounts). A row
+  cannot put a copy on a controller, accessory or toy.
 - The export fills `copy_id`. Keep it to update that copy when importing the
   file again; leave it empty to add a new copy. Columns the file does not
   have keep that copy's values, while an empty cell clears one. Importing an
@@ -72,7 +72,8 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
 | `product_code` | Serial or product code |
 | `format` | `physical` or `digital` |
 | `edition` | Free text, such as `Collector's Edition` |
-| `device` | Device name |
+| `device` | Console, handheld or PC the copy is on |
+| `account` | Digital only: the store account that owns it |
 | `store` | Store name |
 | `condition` | Physical only: `sealed`, `cib`, `no_manual`, `loose` |
 | `purchased_on` | Date bought, `YYYY-MM-DD` |
@@ -93,7 +94,7 @@ opening it is safe.
 ## Hardware
 
 The **Hardware** tab moves your [hardware](hardware.md) to and from its own
-CSV file. **Export hardware** downloads every item, and **Download blank
+CSV file. Accounts are not in it; they come with the games' file. **Export hardware** downloads every item, and **Download blank
 template** the columns alone.
 
 An import shows a preview first. Each row updates the hardware with the same
@@ -106,12 +107,12 @@ Stores that do not exist yet are added. Rows with errors block the import.
 | `device_id` | Number from the export, or empty |
 | `status` | `owned` or `wanted` (empty means owned) |
 | `name` | Required |
-| `kind` | `console`, `handheld`, `pc`, `account`, `controller`, `accessory` or `toy`. Required for new hardware. |
+| `kind` | `console`, `handheld`, `pc`, `controller`, `accessory` or `toy`. Required for new hardware. |
 | `model` | Free text |
 | `platform` | What a controller, accessory or toy is for: platform name, abbreviation or slug |
-| `plays` | What a console, handheld, PC or account plays: platforms separated by `;` |
+| `plays` | What a console, handheld or PC plays: platforms separated by `;` |
 | `region` | As for copies |
-| `condition` | `sealed`, `cib`, `no_manual`, `loose`; not for accounts |
+| `condition` | `sealed`, `cib`, `no_manual`, `loose` |
 | `store` | Store name |
 | `purchased_on` | `YYYY-MM-DD` |
 | `price`, `currency` | Price paid, or expected for wanted hardware, read as for copies |

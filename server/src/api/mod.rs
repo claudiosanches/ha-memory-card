@@ -1,3 +1,4 @@
+pub mod accounts;
 pub mod barcodes;
 pub mod body;
 pub mod covers;
@@ -46,6 +47,9 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(platforms::list, platforms::create))
         .routes(routes!(platforms::reorder))
         .routes(routes!(platforms::update, platforms::delete))
+        .routes(routes!(accounts::list, accounts::create))
+        .routes(routes!(accounts::update, accounts::delete))
+        .routes(routes!(accounts::people))
         .routes(routes!(devices::list, devices::create))
         .routes(routes!(devices::update, devices::delete))
         .routes(routes!(devices::add_photo))

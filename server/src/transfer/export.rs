@@ -92,6 +92,7 @@ pub async fn export(pool: &Pool, filter: &LibraryFilter) -> Result<Vec<u8>, Expo
                 text(row.format.map(|v| v.as_str().to_owned())),
                 free(row.edition),
                 free(row.device),
+                free(row.account),
                 free(row.store),
                 text(row.condition.map(|v| v.as_str().to_owned())),
                 text(row.purchased_on),

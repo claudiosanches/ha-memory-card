@@ -1,4 +1,5 @@
-//! Hardware CSV: one row per device, console, controller, accessory or toy.
+//! Hardware CSV: one row per console, handheld, PC, controller, accessory or
+//! toy.
 //! Rows match a device by `device_id`, then by name. Columns the file does
 //! not have keep the device's values, while an empty cell clears one.
 
@@ -147,7 +148,6 @@ fn kind_text(kind: DeviceKind) -> &'static str {
         DeviceKind::Console => "console",
         DeviceKind::Handheld => "handheld",
         DeviceKind::Pc => "pc",
-        DeviceKind::Account => "account",
         DeviceKind::Controller => "controller",
         DeviceKind::Accessory => "accessory",
         DeviceKind::Toy => "toy",
@@ -164,7 +164,6 @@ fn parse_kind(text: &str) -> Option<DeviceKind> {
         "console" => DeviceKind::Console,
         "handheld" | "portable" => DeviceKind::Handheld,
         "pc" | "computer" => DeviceKind::Pc,
-        "account" => DeviceKind::Account,
         "controller" | "gamepad" => DeviceKind::Controller,
         "accessory" => DeviceKind::Accessory,
         "toy" | "amiibo" | "figure" => DeviceKind::Toy,

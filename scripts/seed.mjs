@@ -20,6 +20,15 @@ export async function seed(api) {
   for (const [name, kind, slug, details] of HARDWARE) {
     await api('POST', '/api/devices', { name, kind, platform_id: platforms.get(slug), ...details });
   }
+  const stores = new Map((await api('GET', '/api/stores')).map((s) => [s.name, s.id]));
+  for (const [name, slugs, store, , user_id] of ACCOUNTS) {
+    await api('POST', '/api/accounts', {
+      name,
+      platform_ids: slugs.map((slug) => platforms.get(slug)),
+      store_id: stores.get(store) ?? null,
+      user_id,
+    });
+  }
   for (const [label, color, counts_as] of STATUSES) {
     await api('POST', '/api/play-statuses', { label, color, counts_as });
   }
@@ -150,15 +159,10 @@ const DEVICES = [
       estimated_currency: 'EUR',
     },
   ],
-  ['Nintendo Account', 'account', ['switch']],
   ['PS5', 'console', ['ps5', 'ps4']],
-  ['PlayStation Network', 'account', ['ps5', 'ps4']],
   ['PS2 Slim', 'console', ['ps2']],
   ['Gaming PC', 'pc', ['pc']],
-  ['Steam account', 'account', ['pc']],
-  ['GOG account', 'account', ['pc']],
   ['Xbox Series X', 'console', ['xbox-series']],
-  ['Microsoft account', 'account', ['xbox-series', 'pc']],
   [
     'GameCube',
     'console',
@@ -169,6 +173,16 @@ const DEVICES = [
   ['Super Nintendo', 'console', ['snes']],
   ['Game Boy Advance SP', 'handheld', ['gba']],
   ['New Nintendo 3DS XL', 'handheld', ['3ds']],
+];
+
+// Store accounts own digital copies; each also names the device its games are
+// installed on, and whose account it is.
+const ACCOUNTS = [
+  ['Nintendo Account', ['switch'], 'Nintendo eShop', 'Switch OLED', 'sam'],
+  ['PlayStation Network', ['ps5', 'ps4'], 'PlayStation Store', 'PS5', 'alex'],
+  ['Steam account', ['pc'], 'Steam', 'Gaming PC', 'jordan'],
+  ['GOG account', ['pc'], 'GOG', 'Gaming PC', 'jordan'],
+  ['Microsoft account', ['xbox-series', 'pc'], 'Microsoft Store', 'Xbox Series X', 'robin'],
 ];
 
 // Controllers, accessories and toys, which hold no games.
@@ -275,14 +289,19 @@ const SESSIONS = [
 ];
 const LAST_PLAYED = 'The Legend of Zelda: Tears of the Kingdom';
 
-const COLUMNS = ['status', 'game_title', 'play_status', 'labels', 'platform', 'region', 'release_title', 'format', 'edition', 'device', 'store', 'condition', 'purchased_on', 'price', 'currency', 'estimated_value', 'barcode'];
+const COLUMNS = ['status', 'game_title', 'play_status', 'labels', 'platform', 'region', 'release_title', 'format', 'edition', 'device', 'account', 'store', 'condition', 'purchased_on', 'price', 'currency', 'estimated_value', 'barcode'];
 
 function csv() {
   const lines = [COLUMNS.join(',')];
   ROWS.forEach((row, n) => {
     const [title, play_status, platform, region, format, device, store, condition, purchased_on, price, currency, estimated, extra = {}] = row;
+    // A digital copy on an account is installed on the account's device.
+    const account = ACCOUNTS.find(([name]) => name === device);
     const values = {
-      status: 'owned', game_title: title, play_status, labels: GAME_LABELS[title], platform, region, format, device, store, condition, purchased_on, price, currency,
+      status: 'owned', game_title: title, play_status, labels: GAME_LABELS[title], platform, region, format,
+      device: account ? account[3] : device,
+      account: account ? device : '',
+      store, condition, purchased_on, price, currency,
       estimated_value: estimated,
       barcode: format === 'physical' && n % 3 === 0 ? ean13(`789000${String(n).padStart(6, '0')}`) : '',
       ...extra,
