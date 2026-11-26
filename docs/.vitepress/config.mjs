@@ -19,6 +19,7 @@ export default {
   description: 'A video game collection manager that runs as a Home Assistant app.',
   lang: 'en',
   cleanUrls: true,
+  markdown: { image: { lazyLoading: true } },
   srcExclude: developer,
   rewrites: Object.fromEntries(guide.map((file) => [file, file === 'README.md' ? 'docs/index.md' : `docs/${file}`])),
   head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]],
