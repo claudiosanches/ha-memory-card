@@ -35,11 +35,11 @@ configuration:
   sensors:
     name: Home Assistant sensors
     description: >-
-      Publish collection counts, what you are playing and what you added last
-      as Home Assistant sensors, with a button that picks a random game. "mqtt"
-      publishes them through the Mosquitto broker app and the MQTT
-      integration; "integration" through the Memory Card integration from
-      the Marketplace, with no broker; "off" removes them.
+      Publish the household's counts, each person's backlog and play, and
+      the latest pick as Home Assistant sensors. "mqtt" publishes them through
+      the Mosquitto broker app and the MQTT integration; "integration" through
+      the Memory Card integration from the Marketplace, with no broker and
+      with a button that rolls a pick; "off" removes them.
   tag_scan_finished:
     name: Tag scan on a finished game
     description: >-

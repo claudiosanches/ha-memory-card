@@ -35,11 +35,12 @@ configuration:
   sensors:
     name: Sensores de Home Assistant
     description: >-
-      Publicar recuentos de la colección, a qué estás jugando y lo último que
-      añadiste como sensores de Home Assistant, con un botón que sortea un
-      juego. "mqtt" los publica a través de la aplicación Mosquitto broker y
-      la integración MQTT; "integration", a través de la integración Memory
-      Card del Marketplace, sin broker; "off" los elimina.
+      Publicar los recuentos del hogar, el backlog y las partidas de cada
+      persona y el último sorteo como sensores de Home Assistant. "mqtt" los
+      publica a través de la aplicación Mosquitto broker y la integración
+      MQTT; "integration", a través de la integración Memory Card del
+      Marketplace, sin broker y con un botón que sortea un juego; "off" los
+      elimina.
   tag_scan_finished:
     name: Etiqueta leída en un juego terminado
     description: >-
