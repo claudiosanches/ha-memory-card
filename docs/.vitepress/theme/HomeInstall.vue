@@ -48,7 +48,7 @@ async function copyRepoUrl() {
           </p>
           <div class="mc-copy-box">
             <code>{{ REPO_URL }}</code>
-            <button type="button" class="mc-copy-btn" @click="copyRepoUrl">
+            <button type="button" class="mc-copy-btn" aria-live="polite" @click="copyRepoUrl">
               {{ copied ? 'Copied' : 'Copy' }}
             </button>
           </div>
