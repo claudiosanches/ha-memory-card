@@ -48,6 +48,10 @@ pub fn copy_dir(copy_id: i64) -> String {
     format!("copy-{copy_id}")
 }
 
+pub fn device_dir(device_id: i64) -> String {
+    format!("device-{device_id}")
+}
+
 /// Writes `file_name` into `dir` and returns its relative path.
 pub async fn write_in(
     covers_dir: &Path,

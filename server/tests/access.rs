@@ -234,6 +234,8 @@ async fn every_route_checks_the_role() {
     let manager_reads = [
         "/api/export.csv",
         "/api/import/template.csv",
+        "/api/hardware.csv",
+        "/api/hardware/template.csv",
         "/api/igdb/search",
         "/api/igdb/titles",
         "/api/games/{id}/igdb-contents",

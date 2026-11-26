@@ -5,6 +5,7 @@ use sqlx::types::Json;
 use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
+use super::devices::DeviceKind;
 use super::found;
 use super::photos::CopyPhoto;
 use super::sessions::{self, PersonPlay, PlaySession};
@@ -956,14 +957,15 @@ async fn check_references(conn: &mut SqliteConnection, fields: &CopyFields) -> A
         return Err(ApiError::invalid("unknown_platform", "platform_id"));
     }
     if let Some(device_id) = fields.device_id {
-        let exists: bool = sqlx::query_scalar!(
-            r#"SELECT EXISTS (SELECT 1 FROM devices WHERE id = ?) AS "exists!: bool""#,
+        let kind = sqlx::query_scalar!(
+            r#"SELECT kind AS "kind: DeviceKind" FROM devices WHERE id = ?"#,
             device_id
         )
-        .fetch_one(&mut *conn)
-        .await?;
-        if !exists {
-            return Err(ApiError::invalid("unknown_device", "device_id"));
+        .fetch_optional(&mut *conn)
+        .await?
+        .ok_or(ApiError::invalid("unknown_device", "device_id"))?;
+        if !kind.holds_games() {
+            return Err(ApiError::invalid("device_holds_no_games", "device_id"));
         }
     }
     if let Some(store_id) = fields.store_id {

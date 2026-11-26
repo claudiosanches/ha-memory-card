@@ -18,7 +18,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call } from '../../api/errors';
-import { queryKeys, useDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
+import { queryKeys, useGameDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
 import {
   CONDITIONS,
   type CopyDetail,
@@ -88,7 +88,7 @@ type CopyFormProps = {
 export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, title, onClose }: CopyFormProps) {
   const { t, i18n } = useTranslation();
   const platforms = usePlatforms();
-  const devices = useDevices();
+  const devices = useGameDevices();
   const stores = useStores();
   const appStatus = useStatus();
   const saved = useGameSaved();

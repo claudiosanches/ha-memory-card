@@ -47,7 +47,8 @@ linked to IGDB yet. See [IGDB](igdb.md#close-matches).
   Microsoft Store, Steam, Epic Games Store, GOG, itch.io) exist from the
   start. Names that match nothing are created. A new device is an account
   when all its copies are digital, otherwise a console; change it under
-  [Manage](manage.md).
+  [Hardware](hardware.md). A row cannot put a copy on a controller,
+  accessory or toy.
 - The export fills `copy_id`. Keep it to update that copy when importing the
   file again; leave it empty to add a new copy. Columns the file does not
   have keep that copy's values, while an empty cell clears one. Importing an
@@ -87,3 +88,34 @@ the app.
 
 The export escapes cells that a spreadsheet would read as a formula, so
 opening it is safe.
+
+## Hardware
+
+The **Hardware** tab moves your [hardware](hardware.md) to and from its own
+CSV file. **Export hardware** downloads every item, and **Download blank
+template** the columns alone.
+
+An import shows a preview first. Each row updates the hardware with the same
+`device_id`, or else the same name, and adds new hardware otherwise. Columns
+the file does not have keep their values, while an empty cell clears one.
+Stores that do not exist yet are added. Rows with errors block the import.
+
+| Column | Accepted values |
+|---|---|
+| `device_id` | Number from the export, or empty |
+| `status` | `owned` or `wanted` (empty means owned) |
+| `name` | Required |
+| `kind` | `console`, `handheld`, `pc`, `account`, `controller`, `accessory` or `toy`. Required for new hardware. |
+| `model` | Free text |
+| `platform` | What a controller, accessory or toy is for: platform name, abbreviation or slug |
+| `plays` | What a console, handheld, PC or account plays: platforms separated by `;` |
+| `region` | As for copies |
+| `condition` | `sealed`, `cib`, `no_manual`, `loose`; not for accounts |
+| `store` | Store name |
+| `purchased_on` | `YYYY-MM-DD` |
+| `price`, `currency` | Price paid, or expected for wanted hardware, read as for copies |
+| `estimated_value`, `estimated_currency` | What it would sell for now |
+| `serial_number` | Free text |
+| `barcode` | UPC or EAN digits |
+| `notes` | Free text |
+| `active` | `yes` or `no` |

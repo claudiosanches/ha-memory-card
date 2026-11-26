@@ -26,7 +26,7 @@ fn starts_formula(text: &str) -> bool {
 
 /// Free text that would start a formula, at its start or after a cell break,
 /// gets a `'` there, which spreadsheets show as text and [`unplain`] drops.
-fn plain(text: String) -> String {
+pub(crate) fn plain(text: String) -> String {
     let mut out = String::with_capacity(text.len() + 1);
     if starts_formula(&text) {
         out.push('\'');

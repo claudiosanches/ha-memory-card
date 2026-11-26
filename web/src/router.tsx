@@ -20,6 +20,7 @@ import { SETTINGS_TABS, SettingsPage, type SettingsTab } from './pages/SettingsP
 import { IgdbMatchesPage } from './pages/IgdbMatchesPage';
 import { StatsPage } from './pages/stats/StatsPage';
 import { HouseholdPage } from './pages/household/HouseholdPage';
+import { HardwarePage } from './pages/hardware/HardwarePage';
 import { parseSearch, stringifySearch } from './searchParams';
 
 const rootRoute = createRootRoute({ component: Layout });
@@ -33,6 +34,7 @@ const routeTree = rootRoute.addChildren([
   }),
   createRoute({ getParentRoute: () => rootRoute, path: '/games/$gameId', component: GamePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/wishlist', component: WishlistPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/hardware', component: HardwarePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({
     getParentRoute: () => rootRoute,

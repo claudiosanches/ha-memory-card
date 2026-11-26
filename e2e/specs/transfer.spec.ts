@@ -44,7 +44,7 @@ test('imports a CSV and exports it back', async ({ page }, testInfo) => {
   expect(exported).toContain(`Ingress Quest ${p},backlog,,Nintendo Switch,eu,,,physical,,Console ${p},Shop ${p},cib,,,,`);
   expect(exported).toContain(`Ingress Quest ${p},backlog,,Wii U,na,,,digital,,Console ${p},,,,,,,,,"Bought on sale, 2015"`);
 
-  await page.goto(`${PREFIX}/#/manage`);
+  await page.goto(`${PREFIX}/#/hardware`);
   await expect(page.getByTestId(`device-Console ${p}`)).toContainText('Wii U');
 
   expect(escaped).toEqual([]);

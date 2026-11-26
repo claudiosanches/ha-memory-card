@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { useDevices, usePlatforms } from '../../api/queries';
+import { useDevices, useGameDevices, usePlatforms } from '../../api/queries';
 import type { Suggestion } from '../../api/types';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
@@ -20,7 +20,7 @@ const HOUR_LIMITS = [2, 5, 10, 20, 40];
 /** Rolls a random game from your own backlog, optionally one a device can play or a short one. */
 export function Picker() {
   const { t } = useTranslation();
-  const devices = useDevices();
+  const devices = useGameDevices();
   const [device, setDevice] = useState<string | null>(null);
   const [hours, setHours] = useState<string | null>(null);
   // Kept apart from the mutation, which drops its data while the next roll loads.

@@ -9,7 +9,7 @@ import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import {
   queryKeys,
-  useDevices,
+  useGameDevices,
   useGame,
   useGameModes,
   useMissingDetails,
@@ -158,7 +158,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   const queryClient = useQueryClient();
   const gameModes = useGameModes();
   const platforms = usePlatforms();
-  const devices = useDevices();
+  const devices = useGameDevices();
   const stores = useStores();
   const [dialog, setDialog] = useState<'copy' | 'igdb' | null>(null);
   const [copyEdits, setCopyEdits] = useState<Record<number, CopyEdit>>({});

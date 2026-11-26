@@ -2,6 +2,7 @@ import { Alert, Anchor, AppShell, Box, Burger, Group, Loader, NavLink, Text, Too
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import {
   IconChartBar,
+  IconDevices,
   IconChecklist,
   IconDeviceGamepad2,
   IconDeviceSdCard,
@@ -25,13 +26,14 @@ import { ColorSchemePicker } from './ColorSchemePicker';
 import { SlotOneModal } from './SlotOneModal';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'backlog' | 'wishlist' | 'stats' | 'household' | 'manage' | 'cleanup' | 'import' | 'settings';
+type NavKey = 'library' | 'backlog' | 'wishlist' | 'hardware' | 'stats' | 'household' | 'manage' | 'cleanup' | 'import' | 'settings';
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
   { key: 'library', to: '/', icon: IconLibrary },
   { key: 'backlog', to: '/backlog', icon: IconStack2 },
   { key: 'wishlist', to: '/wishlist', icon: IconHeart },
+  { key: 'hardware', to: '/hardware', icon: IconDevices },
 ];
 
 const INSIGHTS: NavItem[] = [

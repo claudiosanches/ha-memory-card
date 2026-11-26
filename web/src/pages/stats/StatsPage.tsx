@@ -87,6 +87,8 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
       .join(t('common.separator'));
   const [spent] = stats.spent;
   const [estimated] = stats.estimated;
+  const [hardwareSpent] = stats.hardware.spent;
+  const [hardwareEstimated] = stats.hardware.estimated;
 
   return (
     <Stack gap="section">
@@ -269,6 +271,39 @@ function StatsView({ stats, locale }: { stats: Stats; locale: string }) {
           </div>
         )}
       </Group>
+
+      {(stats.hardware.owned > 0 || stats.hardware.wanted > 0) && (
+        <Group title={t('nav.hardware')}>
+          <dl className={classes.tiles}>
+            <StatTile
+              label={t('stats.hardwareItems')}
+              value={number(stats.hardware.owned)}
+              detail={[
+                ...stats.hardware.kinds.map((k) => `${t(`deviceKind.${k.kind}`)}: ${number(k.count)}`),
+                stats.hardware.wanted > 0 ? t('stats.hardwareWanted', { count: stats.hardware.wanted }) : null,
+              ]
+                .filter(Boolean)
+                .join(t('common.separator'))}
+              to="/hardware"
+              testId="stats-hardware"
+            />
+            <StatTile
+              label={t('stats.value')}
+              value={hardwareSpent ? money(hardwareSpent.amount, hardwareSpent.currency) : t('stats.noPrices')}
+              empty={!hardwareSpent}
+              detail={amounts(stats.hardware.spent, null)}
+              testId="stats-hardware-paid"
+            />
+            <StatTile
+              label={t('stats.estimated')}
+              value={hardwareEstimated ? money(hardwareEstimated.amount, hardwareEstimated.currency) : t('stats.noEstimates')}
+              empty={!hardwareEstimated}
+              detail={amounts(stats.hardware.estimated, null)}
+              testId="stats-hardware-estimated"
+            />
+          </dl>
+        </Group>
+      )}
     </Stack>
   );
 }
@@ -325,7 +360,7 @@ function StatTile({
   detail?: string;
   /** The value is a sentence saying there is nothing yet. */
   empty?: boolean;
-  to?: '/' | '/wishlist';
+  to?: '/' | '/wishlist' | '/hardware';
   testId?: string;
 }) {
   return (

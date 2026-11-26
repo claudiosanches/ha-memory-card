@@ -1,9 +1,11 @@
-import { Accordion, Alert, Anchor, Badge, Button, Code, FileInput, Group, List, Select, SimpleGrid, Stack, Table, Text } from '@mantine/core';
+import { Accordion, Alert, Anchor, Badge, Button, Code, FileInput, Group, List, Select, SimpleGrid, Stack, Table, Tabs, Text } from '@mantine/core';
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useRef, useState } from 'react';
 import { ToolSection } from '../components/ToolSection';
+import { ToolTabList } from '../components/ToolTabList';
+import { HardwareTransfer } from './hardware/HardwareTransfer';
 import { CardPage } from '../components/CardPage';
 import { withColumns } from './importColumns';
 import classes from './Tools.module.css';
@@ -75,6 +77,7 @@ export function ImportPage() {
   // Counts choices, so a slow read of an earlier file is dropped.
   const chosen = useRef(0);
   const igdb = useStatus().data?.igdb_configured ?? false;
+  const [tab, setTab] = useState('games');
 
   const preview = useMutation({
     mutationFn: (body: string) => call(api.POST('/api/import/preview', { body, ...asCsv })),
@@ -133,6 +136,19 @@ export function ImportPage() {
 
   return (
     <CardPage title={t('nav.import')} description={t('import.intro')}>
+      <Tabs value={tab} onChange={(value) => setTab(value ?? 'games')} keepMounted={false}>
+        <ToolTabList
+          label={t('nav.import')}
+          tabs={[
+            { value: 'games', label: t('import.tabGames') },
+            { value: 'hardware', label: t('nav.hardware') },
+          ]}
+        />
+        <Tabs.Panel value="hardware">
+          <HardwareTransfer />
+        </Tabs.Panel>
+        <Tabs.Panel value="games">
+          <Stack gap="card">
 
       <ToolSection title={t('import.exportTitle')} description={t('import.exportText')}>
         <Group className={classes.downloads}>
@@ -205,6 +221,9 @@ export function ImportPage() {
       </ToolSection>
 
       <ColumnHelp />
+          </Stack>
+        </Tabs.Panel>
+      </Tabs>
     </CardPage>
   );
 }

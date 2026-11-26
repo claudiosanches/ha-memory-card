@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/device-photos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteDevicePhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/devices": {
         parameters: {
             query?: never;
@@ -127,6 +143,22 @@ export interface paths {
         put: operations["updateDevice"];
         post?: never;
         delete: operations["deleteDevice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/devices/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addDevicePhoto"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -360,6 +392,70 @@ export interface paths {
             cookie?: never;
         };
         get: operations["listGenres"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hardware.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportHardware"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hardware/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["runHardwareImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hardware/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewHardwareImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hardware/template.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["hardwareTemplate"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1002,37 +1098,80 @@ export interface components {
         };
         Device: {
             active: boolean;
+            barcode?: string | null;
+            condition?: components["schemas"]["Condition"] | null;
             /**
              * Format: int64
              * @description Copies assigned to this device, of any status.
              */
             copy_count: number;
+            currency?: string | null;
+            estimated_currency?: string | null;
+            /** @description Decimal text: what it would sell for now. */
+            estimated_value?: string | null;
             /** Format: int64 */
             id: number;
             kind: components["schemas"]["DeviceKind"];
             model?: string | null;
             name: string;
             notes?: string | null;
+            /** @description Oldest first. */
+            photos: components["schemas"]["CopyPhoto"][];
+            /**
+             * Format: int64
+             * @description The platform a controller, accessory or toy is for.
+             */
+            platform_id?: number | null;
             /** @description Platforms this device plays, in platform list order. */
             platform_ids: number[];
+            /** @description Decimal text, paid for owned hardware or expected for wanted. */
+            price?: string | null;
+            purchased_on?: string | null;
+            region?: components["schemas"]["Region"] | null;
+            serial_number?: string | null;
             /** @description Names the device in library links. */
             slug: string;
+            status: components["schemas"]["CopyStatus"];
+            /** Format: int64 */
+            store_id?: number | null;
         };
         DeviceInput: {
             active?: boolean;
+            /** @description UPC or EAN; spaces and hyphens are ignored. */
+            barcode?: string | null;
+            condition?: components["schemas"]["Condition"] | null;
+            currency?: string | null;
+            estimated_currency?: string | null;
+            /** @description Decimal text: what it would sell for now; needs `estimated_currency`. */
+            estimated_value?: string | null;
             kind: components["schemas"]["DeviceKind"];
             model?: string | null;
             name: string;
             notes?: string | null;
+            /**
+             * Format: int64
+             * @description The platform a controller, accessory or toy is for.
+             */
+            platform_id?: number | null;
+            /** @description Platforms a console, handheld, PC or account plays. */
             platform_ids?: number[];
+            /** @description Decimal text such as `299.99`; needs `currency`. */
+            price?: string | null;
+            /** @description `YYYY-MM-DD`. */
+            purchased_on?: string | null;
+            region?: components["schemas"]["Region"] | null;
+            serial_number?: string | null;
             /**
              * @description Names it in library links. Blank makes one from the name for a new
              *     one and keeps the current one on update.
              */
             slug?: string | null;
+            status?: components["schemas"]["CopyStatus"] | null;
+            /** Format: int64 */
+            store_id?: number | null;
         };
         /** @enum {string} */
-        DeviceKind: "console" | "handheld" | "pc" | "account";
+        DeviceKind: "console" | "handheld" | "pc" | "account" | "controller" | "accessory" | "toy";
         DuplicateCopy: {
             condition?: components["schemas"]["Condition"] | null;
             /** Format: int64 */
@@ -1190,6 +1329,50 @@ export interface components {
             name: string;
             slug: string;
         };
+        HardwareIssue: {
+            code: string;
+            column: string;
+        };
+        HardwarePreview: {
+            /** @description Why the file cannot be read at all, such as `missing_column`. */
+            file_issue?: string | null;
+            rows: components["schemas"]["HardwareRow"][];
+        };
+        HardwareResult: {
+            created: number;
+            /** @description Stores named in the file that were added. */
+            new_stores: number;
+            updated: number;
+        };
+        HardwareRow: {
+            /**
+             * Format: int64
+             * @description The device it updates, or none for a new one.
+             */
+            device_id?: number | null;
+            issues: components["schemas"]["HardwareIssue"][];
+            /** @description The file's line, counting the header as 1. */
+            line: number;
+            name: string;
+        };
+        HardwareStats: {
+            /** @description What owned items would sell for now, per currency. */
+            estimated: components["schemas"]["Amount"][];
+            /** @description Owned items per kind, largest first. */
+            kinds: components["schemas"]["KindCount"][];
+            /**
+             * Format: int64
+             * @description Owned items, not counting accounts.
+             */
+            owned: number;
+            /** @description What owned items cost, per currency; `copies` counts items. */
+            spent: components["schemas"]["Amount"][];
+            /**
+             * Format: int64
+             * @description Hardware on the wishlist.
+             */
+            wanted: number;
+        };
         /**
          * @description How a header was read. `column` is empty for headers that match nothing
          *     or repeat a column an earlier header took.
@@ -1236,6 +1419,11 @@ export interface components {
             updated_games: number;
             updated_releases: number;
             warning_rows: number;
+        };
+        KindCount: {
+            /** Format: int64 */
+            count: number;
+            kind: components["schemas"]["DeviceKind"];
         };
         Label: {
             color: components["schemas"]["StatusColor"];
@@ -1608,6 +1796,8 @@ export interface components {
              * @description Games with an owned copy.
              */
             games: number;
+            /** @description Owned hardware other than accounts. */
+            hardware: components["schemas"]["HardwareStats"];
             /** @description The person's, by session count, then minutes. */
             most_played: components["schemas"]["PlayedGame"][];
             /** @description The copies worth the most, up to five per currency, largest first. */
@@ -2197,6 +2387,36 @@ export interface operations {
             };
         };
     };
+    deleteDevicePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The photo's device */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Device"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     listDevices: {
         parameters: {
             query?: never;
@@ -2297,7 +2517,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Includes `unknown_platform` */
+            /** @description Includes `unknown_platform` and `device_has_copies` */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2327,6 +2547,57 @@ export interface operations {
                 content?: never;
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    addDevicePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": components["schemas"]["Image"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Device"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `too_many_photos`: 20 per device */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid_image` or `image_too_large` */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3012,6 +3283,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Genre"][];
+                };
+            };
+        };
+    };
+    exportHardware: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One row per device */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    runHardwareImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "text/csv": string;
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HardwareResult"];
+                };
+            };
+            /** @description `import_invalid`: preview the file to see why */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    previewHardwareImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "text/csv": string;
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HardwarePreview"];
+                };
+            };
+        };
+    };
+    hardwareTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Header row only */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

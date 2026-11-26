@@ -1,6 +1,6 @@
 import { Button, Drawer, MultiSelect, NumberInput, SegmentedControl, Select, Stack } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
-import { useDevices, useGameModes, useGenres, useLabels, usePlatforms, useStores } from '../../api/queries';
+import { useGameDevices, useGameModes, useGenres, useLabels, usePlatforms, useStores } from '../../api/queries';
 import { FORMATS, type Format, REGIONS, type Region } from '../../api/types';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { type LibrarySearch, MAX_HOURS_TO_BEAT, NO_STATUS, type StatusFilter } from './search';
@@ -19,7 +19,7 @@ export function FiltersDrawer({ opened, search, onChange, onClear, onClose }: Pr
   const { t } = useTranslation();
   const statuses = usePlayStatusList();
   const platforms = usePlatforms();
-  const devices = useDevices();
+  const devices = useGameDevices();
   const stores = useStores();
   const gameModes = useGameModes();
   const genres = useGenres();

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT kind AS \"kind: DeviceKind\" FROM devices WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "kind: DeviceKind",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "kind"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ce6fb5c0c11cba6f4b8f9b9b3e5c81bc851b16be2adf5e555eda67db9da6caa8"
+}

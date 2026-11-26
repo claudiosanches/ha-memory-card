@@ -3,23 +3,14 @@
 **Manage** in the sidebar holds the lists the collection is built from. Only
 managers see it.
 
-![Manage, on the Devices tab](https://ha-memory-card.pages.dev/images/manage.webp)
+![Manage, on the Platforms tab](https://ha-memory-card.pages.dev/images/manage.webp)
 
-The device, store, platform and label forms show each one's slug: the short
-name that library links, Home Assistant rolls and CSV files use.
+The store, platform and label forms, and the device form on
+[Hardware](hardware.md), show each one's slug: the short name that library
+links, Home Assistant rolls and CSV files use.
 
-## Devices
-
-The consoles, handhelds, PCs and store accounts your games live on. **Add
-device** asks for:
-
-- a name that tells your devices apart, such as "Living room Switch";
-- the type: **Console**, **Handheld**, **PC** or **Account**;
-- the model, shown under the name, such as "Switch OLED";
-- **Plays:** the platforms whose games it runs. A Wii U plays Wii U and Wii.
-
-Inactive devices are left out when choosing where a copy lives. Deleting a
-device keeps its copies, with no device.
+Consoles, handhelds, PCs and accounts are on the [Hardware](hardware.md)
+page, with the rest of your hardware.
 
 ## Stores
 

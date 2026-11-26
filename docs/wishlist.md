@@ -29,3 +29,7 @@ copy from the wishlist.
 Wishlist copies do not count as owned anywhere else: the library, backlog,
 duplicates and Missing details look only at copies you own. In the
 [Library](library.md), **Filters > Show > Wishlist** lists the games on it.
+
+Hardware you want, such as a controller or an amiibo, shows under
+**Hardware** below the copies. **Got it** opens its form as owned. See
+[Hardware](hardware.md).

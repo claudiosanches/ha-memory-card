@@ -29,7 +29,7 @@ credentials are optional; without them you enter games by hand.
 Memory Card keeps one collection for the whole household, and each person's
 play apart.
 
-- The collection is shared: games, copies, devices, stores, platforms,
+- The collection is shared: games, copies, hardware, stores, platforms,
   labels, the list of play statuses, NFC tags, photos and covers. Everyone can
   browse it, and managers change it.
 - Play is each person's own: their play status for every game, which makes
@@ -66,8 +66,8 @@ starts read-only. To name a manager:
 
 Everyone else is a viewer. Viewers browse the library, game pages, the
 backlog, duplicates, stats and the household. They cannot change the
-collection, import or export CSV files, manage devices, stores, platforms,
-play statuses and labels, or sync with IGDB. Requests that Home Assistant
+collection or its hardware, import or export CSV files, manage stores,
+platforms, play statuses and labels, or sync with IGDB. Requests that Home Assistant
 does not tie to a user are refused.
 
 Managers keep their own play. To let viewers keep theirs, turn on
@@ -203,6 +203,18 @@ owned anywhere else: the library, backlog, duplicates and Missing details
 only look at copies you own. **Show > Wishlist** in the library filters
 lists the games on it.
 
+## Hardware
+
+**Hardware** in the sidebar lists the consoles, accounts, controllers,
+accessories and toys, such as amiibo, the household owns or wants. Consoles,
+handhelds, PCs and accounts hold games: each copy can say which one it lives
+on, and **Plays** lists the platforms they run. Controllers, accessories and
+toys hold no games and name the platform they are for. Each item keeps its
+region, condition, where and when it was bought, what it cost and what it
+would sell for now, serial number, barcode, notes and up to 20 photos.
+Hardware on the wishlist also shows on the Wishlist page, and **Stats** sums
+up the hardware apart from the games.
+
 ## Barcodes
 
 **Scan barcode** on the Library and Wishlist pages reads the barcode on a
@@ -246,7 +258,8 @@ bundle copy's `copy_id` in its `bundle_copy_id` column.
 ## Import & export (CSV)
 
 **Import & export** in the sidebar downloads your collection as a CSV file
-and imports one back. Start from **Download blank template** to enter a
+and imports one back. Its **Hardware** tab does the same for your hardware,
+in a file of its own. Start from **Download blank template** to enter a
 collection in a spreadsheet. **Export CSV** on the Library page downloads
 only the copies that match its filters.
 
@@ -269,7 +282,7 @@ names for each game, to link with a click or mark as not on IGDB.
   Store, Microsoft Store, Steam, Epic Games Store, GOG, itch.io) exist from
   the start. Names that match nothing are created. A new device is an account
   when all its copies are digital, otherwise a console; change it on the
-  Manage screen.
+  Hardware page.
 - The export fills `copy_id`. Keep it to update that copy when importing the
   file again; leave it empty to add a new copy. Columns the file does not
   have keep that copy's values, while an empty cell clears one. Importing an
@@ -314,7 +327,7 @@ _Game titles belong to their respective owners._
 games, copies and wishlist copies the house has, your backlog progress and
 your games by play status, your most played games and a calendar of your
 play, copies by platform and by store, and what was paid next to what the
-copies are worth now.
+copies are worth now. A **Hardware** group does the same for your hardware.
 
 ![The Household page comparing everyone's play this month](https://ha-memory-card.pages.dev/images/household.webp)
 
@@ -490,7 +503,8 @@ includes in its backups:
 - `db/memory-card.sqlite`: your collection.
 - `db/pre-migration/`: a copy of the database taken before each upgrade that
   changes its structure. The last five are kept.
-- `covers/`: downloaded and uploaded covers, and photos of copies.
+- `covers/`: downloaded and uploaded covers, and photos of copies and
+  hardware.
 
 Backups stop the app for a moment so the database is copied in a consistent
 state. The app starts again on its own when the backup finishes.

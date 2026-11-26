@@ -6,16 +6,23 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import type { CopyPhoto } from '../../api/types';
-import { notifyError } from '../../components/notify';
+import type { CopyPhoto, GameDetail } from '../../api/types';
+import { notifyError, notifySuccess } from '../../components/notify';
 import { useGameSaved } from './forms';
 import classes from './Copies.module.css';
 import { useFormatDate } from '../../hooks/useFormatDate';
 
-type Props = { photos: CopyPhoto[]; start: number; canDelete: boolean; onClose: () => void };
+type Props = {
+  photos: CopyPhoto[];
+  start: number;
+  canDelete: boolean;
+  onClose: () => void;
+  /** Deletes a photo that is not a copy's, such as a device's. */
+  onDelete?: (id: number) => Promise<unknown>;
+};
 
 /** One copy's photos, full size, one at a time. */
-export function PhotoViewer({ photos, start, canDelete, onClose }: Props) {
+export function PhotoViewer({ photos, start, canDelete, onClose, onDelete }: Props) {
   const { t } = useTranslation();
   const formatDate = useFormatDate();
   const phone = useMediaQuery('(max-width: 48em)');
@@ -26,9 +33,11 @@ export function PhotoViewer({ photos, start, canDelete, onClose }: Props) {
   const photo = photos[index];
 
   const remove = useMutation({
-    mutationFn: (id: number) => call(api.DELETE('/api/photos/{id}', { params: { path: { id } } })),
-    onSuccess: (game) => {
-      saved(game, t('common.deleted'));
+    mutationFn: (id: number): Promise<unknown> =>
+      onDelete ? onDelete(id) : call(api.DELETE('/api/photos/{id}', { params: { path: { id } } })),
+    onSuccess: (result) => {
+      if (onDelete) notifySuccess(t('common.deleted'));
+      else saved(result as GameDetail, t('common.deleted'));
       if (photos.length <= 1) onClose();
     },
     onError: (error) => notifyError(errorMessage(t, error)),

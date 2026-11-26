@@ -193,7 +193,8 @@ try {
       },
     }),
   ]);
-  await save('manage', [await capture('/manage?tab=devices')]);
+  await save('manage', [await capture('/manage?tab=platforms')]);
+  await save('hardware', [await capture('/hardware')]);
   await save('settings', [await capture('/settings')]);
 
   const phone = { width: 390, height: 844, mobile: true };

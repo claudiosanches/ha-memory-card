@@ -23,9 +23,11 @@ const USER_NAME: &str = "x-remote-user-name";
 const USER_DISPLAY_NAME: &str = "x-remote-user-display-name";
 
 /// Reads anyone may make, except these manager tools.
-const MANAGER_READS: [&str; 8] = [
+const MANAGER_READS: [&str; 10] = [
     "/api/export.csv",
     "/api/import/template.csv",
+    "/api/hardware.csv",
+    "/api/hardware/template.csv",
     "/api/igdb/search",
     "/api/igdb/titles",
     "/api/games/{id}/igdb-contents",

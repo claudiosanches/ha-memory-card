@@ -50,7 +50,10 @@ export type MissingField = Schemas['MissingField'];
 export type Role = Schemas['Role'];
 export type LibraryQuery = NonNullable<operations['listGames']['parameters']['query']>;
 
-export const DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account'];
+export const DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account', 'controller', 'accessory', 'toy'];
+/** Kinds that hold copies; the rest is hardware for a platform. */
+export const GAME_DEVICE_KINDS: readonly DeviceKind[] = ['console', 'handheld', 'pc', 'account'];
+export const holdsGames = (kind: DeviceKind) => GAME_DEVICE_KINDS.includes(kind);
 export const REGIONS: readonly Region[] = ['na', 'eu', 'au', 'nz', 'jp', 'cn', 'asia', 'kr', 'br', 'ww'];
 export const FORMATS: readonly Format[] = ['physical', 'digital'];
 export const PLATFORM_CATEGORIES: readonly PlatformCategory[] = [

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO device_photos (device_id, path, created_by) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "be63d3b11d6766c80a483b57b40707ee359c51a0d41c9cbf05e69f6a6433e42d"
+}

@@ -61,6 +61,7 @@ const STATS: Stats = {
   total_sessions: 3,
   total_minutes: 150,
   most_played: [{ game_id: 4, title: 'Hades', sessions: 3, minutes: 150 }],
+  hardware: { owned: 0, wanted: 0, kinds: [], spent: [], estimated: [] },
 };
 
 const PLATFORMS = [1, 2].map((id) => ({

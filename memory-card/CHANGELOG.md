@@ -21,8 +21,11 @@ First release.
 - Library as a cover grid, a compact list or a table of copies, with a search
   that ignores case and accents, and filters kept in the address.
 - Labels to group and filter games.
-- Manage pages for devices, stores, platforms, play statuses and labels, with
-  every IGDB platform ready to switch on.
+- Hardware: consoles, handhelds, PCs and accounts that copies live on, and
+  controllers, accessories and toys, with condition, price, value, photos,
+  the wishlist, stats and a CSV file of their own.
+- Manage pages for stores, platforms, play statuses and labels, with every
+  IGDB platform ready to switch on.
 - Cleanup: missing details filled in one game at a time, and duplicates.
 - IGDB covers, summaries, genres, game modes, player counts, other names and
   time to beat, with regional covers for Japan, Korea and Europe.

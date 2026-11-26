@@ -14,8 +14,11 @@ export async function seed(api) {
   }
   console.log('Adding test data');
   const platforms = new Map((await api('GET', '/api/platforms')).map((p) => [p.slug, p.id]));
-  for (const [name, kind, slugs] of DEVICES) {
-    await api('POST', '/api/devices', { name, kind, platform_ids: slugs.map((slug) => platforms.get(slug)) });
+  for (const [name, kind, slugs, details = {}] of DEVICES) {
+    await api('POST', '/api/devices', { name, kind, platform_ids: slugs.map((slug) => platforms.get(slug)), ...details });
+  }
+  for (const [name, kind, slug, details] of HARDWARE) {
+    await api('POST', '/api/devices', { name, kind, platform_id: platforms.get(slug), ...details });
   }
   for (const [label, color, counts_as] of STATUSES) {
     await api('POST', '/api/play-statuses', { label, color, counts_as });
@@ -132,7 +135,21 @@ export const PLAYERS = {
 };
 
 const DEVICES = [
-  ['Switch OLED', 'console', ['switch']],
+  [
+    'Switch OLED',
+    'console',
+    ['switch'],
+    {
+      model: 'White',
+      region: 'eu',
+      condition: 'cib',
+      purchased_on: '2021-10-08',
+      price: '349.99',
+      currency: 'EUR',
+      estimated_value: '280',
+      estimated_currency: 'EUR',
+    },
+  ],
   ['Nintendo Account', 'account', ['switch']],
   ['PS5', 'console', ['ps5', 'ps4']],
   ['PlayStation Network', 'account', ['ps5', 'ps4']],
@@ -142,11 +159,26 @@ const DEVICES = [
   ['GOG account', 'account', ['pc']],
   ['Xbox Series X', 'console', ['xbox-series']],
   ['Microsoft account', 'account', ['xbox-series', 'pc']],
-  ['GameCube', 'console', ['gamecube']],
+  [
+    'GameCube',
+    'console',
+    ['gamecube'],
+    { model: 'Indigo', region: 'na', condition: 'loose', price: '199.99', currency: 'USD', estimated_value: '120', estimated_currency: 'USD' },
+  ],
   ['Nintendo 64', 'console', ['n64']],
   ['Super Nintendo', 'console', ['snes']],
   ['Game Boy Advance SP', 'handheld', ['gba']],
   ['New Nintendo 3DS XL', 'handheld', ['3ds']],
+];
+
+// Controllers, accessories and toys, which hold no games.
+const HARDWARE = [
+  ['Pro Controller', 'controller', 'switch', { condition: 'loose', price: '69.99', currency: 'EUR', estimated_value: '45', estimated_currency: 'EUR' }],
+  ['DualSense Midnight Black', 'controller', 'ps5', { price: '74.99', currency: 'EUR' }],
+  ['WaveBird', 'controller', 'gamecube', { condition: 'cib', price: '35', currency: 'USD', estimated_value: '90', estimated_currency: 'USD' }],
+  ['Game Boy Player', 'accessory', 'gamecube', { condition: 'loose', estimated_value: '150', estimated_currency: 'USD' }],
+  ['Link amiibo', 'toy', 'switch', { condition: 'sealed', price: '15.99', currency: 'EUR' }],
+  ['Samus amiibo', 'toy', 'switch', { status: 'wanted', price: '17.99', currency: 'EUR' }],
 ];
 
 const STATUSES = [

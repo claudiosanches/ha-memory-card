@@ -42,6 +42,7 @@ export default {
             page('Game page', 'game'),
             page('Backlog', 'backlog'),
             page('Wishlist', 'wishlist'),
+            page('Hardware', 'hardware'),
             page('Stats', 'stats'),
             page('Household', 'household'),
             page('Manage', 'manage'),

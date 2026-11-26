@@ -24,6 +24,8 @@ pub struct DeviceRow {
     pub id: i64,
     pub name: String,
     pub platform_ids: Vec<i64>,
+    /// False for controllers, accessories and toys, which hold no copies.
+    pub holds_games: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -90,7 +92,8 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
     let devices = sqlx::query!(
         r#"SELECT d.id AS "id!", d.name,
                   (SELECT json_group_array(platform_id) FROM device_platforms
-                   WHERE device_id = d.id) AS "platform_ids!: sqlx::types::Json<Vec<i64>>"
+                   WHERE device_id = d.id) AS "platform_ids!: sqlx::types::Json<Vec<i64>>",
+                  d.kind IN ('console', 'handheld', 'pc', 'account') AS "holds_games!: bool"
            FROM devices d"#
     )
     .fetch_all(&mut *conn)
@@ -100,6 +103,7 @@ pub async fn load(conn: &mut SqliteConnection, person: &str) -> sqlx::Result<Sna
         id: row.id,
         name: row.name,
         platform_ids: row.platform_ids.0,
+        holds_games: row.holds_games,
     })
     .collect();
 

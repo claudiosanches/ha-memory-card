@@ -89,8 +89,8 @@ There are three ways in:
 - **From the box:** select **Scan barcode** and point a phone at the box. See
   [Barcodes](barcodes.md).
 
-Before adding many copies, set up your consoles and accounts under
-[Manage](manage.md), so each copy can say which device it lives on.
+Before adding many copies, add your consoles and accounts under
+[Hardware](hardware.md), so each copy can say which device it lives on.
 
 ## Next
 

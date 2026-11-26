@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT (SELECT COUNT(*) FROM device_photos WHERE device_id = d.id) AS \"photos!: i64\"\n           FROM devices d WHERE d.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "photos!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b24a5b7a113043f5a11e27de4b282f230121cfdeab876ed9344cbee5b5645736"
+}

@@ -543,6 +543,46 @@
         }
       }
     },
+    "/api/device-photos/{id}": {
+      "delete": {
+        "tags": [
+          "devices"
+        ],
+        "operationId": "deleteDevicePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The photo's device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/devices": {
       "get": {
         "tags": [
@@ -669,7 +709,7 @@
             }
           },
           "422": {
-            "description": "Includes `unknown_platform`",
+            "description": "Includes `unknown_platform` and `device_has_copies`",
             "content": {
               "application/json": {
                 "schema": {
@@ -701,6 +741,75 @@
             "description": "Deleted; its copies keep existing with no device"
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/devices/{id}/photos": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "operationId": "addDevicePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "$ref": "#/components/schemas/Image"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`too_many_photos`: 20 per device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`invalid_image` or `image_too_large`",
             "content": {
               "application/json": {
                 "schema": {
@@ -1797,6 +1906,114 @@
                   "items": {
                     "$ref": "#/components/schemas/Genre"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hardware.csv": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "operationId": "exportHardware",
+        "responses": {
+          "200": {
+            "description": "One row per device",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hardware/import": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "operationId": "runHardwareImport",
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwareResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`import_invalid`: preview the file to see why",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hardware/import/preview": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "operationId": "previewHardwareImport",
+        "requestBody": {
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwarePreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hardware/template.csv": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "operationId": "hardwareTemplate",
+        "responses": {
+          "200": {
+            "description": "Header row only",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -4210,16 +4427,53 @@
           "kind",
           "active",
           "platform_ids",
-          "copy_count"
+          "copy_count",
+          "status",
+          "photos"
         ],
         "properties": {
           "active": {
             "type": "boolean"
           },
+          "barcode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "copy_count": {
             "type": "integer",
             "format": "int64",
             "description": "Copies assigned to this device, of any status."
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimated_currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimated_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text: what it would sell for now."
           },
           "id": {
             "type": "integer",
@@ -4243,6 +4497,21 @@
               "null"
             ]
           },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyPhoto"
+            },
+            "description": "Oldest first."
+          },
+          "platform_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The platform a controller, accessory or toy is for."
+          },
           "platform_ids": {
             "type": "array",
             "items": {
@@ -4251,9 +4520,48 @@
             },
             "description": "Platforms this device plays, in platform list order."
           },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text, paid for owned hardware or expected for wanted."
+          },
+          "purchased_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Region"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "serial_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "slug": {
             "type": "string",
             "description": "Names the device in library links."
+          },
+          "status": {
+            "$ref": "#/components/schemas/CopyStatus"
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -4266,6 +4574,43 @@
         "properties": {
           "active": {
             "type": "boolean"
+          },
+          "barcode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UPC or EAN; spaces and hyphens are ignored."
+          },
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Condition",
+                "description": "Not for accounts."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimated_currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimated_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text: what it would sell for now; needs `estimated_currency`."
           },
           "kind": {
             "$ref": "#/components/schemas/DeviceKind"
@@ -4285,12 +4630,51 @@
               "null"
             ]
           },
+          "platform_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The platform a controller, accessory or toy is for."
+          },
           "platform_ids": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "int64"
-            }
+            },
+            "description": "Platforms a console, handheld, PC or account plays."
+          },
+          "price": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Decimal text such as `299.99`; needs `currency`."
+          },
+          "purchased_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`YYYY-MM-DD`."
+          },
+          "region": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Region"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "serial_number": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "slug": {
             "type": [
@@ -4298,6 +4682,24 @@
               "null"
             ],
             "description": "Names it in library links. Blank makes one from the name for a new\none and keeps the current one on update."
+          },
+          "status": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CopyStatus",
+                "description": "`wanted` puts it on the wishlist. Left out, it is owned."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "store_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -4307,7 +4709,10 @@
           "console",
           "handheld",
           "pc",
-          "account"
+          "account",
+          "controller",
+          "accessory",
+          "toy"
         ]
       },
       "DuplicateCopy": {
@@ -4914,6 +5319,140 @@
           }
         }
       },
+      "HardwareIssue": {
+        "type": "object",
+        "required": [
+          "column",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "column": {
+            "type": "string"
+          }
+        }
+      },
+      "HardwarePreview": {
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "properties": {
+          "file_issue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the file cannot be read at all, such as `missing_column`."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HardwareRow"
+            }
+          }
+        }
+      },
+      "HardwareResult": {
+        "type": "object",
+        "required": [
+          "created",
+          "updated",
+          "new_stores"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "new_stores": {
+            "type": "integer",
+            "description": "Stores named in the file that were added.",
+            "minimum": 0
+          },
+          "updated": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "HardwareRow": {
+        "type": "object",
+        "required": [
+          "line",
+          "name",
+          "issues"
+        ],
+        "properties": {
+          "device_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The device it updates, or none for a new one."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HardwareIssue"
+            }
+          },
+          "line": {
+            "type": "integer",
+            "description": "The file's line, counting the header as 1.",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "HardwareStats": {
+        "type": "object",
+        "required": [
+          "owned",
+          "wanted",
+          "kinds",
+          "spent",
+          "estimated"
+        ],
+        "properties": {
+          "estimated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "description": "What owned items would sell for now, per currency."
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KindCount"
+            },
+            "description": "Owned items per kind, largest first."
+          },
+          "owned": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Owned items, not counting accounts."
+          },
+          "spent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amount"
+            },
+            "description": "What owned items cost, per currency; `copies` counts items."
+          },
+          "wanted": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Hardware on the wishlist."
+          }
+        }
+      },
       "HeaderMatch": {
         "type": "object",
         "description": "How a header was read. `column` is empty for headers that match nothing\nor repeat a column an earlier header took.",
@@ -5083,6 +5622,22 @@
           "warning_rows": {
             "type": "integer",
             "minimum": 0
+          }
+        }
+      },
+      "KindCount": {
+        "type": "object",
+        "required": [
+          "kind",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DeviceKind"
           }
         }
       },
@@ -6187,7 +6742,8 @@
           "play_days",
           "total_sessions",
           "total_minutes",
-          "most_played"
+          "most_played",
+          "hardware"
         ],
         "properties": {
           "added_by_month": {
@@ -6230,6 +6786,10 @@
             "type": "integer",
             "format": "int64",
             "description": "Games with an owned copy."
+          },
+          "hardware": {
+            "$ref": "#/components/schemas/HardwareStats",
+            "description": "Owned hardware other than accounts."
           },
           "most_played": {
             "type": "array",

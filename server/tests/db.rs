@@ -39,6 +39,7 @@ async fn fresh_database_has_schema_and_seed() {
         [
             "copies",
             "copy_photos",
+            "device_photos",
             "device_platforms",
             "devices",
             "game_game_modes",

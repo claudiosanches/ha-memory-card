@@ -54,8 +54,11 @@ const server = http.createServer((req, res) => {
     },
   );
   upstream.on('error', (err) => {
-    res.writeHead(502, { 'Content-Type': 'text/plain' }).end(String(err));
+    if (!res.headersSent) res.writeHead(502, { 'Content-Type': 'text/plain' }).end(String(err));
   });
+  // A closed page ends its request upstream too, as Home Assistant's ingress
+  // does, so the app stops counting its event stream.
+  res.on('close', () => upstream.destroy());
   req.pipe(upstream);
 });
 

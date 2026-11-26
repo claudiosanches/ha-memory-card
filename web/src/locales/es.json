@@ -22,7 +22,8 @@
     "manage": "Gestionar",
     "cleanup": "Limpieza",
     "import": "Importar / exportar",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "hardware": "Hardware"
   },
   "common": {
     "actions": "Acciones",
@@ -51,9 +52,8 @@
     "notBuilt": "Esta pantalla aún no está hecha."
   },
   "manage": {
-    "intro": "Organiza los dispositivos, tiendas, plataformas, estados de juego y categorías que usa tu colección.",
+    "intro": "Organiza las tiendas, plataformas, estados de juego y categorías que usa tu colección.",
     "tabs": {
-      "devices": "Dispositivos",
       "stores": "Tiendas",
       "platforms": "Plataformas",
       "playStatuses": "Estados de juego",
@@ -61,14 +61,9 @@
     }
   },
   "devices": {
-    "add": "Añadir dispositivo",
-    "edit": "Editar dispositivo",
-    "empty": "Aún no hay dispositivos. Añade las consolas, portátiles, PC y cuentas de tienda donde están tus juegos.",
     "kind": "Tipo",
-    "nameDescription": "Así eliges este dispositivo para una copia. Usa nombres que distingan tus dispositivos.",
     "namePlaceholder": "Switch del salón",
     "model": "Modelo",
-    "modelDescription": "Opcional. El modelo o la edición del aparato, mostrado bajo el nombre en esta pantalla.",
     "modelPlaceholder": "Switch OLED, New 3DS XL, CUH-7216B",
     "platforms": "Ejecuta",
     "platformsDescription": "Plataformas cuyos juegos ejecuta este dispositivo. Una Wii U ejecuta juegos de Wii U y de Wii.",
@@ -81,7 +76,10 @@
     "console": "Consola",
     "handheld": "Portátil",
     "pc": "PC",
-    "account": "Cuenta"
+    "account": "Cuenta",
+    "controller": "Mando",
+    "accessory": "Accesorio",
+    "toy": "Juguete o figura"
   },
   "stores": {
     "add": "Añadir tienda",
@@ -288,7 +286,10 @@
     "too_large": "Se envió demasiado de una vez. Divide el archivo e inténtalo de nuevo.",
     "too_many_writes": "Todavía se están enviando demasiados cambios tuyos. Espera un momento e inténtalo de nuevo.",
     "too_many_downloads": "Todavía se están descargando demasiados archivos grandes para ti. Espera un momento e inténtalo de nuevo.",
-    "label_separator": "Las categorías no pueden contener comas ni punto y coma."
+    "label_separator": "Las categorías no pueden contener comas ni punto y coma.",
+    "device_holds_no_games": "Las copias van en una consola, portátil, PC o cuenta, no en otro hardware.",
+    "device_has_copies": "Hay copias en este dispositivo. Muévelas antes, o mantenlo como consola, portátil, PC o cuenta.",
+    "not_for_this_kind": "Esto no aplica a ese tipo de hardware."
   },
   "import": {
     "intro": "Pasa tu colección entre Memory Card y una hoja de cálculo.",
@@ -391,7 +392,8 @@
     "notImported": "No se importa",
     "readAs": "Leer {{header}} como",
     "noHeader": "(sin encabezado)",
-    "reviewMatches": "Revisar coincidencias de IGDB"
+    "reviewMatches": "Revisar coincidencias de IGDB",
+    "tabGames": "Juegos"
   },
   "importIssues": {
     "required": "Necesita un valor.",
@@ -409,7 +411,9 @@
     "nested_bundle": "Un recopilatorio no puede ir dentro de otro.",
     "same_game": "La copia del recopilatorio es de este mismo juego.",
     "ignored_in_bundle": "Se omite: el precio, el valor estimado y la fecha de compra se quedan en la copia del recopilatorio.",
-    "too_many_labels": "Más de 50 categorías."
+    "too_many_labels": "Más de 50 categorías.",
+    "device_holds_no_games": "Ese dispositivo es hardware sin juegos.",
+    "duplicate_row": "Otra fila tiene el mismo nombre."
   },
   "fileIssues": {
     "not_utf8": "El archivo no está en UTF-8. Guárdalo como \"CSV UTF-8\" e inténtalo de nuevo.",
@@ -890,7 +894,10 @@
     "copiesCount_one": "{{count}} copia",
     "copiesCount_other": "{{count}} copias",
     "gamesCount_one": "{{count}} juego",
-    "gamesCount_other": "{{count}} juegos"
+    "gamesCount_other": "{{count}} juegos",
+    "hardwareItems": "Hardware",
+    "hardwareWanted_one": "{{count}} en la lista de deseos",
+    "hardwareWanted_other": "{{count}} en la lista de deseos"
   },
   "household": {
     "intro": "Mira cómo juega cada persona de la casa.",
@@ -1038,5 +1045,38 @@
       "tagline": "Bienvenido a la autopista de la información.",
       "close": "Cerrar"
     }
+  },
+  "hardware": {
+    "intro": "Consolas, cuentas, mandos, accesorios y juguetes que tiene o quiere la casa.",
+    "add": "Añadir hardware",
+    "edit": "Editar hardware",
+    "holdsGames": "Contiene juegos",
+    "other": "Otro hardware",
+    "nameDescription": "Lo distingue del resto y sirve para elegir la consola o cuenta de una copia.",
+    "modelDescription": "Opcional. El modelo o la edición, como un color.",
+    "for": "Para",
+    "forDescription": "La plataforma con la que va.",
+    "serialNumber": "Número de serie",
+    "showOwned": "Lo tengo",
+    "showAll": "Todo",
+    "allKinds": "Todos los tipos",
+    "empty": "Aún no hay hardware aquí.",
+    "paid": "Pagado {{amount}}",
+    "expected": "{{amount}} previsto",
+    "worth": "Vale {{amount}}",
+    "exportTitle": "Exportar",
+    "exportText": "Descarga tu hardware como archivo CSV, o un archivo vacío para rellenar.",
+    "exportButton": "Exportar hardware",
+    "importTitle": "Importar",
+    "importText": "Las filas actualizan el hardware con el mismo device_id o nombre, o añaden hardware nuevo. Las columnas que el archivo no tiene conservan sus valores; una celda vacía borra uno. Las tiendas que aún no existen se añaden.",
+    "importDone": "Añadidos {{created}}, actualizados {{updated}}.",
+    "columns": "Columnas: {{columns}}. kind es console, handheld, pc, account, controller, accessory o toy; plays lista plataformas separadas por punto y coma.",
+    "previewSummary": "{{created}} nuevos, {{updated}} por actualizar.",
+    "previewErrors_one": "{{count}} fila necesita arreglo.",
+    "previewErrors_other": "{{count}} filas necesitan arreglo.",
+    "line": "Línea",
+    "change": "Cambio",
+    "new": "Nuevo",
+    "update": "Actualizar"
   }
 }

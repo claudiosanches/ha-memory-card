@@ -2,6 +2,7 @@
 //! describes a game with no copies.
 
 pub mod export;
+pub mod hardware;
 pub mod parse;
 pub mod plan;
 

@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Device, Label, Platform, Store } from '../../api/types';
+import type { Label, Platform, Store } from '../../api/types';
 import en from '../../locales/en.json';
 import { json, mockApi } from '../../test/api';
 import { renderAt } from '../../test/render';
@@ -31,97 +31,6 @@ const PLATFORMS = [
   platform(2, 'Wii', { abbreviation: 'Wii', device_count: 1 }),
   platform(3, 'Nintendo 3DS', { abbreviation: '3DS', custom: true }),
 ];
-
-const WII_U: Device = {
-  id: 7,
-  name: 'Living room Wii U',
-  slug: 'living-room-wii-u',
-  kind: 'console',
-  model: 'Deluxe',
-  notes: null,
-  active: true,
-  platform_ids: [1, 2],
-  copy_count: 3,
-};
-
-describe('Manage devices', () => {
-  it('lists devices with their kind and platforms', async () => {
-    mockApi({ 'GET /api/devices': [WII_U], 'GET /api/platforms': PLATFORMS });
-    renderAt('/manage');
-
-    const row = await screen.findByTestId('device-Living room Wii U');
-    expect(within(row).getByText(en.deviceKind.console)).toBeInTheDocument();
-    expect(within(row).getByText('Deluxe')).toBeInTheDocument();
-    expect(within(row).getByText('Wii U')).toBeInTheDocument();
-    expect(within(row).getByText('Wii')).toBeInTheDocument();
-  });
-
-  it('creates a device', async () => {
-    const calls = mockApi({
-      'GET /api/devices': [],
-      'GET /api/platforms': PLATFORMS,
-      'POST /api/devices': (body: unknown) => json({ ...WII_U, ...(body as object), id: 8 }, 201),
-    });
-    renderAt('/manage');
-
-    fireEvent.click(await screen.findByRole('button', { name: en.devices.add }));
-    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), {
-      target: { value: 'Switch OLED' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
-
-    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
-    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
-      name: 'Switch OLED',
-      slug: 'switch-oled',
-      kind: 'console',
-      model: '',
-      notes: '',
-      active: true,
-      platform_ids: [],
-    });
-  });
-
-  it('shows a taken name on the name field', async () => {
-    mockApi({
-      'GET /api/devices': [WII_U],
-      'GET /api/platforms': PLATFORMS,
-      'POST /api/devices': json({ code: 'name_taken' }, 409),
-    });
-    renderAt('/manage');
-
-    fireEvent.click(await screen.findByRole('button', { name: en.devices.add }));
-    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), {
-      target: { value: 'living room wii u' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
-
-    expect(await screen.findByText(en.errors.name_taken)).toBeInTheDocument();
-  });
-
-  it('requires a name before calling the API', async () => {
-    const calls = mockApi({ 'GET /api/devices': [], 'GET /api/platforms': PLATFORMS });
-    renderAt('/manage');
-
-    fireEvent.click(await screen.findByRole('button', { name: en.devices.add }));
-    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
-
-    expect(await screen.findByText(en.errors.required)).toBeInTheDocument();
-    expect(calls.filter((c) => c.method === 'POST')).toEqual([]);
-  });
-
-  it('warns how many copies lose their device on delete', async () => {
-    mockApi({ 'GET /api/devices': [WII_U], 'GET /api/platforms': PLATFORMS });
-    renderAt('/manage');
-
-    const row = await screen.findByTestId('device-Living room Wii U');
-    fireEvent.click(within(row).getByRole('button', { name: en.common.delete }));
-
-    expect(
-      await screen.findByText('3 copies are on this device. They will be kept with no device.'),
-    ).toBeInTheDocument();
-  });
-});
 
 describe('Manage stores', () => {
   it('opens on the tab named in the URL', async () => {

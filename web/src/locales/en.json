@@ -22,7 +22,8 @@
     "manage": "Manage",
     "cleanup": "Cleanup",
     "import": "Import & export",
-    "settings": "Settings"
+    "settings": "Settings",
+    "hardware": "Hardware"
   },
   "common": {
     "actions": "Actions",
@@ -51,9 +52,8 @@
     "notBuilt": "This screen is not built yet."
   },
   "manage": {
-    "intro": "Organize the devices, stores, platforms, play statuses, and labels used in your collection.",
+    "intro": "Organize the stores, platforms, play statuses, and labels used in your collection.",
     "tabs": {
-      "devices": "Devices",
       "stores": "Stores",
       "platforms": "Platforms",
       "playStatuses": "Play statuses",
@@ -61,14 +61,9 @@
     }
   },
   "devices": {
-    "add": "Add device",
-    "edit": "Edit device",
-    "empty": "No devices yet. Add the consoles, handhelds, PCs and store accounts your games live on.",
     "kind": "Type",
-    "nameDescription": "How you pick this device for a copy. Use names that tell your devices apart.",
     "namePlaceholder": "Living room Switch",
     "model": "Model",
-    "modelDescription": "Optional. The hardware model or edition, shown under the name on this screen.",
     "modelPlaceholder": "Switch OLED, New 3DS XL, CUH-7216B",
     "platforms": "Plays",
     "platformsDescription": "Platforms whose games this device runs. A Wii U plays Wii U and Wii.",
@@ -81,7 +76,10 @@
     "console": "Console",
     "handheld": "Handheld",
     "pc": "PC",
-    "account": "Account"
+    "account": "Account",
+    "controller": "Controller",
+    "accessory": "Accessory",
+    "toy": "Toy or figure"
   },
   "stores": {
     "add": "Add store",
@@ -288,7 +286,10 @@
     "too_large": "Too much was sent at once. Split the file and try again.",
     "too_many_writes": "Too many of your changes are still being sent. Wait a moment and try again.",
     "too_many_downloads": "Too many large files are still downloading for you. Wait a moment and try again.",
-    "label_separator": "Labels cannot contain commas or semicolons."
+    "label_separator": "Labels cannot contain commas or semicolons.",
+    "device_holds_no_games": "Copies go on a console, handheld, PC or account, not on other hardware.",
+    "device_has_copies": "Copies are on this device. Move them first, or keep it a console, handheld, PC or account.",
+    "not_for_this_kind": "This does not apply to that kind of hardware."
   },
   "import": {
     "intro": "Move your collection between Memory Card and a spreadsheet.",
@@ -391,7 +392,8 @@
     "notImported": "Not imported",
     "readAs": "Read {{header}} as",
     "noHeader": "(no header)",
-    "reviewMatches": "Review IGDB matches"
+    "reviewMatches": "Review IGDB matches",
+    "tabGames": "Games"
   },
   "importIssues": {
     "required": "Needs a value.",
@@ -409,7 +411,9 @@
     "nested_bundle": "A bundle cannot go inside another bundle.",
     "same_game": "The bundle copy is of this same game.",
     "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy.",
-    "too_many_labels": "More than 50 labels."
+    "too_many_labels": "More than 50 labels.",
+    "device_holds_no_games": "That device is hardware that holds no games.",
+    "duplicate_row": "Another row has the same name."
   },
   "fileIssues": {
     "not_utf8": "The file is not UTF-8. Save it as \"CSV UTF-8\" and try again.",
@@ -890,7 +894,10 @@
     "copiesCount_one": "{{count}} copy",
     "copiesCount_other": "{{count}} copies",
     "gamesCount_one": "{{count}} game",
-    "gamesCount_other": "{{count}} games"
+    "gamesCount_other": "{{count}} games",
+    "hardwareItems": "Hardware",
+    "hardwareWanted_one": "{{count}} on the wishlist",
+    "hardwareWanted_other": "{{count}} on the wishlist"
   },
   "household": {
     "intro": "See how everyone in the house plays.",
@@ -1038,5 +1045,38 @@
       "tagline": "Welcome to the Information Superhighway.",
       "close": "Close"
     }
+  },
+  "hardware": {
+    "intro": "Consoles, accounts, controllers, accessories and toys the household owns or wants.",
+    "add": "Add hardware",
+    "edit": "Edit hardware",
+    "holdsGames": "Holds games",
+    "other": "Other hardware",
+    "nameDescription": "Tells it apart from the rest, and picks a console or account for a copy.",
+    "modelDescription": "Optional. The model or edition, such as a color.",
+    "for": "For",
+    "forDescription": "The platform it goes with.",
+    "serialNumber": "Serial number",
+    "showOwned": "I own",
+    "showAll": "All",
+    "allKinds": "Every kind",
+    "empty": "No hardware here yet.",
+    "paid": "Paid {{amount}}",
+    "expected": "{{amount}} expected",
+    "worth": "Worth {{amount}}",
+    "exportTitle": "Export",
+    "exportText": "Download your hardware as a CSV file, or a blank file to fill in.",
+    "exportButton": "Export hardware",
+    "importTitle": "Import",
+    "importText": "Rows update the hardware with the same device_id or name, or add new hardware. Columns the file does not have keep their values; an empty cell clears one. Stores that do not exist yet are added.",
+    "importDone": "Added {{created}}, updated {{updated}}.",
+    "columns": "Columns: {{columns}}. kind is console, handheld, pc, account, controller, accessory or toy; plays lists platforms separated by semicolons.",
+    "previewSummary": "{{created}} new, {{updated}} to update.",
+    "previewErrors_one": "{{count}} row needs fixing.",
+    "previewErrors_other": "{{count}} rows need fixing.",
+    "line": "Line",
+    "change": "Change",
+    "new": "New",
+    "update": "Update"
   }
 }

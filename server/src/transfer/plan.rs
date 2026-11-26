@@ -172,6 +172,8 @@ struct Planner<'a> {
     plan: Plan,
     platforms: PlatformIndex,
     devices: HashMap<String, Ref>,
+    /// Controllers, accessories and toys, by name key; copies cannot be on them.
+    hardware_only: HashSet<String>,
     device_platforms: HashMap<i64, HashSet<i64>>,
     /// The platforms each new device plays, by its index in the plan.
     new_device_platforms: HashSet<(usize, Ref)>,
@@ -256,6 +258,12 @@ impl<'a> Planner<'a> {
                 .devices
                 .iter()
                 .map(|d| (key(&d.name), Ref::Existing(d.id)))
+                .collect(),
+            hardware_only: snapshot
+                .devices
+                .iter()
+                .filter(|d| !d.holds_games)
+                .map(|d| key(&d.name))
                 .collect(),
             device_platforms: snapshot
                 .devices
@@ -452,7 +460,14 @@ impl<'a> Planner<'a> {
         let release_title = issues.text(&raw.release_title, "release_title", TITLE_MAX, false);
         let product_code = issues.text(&raw.product_code, "product_code", CODE_MAX, false);
         let format = issues.value(&raw.format, "format", Format::parse_loose, has_copy);
-        let device_name = issues.text(&raw.device, "device", NAME_MAX, false);
+        let mut device_name = issues.text(&raw.device, "device", NAME_MAX, false);
+        if device_name
+            .as_deref()
+            .is_some_and(|name| self.hardware_only.contains(&key(name)))
+        {
+            issues.error("device", "device_holds_no_games");
+            device_name = None;
+        }
         let store_name = issues.text(&raw.store, "store", NAME_MAX, false);
         let condition = issues.value(&raw.condition, "condition", Condition::parse_loose, false);
         if condition.is_some() && format == Some(Format::Digital) {

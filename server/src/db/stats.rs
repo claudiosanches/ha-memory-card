@@ -63,6 +63,28 @@ pub struct Stats {
     pub total_minutes: i64,
     /// The person's, by session count, then minutes.
     pub most_played: Vec<PlayedGame>,
+    /// Owned hardware other than accounts.
+    pub hardware: HardwareStats,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct HardwareStats {
+    /// Owned items, not counting accounts.
+    pub owned: i64,
+    /// Hardware on the wishlist.
+    pub wanted: i64,
+    /// Owned items per kind, largest first.
+    pub kinds: Vec<KindCount>,
+    /// What owned items cost, per currency; `copies` counts items.
+    pub spent: Vec<Amount>,
+    /// What owned items would sell for now, per currency.
+    pub estimated: Vec<Amount>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct KindCount {
+    pub kind: super::devices::DeviceKind,
+    pub count: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -411,6 +433,8 @@ pub async fn get(pool: &SqlitePool, person: &str) -> sqlx::Result<Stats> {
     .fetch_all(pool)
     .await?;
 
+    let hardware = hardware(pool).await?;
+
     Ok(Stats {
         games: counts.games,
         copies: counts.copies,
@@ -436,5 +460,55 @@ pub async fn get(pool: &SqlitePool, person: &str) -> sqlx::Result<Stats> {
         total_sessions: play.sessions,
         total_minutes: play.minutes,
         most_played,
+        hardware,
+    })
+}
+
+async fn hardware(pool: &SqlitePool) -> sqlx::Result<HardwareStats> {
+    let counts = sqlx::query!(
+        r#"SELECT COALESCE(SUM(status = 'owned'), 0) AS "owned!: i64",
+                  COALESCE(SUM(status = 'wanted'), 0) AS "wanted!: i64"
+           FROM devices WHERE kind != 'account'"#
+    )
+    .fetch_one(pool)
+    .await?;
+    let kinds = sqlx::query_as!(
+        KindCount,
+        r#"SELECT kind AS "kind!: super::devices::DeviceKind", COUNT(*) AS "count!: i64"
+           FROM devices WHERE status = 'owned' AND kind != 'account'
+           GROUP BY kind ORDER BY COUNT(*) DESC, kind"#
+    )
+    .fetch_all(pool)
+    .await?;
+    let spent = sqlx::query!(
+        r#"SELECT currency AS "currency!", SUM(price) AS "minor!: i64", COUNT(*) AS "items!: i64"
+           FROM devices
+           WHERE status = 'owned' AND price IS NOT NULL AND currency IS NOT NULL
+           GROUP BY currency ORDER BY COUNT(*) DESC, currency"#
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|row| amount(row.currency, row.minor, row.items))
+    .collect();
+    let estimated = sqlx::query!(
+        r#"SELECT estimated_currency AS "currency!", SUM(estimated_value) AS "minor!: i64",
+                  COUNT(*) AS "items!: i64"
+           FROM devices
+           WHERE status = 'owned' AND estimated_value IS NOT NULL
+             AND estimated_currency IS NOT NULL
+           GROUP BY estimated_currency ORDER BY COUNT(*) DESC, estimated_currency"#
+    )
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .map(|row| amount(row.currency, row.minor, row.items))
+    .collect();
+    Ok(HardwareStats {
+        owned: counts.owned,
+        wanted: counts.wanted,
+        kinds,
+        spent,
+        estimated,
     })
 }

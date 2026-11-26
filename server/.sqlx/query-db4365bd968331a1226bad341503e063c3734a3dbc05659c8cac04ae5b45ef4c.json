@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE devices\n         SET name = ?, slug = COALESCE(?, slug), kind = ?, model = ?, notes = ?, active = ?,\n             platform_id = ?, status = ?, region = ?, condition = ?, store_id = ?,\n             purchased_on = ?, price = ?, currency = ?, estimated_value = ?,\n             estimated_currency = ?, serial_number = ?, barcode = ?,\n             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 19
+    },
+    "nullable": []
+  },
+  "hash": "db4365bd968331a1226bad341503e063c3734a3dbc05659c8cac04ae5b45ef4c"
+}

@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from './client';
 import { ApiError, call } from './errors';
-import type { LibraryQuery } from './types';
+import { holdsGames, type LibraryQuery } from './types';
 
 export const queryKeys = {
   me: ['me'],
@@ -54,6 +54,15 @@ export function usePlatforms() {
 
 export function useDevices() {
   return useQuery({ queryKey: queryKeys.devices, queryFn: () => call(api.GET('/api/devices')) });
+}
+
+/** Owned devices copies can live on: consoles, handhelds, PCs and accounts. */
+export function useGameDevices() {
+  return useQuery({
+    queryKey: queryKeys.devices,
+    queryFn: () => call(api.GET('/api/devices')),
+    select: (devices) => devices.filter((d) => holdsGames(d.kind) && d.status === 'owned'),
+  });
 }
 
 export function useStores() {

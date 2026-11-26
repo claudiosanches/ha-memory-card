@@ -1,0 +1,263 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT d.id AS \"id!\", d.name, d.slug, d.kind AS \"kind: DeviceKind\", d.model, d.notes,\n                  d.active AS \"active: bool\",\n                  (SELECT json_group_array(platform_id) FROM (\n                       SELECT dp.platform_id FROM device_platforms dp\n                       JOIN platforms p ON p.id = dp.platform_id\n                       WHERE dp.device_id = d.id\n                       ORDER BY p.sort_order, p.name)) AS \"platform_ids!: Json<Vec<i64>>\",\n                  (SELECT COUNT(*) FROM copies c WHERE c.device_id = d.id) AS \"copy_count!: i64\",\n                  d.platform_id, d.status AS \"status: CopyStatus\", d.region AS \"region: Region\",\n                  d.condition AS \"condition: Condition\", d.store_id, d.purchased_on,\n                  d.price, d.currency, d.estimated_value, d.estimated_currency,\n                  d.serial_number, d.barcode,\n                  (SELECT json_group_array(json_object('id', id, 'path', path, 'created_at', created_at))\n                   FROM (SELECT id, path, created_at FROM device_photos\n                         WHERE device_id = d.id ORDER BY id)) AS \"photos!: Json<Vec<CopyPhoto>>\"\n           FROM devices d\n           WHERE d.id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "slug",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "name": "kind: DeviceKind",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "name": "model",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "model"
+          }
+        }
+      },
+      {
+        "name": "notes",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "notes"
+          }
+        }
+      },
+      {
+        "name": "active: bool",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "active"
+          }
+        }
+      },
+      {
+        "name": "platform_ids!: Json<Vec<i64>>",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "copy_count!: i64",
+        "ordinal": 8,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "platform_id",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "platform_id"
+          }
+        }
+      },
+      {
+        "name": "status: CopyStatus",
+        "ordinal": 10,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "name": "region: Region",
+        "ordinal": 11,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "region"
+          }
+        }
+      },
+      {
+        "name": "condition: Condition",
+        "ordinal": 12,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "condition"
+          }
+        }
+      },
+      {
+        "name": "store_id",
+        "ordinal": 13,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "store_id"
+          }
+        }
+      },
+      {
+        "name": "purchased_on",
+        "ordinal": 14,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "purchased_on"
+          }
+        }
+      },
+      {
+        "name": "price",
+        "ordinal": 15,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "price"
+          }
+        }
+      },
+      {
+        "name": "currency",
+        "ordinal": 16,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "currency"
+          }
+        }
+      },
+      {
+        "name": "estimated_value",
+        "ordinal": 17,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "estimated_value"
+          }
+        }
+      },
+      {
+        "name": "estimated_currency",
+        "ordinal": 18,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "estimated_currency"
+          }
+        }
+      },
+      {
+        "name": "serial_number",
+        "ordinal": 19,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "serial_number"
+          }
+        }
+      },
+      {
+        "name": "barcode",
+        "ordinal": 20,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "devices",
+            "name": "barcode"
+          }
+        }
+      },
+      {
+        "name": "photos!: Json<Vec<CopyPhoto>>",
+        "ordinal": 21,
+        "type_info": "Null",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "a6acbb0f90c9dced937c5e37990d0d1ada090a9eb125785ee30cc547adb5f619"
+}

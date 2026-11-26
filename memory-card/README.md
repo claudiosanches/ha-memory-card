@@ -28,6 +28,8 @@ login. Managers you name change the collection; everyone else browses it.
   pick when you cannot decide.
 - A wishlist, and barcode scans from your phone that tell you in a shop
   whether you own a game already.
+- Hardware: consoles, controllers, accessories and amiibo, with what they
+  cost and what they are worth.
 - Labels, photos of your copies, bundles and a list of games you own twice.
 - Stats on what you own, what you paid and what you played, and a
   Household page that compares everyone's play.

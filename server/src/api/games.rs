@@ -147,7 +147,7 @@ fn names(values: &[String]) -> ApiResult<Vec<String>> {
 
 /// An amount needs a currency; a currency alone is dropped. `fields` names
 /// the amount and currency fields in errors.
-fn price(
+pub(super) fn price(
     amount: Option<&str>,
     currency: Option<&str>,
     fields: (&'static str, &'static str),
