@@ -4,8 +4,8 @@
 --
 -- Slugs name rows in library links: lowercase ASCII letters, digits and hyphens.
 --
--- Game, release and copy ids are never reused, so an old export, a pending tag link or a cover
--- folder cannot land on a newer row.
+-- Game, release, copy and device ids are never reused, so an old export, a pending tag link or a
+-- photo folder cannot land on a newer row.
 
 CREATE TABLE platforms (
     id               INTEGER PRIMARY KEY,
@@ -36,7 +36,7 @@ CREATE TABLE stores (
 -- the platforms they play in device_platforms; controllers, accessories and
 -- toys do not, and name the platform they are for in platform_id.
 CREATE TABLE devices (
-    id                 INTEGER PRIMARY KEY,
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     name               TEXT    NOT NULL UNIQUE COLLATE NOCASE,
     slug               TEXT    NOT NULL UNIQUE COLLATE NOCASE,
     kind               TEXT    NOT NULL,
@@ -244,8 +244,8 @@ CREATE TABLE copies (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     release_id         INTEGER NOT NULL REFERENCES releases (id) ON DELETE CASCADE,
     -- A copy that came inside another copy, such as one game of a collection on a
-    -- single cartridge. It shares the bundle copy's status, format, device, store,
-    -- condition, platform and region; price and purchase date stay on the bundle.
+    -- single cartridge. It shares the bundle copy's status, format, device, account,
+    -- store, condition, platform and region; price and purchase date stay on the bundle.
     bundle_id          INTEGER REFERENCES copies (id) ON DELETE CASCADE,
     status             TEXT    NOT NULL DEFAULT 'owned',
     device_id          INTEGER REFERENCES devices (id) ON DELETE SET NULL,
@@ -271,10 +271,8 @@ CREATE TABLE copies (
     barcode            TEXT,
     notes              TEXT,
     -- Where a copy came from: `manual` when added in the app, `csv` from an
-    -- import. Store syncs add their own sources and keep the copy's id in that
-    -- store in source_ref, so a later sync finds the copies it made.
+    -- import.
     source             TEXT    NOT NULL DEFAULT 'manual',
-    source_ref         TEXT,
     -- When a copy became owned, so a wishlist copy marked Got it counts as added
     -- then. Kept by triggers, since every path that changes a status needs it.
     owned_at           TEXT,
@@ -290,7 +288,6 @@ CREATE INDEX copies_device ON copies (device_id);
 CREATE INDEX copies_account ON copies (account_id);
 CREATE INDEX copies_store ON copies (store_id);
 CREATE INDEX copies_barcode ON copies (barcode);
-CREATE UNIQUE INDEX copies_source_ref ON copies (source, source_ref) WHERE source_ref IS NOT NULL;
 
 CREATE TRIGGER copies_owned_on_insert AFTER INSERT ON copies
 WHEN NEW.status = 'owned'
@@ -406,11 +403,6 @@ CREATE TABLE suggestions (
 
 CREATE INDEX suggestions_person_game ON suggestions (user_id, game_id, suggested_at);
 CREATE INDEX suggestions_time ON suggestions (suggested_at);
-
-CREATE TABLE settings (
-    key   TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-) WITHOUT ROWID;
 
 -- Starting data, so the app works without IGDB credentials.
 
