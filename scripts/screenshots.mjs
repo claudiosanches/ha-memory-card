@@ -105,9 +105,10 @@ try {
     return png;
   }
 
-  /** Saves PNGs side by side as one WebP, scaled by `scale`. */
-  async function save(name, pngs, { scale = 1, gap = 0, pad = 0 } = {}) {
+  /** Takes the PNGs unless ONLY leaves `name` out, then saves them side by side as one WebP, scaled by `scale`. */
+  async function save(name, shots, { scale = 1, gap = 0, pad = 0 } = {}) {
     if (only.length && !only.some((prefix) => name.startsWith(prefix))) return;
+    const pngs = await shots();
     const url = await encoder.evaluate(
       async ({ images, scale, gap, pad }) => {
         const bitmaps = await Promise.all(
@@ -138,17 +139,17 @@ try {
 
   // The seed leaves a few games for this page. Linking each to its closest
   // match afterwards, as Link there does, gives every other shot covers.
-  await save('close-matches', [await capture('/igdb-matches')]);
+  await save('close-matches', async () => [await capture('/igdb-matches')]);
   for (const group of await api('GET', '/api/igdb/matches')) {
     await api('POST', `/api/games/${group.game_id}/igdb`, { igdb_id: group.candidates[0].igdb_id });
   }
   const games = await api('GET', '/api/games');
   const id = (title) => games.find((g) => g.title === title).id;
 
-  await save('library', [await capture('/')]);
-  await save('library-dark', [await capture('/', { scheme: 'dark' })]);
-  await save('library-copies', [await capture('/', { view: 'copies' })]);
-  await save('add-game', [
+  await save('library', async () => [await capture('/')]);
+  await save('library-dark', async () => [await capture('/', { scheme: 'dark' })]);
+  await save('library-copies', async () => [await capture('/', { view: 'copies' })]);
+  await save('add-game', async () => [
     await capture('/', {
       before: async (page) => {
         await page.getByRole('button', { name: 'Add game' }).click();
@@ -159,8 +160,8 @@ try {
       },
     }),
   ]);
-  await save('game', [await capture(`/games/${id('Stardew Valley')}`, { height: 1380 })]);
-  await save('backlog', [
+  await save('game', async () => [await capture(`/games/${id('Stardew Valley')}`, { height: 1380 })]);
+  await save('backlog', async () => [
     await capture('/backlog', {
       before: async (page) => {
         await page.getByRole('button', { name: 'Pick for me' }).click();
@@ -168,12 +169,12 @@ try {
       },
     }),
   ]);
-  await save('wishlist', [await capture('/wishlist')]);
-  await save('duplicates', [await capture('/cleanup?tab=duplicates')]);
-  await save('stats', [await capture('/stats', { scheme: 'dark' })]);
-  await save('household', [await capture('/household')]);
-  await save('missing-details', [await capture('/cleanup?tab=missing')]);
-  await save('import', [
+  await save('wishlist', async () => [await capture('/wishlist')]);
+  await save('duplicates', async () => [await capture('/cleanup?tab=duplicates')]);
+  await save('stats', async () => [await capture('/stats', { scheme: 'dark' })]);
+  await save('household', async () => [await capture('/household')]);
+  await save('missing-details', async () => [await capture('/cleanup?tab=missing')]);
+  await save('import', async () => [
     await capture('/import', {
       height: 1260,
       before: async (page) => {
@@ -193,21 +194,23 @@ try {
       },
     }),
   ]);
-  await save('manage', [await capture('/manage?tab=platforms')]);
-  await save('hardware', [await capture('/hardware')]);
-  await save('settings', [await capture('/settings')]);
+  await save('manage', async () => [await capture('/manage?tab=platforms')]);
+  await save('hardware', async () => [await capture('/hardware')]);
+  await save('settings', async () => [await capture('/settings')]);
 
   const phone = { width: 390, height: 844, mobile: true };
   await save(
     'phone',
-    [await capture('/', phone), await capture(`/games/${id('Mario Kart 8 Deluxe')}`, phone)],
+    async () => [await capture('/', phone), await capture(`/games/${id('Mario Kart 8 Deluxe')}`, phone)],
     { scale: 0.6, gap: 48, pad: 48 },
   );
 
   for (const theme of themes) {
     for (const scheme of ['light', 'dark']) {
       // Themes hide their sidebar picture below 45em (720 pixels) tall.
-      await save(`themes/${theme}-${scheme}`, [await capture('/', { width: 1280, height: 900, theme, scheme })]);
+      await save(`themes/${theme}-${scheme}`, async () => [
+        await capture('/', { width: 1280, height: 900, theme, scheme }),
+      ]);
     }
   }
 } finally {

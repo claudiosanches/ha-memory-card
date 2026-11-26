@@ -17,12 +17,47 @@ const ALLOWED = new Set([
   'Zlib',
 ]);
 
-/** Evaluates simple SPDX expressions: `A OR B`, `A AND B`, parentheses. */
+/**
+ * Evaluates an SPDX expression: AND binds tighter than OR and parentheses
+ * group. A `WITH` exception, or an expression it cannot read, is not allowed.
+ */
 function allowed(expression) {
-  const expr = expression.trim().replace(/^\((.*)\)$/, '$1');
-  if (/\sOR\s/.test(expr)) return expr.split(/\s+OR\s+/).some(allowed);
-  if (/\sAND\s/.test(expr)) return expr.split(/\s+AND\s+/).every(allowed);
-  return ALLOWED.has(expr);
+  const tokens = expression.match(/[()]|[^\s()]+/g) ?? [];
+  let at = 0;
+  const operator = (name) => tokens[at]?.toUpperCase() === name && ++at > 0;
+  const fail = () => {
+    throw new Error(expression);
+  };
+  const term = () => {
+    const token = tokens[at++];
+    if (token === '(') {
+      const ok = any();
+      if (tokens[at++] !== ')') fail();
+      return ok;
+    }
+    if (token === undefined || token === ')' || ['AND', 'OR', 'WITH'].includes(token.toUpperCase())) fail();
+    if (operator('WITH')) {
+      if (tokens[at++] === undefined) fail();
+      return false;
+    }
+    return ALLOWED.has(token);
+  };
+  const all = () => {
+    let ok = term();
+    while (operator('AND')) ok = term() && ok;
+    return ok;
+  };
+  const any = () => {
+    let ok = all();
+    while (operator('OR')) ok = all() || ok;
+    return ok;
+  };
+  try {
+    const ok = any();
+    return at === tokens.length && ok;
+  } catch {
+    return false;
+  }
 }
 
 const output = execFileSync('npm', ['query', '.workspace:attr([name=memory-card-web]) .prod'], {

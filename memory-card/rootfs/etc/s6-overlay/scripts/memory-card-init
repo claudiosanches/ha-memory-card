@@ -5,7 +5,7 @@
 set -eu
 chown memory-card:memory-card /data
 # -h so a link in /data never hands over the file it points to.
-find /data -mindepth 1 ! -user memory-card ! -name options.json -exec chown -h memory-card:memory-card {} +
+find /data -mindepth 1 ! -user memory-card ! -path /data/options.json -exec chown -h memory-card:memory-card {} +
 # Not through a link: chmod would change the file it points to.
 if [ -f /data/options.json ] && [ ! -L /data/options.json ]; then
     chgrp memory-card /data/options.json

@@ -9,7 +9,7 @@ set -eu
 archive=$1
 scripts=$(dirname "$0")
 tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
+trap 'rm -rf "$tmp"; docker rmi memory-card:smoke-amd64 memory-card:smoke-arm64 >/dev/null 2>&1 || true' EXIT
 
 for arch in amd64 arm64; do
     image=memory-card:smoke-$arch
