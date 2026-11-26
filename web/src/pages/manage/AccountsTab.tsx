@@ -207,7 +207,7 @@ function AccountForm({
         data-autofocus
         {...inputs.name}
       />
-      <SlugInput param="device" saved={account?.slug} {...inputs.slug} />
+      <SlugInput param="account" saved={account?.slug} {...inputs.slug} />
       <Select
         label={t('accounts.store')}
         description={t('accounts.storeDescription')}
