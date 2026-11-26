@@ -75,3 +75,30 @@ async fn wanted_copies_do_not_count() {
     let (_, groups) = app.json("GET", "/api/duplicates", None).await;
     assert_eq!(groups, json!([]));
 }
+
+#[tokio::test]
+async fn devices_and_accounts_are_compared_apart() {
+    let app = TestApp::new().await;
+    let csv = "game_title,platform,region,format,device,account\n\
+        Hades,PS5,eu,physical,PS5,\n\
+        Hades,PS5,eu,digital,PS5,PSN Alex\n\
+        Celeste,PS5,eu,digital,PS5,PSN Alex\n\
+        Celeste,PS5,eu,digital,PS5,PSN Sam\n";
+    let (status, result) = app.post_csv("/api/import", csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+
+    let (_, groups) = app.json("GET", "/api/duplicates", None).await;
+    let labels: Vec<(&str, &Value)> = groups
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|g| (g["title"].as_str().unwrap(), &g["labels"]))
+        .collect();
+    assert_eq!(
+        labels,
+        [
+            ("Celeste", &json!(["cross_device", "same_release"])),
+            ("Hades", &json!(["physical_digital", "same_release"])),
+        ]
+    );
+}

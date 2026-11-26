@@ -127,13 +127,8 @@ fn labels(copies: &[DuplicateCopy]) -> Vec<DuplicateLabel> {
         ),
         (
             DuplicateLabel::CrossDevice,
-            // Devices and accounts both say where a copy lives.
-            distinct(
-                copies
-                    .iter()
-                    .filter(|c| c.device_id.is_some() || c.account_id.is_some())
-                    .map(|c| (c.device_id, c.account_id)),
-            ) > 1,
+            distinct(copies.iter().filter_map(|c| c.device_id)) > 1
+                || distinct(copies.iter().filter_map(|c| c.account_id)) > 1,
         ),
         (
             DuplicateLabel::PhysicalDigital,
