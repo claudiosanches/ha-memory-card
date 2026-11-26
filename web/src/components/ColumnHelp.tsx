@@ -1,8 +1,9 @@
 import { Accordion, Code, Stack, Table, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /** A folded table of a CSV file's columns and what each one accepts. */
-export function ColumnHelp({ intro, columns }: { intro: string; columns: { name: string; help: string }[] }) {
+export function ColumnHelp({ intro, columns }: { intro: ReactNode; columns: { name: string; help: string }[] }) {
   const { t } = useTranslation();
   return (
     <Accordion variant="contained">

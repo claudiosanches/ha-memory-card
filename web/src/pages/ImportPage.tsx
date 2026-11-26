@@ -10,7 +10,7 @@ import { CardPage } from '../components/CardPage';
 import { ColumnHelp } from '../components/ColumnHelp';
 import { withColumns } from './importColumns';
 import classes from './Tools.module.css';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { call, errorMessage } from '../api/errors';
 import type { components } from '../api/schema';
@@ -24,6 +24,8 @@ type Result = components['schemas']['ImportResult'];
 /** The most the server reads of an import. */
 const FILE_MAX = 16 * 1024 * 1024;
 const ROWS_MAX = 20_000;
+/** Column names in translated text, as `<code>copy_id</code>`. */
+const CODE = { code: <Code /> };
 
 const COLUMNS = [
   'copy_id',
@@ -170,7 +172,7 @@ export function ImportPage() {
         </Group>
       </ToolSection>
 
-      <ToolSection title={t('import.importTitle')} description={t('import.importText')}>
+      <ToolSection title={t('import.importTitle')} description={<Trans i18nKey="import.importText" components={CODE} />}>
         <FileInput
           label={t('import.file')}
           placeholder={t('import.filePlaceholder')}
@@ -224,7 +226,7 @@ export function ImportPage() {
       </ToolSection>
 
       <ColumnHelp
-        intro={t('import.columnsText')}
+        intro={<Trans i18nKey="import.columnsText" components={CODE} />}
         columns={COLUMNS.map((name) => ({ name, help: t(`import.columns.${name}`) }))}
       />
           </Stack>

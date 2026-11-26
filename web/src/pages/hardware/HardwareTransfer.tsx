@@ -1,8 +1,8 @@
-import { Alert, Button, FileInput, Group, Stack, Table, Text } from '@mantine/core';
+import { Alert, Button, Code, FileInput, Group, Stack, Table, Text } from '@mantine/core';
 import { IconDownload, IconFileSpreadsheet, IconUpload } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import type { components } from '../../api/schema';
@@ -17,6 +17,8 @@ type Result = components['schemas']['HardwareResult'];
 const FILE_MAX = 4 * 1024 * 1024;
 /** The most rows the server reads of a hardware file. */
 const ROWS_MAX = 5_000;
+/** Column names in translated text, as `<code>device_id</code>`. */
+const CODE = { code: <Code /> };
 const asCsv = { bodySerializer: (body: string) => body, headers: { 'Content-Type': 'text/csv' } };
 
 export const HARDWARE_COLUMNS = [
@@ -108,7 +110,7 @@ export function HardwareTransfer() {
         </Group>
       </ToolSection>
 
-      <ToolSection title={t('hardware.importTitle')} description={t('hardware.importText')}>
+      <ToolSection title={t('hardware.importTitle')} description={<Trans i18nKey="hardware.importText" components={CODE} />}>
         <FileInput
           label={t('import.file')}
           placeholder={t('import.filePlaceholder')}
@@ -130,7 +132,7 @@ export function HardwareTransfer() {
       </ToolSection>
 
       <ColumnHelp
-        intro={t('hardware.columnsText')}
+        intro={<Trans i18nKey="hardware.columnsText" components={CODE} />}
         columns={HARDWARE_COLUMNS.map((name) => ({ name, help: t(`hardware.columnHelp.${name}`) }))}
       />
     </Stack>

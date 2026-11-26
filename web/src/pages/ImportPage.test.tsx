@@ -44,6 +44,7 @@ describe('Import page', () => {
       'href',
       'api/import/template.csv',
     );
+    expect(screen.getByText('copy_id', { selector: 'code' })).toBeInTheDocument();
   });
 
   it('lists the hardware columns like the games ones', async () => {
@@ -57,6 +58,7 @@ describe('Import page', () => {
     fireEvent.click(screen.getByRole('button', { name: en.import.columnsTitle }));
     expect(await screen.findByText(en.hardware.columnHelp.plays)).toBeInTheDocument();
     expect(screen.getByText('serial_number')).toBeInTheDocument();
+    expect(screen.getByText('device_id', { selector: 'p code' })).toBeInTheDocument();
   });
 
   it('previews a file, then imports it', async () => {
