@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Hardware in Spanish and Brazilian Portuguese calls a loose console one
-  without its box, where a loose game still reads as only the media.
+  without its box, with its own wording apart from a loose game.
 
 ## [0.1.1] - 2026-11-27
 
