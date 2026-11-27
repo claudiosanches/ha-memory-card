@@ -63,6 +63,8 @@ CREATE TABLE devices (
     updated_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
+CREATE INDEX devices_platform ON devices (platform_id);
+
 CREATE TABLE device_platforms (
     device_id   INTEGER NOT NULL REFERENCES devices (id) ON DELETE CASCADE,
     platform_id INTEGER NOT NULL REFERENCES platforms (id) ON DELETE RESTRICT,
