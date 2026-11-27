@@ -5,11 +5,6 @@ gestores veem esta página.
 
 ![Gerenciar, na aba Plataformas](https://ha-memory-card.pages.dev/images/manage.webp)
 
-Ao editar uma conta, loja, plataforma ou etiqueta, ou um dispositivo em
-[Hardware](hardware.md), o formulário mostra o slug: o nome curto gerado a
-partir do nome, usado pelos links da biblioteca e pelos sorteios no Home
-Assistant.
-
 Consoles, portáteis e PCs ficam na página [Hardware](hardware.md), junto com o
 restante do seu equipamento.
 

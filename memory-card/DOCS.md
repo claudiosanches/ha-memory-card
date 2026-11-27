@@ -414,9 +414,9 @@ something in it, such as their play status.
 
 The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
-`min_local_players` and `max_hours_to_beat` (hours for the main story). Each
-platform shows its slug in its Manage form and each device in its Hardware
-form, and library links use the same slugs.
+`min_local_players` and `max_hours_to_beat` (hours for the main story). A slug
+is the lowercase, hyphen-separated form of the name, such as `switch` or
+`living-room-switch`.
 
 The counts keep long-term statistics, so history graphs show how the
 collection and each backlog change. Sensors update a second after each

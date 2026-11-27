@@ -106,9 +106,8 @@ tap_action:
 Os filtros correspondem ao sorteador da página Backlog: `play_status` (uma
 lista de chaves de status de jogo), `platform`, `device`, `genre`, `game_mode`
 (listas de slugs), `min_local_players` e `max_hours_to_beat` (horas da história
-principal). Cada plataforma mostra seu slug no formulário de
-[Gerenciar](manage.md) e cada dispositivo no formulário de
-[Hardware](hardware.md), e os links da biblioteca usam os mesmos slugs.
+principal). Um slug é o nome em minúsculas separado por hifens, como `switch`
+ou `living-room-switch`.
 
 Os sorteios exigem gestores definidos na configuração, e a pessoa precisa ser
 gestora ou visualizadora com `viewers_track_progress` ligado. Cada pessoa

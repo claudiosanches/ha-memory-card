@@ -131,9 +131,8 @@ backlog de uma pessoa e responde com `title` e `platforms`.
 | `min_local_players` | Pelo menos essa quantidade de jogadores na mesma tela. |
 | `max_hours_to_beat` | No máximo essa quantidade de horas na história principal, segundo o IGDB. Jogos sem tempo ficam de fora. |
 
-Os campos de slug aceitam um único slug ou uma lista de até 10. Cada plataforma
-mostra seu slug no formulário de [Gerenciar](manage.md) e cada dispositivo no
-formulário de [Hardware](hardware.md).
+Os campos de slug aceitam um único slug ou uma lista de até 10. Um slug é o
+nome em minúsculas separado por hifens, como `switch` ou `living-room-switch`.
 
 Um sorteio de noite de jogos para duas pessoas no Switch, a partir do backlog
 de Ana:
@@ -172,7 +171,7 @@ Quem pode sortear:
 | O Memory Card não registra partidas para esta pessoa. | Torne-a gestora ou ligue `viewers_track_progress`. Uma pessoa que o Memory Card nunca viu precisa abri-lo e definir um status de jogo primeiro. |
 | Esta pessoa não tem um usuário do Home Assistant. | Vincule a pessoa a um usuário em **Configurações > Pessoas**. |
 | Nenhum jogo corresponde a estes filtros. | Afrouxe os filtros ou adicione jogos ao backlog. |
-| O Memory Card não conseguiu ler estes filtros. | Confira os slugs nos formulários de Gerenciar e Hardware. |
+| O Memory Card não conseguiu ler estes filtros. | Confira se cada filtro usa slugs e chaves válidos em minúsculas. |
 | Não foi possível alcançar o aplicativo Memory Card. | Inicie o aplicativo e confira a aba **Log**. |
 | O Memory Card não está configurado. | Adicione o Memory Card em **Descoberto**, em **Configurações > Dispositivos e serviços**. |
 

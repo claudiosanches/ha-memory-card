@@ -100,9 +100,9 @@ tap_action:
 
 The filters match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
-`min_local_players` and `max_hours_to_beat` (hours for the main story). Each
-platform shows its slug in its [Manage](manage.md) form and each device in its
-[Hardware](hardware.md) form, and library links use the same slugs.
+`min_local_players` and `max_hours_to_beat` (hours for the main story). A slug
+is the lowercase, hyphen-separated form of the name, such as `switch` or
+`living-room-switch`.
 
 Rolls need managers set in the options, and the person must be a manager or a
 viewer with `viewers_track_progress` on. A person rolls only for themselves.

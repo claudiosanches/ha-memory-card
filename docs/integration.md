@@ -125,9 +125,8 @@ and responds with its `title` and `platforms`.
 | `min_local_players` | At least this many players on the same screen. |
 | `max_hours_to_beat` | At most this many hours for the main story, from IGDB. Games without a time are left out. |
 
-The slug fields take one slug or a list of up to 10. Each platform shows its
-slug in its [Manage](manage.md) form and each device in its
-[Hardware](hardware.md) form.
+The slug fields take one slug or a list of up to 10. A slug is the lowercase,
+hyphen-separated form of the name, such as `switch` or `living-room-switch`.
 
 A game night pick for two on the Switch, from Ana's backlog:
 
@@ -165,7 +164,7 @@ Who can roll:
 | Memory Card does not keep play for this person. | Make them a manager, or turn on `viewers_track_progress`. A person Memory Card has never seen needs to open it and set a play status first. |
 | This person has no Home Assistant user. | Link the person to a user under **Settings > People**. |
 | No game matches these filters. | Loosen the filters, or add games to the backlog. |
-| Memory Card could not read these filters. | Check the slugs against the Manage and Hardware forms. |
+| Memory Card could not read these filters. | Check that each filter uses valid lowercase slugs and keys. |
 | Cannot reach the Memory Card app. | Start the app, and check its **Log** tab. |
 | Memory Card is not set up. | Add Memory Card from **Discovered** under **Settings > Devices & services**. |
 

@@ -5,10 +5,6 @@ managers see it.
 
 ![Manage, on the Platforms tab](https://ha-memory-card.pages.dev/images/manage.webp)
 
-Editing an account, store, platform or label, or a device on
-[Hardware](hardware.md), shows its slug: the short name made from its name
-that library links and Home Assistant rolls use.
-
 Consoles, handhelds and PCs are on the [Hardware](hardware.md) page, with
 the rest of your hardware.
 

@@ -1045,8 +1045,7 @@
   "slug": {
     "label": "Slug",
     "description": "Usado nos links da biblioteca: {{link}}",
-    "changed": "Links com o slug antigo deixam de funcionar.",
-    "copy": "Copiar slug"
+    "changed": "Links com o slug antigo deixam de funcionar."
   },
   "easterEggs": {
     "slotOne": {

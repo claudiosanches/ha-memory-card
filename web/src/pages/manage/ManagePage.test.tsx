@@ -131,7 +131,7 @@ describe('Manage stores', () => {
     expect(await screen.findByText(en.errors.slug_taken)).toBeInTheDocument();
   });
 
-  it('hides the slug field when adding and shows it read-only when editing under ingress', async () => {
+  it('hides the slug field when adding and editing under ingress', async () => {
     const base = document.createElement('base');
     base.href = '/api/hassio_ingress/test/';
     document.head.appendChild(base);
@@ -139,12 +139,13 @@ describe('Manage stores', () => {
       const calls = mockApi({
         'GET /api/stores': [{ id: 1, name: 'Amazon', slug: 'amazon', notes: null, copy_count: 0 }],
         'POST /api/stores': (body: unknown) => json({ id: 2, slug: 'cafe-jogos', copy_count: 0, ...(body as object) }, 201),
+        'PUT /api/stores/1': (body: unknown) => json({ id: 1, copy_count: 0, ...(body as object) }),
       });
       renderAt('/manage?tab=stores');
 
       fireEvent.click(await screen.findByRole('button', { name: en.stores.add }));
       expect(screen.queryByRole('textbox', { name: en.slug.label })).toBeNull();
-      expect(screen.queryByTestId('slug-readonly')).toBeNull();
+      expect(screen.queryByText(en.slug.label)).toBeNull();
       fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Café Jogos' } });
       fireEvent.click(screen.getByRole('button', { name: en.common.save }));
       await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
@@ -152,7 +153,11 @@ describe('Manage stores', () => {
 
       fireEvent.click(within(await screen.findByTestId('store-Amazon')).getByRole('button', { name: en.common.edit }));
       expect(screen.queryByRole('textbox', { name: en.slug.label })).toBeNull();
-      expect(screen.getByTestId('slug-readonly')).toHaveTextContent('amazon');
+      expect(screen.queryByText(en.slug.label)).toBeNull();
+      fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Amazon US' } });
+      fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+      await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ name: 'Amazon US', slug: 'amazon', notes: '' });
     } finally {
       base.remove();
     }

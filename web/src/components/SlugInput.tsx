@@ -1,6 +1,6 @@
-import { ActionIcon, Alert, Code, CopyButton, Group, Text, TextInput, Tooltip } from '@mantine/core';
+import { Alert, TextInput } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
-import { IconAlertTriangle, IconCheck, IconCopy } from '@tabler/icons-react';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import type { TFunction } from 'i18next';
 import { type ChangeEvent, type FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,26 +61,7 @@ type Props = ReturnType<typeof useSlugInputs>['slug'] & {
 
 export function SlugInput({ param, saved, ...props }: Props) {
   const { t } = useTranslation();
-  if (inIngress()) {
-    if (saved === undefined) return null;
-    return (
-      <Group gap="xs" align="center" data-testid="slug-readonly">
-        <Text size="xs" c="dimmed">
-          {t('slug.label')}
-        </Text>
-        <Code>{saved}</Code>
-        <CopyButton value={saved}>
-          {({ copied, copy }) => (
-            <Tooltip label={copied ? t('settings.copied') : t('slug.copy')}>
-              <ActionIcon variant="subtle" size="sm" aria-label={t('slug.copy')} onClick={copy}>
-                {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-              </ActionIcon>
-            </Tooltip>
-          )}
-        </CopyButton>
-      </Group>
-    );
-  }
+  if (inIngress()) return null;
   const value = String(props.value ?? '');
   return (
     <>

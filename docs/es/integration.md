@@ -132,9 +132,9 @@ persona y responde con su `title` y `platforms`.
 | `min_local_players` | Al menos esta cantidad de jugadores en la misma pantalla. |
 | `max_hours_to_beat` | Como máximo esta cantidad de horas para la historia principal, según IGDB. Los juegos sin duración quedan fuera. |
 
-Los campos de slugs aceptan un solo slug o una lista de hasta 10. Cada
-plataforma muestra su slug en su formulario de [Gestionar](manage.md) y cada
-dispositivo en su formulario de [Hardware](hardware.md).
+Los campos de slugs aceptan un solo slug o una lista de hasta 10. Un slug es
+la forma en minúsculas y separada por guiones del nombre, como `switch` o
+`living-room-switch`.
 
 Un sorteo de noche de juegos para dos en la Switch, de los pendientes de Ana:
 
@@ -172,7 +172,7 @@ Quién puede sortear:
 | Memory Card no lleva el registro de juego de esta persona. | Hazla gestor o activa `viewers_track_progress`. Una persona que Memory Card nunca ha visto debe abrirla y definir primero un estado de juego. |
 | Esta persona no tiene usuario de Home Assistant. | Vincula la persona a un usuario en **Ajustes > Personas**. |
 | Ningún juego coincide con estos filtros. | Haz los filtros más amplios o añade juegos a tus pendientes. |
-| Memory Card no pudo leer estos filtros. | Comprueba los slugs en los formularios de Gestionar y Hardware. |
+| Memory Card no pudo leer estos filtros. | Comprueba que cada filtro use slugs y claves en minúsculas válidos. |
 | No se puede conectar con la aplicación Memory Card. | Inicia la aplicación y revisa su pestaña **Registro**. |
 | Memory Card no está configurada. | Añade Memory Card desde **Descubierto** en **Ajustes > Dispositivos y servicios**. |
 
