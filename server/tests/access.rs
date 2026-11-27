@@ -242,6 +242,7 @@ async fn every_route_checks_the_role() {
         "/api/igdb/matches",
         "/api/igdb/sync",
         "/api/missing-details",
+        "/api/people",
     ];
 
     // The event stream only ends when the server stops; this ends it at once.

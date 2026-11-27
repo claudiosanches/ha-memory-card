@@ -23,7 +23,7 @@ const USER_NAME: &str = "x-remote-user-name";
 const USER_DISPLAY_NAME: &str = "x-remote-user-display-name";
 
 /// Reads anyone may make, except these manager tools.
-const MANAGER_READS: [&str; 10] = [
+const MANAGER_READS: [&str; 11] = [
     "/api/export.csv",
     "/api/import/template.csv",
     "/api/hardware.csv",
@@ -34,6 +34,8 @@ const MANAGER_READS: [&str; 10] = [
     "/api/igdb/matches",
     "/api/igdb/sync",
     "/api/missing-details",
+    // Everyone Home Assistant has sent, for picking an account's owner.
+    "/api/people",
 ];
 
 /// Changes to the caller's own play, open to viewers when the option allows it.
