@@ -104,7 +104,7 @@ tap_action:
 An automation pressing the button has no person, so it is refused. Use the
 action below instead.
 
-## The roll_pick action
+## The roll_pick action {#the-roll_pick-action}
 
 `memory_card.roll_pick` picks a random owned game from one person's backlog
 and responds with its `title` and `platforms`.

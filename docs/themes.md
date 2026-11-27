@@ -59,7 +59,7 @@ stripes and a pixel-art gamepad.
 ![Retro theme, light](https://ha-memory-card.pages.dev/images/themes/retro-light.webp)
 ![Retro theme, dark](https://ha-memory-card.pages.dev/images/themes/retro-dark.webp)
 
-## 2000's Internet
+## 2000's Internet {#2000s-internet}
 
 A glossy game portal: enamel blue headers, glass buttons, a starfield and a
 spinning globe.

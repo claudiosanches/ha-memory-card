@@ -61,7 +61,7 @@ First release.
 - CSV import and export, with a preview, a blank template, common headers
   and statuses from other spreadsheets and collection apps, and updates by
   `copy_id`.
-- English, Spanish and Brazilian Portuguese.
+- English, Spanish and Brazilian Portuguese, in the app and its docs.
 - 12 themes, each in light and dark.
 - `date_format` and `currency` options.
 

@@ -88,6 +88,13 @@ and the other guide pages sit under `/docs/`. The developer pages (this one,
 Local Home Assistant and Releasing) stay out of the site. A new guide page needs a line in
 `docs/README.md` and in the sidebar in `docs/.vitepress/config.mjs`.
 
+Spanish and Brazilian Portuguese copies of the site sit in `docs/es/` and
+`docs/pt-br/` under the same file names, so a change to a page goes in all
+three. A translated heading keeps the English anchor with `{#anchor}`, so links
+between pages work in every language. The home page's components take their
+text from `docs/.vitepress/theme/i18n.mjs`, and each language's sidebar labels
+are in `docs/.vitepress/config.mjs`.
+
 VitePress and wrangler are locked in `docs/package-lock.json`, apart from the
 app's dependencies; `make docs` installs them with `npm ci`, without install
 scripts. Before the first `make docs-deploy`, sign in to Cloudflare with

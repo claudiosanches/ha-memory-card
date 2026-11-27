@@ -1,12 +1,6 @@
 import { useData } from 'vitepress';
 import { computed } from 'vue';
 
-export const LOCALE_PREFIX = {
-  en: '',
-  'pt-BR': '/pt-br',
-  es: '/es',
-};
-
 const COPY = {
   en: {
     prefix: '',
