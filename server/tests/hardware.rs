@@ -352,3 +352,33 @@ async fn hardware_export_escapes_platform_names() {
     assert!(!csv.contains(",=HYPERLINK"), "{csv}");
     assert_eq!(csv.matches("'=HYPERLINK(1)").count(), 2, "{csv}");
 }
+
+async fn custom_platform(app: &TestApp, body: Value) -> i64 {
+    let (status, platform) = app.json("POST", "/api/platforms", Some(body)).await;
+    assert_eq!(status, StatusCode::CREATED, "{platform}");
+    platform["id"].as_i64().unwrap()
+}
+
+#[tokio::test]
+async fn a_platform_hardware_is_for_cannot_be_deleted() {
+    let app = TestApp::new().await;
+    let dock = custom_platform(&app, json!({"name": "Dock"})).await;
+    add(
+        &app,
+        json!({"name": "Stick", "kind": "controller", "platform_id": dock}),
+    )
+    .await;
+    let (_, platforms) = app.json("GET", "/api/platforms", None).await;
+    let platform = platforms
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["id"] == dock)
+        .unwrap();
+    assert_eq!(platform["device_count"], 1);
+    let (status, body) = app
+        .json("DELETE", &format!("/api/platforms/{dock}"), None)
+        .await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(body["code"], "platform_in_use");
+}

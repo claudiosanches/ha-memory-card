@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  p.category AS \"category: PlatformCategory\", p.custom AS \"custom: bool\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id\n                    WHERE r.platform_id = p.id AND c.status = 'owned') AS \"owned_game_count!: i64\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id\n                    WHERE r.platform_id = p.id AND c.status = 'wanted') AS \"wanted_game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS \"device_count!: i64\",\n                  (SELECT COUNT(*) FROM account_platforms a WHERE a.platform_id = p.id) AS \"account_count!: i64\"\n           FROM platforms p\n           ORDER BY p.sort_order, p.name COLLATE NOCASE",
+  "query": "SELECT p.id AS \"id!\", p.igdb_platform_id, p.name, p.abbreviation, p.slug,\n                  p.family, p.generation, p.active AS \"active: bool\", p.sort_order,\n                  p.category AS \"category: PlatformCategory\", p.custom AS \"custom: bool\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r WHERE r.platform_id = p.id) AS \"game_count!: i64\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id\n                    WHERE r.platform_id = p.id AND c.status = 'owned') AS \"owned_game_count!: i64\",\n                  (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id\n                    WHERE r.platform_id = p.id AND c.status = 'wanted') AS \"wanted_game_count!: i64\",\n                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id)\n                    + (SELECT COUNT(*) FROM devices d WHERE d.platform_id = p.id) AS \"device_count!: i64\",\n                  (SELECT COUNT(*) FROM account_platforms a WHERE a.platform_id = p.id) AS \"account_count!: i64\"\n           FROM platforms p\n           WHERE p.id = ?",
   "describe": {
     "columns": [
       {
@@ -127,39 +127,39 @@
       {
         "name": "game_count!: i64",
         "ordinal": 11,
-        "type_info": "Integer",
+        "type_info": "Null",
         "origin": "Expression"
       },
       {
         "name": "owned_game_count!: i64",
         "ordinal": 12,
-        "type_info": "Integer",
+        "type_info": "Null",
         "origin": "Expression"
       },
       {
         "name": "wanted_game_count!: i64",
         "ordinal": 13,
-        "type_info": "Integer",
+        "type_info": "Null",
         "origin": "Expression"
       },
       {
         "name": "device_count!: i64",
         "ordinal": 14,
-        "type_info": "Integer",
+        "type_info": "Null",
         "origin": "Expression"
       },
       {
         "name": "account_count!: i64",
         "ordinal": 15,
-        "type_info": "Integer",
+        "type_info": "Null",
         "origin": "Expression"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
-      false,
+      null,
       true,
       false,
       true,
@@ -170,12 +170,12 @@
       false,
       true,
       false,
-      false,
-      false,
-      false,
-      false,
-      false
+      null,
+      null,
+      null,
+      null,
+      null
     ]
   },
-  "hash": "dc068644b0948cdcdbb86d42169b8bef24dc19d810bf4700ebf31a412c005e80"
+  "hash": "96e508cc3a330114bd5a64fb22a3ee0e398e7c183804f1c5571f456d3acbf31c"
 }

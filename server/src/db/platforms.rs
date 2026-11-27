@@ -64,7 +64,8 @@ pub async fn list<'e>(db: impl sqlx::SqliteExecutor<'e>) -> sqlx::Result<Vec<Pla
                     WHERE r.platform_id = p.id AND c.status = 'owned') AS "owned_game_count!: i64",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id
                     WHERE r.platform_id = p.id AND c.status = 'wanted') AS "wanted_game_count!: i64",
-                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64",
+                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id)
+                    + (SELECT COUNT(*) FROM devices d WHERE d.platform_id = p.id) AS "device_count!: i64",
                   (SELECT COUNT(*) FROM account_platforms a WHERE a.platform_id = p.id) AS "account_count!: i64"
            FROM platforms p
            ORDER BY p.sort_order, p.name COLLATE NOCASE"#
@@ -84,7 +85,8 @@ pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Platform> {
                     WHERE r.platform_id = p.id AND c.status = 'owned') AS "owned_game_count!: i64",
                   (SELECT COUNT(DISTINCT r.game_id) FROM releases r JOIN copies c ON c.release_id = r.id
                     WHERE r.platform_id = p.id AND c.status = 'wanted') AS "wanted_game_count!: i64",
-                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id) AS "device_count!: i64",
+                  (SELECT COUNT(*) FROM device_platforms d WHERE d.platform_id = p.id)
+                    + (SELECT COUNT(*) FROM devices d WHERE d.platform_id = p.id) AS "device_count!: i64",
                   (SELECT COUNT(*) FROM account_platforms a WHERE a.platform_id = p.id) AS "account_count!: i64"
            FROM platforms p
            WHERE p.id = ?"#,
@@ -187,6 +189,7 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<()> {
     let in_use: bool = sqlx::query_scalar!(
         r#"SELECT EXISTS (SELECT 1 FROM releases WHERE platform_id = ?1)
                OR EXISTS (SELECT 1 FROM device_platforms WHERE platform_id = ?1)
+               OR EXISTS (SELECT 1 FROM devices WHERE platform_id = ?1)
                OR EXISTS (SELECT 1 FROM account_platforms WHERE platform_id = ?1) AS "in_use!: bool""#,
         id
     )

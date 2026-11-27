@@ -43,7 +43,7 @@ CREATE TABLE devices (
     model              TEXT,
     notes              TEXT,
     active             INTEGER NOT NULL DEFAULT 1,
-    platform_id        INTEGER REFERENCES platforms (id) ON DELETE SET NULL,
+    platform_id        INTEGER REFERENCES platforms (id) ON DELETE RESTRICT,
     -- `owned`, or `wanted` for the wishlist.
     status             TEXT    NOT NULL DEFAULT 'owned',
     region             TEXT,
