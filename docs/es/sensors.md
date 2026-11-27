@@ -108,7 +108,7 @@ Los filtros coinciden con el selector de la página Pendientes: `play_status`
 `game_mode` (listas de slugs), `min_local_players` y `max_hours_to_beat` (horas
 de la historia principal). Un slug es la forma en minúsculas y separada por
 guiones del nombre, como `switch` o `living-room-switch`. Activa `show_slugs`
-en la pestaña Configuración de la aplicación para verlos o editarlos en los
+en la pestaña **Configuración** de la aplicación para verlos o editarlos en los
 formularios de [Gestionar](manage.md) y [Hardware](hardware.md).
 
 Los sorteos requieren que haya gestores en la configuración, y la persona debe

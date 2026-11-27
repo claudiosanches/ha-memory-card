@@ -107,7 +107,7 @@ Os filtros correspondem ao sorteador da página Backlog: `play_status` (uma
 lista de chaves de status de jogo), `platform`, `device`, `genre`, `game_mode`
 (listas de slugs), `min_local_players` e `max_hours_to_beat` (horas da história
 principal). Um slug é o nome em minúsculas separado por hifens, como `switch`
-ou `living-room-switch`. Ligue `show_slugs` na aba Configuração do aplicativo
+ou `living-room-switch`. Ligue `show_slugs` na aba **Configuração** do aplicativo
 para vê-los ou editá-los nos formulários de [Gerenciar](manage.md) e
 [Hardware](hardware.md).
 

@@ -134,7 +134,7 @@ persona y responde con su `title` y `platforms`.
 
 Los campos de slugs aceptan un solo slug o una lista de hasta 10. Un slug es
 la forma en minúsculas y separada por guiones del nombre, como `switch` o
-`living-room-switch`. Activa `show_slugs` en la pestaña Configuración de la
+`living-room-switch`. Activa `show_slugs` en la pestaña **Configuración** de la
 aplicación para verlos o editarlos en los formularios de [Gestionar](manage.md)
 y [Hardware](hardware.md).
 

@@ -127,7 +127,7 @@ and responds with its `title` and `platforms`.
 
 The slug fields take one slug or a list of up to 10. A slug is the lowercase,
 hyphen-separated form of the name, such as `switch` or `living-room-switch`.
-Turn on `show_slugs` in the app's Configuration tab to view or edit them in
+Turn on `show_slugs` in the app's **Configuration** tab to view or edit them in
 the [Manage](manage.md) and [Hardware](hardware.md) forms.
 
 A game night pick for two on the Switch, from Ana's backlog:

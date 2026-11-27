@@ -5,6 +5,12 @@ colección. Solo los gestores la ven.
 
 ![Gestionar, en la pestaña Plataformas](https://ha-memory-card.pages.dev/images/manage.webp)
 
+Los slugs, los nombres cortos que usan los filtros de sorteo de Home Assistant
+y los enlaces de la biblioteca, se generan automáticamente a partir del nombre
+de cada elemento. Activa `show_slugs` en la pestaña **Configuración** de la
+aplicación para verlos o editarlos en estos formularios y en
+[Hardware](hardware.md).
+
 Las consolas, las portátiles y los PC están en la página [Hardware](hardware.md),
 junto con el resto de tu hardware.
 

@@ -5,6 +5,11 @@ managers see it.
 
 ![Manage, on the Platforms tab](https://ha-memory-card.pages.dev/images/manage.webp)
 
+Slugs, the short names used in Home Assistant roll filters and library links,
+are made from each item's name automatically. Turn on `show_slugs` in the
+app's **Configuration** tab to view or edit them in these forms and on
+[Hardware](hardware.md).
+
 Consoles, handhelds and PCs are on the [Hardware](hardware.md) page, with
 the rest of your hardware.
 
