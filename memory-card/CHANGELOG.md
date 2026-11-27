@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-27
+
 ### Added
 
 - Optional username on store accounts (such as a PSN Online ID, Xbox
@@ -85,5 +87,6 @@ First release.
 - 12 themes, each in light and dark.
 - `date_format` and `currency` options.
 
-[Unreleased]: https://github.com/claudiosanches/ha-memory-card/compare/v0.1.1...dev
+[Unreleased]: https://github.com/claudiosanches/ha-memory-card/compare/v0.2.0...dev
+[0.2.0]: https://github.com/claudiosanches/ha-memory-card/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/claudiosanches/ha-memory-card/releases/tag/v0.1.1
