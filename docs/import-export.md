@@ -94,9 +94,12 @@ opening it is safe.
 ## Hardware
 
 The **Hardware** tab moves your [hardware](hardware.md) to and from its own
-CSV file. Accounts are not in it; they come with the games' file. **Export
-hardware** downloads every item, and **Download blank template** the columns
-alone.
+CSV file. **Export hardware** downloads every item, and **Download blank
+template** the columns alone.
+
+Neither file holds accounts themselves. The games' file names the account of
+each digital copy, but an account's owner, store, platforms and notes stay in
+the database, which Home Assistant's backups keep.
 
 **Columns and accepted values** at the bottom of the tab lists the columns in
 the app.
