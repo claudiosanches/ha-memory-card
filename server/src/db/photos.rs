@@ -54,18 +54,20 @@ pub async fn add(pool: &SqlitePool, copy_id: i64, path: &str, by: &str) -> ApiRe
 
 /// Deletes a photo row and returns its game id and file path.
 pub async fn delete(pool: &SqlitePool, id: i64) -> ApiResult<(i64, String)> {
+    let mut tx = super::write_tx(pool).await?;
     let row = sqlx::query!(
         r#"SELECT r.game_id, p.path FROM copy_photos p
            JOIN copies c ON c.id = p.copy_id JOIN releases r ON r.id = c.release_id
            WHERE p.id = ?"#,
         id
     )
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await?
     .ok_or(ApiError::NotFound)?;
     sqlx::query!("DELETE FROM copy_photos WHERE id = ?", id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
+    tx.commit().await?;
     Ok((row.game_id, row.path))
 }
 
@@ -123,14 +125,11 @@ async fn device_room(conn: &mut SqliteConnection, device_id: i64) -> ApiResult<(
 /// Deletes a device photo row and returns its device id and file path.
 pub async fn delete_for_device(pool: &SqlitePool, id: i64) -> ApiResult<(i64, String)> {
     let row = sqlx::query!(
-        r#"SELECT device_id AS "device_id!", path FROM device_photos WHERE id = ?"#,
+        r#"DELETE FROM device_photos WHERE id = ? RETURNING device_id AS "device_id!", path"#,
         id
     )
     .fetch_optional(pool)
     .await?
     .ok_or(ApiError::NotFound)?;
-    sqlx::query!("DELETE FROM device_photos WHERE id = ?", id)
-        .execute(pool)
-        .await?;
     Ok((row.device_id, row.path))
 }

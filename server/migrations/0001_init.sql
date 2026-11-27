@@ -4,8 +4,8 @@
 --
 -- Slugs name rows in library links: lowercase ASCII letters, digits and hyphens.
 --
--- Game, release, copy and device ids are never reused, so an old export, a pending tag link or a
--- photo folder cannot land on a newer row.
+-- Game, release, copy, device and photo ids are never reused, so an old export, a pending tag
+-- link, a photo folder or a late photo delete cannot land on a newer row.
 
 CREATE TABLE platforms (
     id               INTEGER PRIMARY KEY,
@@ -307,7 +307,7 @@ END;
 -- Photos of a copy, such as the box, the disc or the manual. path is
 -- relative to the covers directory.
 CREATE TABLE copy_photos (
-    id         INTEGER PRIMARY KEY,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
     copy_id    INTEGER NOT NULL REFERENCES copies (id) ON DELETE CASCADE,
     path       TEXT    NOT NULL,
     created_by TEXT    REFERENCES users (id) ON DELETE SET NULL,
@@ -318,7 +318,7 @@ CREATE INDEX copy_photos_copy ON copy_photos (copy_id, id);
 
 -- Photos of a device, with paths under the covers directory as for copies.
 CREATE TABLE device_photos (
-    id         INTEGER PRIMARY KEY,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id  INTEGER NOT NULL REFERENCES devices (id) ON DELETE CASCADE,
     path       TEXT    NOT NULL,
     created_by TEXT    REFERENCES users (id) ON DELETE SET NULL,

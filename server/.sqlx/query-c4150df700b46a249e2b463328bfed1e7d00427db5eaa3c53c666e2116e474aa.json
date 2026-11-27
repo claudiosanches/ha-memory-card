@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT device_id AS \"device_id!\", path FROM device_photos WHERE id = ?",
+  "query": "DELETE FROM device_photos WHERE id = ? RETURNING device_id AS \"device_id!\", path",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "f1be989377b71fd6412136d05f588f6ff364e299b2cb9733688ab697f7fde82b"
+  "hash": "c4150df700b46a249e2b463328bfed1e7d00427db5eaa3c53c666e2116e474aa"
 }
