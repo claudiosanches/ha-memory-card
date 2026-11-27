@@ -186,7 +186,7 @@ export function HardwareForm({
       />
       <Select
         label={t('game.condition')}
-        data={CONDITIONS.map((c) => ({ value: c, label: t(`condition.${c}`) }))}
+        data={CONDITIONS.map((c) => ({ value: c, label: t(`condition.${c}`, { context: 'hardware' }) }))}
         clearable
         {...form.getInputProps('condition')}
         value={values.condition || null}

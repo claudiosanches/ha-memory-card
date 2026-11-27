@@ -15,6 +15,15 @@ describe('browserLanguage', () => {
   });
 });
 
+describe('context', () => {
+  it('names a loose console apart from a loose game', () => {
+    const pt = i18n.getFixedT('pt-BR');
+    expect(pt('condition.loose', { context: 'hardware' })).toBe('Sem caixa');
+    expect(pt('condition.loose')).toBe('Só a mídia');
+    expect(pt('condition.cib', { context: 'hardware' })).toBe('Completo na caixa');
+  });
+});
+
 describe('followHomeAssistant', () => {
   afterEach(async () => {
     vi.restoreAllMocks();

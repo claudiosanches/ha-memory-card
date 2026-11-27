@@ -473,9 +473,13 @@
   },
   "condition": {
     "sealed": "Lacrado",
+    "sealed_hardware": "Lacrado",
     "cib": "Completo na caixa",
+    "cib_hardware": "Completo na caixa",
     "no_manual": "Sem manual",
-    "loose": "Só a mídia"
+    "no_manual_hardware": "Sem manual",
+    "loose": "Só a mídia",
+    "loose_hardware": "Sem caixa"
   },
   "playStatus": {
     "backlog": "Backlog",

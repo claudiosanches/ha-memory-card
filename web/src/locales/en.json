@@ -473,9 +473,13 @@
   },
   "condition": {
     "sealed": "Sealed",
+    "sealed_hardware": "Sealed",
     "cib": "Complete in box",
+    "cib_hardware": "Complete in box",
     "no_manual": "No manual",
-    "loose": "Loose"
+    "no_manual_hardware": "No manual",
+    "loose": "Loose",
+    "loose_hardware": "Loose"
   },
   "playStatus": {
     "backlog": "Backlog",

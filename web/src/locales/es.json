@@ -473,9 +473,13 @@
   },
   "condition": {
     "sealed": "Precintado",
+    "sealed_hardware": "Precintado",
     "cib": "Completo en caja",
+    "cib_hardware": "Completo en caja",
     "no_manual": "Sin manual",
-    "loose": "Suelto"
+    "no_manual_hardware": "Sin manual",
+    "loose": "Suelto",
+    "loose_hardware": "Sin caja"
   },
   "playStatus": {
     "backlog": "Pendiente",

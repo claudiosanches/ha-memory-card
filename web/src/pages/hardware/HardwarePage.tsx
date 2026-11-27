@@ -326,7 +326,7 @@ function HardwareCard({
   const price = money(device.price, device.currency);
   const value = money(device.estimated_value, device.estimated_currency);
   const details = [
-    device.condition && t(`condition.${device.condition}`),
+    device.condition && t(`condition.${device.condition}`, { context: 'hardware' }),
     device.region && t(`region.${device.region}`),
     store && (wanted ? t('wishlist.store', { store }) : store),
     device.purchased_on && t('game.boughtOn', { date: formatDate(device.purchased_on) }),
