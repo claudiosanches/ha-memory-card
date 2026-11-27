@@ -75,6 +75,11 @@ jobs:
         with:
           # The builder by digest; Dependabot does not update it.
           driver-opts: image=moby/buildkit:v0.35.1@sha256:baf6138eb8c37644800c7c913fba051e840ebb9ba13eaf92d92ef9a1712d0b4c
+      - name: Description for the image index
+        id: about
+        run: |
+          description=$(sed -n 's/^description: //p' memory-card/config.yaml)
+          echo "description=$description" >> "$GITHUB_OUTPUT"
       - name: Build both architectures
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -84,6 +89,8 @@ jobs:
           # gzip throughout, base layers included: skopeo on the runner annotates zstd
           # images in the index, which --preserve-digests then refuses to push.
           outputs: type=oci,dest=${{ runner.temp }}/memory-card.tar,compression=gzip,force-compression=true
+          # GitHub shows a multi-arch package's description from its index.
+          annotations: index:org.opencontainers.image.description=${{ steps.about.outputs.description }}
           build-args: BUILD_VERSION=${{ needs.notes.outputs.version }}
       - run: ./scripts/smoke-archive.sh "$RUNNER_TEMP/memory-card.tar"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -100,12 +107,15 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       packages: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: image
           path: ${{ runner.temp }}
       - name: Push both architectures
+        id: push
         env:
           ACTOR: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -118,6 +128,9 @@ jobs:
             skopeo copy --all --preserve-digests \
               "oci-archive:$RUNNER_TEMP/memory-card.tar" "docker://$IMAGE:$VERSION"
           fi
+          skopeo inspect --raw "docker://$IMAGE:$VERSION" > "$RUNNER_TEMP/index.json"
+          digest=$(sha256sum "$RUNNER_TEMP/index.json" | cut -d ' ' -f 1)
+          echo "digest=sha256:$digest" >> "$GITHUB_OUTPUT"
 
   # Creates the GitHub release once the image is out. Moving main, which makes
   # Home Assistant offer the update, is left to the maintainer: this job's
@@ -127,6 +140,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      packages: read
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -136,11 +150,29 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
           TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.notes.outputs.version }}
+          DIGEST: ${{ needs.publish.outputs.digest }}
         run: |
           if gh api "repos/$REPO/releases/tags/$TAG" --silent 2>/dev/null; then
             echo "::notice::The $TAG release exists"
-          else
-            gh api "repos/$REPO/releases" -f tag_name="$TAG" -f name="$TAG" \
-              -F body=@"$RUNNER_TEMP/notes.md" -f make_latest=legacy --silent
+            exit 0
           fi
+          # The page of this version of the package, else the package's own page.
+          package=${IMAGE##*/}
+          page="https://github.com/$REPO/pkgs/container/$package"
+          id=$(gh api "users/$OWNER/packages/container/$package/versions?per_page=100" \
+            --jq ".[] | select(.name == \"$DIGEST\") | .id" 2>/dev/null | head -n 1) || id=
+          # gh prints an error answer to stdout, so only a number is an id.
+          case $id in
+          '' | *[!0-9]*) ;;
+          *) page="$page/$id?tag=$VERSION" ;;
+          esac
+          {
+            cat "$RUNNER_TEMP/notes.md"
+            printf '\n**Image:** [`%s:%s`](%s) for amd64 and arm64, `%s`\n' \
+              "$IMAGE" "$VERSION" "$page" "$DIGEST"
+          } > "$RUNNER_TEMP/body.md"
+          gh api "repos/$REPO/releases" -f tag_name="$TAG" -f name="$TAG" \
+            -F body=@"$RUNNER_TEMP/body.md" -f make_latest=legacy --silent

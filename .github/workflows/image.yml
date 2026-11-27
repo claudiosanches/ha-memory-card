@@ -57,6 +57,11 @@ jobs:
         with:
           # The builder by digest; Dependabot does not update it.
           driver-opts: image=moby/buildkit:v0.35.1@sha256:baf6138eb8c37644800c7c913fba051e840ebb9ba13eaf92d92ef9a1712d0b4c
+      - name: Description for the image index
+        id: about
+        run: |
+          description=$(sed -n 's/^description: //p' memory-card/config.yaml)
+          echo "description=$description" >> "$GITHUB_OUTPUT"
       - name: Build both architectures
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -66,4 +71,6 @@ jobs:
           # gzip throughout, base layers included: skopeo on the runner annotates zstd
           # images in the index, which --preserve-digests then refuses to push.
           outputs: type=oci,dest=${{ runner.temp }}/memory-card.tar,compression=gzip,force-compression=true
+          # GitHub shows a multi-arch package's description from its index.
+          annotations: index:org.opencontainers.image.description=${{ steps.about.outputs.description }}
       - run: ./scripts/smoke-archive.sh "$RUNNER_TEMP/memory-card.tar"
