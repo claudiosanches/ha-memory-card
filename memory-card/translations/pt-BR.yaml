@@ -65,6 +65,13 @@ configuration:
     description: >-
       Como as datas são escritas. "language" segue o idioma do aplicativo;
       "dmy" escreve 23/11/2026, "mdy" 11/23/2026 e "ymd" 2026-11-23.
+  show_slugs:
+    name: Mostrar campos de slug
+    description: >-
+      Mostrar e editar o campo slug nos formulários de contas, lojas,
+      plataformas, etiquetas e hardware. Os slugs continuam sendo gerados a
+      partir do nome e são usados nos filtros de sorteio do Home Assistant e
+      nos links da biblioteca.
   log_level:
     name: Nível de log
     description: Quanto o aplicativo escreve no log.

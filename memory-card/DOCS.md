@@ -123,6 +123,7 @@ one.
 | `tag_readers` | NFC readers with no Home Assistant user, such as ESPHome ones, and whose play their scans log. See [NFC tags](#nfc-tags). |
 | `currency` | Three-letter code, such as `EUR`, that new prices start with. Empty (the default) uses the copy priced last, then Home Assistant's currency. |
 | `date_format` | How dates are written: `language` (default) as the app's language writes them, `dmy` as 23/11/2026, `mdy` as 11/23/2026 or `ymd` as 2026-11-23. |
+| `show_slugs` | Shows the slug field on account, store, platform, label and hardware forms. Off by default; slugs are still made from the name. |
 | `log_level` | `trace`, `debug`, `info` (default), `warning` or `error`. |
 
 ## Library and games
@@ -416,7 +417,8 @@ The fields match the Backlog page's picker: `play_status` (a list of play
 status keys), `platform`, `device`, `genre`, `game_mode` (lists of slugs),
 `min_local_players` and `max_hours_to_beat` (hours for the main story). A slug
 is the lowercase, hyphen-separated form of the name, such as `switch` or
-`living-room-switch`.
+`living-room-switch`; turn on `show_slugs` in the app options to view or edit
+them in the forms.
 
 The counts keep long-term statistics, so history graphs show how the
 collection and each backlog change. Sensors update a second after each

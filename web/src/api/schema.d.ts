@@ -1981,6 +1981,8 @@ export interface components {
             igdb_configured: boolean;
             /** @description Whether Home Assistant sensors are being published. */
             sensors: components["schemas"]["SensorsStatus"];
+            /** @description Whether manage and hardware forms show the slug field, from the app options. */
+            show_slugs: boolean;
             /** @description Whether Memory Card hears Home Assistant tag scans. */
             tags: components["schemas"]["TagsStatus"];
             version: string;

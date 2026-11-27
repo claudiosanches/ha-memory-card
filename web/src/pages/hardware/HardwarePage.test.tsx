@@ -74,7 +74,7 @@ describe('Hardware', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({
       name: 'Switch OLED',
-      slug: 'switch-oled',
+      slug: null,
       kind: 'console',
       status: 'owned',
       model: null,

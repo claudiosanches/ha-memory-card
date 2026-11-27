@@ -4,19 +4,20 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import type { TFunction } from 'i18next';
 import { type ChangeEvent, type FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { inIngress } from '../api/client';
+import { useStatus } from '../api/queries';
 import { isSlug, sanitizeSlug, slugify, trimSlug } from '../slug';
 
 type Named = { name: string; slug: string };
 
 /**
  * Input props for a form's name and slug. A new record's slug follows its
- * name until someone types a slug of their own; under ingress the server
- * picks a free slug from the name instead.
+ * name until someone types a slug of their own; when the slug field is
+ * hidden, the server picks a free slug from the name instead.
  */
 export function useSlugInputs<Values extends Named>(form: UseFormReturnType<Values>, saved?: string) {
+  const show = useStatus().data?.show_slugs ?? false;
   const named = form as unknown as UseFormReturnType<Named>;
-  const [follows, setFollows] = useState(saved === undefined && !inIngress());
+  const [follows, setFollows] = useState(saved === undefined);
   const name = named.getInputProps('name');
   const slug = named.getInputProps('slug');
   return {
@@ -24,7 +25,7 @@ export function useSlugInputs<Values extends Named>(form: UseFormReturnType<Valu
       ...name,
       onChange: (event: ChangeEvent<HTMLInputElement>) => {
         name.onChange(event);
-        if (follows) named.setFieldValue('slug', slugify(event.currentTarget.value));
+        if (show && follows) named.setFieldValue('slug', slugify(event.currentTarget.value));
       },
     },
     slug: {
@@ -61,7 +62,7 @@ type Props = ReturnType<typeof useSlugInputs>['slug'] & {
 
 export function SlugInput({ param, saved, ...props }: Props) {
   const { t } = useTranslation();
-  if (inIngress()) return null;
+  if (!(useStatus().data?.show_slugs ?? false)) return null;
   const value = String(props.value ?? '');
   return (
     <>

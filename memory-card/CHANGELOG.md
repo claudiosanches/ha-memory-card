@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Memory Card integration is in the Marketplace's catalog, so the docs
   install it by searching for it there.
-- Inside Home Assistant, the slug field is hidden in forms; slugs are still
-  made from the name.
+- Slug fields are hidden in forms by default (slugs are still made from the
+  name); turn on the `show_slugs` app option to show and edit them.
 
 ### Fixed
 

@@ -63,6 +63,12 @@ configuration:
     description: >-
       How dates are written. "language" follows the app's language; "dmy"
       writes 23/11/2026, "mdy" 11/23/2026 and "ymd" 2026-11-23.
+  show_slugs:
+    name: Show slug fields
+    description: >-
+      Show and edit the slug field on account, store, platform, label and
+      hardware forms. Slugs are made from the name either way, and are used
+      in Home Assistant roll filters and library links.
   log_level:
     name: Log level
     description: How much the app writes to its log.

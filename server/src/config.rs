@@ -242,6 +242,7 @@ struct Options {
     tag_readers: Option<Vec<TagReader>>,
     currency: Option<String>,
     date_format: Option<DateFormat>,
+    show_slugs: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -271,6 +272,8 @@ pub struct Config {
     /// ISO 4217 code new prices start with, ahead of Home Assistant's.
     pub currency: Option<String>,
     pub date_format: DateFormat,
+    /// Shows the slug field on manage and hardware forms.
+    pub show_slugs: bool,
     /// Broker named by `MEMORY_CARD_MQTT_*`, used instead of asking the Supervisor.
     pub mqtt: Option<MqttBroker>,
     pub supervisor_url: String,
@@ -495,6 +498,8 @@ impl Config {
             })?,
         };
 
+        let show_slugs = flag(&env, "MEMORY_CARD_SHOW_SLUGS", options.show_slugs, false)?;
+
         let currency = match env("MEMORY_CARD_CURRENCY").map(|raw| ("MEMORY_CARD_CURRENCY", raw)) {
             Some(found) => Some(found),
             None => options.currency.map(|raw| ("currency", raw)),
@@ -509,6 +514,7 @@ impl Config {
             home_assistant,
             currency,
             date_format,
+            show_slugs,
             data_dir,
             tmp_dir,
             listen,
@@ -708,6 +714,7 @@ mod tests {
         assert!(config.external_services);
         assert_eq!(config.tag_scan_finished, FinishedScan::Playing);
         assert_eq!(config.date_format, DateFormat::Language);
+        assert!(!config.show_slugs);
         assert_eq!(config.db_path(), dir.path().join("db/memory-card.sqlite"));
         assert_eq!(config.tmp_dir, dir.path().join("tmp"));
         assert_eq!(config.currency, None);
@@ -733,7 +740,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("options.json"),
-            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true,"tag_scan_finished":"keep","date_format":"dmy"}"#,
+            r#"{"igdb_client_id":"id","igdb_client_secret":"secret","log_level":"warning","managers":[" abc123 ",""],"viewers_track_progress":true,"tag_scan_finished":"keep","date_format":"dmy","show_slugs":true}"#,
         )
         .unwrap();
         let config = load_with(dir.path(), &[]).unwrap();
@@ -743,6 +750,7 @@ mod tests {
         assert!(config.viewers_track_progress);
         assert_eq!(config.tag_scan_finished, FinishedScan::Keep);
         assert_eq!(config.date_format, DateFormat::Dmy);
+        assert!(config.show_slugs);
         let igdb = config.igdb.unwrap();
         assert_eq!(igdb.client_id, "id");
         assert!(!format!("{igdb:?}").contains("secret\""));
@@ -765,6 +773,7 @@ mod tests {
                 ("MEMORY_CARD_LISTEN", "127.0.0.1:18099"),
                 ("MEMORY_CARD_MANAGERS", "one, two,"),
                 ("MEMORY_CARD_VIEWERS_TRACK_PROGRESS", "1"),
+                ("MEMORY_CARD_SHOW_SLUGS", "true"),
             ],
         )
         .unwrap();
@@ -776,6 +785,7 @@ mod tests {
         );
         assert_eq!(config.managers, vec!["one", "two"]);
         assert!(config.viewers_track_progress);
+        assert!(config.show_slugs);
         assert!(config.igdb.is_none(), "empty secret disables IGDB");
     }
 

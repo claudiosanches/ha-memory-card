@@ -33,6 +33,7 @@ options:
   tag_scan_finished: playing
   tag_readers: []
   date_format: language
+  show_slugs: false
   log_level: info
 schema:
   managers:
@@ -48,4 +49,5 @@ schema:
       person: str
   currency: "match(^[A-Za-z]{3}$)?"
   date_format: "list(language|dmy|mdy|ymd)"
+  show_slugs: bool
   log_level: "list(trace|debug|info|warning|error)"

@@ -87,6 +87,7 @@ describe('Manage stores', () => {
 
   it('gives a new store a slug from its name until the slug is edited', async () => {
     const calls = mockApi({
+      'GET /api/status': { show_slugs: true },
       'GET /api/stores': [],
       'POST /api/stores': (body: unknown) => json({ id: 2, copy_count: 0, ...(body as object) }, 201),
     });
@@ -94,7 +95,7 @@ describe('Manage stores', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: en.stores.add }));
     const name = screen.getByRole('textbox', { name: en.common.name });
-    const slug = screen.getByRole('textbox', { name: en.slug.label });
+    const slug = await screen.findByRole('textbox', { name: en.slug.label });
     fireEvent.change(name, { target: { value: 'Café Jogos' } });
     expect(slug).toHaveValue('cafe-jogos');
 
@@ -113,13 +114,14 @@ describe('Manage stores', () => {
 
   it('warns that changing a saved slug breaks its links', async () => {
     mockApi({
+      'GET /api/status': { show_slugs: true },
       'GET /api/stores': [{ id: 1, name: 'Amazon', slug: 'amazon', notes: null, copy_count: 0 }],
       'PUT /api/stores/1': () => json({ code: 'slug_taken' }, 409),
     });
     renderAt('/manage?tab=stores');
 
     fireEvent.click(within(await screen.findByTestId('store-Amazon')).getByRole('button', { name: en.common.edit }));
-    const slug = screen.getByRole('textbox', { name: en.slug.label });
+    const slug = await screen.findByRole('textbox', { name: en.slug.label });
     expect(slug).toHaveValue('amazon');
     fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Amazon US' } });
     expect(slug).toHaveValue('amazon');
@@ -131,36 +133,30 @@ describe('Manage stores', () => {
     expect(await screen.findByText(en.errors.slug_taken)).toBeInTheDocument();
   });
 
-  it('hides the slug field when adding and editing under ingress', async () => {
-    const base = document.createElement('base');
-    base.href = '/api/hassio_ingress/test/';
-    document.head.appendChild(base);
-    try {
-      const calls = mockApi({
-        'GET /api/stores': [{ id: 1, name: 'Amazon', slug: 'amazon', notes: null, copy_count: 0 }],
-        'POST /api/stores': (body: unknown) => json({ id: 2, slug: 'cafe-jogos', copy_count: 0, ...(body as object) }, 201),
-        'PUT /api/stores/1': (body: unknown) => json({ id: 1, copy_count: 0, ...(body as object) }),
-      });
-      renderAt('/manage?tab=stores');
+  it('hides the slug field when show_slugs is off', async () => {
+    const calls = mockApi({
+      'GET /api/status': { show_slugs: false },
+      'GET /api/stores': [{ id: 1, name: 'Amazon', slug: 'amazon', notes: null, copy_count: 0 }],
+      'POST /api/stores': (body: unknown) => json({ id: 2, slug: 'cafe-jogos', copy_count: 0, ...(body as object) }, 201),
+      'PUT /api/stores/1': (body: unknown) => json({ id: 1, copy_count: 0, ...(body as object) }),
+    });
+    renderAt('/manage?tab=stores');
 
-      fireEvent.click(await screen.findByRole('button', { name: en.stores.add }));
-      expect(screen.queryByRole('textbox', { name: en.slug.label })).toBeNull();
-      expect(screen.queryByText(en.slug.label)).toBeNull();
-      fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Café Jogos' } });
-      fireEvent.click(screen.getByRole('button', { name: en.common.save }));
-      await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
-      expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Café Jogos', slug: null, notes: '' });
+    fireEvent.click(await screen.findByRole('button', { name: en.stores.add }));
+    expect(screen.queryByRole('textbox', { name: en.slug.label })).toBeNull();
+    expect(screen.queryByText(en.slug.label)).toBeNull();
+    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Café Jogos' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Café Jogos', slug: null, notes: '' });
 
-      fireEvent.click(within(await screen.findByTestId('store-Amazon')).getByRole('button', { name: en.common.edit }));
-      expect(screen.queryByRole('textbox', { name: en.slug.label })).toBeNull();
-      expect(screen.queryByText(en.slug.label)).toBeNull();
-      fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Amazon US' } });
-      fireEvent.click(screen.getByRole('button', { name: en.common.save }));
-      await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ name: 'Amazon US', slug: 'amazon', notes: '' });
-    } finally {
-      base.remove();
-    }
+    fireEvent.click(within(await screen.findByTestId('store-Amazon')).getByRole('button', { name: en.common.edit }));
+    expect(screen.queryByRole('textbox', { name: en.slug.label })).toBeNull();
+    expect(screen.queryByText(en.slug.label)).toBeNull();
+    fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'Amazon US' } });
+    fireEvent.click(screen.getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ name: 'Amazon US', slug: 'amazon', notes: '' });
   });
 });
 
@@ -259,7 +255,7 @@ describe('Manage labels', () => {
     fireEvent.click(screen.getByRole('button', { name: en.common.save }));
 
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
-    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Couch co-op', slug: 'couch-co-op', color: 'teal' });
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Couch co-op', slug: null, color: 'teal' });
   });
 
   it('refuses commas and semicolons in a name before calling the API', async () => {

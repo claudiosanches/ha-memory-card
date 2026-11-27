@@ -7295,6 +7295,7 @@
           "igdb_configured",
           "external_services",
           "date_format",
+          "show_slugs",
           "sensors",
           "tags"
         ],
@@ -7328,6 +7329,10 @@
           "sensors": {
             "$ref": "#/components/schemas/SensorsStatus",
             "description": "Whether Home Assistant sensors are being published."
+          },
+          "show_slugs": {
+            "type": "boolean",
+            "description": "Whether manage and hardware forms show the slug field, from the app options."
           },
           "tags": {
             "$ref": "#/components/schemas/TagsStatus",

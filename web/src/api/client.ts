@@ -9,11 +9,6 @@ export function apiBaseUrl(baseURI: string = document.baseURI): string {
   return new URL('.', baseURI).href.replace(/\/$/, '');
 }
 
-/** True when served through Home Assistant ingress (`<base href>` injected). */
-export function inIngress(baseURI: string = document.baseURI): boolean {
-  return new URL('.', baseURI).pathname !== '/';
-}
-
 export const api = createClient<paths>({
   baseUrl: apiBaseUrl(),
   // The server refuses changes without it; another site cannot send it.

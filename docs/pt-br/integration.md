@@ -133,6 +133,8 @@ backlog de uma pessoa e responde com `title` e `platforms`.
 
 Os campos de slug aceitam um único slug ou uma lista de até 10. Um slug é o
 nome em minúsculas separado por hifens, como `switch` ou `living-room-switch`.
+Ligue `show_slugs` na aba Configuração do aplicativo para vê-los ou editá-los
+nos formulários de [Gerenciar](manage.md) e [Hardware](hardware.md).
 
 Um sorteio de noite de jogos para duas pessoas no Switch, a partir do backlog
 de Ana:

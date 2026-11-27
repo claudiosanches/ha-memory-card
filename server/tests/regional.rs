@@ -108,3 +108,11 @@ async fn dates_follow_the_language_unless_the_option_names_a_format() {
     let app = TestApp::with_env(&[("MEMORY_CARD_DATE_FORMAT", "dmy")]).await;
     assert_eq!(status(&app).await["date_format"], "dmy");
 }
+
+#[tokio::test]
+async fn show_slugs_is_off_by_default_and_follows_the_option() {
+    let app = TestApp::new().await;
+    assert_eq!(status(&app).await["show_slugs"], false);
+    let app = TestApp::with_env(&[("MEMORY_CARD_SHOW_SLUGS", "true")]).await;
+    assert_eq!(status(&app).await["show_slugs"], true);
+}

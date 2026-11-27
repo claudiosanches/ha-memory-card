@@ -55,6 +55,7 @@ The server reads these variables; `make run` sets the first four,
 | `MEMORY_CARD_TAG_READERS` | from `options.json` | `device=person,...` pairs of Home Assistant device and user IDs; overrides `tag_readers` |
 | `MEMORY_CARD_CURRENCY` | from `options.json` | Three-letter code; overrides `currency` |
 | `MEMORY_CARD_DATE_FORMAT` | from `options.json` | `language`, `dmy`, `mdy` or `ymd`; overrides `date_format` |
+| `MEMORY_CARD_SHOW_SLUGS` | from `options.json` | `true` or `false`; overrides `show_slugs` |
 | `MEMORY_CARD_MQTT_HOST` | unset | MQTT broker for the sensors, instead of asking the Supervisor |
 | `MEMORY_CARD_MQTT_PORT` | `1883` | Port of that broker |
 | `MEMORY_CARD_MQTT_USERNAME` | unset | Broker user |
