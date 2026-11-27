@@ -122,10 +122,8 @@ async fn a_scanned_tag_starts_its_copy() {
     .unwrap();
     assert_eq!(
         history,
-        [
-            ("completed".into(), "manual".into()),
-            ("playing".into(), "scan".into()),
-        ]
+        [("playing".into(), "scan".into())],
+        "one row a day, whatever changed it"
     );
 
     assert_eq!(

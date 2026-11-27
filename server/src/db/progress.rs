@@ -81,16 +81,18 @@ pub(super) async fn put(
         return Ok(());
     }
     let source = source.as_str();
-    // Second thoughts the same day, such as a status picked by mistake, keep
-    // one row.
+    // A game keeps one row a day per person, so second thoughts such as a
+    // status picked by mistake count as the last one, and the history stays
+    // bounded however often a status flips.
     let replaced = sqlx::query!(
         "UPDATE play_status_changes
          SET play_status = ?1,
              counts_as = (SELECT counts_as FROM play_statuses WHERE key = ?1),
+             source = ?2,
              changed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = (SELECT id FROM play_status_changes
                      WHERE user_id = ?3 AND game_id = ?4 ORDER BY id DESC LIMIT 1)
-           AND source = ?2 AND date(changed_at) = date('now')",
+           AND date(changed_at) = date('now')",
         status,
         source,
         user,

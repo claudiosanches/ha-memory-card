@@ -376,8 +376,8 @@ CREATE INDEX play_progress_game ON play_progress (game_id);
 CREATE INDEX play_progress_status ON play_progress (play_status);
 
 -- Each status a person gave a game, so a finish still counts after the status
--- changes again. Clearing a status adds nothing, and a change from the same
--- source on the same day replaces that day's row. counts_as keeps the
+-- changes again. Clearing a status adds nothing, and a later change on the
+-- same day replaces that day's row. counts_as keeps the
 -- status's group at the time, so editing or deleting statuses later changes
 -- no finish. source is manual (in the app), scan (an NFC tag) or csv (an
 -- import, which restates statuses rather than changing them then).

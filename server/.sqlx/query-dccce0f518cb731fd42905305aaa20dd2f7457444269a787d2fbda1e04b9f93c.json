@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE play_status_changes\n         SET play_status = ?1,\n             counts_as = (SELECT counts_as FROM play_statuses WHERE key = ?1),\n             source = ?2,\n             changed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')\n         WHERE id = (SELECT id FROM play_status_changes\n                     WHERE user_id = ?3 AND game_id = ?4 ORDER BY id DESC LIMIT 1)\n           AND date(changed_at) = date('now')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "dccce0f518cb731fd42905305aaa20dd2f7457444269a787d2fbda1e04b9f93c"
+}

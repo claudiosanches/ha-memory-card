@@ -219,10 +219,10 @@ async fn a_finish_stays_counted_after_the_status_changes_again() {
     assert_eq!(
         history(&app, tetris).await,
         [
-            ("backlog".into(), "csv".into()),
             ("completed".into(), "manual".into()),
             ("playing".into(), "manual".into()),
-        ]
+        ],
+        "the import's row gave way to the change made the same day"
     );
 }
 
