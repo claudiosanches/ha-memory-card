@@ -28,19 +28,25 @@ function allowed(expression) {
   const fail = () => {
     throw new Error(expression);
   };
-  const term = () => {
+  // A license or exception name: no parenthesis or operator.
+  const name = () => {
     const token = tokens[at++];
-    if (token === '(') {
+    if (token === undefined || token === '(' || token === ')' || ['AND', 'OR', 'WITH'].includes(token.toUpperCase())) fail();
+    return token;
+  };
+  const term = () => {
+    if (tokens[at] === '(') {
+      at++;
       const ok = any();
       if (tokens[at++] !== ')') fail();
       return ok;
     }
-    if (token === undefined || token === ')' || ['AND', 'OR', 'WITH'].includes(token.toUpperCase())) fail();
+    const license = name();
     if (operator('WITH')) {
-      if (tokens[at++] === undefined) fail();
+      name();
       return false;
     }
-    return ALLOWED.has(token);
+    return ALLOWED.has(license);
   };
   const all = () => {
     let ok = term();
