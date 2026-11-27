@@ -15,6 +15,7 @@ use super::parse::{FileIssue, detect_delimiter, too_wide};
 use crate::api::devices::DeviceInput;
 use crate::api::input::{NAME_MAX, required};
 use crate::db::devices::{self, Device, DeviceFields};
+use crate::db::labels::SEPARATORS;
 use crate::db::platforms::{self, Platform};
 use crate::db::stores::{self, Store, StoreFields};
 use crate::db::{Pool, write_tx};
@@ -88,6 +89,16 @@ pub async fn export(pool: &Pool) -> ApiResult<Vec<u8>> {
             .find(|p| p.id == id)
             .map(|p| p.name.clone())
     };
+    // A name with a separator in it would split in the list, so it goes by slug.
+    let listed = |id: i64| {
+        platforms.iter().find(|p| p.id == id).map(|p| {
+            if p.name.contains(SEPARATORS) {
+                p.slug.clone()
+            } else {
+                p.name.clone()
+            }
+        })
+    };
     let mut out = UTF8_BOM.to_vec();
     {
         let mut writer = csv::Writer::from_writer(&mut out);
@@ -106,7 +117,7 @@ pub async fn export(pool: &Pool) -> ApiResult<Vec<u8>> {
                 plain(
                     d.platform_ids
                         .iter()
-                        .filter_map(|id| platform(*id))
+                        .filter_map(|id| listed(*id))
                         .collect::<Vec<_>>()
                         .join("; "),
                 ),
@@ -360,12 +371,14 @@ fn plan_row(
             }
         };
     }
-    // A name or slug first; an abbreviation only when one platform has it.
+    // A name, then a slug, as the games file reads them; an abbreviation only
+    // when one platform has it.
     let platform_id = |text: &str| -> Result<i64, &'static str> {
         let k = key(text);
         if let Some(found) = platforms
             .iter()
-            .find(|p| key(&p.name) == k || key(&p.slug) == k)
+            .find(|p| key(&p.name) == k)
+            .or_else(|| platforms.iter().find(|p| key(&p.slug) == k))
         {
             return Ok(found.id);
         }
@@ -390,7 +403,7 @@ fn plan_row(
     if let Some(text) = cell("plays") {
         let mut ids = Vec::new();
         for part in text
-            .split([';', ','])
+            .split(SEPARATORS)
             .map(str::trim)
             .filter(|p| !p.is_empty())
         {

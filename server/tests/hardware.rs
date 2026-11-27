@@ -382,3 +382,30 @@ async fn a_platform_hardware_is_for_cannot_be_deleted() {
     assert_eq!(status, StatusCode::CONFLICT);
     assert_eq!(body["code"], "platform_in_use");
 }
+
+#[tokio::test]
+async fn hardware_csv_keeps_platform_names_apart_from_slugs_and_separators() {
+    let app = TestApp::new().await;
+    // Named like the catalog's PlayStation 5 slug, and listed after it.
+    let lookalike = custom_platform(&app, json!({"name": "ps5", "slug": "alternate-ps5"})).await;
+    let upstairs = custom_platform(&app, json!({"name": "Family PC, upstairs"})).await;
+    add(
+        &app,
+        json!({"name": "Box", "kind": "console", "platform_ids": [lookalike, upstairs]}),
+    )
+    .await;
+
+    let (_, bytes) = app.get("/api/hardware.csv").await;
+    let csv = String::from_utf8(bytes).unwrap();
+    let (status, result) = app.post_csv("/api/hardware/import", &csv).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let (_, devices) = app.json("GET", "/api/devices", None).await;
+    let mut plays: Vec<i64> = devices[0]["platform_ids"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|id| id.as_i64().unwrap())
+        .collect();
+    plays.sort_unstable();
+    assert_eq!(plays, [lookalike, upstairs], "{csv}");
+}
