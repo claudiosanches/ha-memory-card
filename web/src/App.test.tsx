@@ -37,15 +37,16 @@ describe('App', () => {
     mockApi({ 'GET /api/me': VIEWER, 'GET /api/games': [] });
     renderAt('/');
     expect(await screen.findByRole('link', { name: en.nav.settings })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: en.nav.cleanup })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: en.maintenance.tabs.duplicates })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: en.nav.maintenance })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: en.nav.import })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: en.nav.manage })).not.toBeInTheDocument();
   });
 
-  it('highlights Cleanup when reviewing IGDB matches', async () => {
+  it('highlights Maintenance when reviewing IGDB matches', async () => {
     mockApi({ 'GET /api/igdb/matches': [] });
     renderAt('/igdb-matches');
-    expect(await screen.findByRole('link', { name: en.nav.cleanup })).toHaveAttribute('data-active', 'true');
+    expect(await screen.findByRole('link', { name: en.nav.maintenance })).toHaveAttribute('data-active', 'true');
   });
 
   it('keeps viewers off manager pages opened by URL', async () => {

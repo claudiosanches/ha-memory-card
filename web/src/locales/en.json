@@ -20,7 +20,7 @@
     "stats": "Stats",
     "household": "Household",
     "manage": "Manage",
-    "cleanup": "Cleanup",
+    "maintenance": "Maintenance",
     "import": "Import & export",
     "settings": "Settings",
     "hardware": "Hardware"
@@ -153,7 +153,7 @@
       "cancel": "Moving {{name}} was cancelled."
     }
   },
-  "cleanup": {
+  "maintenance": {
     "intro": "Fill in missing details, review duplicate copies, and keep IGDB matches in sync.",
     "viewerIntro": "Review games with more than one owned copy in the collection.",
     "tabs": {
@@ -785,7 +785,6 @@
     "upToHours_other": "Up to {{count}} hours"
   },
   "duplicates": {
-    "intro": "Games you own more than one copy of.",
     "filter": "Show duplicates by difference",
     "all": "All",
     "empty": "No duplicates. You own one copy of every game.",

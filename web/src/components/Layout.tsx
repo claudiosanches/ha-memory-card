@@ -26,7 +26,7 @@ import { ColorSchemePicker } from './ColorSchemePicker';
 import { SlotOneModal } from './SlotOneModal';
 import classes from './Layout.module.css';
 
-type NavKey = 'library' | 'backlog' | 'wishlist' | 'hardware' | 'stats' | 'household' | 'manage' | 'cleanup' | 'import' | 'settings';
+type NavKey = 'library' | 'backlog' | 'wishlist' | 'hardware' | 'stats' | 'household' | 'manage' | 'maintenance' | 'import' | 'settings';
 type NavItem = { key: NavKey; to: string; icon: ComponentType<{ size?: number }>; manager?: boolean };
 
 const COLLECTION: NavItem[] = [
@@ -43,7 +43,7 @@ const INSIGHTS: NavItem[] = [
 
 const TOOLS: NavItem[] = [
   { key: 'manage', to: '/manage', icon: IconAdjustments, manager: true },
-  { key: 'cleanup', to: '/cleanup', icon: IconChecklist },
+  { key: 'maintenance', to: '/maintenance', icon: IconChecklist },
   { key: 'import', to: '/import', icon: IconFileImport, manager: true },
 ];
 
@@ -85,21 +85,26 @@ export function Layout() {
   const isActive = (key: NavKey, to: string) =>
     pathname === to ||
     (key === 'library' && pathname.startsWith('/games/')) ||
-    (key === 'cleanup' && pathname === '/igdb-matches');
+    (key === 'maintenance' && pathname === '/igdb-matches');
 
-  const link = ({ key, to, icon: Icon }: NavItem) => (
-    <Tooltip key={key} label={t(`nav.${key}`)} position="right" disabled={!rail}>
-      <NavLink
-        className={classes.navLink}
-        classNames={{ body: classes.navBody, section: classes.navSection }}
-        label={t(`nav.${key}`)}
-        leftSection={<Icon size={20} />}
-        active={isActive(key, to)}
-        onClick={close}
-        renderRoot={(props) => <Link to={to} {...props} aria-current={pathname === to ? 'page' : undefined} />}
-      />
-    </Tooltip>
-  );
+  const navLabel = (key: NavKey) => (key === 'maintenance' && !canManage ? t('maintenance.tabs.duplicates') : t(`nav.${key}`));
+
+  const link = ({ key, to, icon: Icon }: NavItem) => {
+    const label = navLabel(key);
+    return (
+      <Tooltip key={key} label={label} position="right" disabled={!rail}>
+        <NavLink
+          className={classes.navLink}
+          classNames={{ body: classes.navBody, section: classes.navSection }}
+          label={label}
+          leftSection={<Icon size={20} />}
+          active={isActive(key, to)}
+          onClick={close}
+          renderRoot={(props) => <Link to={to} {...props} aria-current={pathname === to ? 'page' : undefined} />}
+        />
+      </Tooltip>
+    );
+  };
 
   return (
     <AppShell

@@ -76,7 +76,7 @@ describe('Setup wizard', () => {
       'PUT /api/games/4': (body: unknown) => ({ ...detail(4, 'Metroid Dread'), ...(body as object) }),
       'PUT /api/copies/21': () => detail(4, 'Metroid Dread'),
     });
-    renderAt('/cleanup?tab=missing');
+    renderAt('/maintenance?tab=missing');
 
     fireEvent.click(await screen.findByRole('button', { name: en.setup.start_other.replace('{{count}}', '2') }));
     expect(await screen.findByText('Metroid Dread')).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('Setup wizard', () => {
       'GET /api/games/4': game,
       'PUT /api/copies/21': () => game,
     });
-    renderAt('/cleanup?tab=missing');
+    renderAt('/maintenance?tab=missing');
 
     fireEvent.click(await screen.findByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') }));
     const copy = await screen.findByTestId('setup-copy-21');
@@ -127,7 +127,7 @@ describe('Setup wizard', () => {
 
   it('only goes through games lacking the chosen details', async () => {
     mockApi(SETUP);
-    renderAt('/cleanup?tab=missing');
+    renderAt('/maintenance?tab=missing');
 
     fireEvent.click(await screen.findByRole('checkbox', { name: /^Cover/ }));
     expect(screen.getByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') })).toBeInTheDocument();

@@ -46,7 +46,7 @@ export default {
             page('Stats', 'stats'),
             page('Household', 'household'),
             page('Manage', 'manage'),
-            page('Cleanup', 'cleanup'),
+            page('Maintenance', 'maintenance'),
             page('Import & export', 'import-export'),
             page('Settings', 'settings'),
           ],

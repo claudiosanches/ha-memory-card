@@ -170,10 +170,10 @@ try {
     }),
   ]);
   await save('wishlist', async () => [await capture('/wishlist')]);
-  await save('duplicates', async () => [await capture('/cleanup?tab=duplicates')]);
+  await save('duplicates', async () => [await capture('/maintenance?tab=duplicates')]);
   await save('stats', async () => [await capture('/stats', { scheme: 'dark' })]);
   await save('household', async () => [await capture('/household')]);
-  await save('missing-details', async () => [await capture('/cleanup?tab=missing')]);
+  await save('missing-details', async () => [await capture('/maintenance?tab=missing')]);
   await save('import', async () => [
     await capture('/import', {
       height: 1260,

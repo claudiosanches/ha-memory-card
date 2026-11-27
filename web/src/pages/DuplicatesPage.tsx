@@ -16,7 +16,7 @@ type Names = {
   store: Map<number, string>;
 };
 
-export function DuplicatesTab({ showIntro = true }: { showIntro?: boolean }) {
+export function DuplicatesTab() {
   const { t } = useTranslation();
   const duplicates = useDuplicates();
   const platforms = usePlatforms();
@@ -40,12 +40,6 @@ export function DuplicatesTab({ showIntro = true }: { showIntro?: boolean }) {
 
   return (
     <Stack gap="card">
-      {showIntro && (
-        <Text size="sm" c="dimmed">
-          {t('duplicates.intro')}
-        </Text>
-      )}
-
       {all.length > 0 && (
         <FilterBar label={t('duplicates.filter')}>
           <FilterButton count={all.length} selected={!label} onClick={() => setLabel(null)}>

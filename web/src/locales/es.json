@@ -20,7 +20,7 @@
     "stats": "Estadísticas",
     "household": "Hogar",
     "manage": "Gestionar",
-    "cleanup": "Limpieza",
+    "maintenance": "Mantenimiento",
     "import": "Importar / exportar",
     "settings": "Ajustes",
     "hardware": "Hardware"
@@ -153,7 +153,7 @@
       "cancel": "Se canceló el movimiento de {{name}}."
     }
   },
-  "cleanup": {
+  "maintenance": {
     "intro": "Completa los detalles que faltan, revisa copias duplicadas y mantén sincronizado IGDB.",
     "viewerIntro": "Revisa los juegos con más de una copia propia en la colección.",
     "tabs": {
@@ -785,7 +785,6 @@
     "upToHours_other": "Hasta {{count}} horas"
   },
   "duplicates": {
-    "intro": "Juegos de los que tienes más de una copia.",
     "filter": "Mostrar duplicados por diferencia",
     "all": "Todos",
     "empty": "No hay duplicados. Tienes una copia de cada juego.",

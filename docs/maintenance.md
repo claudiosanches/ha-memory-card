@@ -1,8 +1,8 @@
-# Cleanup
+# Maintenance
 
-**Cleanup** in the sidebar brings together the tools that keep the collection
-tidy. Managers see **Missing details**, **Duplicates** and, when IGDB is
-connected, **IGDB**. Viewers see only duplicates.
+**Maintenance** in the sidebar brings together the tools that keep the
+collection tidy. Managers see **Missing details**, **Duplicates** and, when
+IGDB is connected, **IGDB**. Viewers see only **Duplicates** in the sidebar.
 
 ## Missing details
 

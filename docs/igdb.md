@@ -23,7 +23,7 @@ versions**.
 
 ## Sync
 
-**Cleanup > IGDB > Sync with IGDB** links each game whose title matches
+**Maintenance > IGDB > Sync with IGDB** links each game whose title matches
 exactly one IGDB game, then updates the details and covers of every linked
 game. It shows how many it linked, updated, could not match and failed on.
 

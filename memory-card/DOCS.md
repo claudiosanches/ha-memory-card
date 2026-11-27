@@ -98,7 +98,7 @@ covers and metadata, give it access to the IGDB API.
 
 Releases for Japan, Korea and Europe get their regional cover when IGDB has
 one. IGDB also gives the time to beat a game: the main story, with extras and
-everything, shown on the game page and the backlog. **Cleanup > IGDB > Sync
+everything, shown on the game page and the backlog. **Maintenance > IGDB > Sync
 with IGDB** refreshes every linked game.
 
 To keep Memory Card from contacting the internet, turn off
@@ -267,7 +267,7 @@ collection in a spreadsheet. **Export CSV** on the Library page downloads
 only the copies that match its filters.
 
 After an import, games without an IGDB link can be linked with
-**Cleanup > IGDB > Sync with IGDB**, which matches them by exact title. **Review
+**Maintenance > IGDB > Sync with IGDB**, which matches them by exact title. **Review
 close matches** next to it goes through the rest: it shows IGDB's closest
 names for each game, to link with a click or mark as not on IGDB.
 

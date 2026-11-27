@@ -9,7 +9,7 @@ import { Layout } from './components/Layout';
 import { ManagerOnly } from './components/ManagerOnly';
 import { WishlistPage } from './pages/WishlistPage';
 import { BacklogPage } from './pages/backlog/BacklogPage';
-import { CLEANUP_TABS, CleanupPage, type CleanupTab } from './pages/cleanup/CleanupPage';
+import { MAINTENANCE_TABS, MaintenancePage, type MaintenanceTab } from './pages/maintenance/MaintenancePage';
 import { ImportPage } from './pages/ImportPage';
 import { GamePage } from './pages/game/GamePage';
 import { LibraryPage } from './pages/library/LibraryPage';
@@ -37,10 +37,10 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/backlog', component: BacklogPage }),
   createRoute({
     getParentRoute: () => rootRoute,
-    path: '/cleanup',
-    component: CleanupPage,
-    validateSearch: (search: Record<string, unknown>): { tab?: CleanupTab } =>
-      CLEANUP_TABS.includes(search.tab as CleanupTab) ? { tab: search.tab as CleanupTab } : {},
+    path: '/maintenance',
+    component: MaintenancePage,
+    validateSearch: (search: Record<string, unknown>): { tab?: MaintenanceTab } =>
+      MAINTENANCE_TABS.includes(search.tab as MaintenanceTab) ? { tab: search.tab as MaintenanceTab } : {},
   }),
   createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/household', component: HouseholdPage }),

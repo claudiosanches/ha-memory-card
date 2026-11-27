@@ -26,7 +26,7 @@ its options. These pages go through everything step by step.
 - [Stats](stats.md): totals for the collection and your play.
 - [Household](household.md): everyone's play side by side.
 - [Manage](manage.md): accounts, stores, platforms, play statuses and labels.
-- [Cleanup](cleanup.md): missing details, duplicates and IGDB sync.
+- [Maintenance](maintenance.md): missing details, duplicates and IGDB sync.
 - [Import & export](import-export.md): CSV files and spreadsheets.
 - [Settings](settings.md): appearance, status and your access.
 

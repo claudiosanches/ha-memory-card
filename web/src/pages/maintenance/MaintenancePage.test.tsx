@@ -18,7 +18,7 @@ const STATUS = {
   tags: 'unavailable',
 };
 
-describe('Cleanup access and tabs', () => {
+describe('Maintenance access and tabs', () => {
   it('shows Missing details, Duplicates, and IGDB tabs to managers when IGDB is configured', async () => {
     mockApi({
       'GET /api/me': MANAGER,
@@ -27,15 +27,15 @@ describe('Cleanup access and tabs', () => {
       'GET /api/igdb/sync': { running: false, total: 0, done: 0, linked: 0, unmatched: 0, updated: 0, failed: 0 },
       'GET /api/igdb/titles': [],
     });
-    renderAt('/cleanup');
+    renderAt('/maintenance');
 
-    expect(await screen.findByRole('tab', { name: en.cleanup.tabs.missing })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: en.cleanup.tabs.duplicates })).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('tab', { name: en.cleanup.tabs.igdb }));
+    expect(await screen.findByRole('tab', { name: en.maintenance.tabs.missing })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: en.maintenance.tabs.duplicates })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('tab', { name: en.maintenance.tabs.igdb }));
     expect(await screen.findByRole('button', { name: en.igdb.syncButton })).toBeInTheDocument();
   });
 
-  it('shows only Duplicates to viewers and keeps manager cleanup tools away', async () => {
+  it('shows only Duplicates to viewers and keeps manager maintenance tools away', async () => {
     const calls = mockApi({
       'GET /api/me': VIEWER,
       'GET /api/status': STATUS,
@@ -44,9 +44,10 @@ describe('Cleanup access and tabs', () => {
       'GET /api/devices': [],
       'GET /api/stores': [],
     });
-    renderAt('/cleanup?tab=igdb');
+    renderAt('/maintenance?tab=igdb');
 
     expect(await screen.findByText(en.duplicates.empty)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: en.maintenance.tabs.duplicates })).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: en.igdb.syncButton })).not.toBeInTheDocument();
     expect(calls.some((c) => c.path.startsWith('/api/igdb'))).toBe(false);
@@ -54,7 +55,7 @@ describe('Cleanup access and tabs', () => {
   });
 });
 
-describe('Cleanup IGDB titles', () => {
+describe('Maintenance IGDB titles', () => {
   it('renames a game to its IGDB title', async () => {
     const calls = mockApi({
       'GET /api/status': STATUS,
@@ -62,7 +63,7 @@ describe('Cleanup IGDB titles', () => {
       'GET /api/igdb/titles': DIFFERENCES,
       'POST /api/igdb/titles': [DIFFERENCES[1]],
     });
-    renderAt('/cleanup?tab=igdb');
+    renderAt('/maintenance?tab=igdb');
 
     const row = await screen.findByTestId('title-3');
     expect(within(row).getByText("IGDB: Bomberman '93")).toBeInTheDocument();
@@ -88,7 +89,7 @@ describe('Cleanup IGDB titles', () => {
       'GET /api/igdb/titles': many,
       'POST /api/igdb/titles': [],
     });
-    renderAt('/cleanup?tab=igdb');
+    renderAt('/maintenance?tab=igdb');
 
     fireEvent.click(await screen.findByRole('button', { name: en.igdb.useAllIgdbTitles }));
     await waitFor(() => expect(calls.filter((c) => c.method === 'POST')).toHaveLength(2));
