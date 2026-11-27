@@ -1,6 +1,6 @@
 import { ActionIcon, Badge, Group, Loader, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconTag, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { queryKeys, useLabels } from '../../api/queries';
 import type { Label, LabelInput, StatusColor } from '../../api/types';
 import { ColorPicker } from '../../components/ColorPicker';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { EmptyState } from '../../components/EmptyState';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
@@ -46,7 +47,7 @@ export function LabelsTab() {
       <ManageToolbar addLabel={t('labels.add')} onAdd={() => setEditing({})} />
 
       {labels.data.length === 0 ? (
-        <div className={classes.empty}>{t('labels.empty')}</div>
+        <EmptyState icon={IconTag} title={t('labels.emptyTitle')} description={t('labels.empty')} />
       ) : (
         <ul className={classes.grid}>
           {labels.data.map((label) => (

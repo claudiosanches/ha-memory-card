@@ -1,5 +1,6 @@
 import { Badge, Card, Loader, SegmentedControl, SimpleGrid, Stack, Text } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
+import { IconUsers } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useMe } from '../../api/queries';
 import type { components } from '../../api/schema';
 import { Cover } from '../../components/Cover';
+import { EmptyState } from '../../components/EmptyState';
 import { PageHeader } from '../../components/PageHeader';
 import { playTime } from '../stats/StatsPage';
 import classes from './HouseholdPage.module.css';
@@ -64,7 +66,7 @@ export function HouseholdPage() {
       ) : household.isError ? (
         <Text c="red">{errorMessage(t, household.error)}</Text>
       ) : people.length === 0 ? (
-        <Text c="dimmed">{t('household.empty')}</Text>
+        <EmptyState icon={IconUsers} title={t('household.emptyTitle')} description={t('household.empty')} />
       ) : (
         <>
           <dl className={classes.tiles} data-testid="household-summary">

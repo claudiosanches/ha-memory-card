@@ -1,0 +1,19 @@
+.root {
+  padding: 64px 24px;
+  color: var(--mc-muted);
+  border: 1px dashed var(--mc-border);
+  border-radius: var(--mantine-radius-lg);
+}
+
+.root[data-compact] {
+  padding: 36px 24px;
+}
+
+.description {
+  max-width: 48ch;
+  text-wrap: balance;
+}
+
+.action {
+  margin-top: 4px;
+}

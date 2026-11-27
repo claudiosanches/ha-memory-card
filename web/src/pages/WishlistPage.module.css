@@ -5,7 +5,6 @@
 .title { color: inherit; font-weight: 650; text-decoration: none; transition: color 120ms ease; }
 .title:hover, .item:has(.cover:hover) .title { color: var(--mantine-primary-color-light-color); }
 .actions { flex-shrink: 0; }
-.empty { padding: 48px 16px; border: 1px dashed var(--mc-border); border-radius: var(--mantine-radius-lg); color: var(--mc-muted); }
 
 @media (max-width: 48em) {
   .list { grid-template-columns: 1fr; }

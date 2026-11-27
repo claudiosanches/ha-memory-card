@@ -21,13 +21,14 @@ import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useCanManage, useDevices, usePlatforms, useStores } from '../../api/queries';
 import { type CopyStatus, type Device, type DeviceKind, DEVICE_KINDS, holdsGames } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { EmptyState } from '../../components/EmptyState';
 import { FilterBar, FilterButton } from '../../components/FilterBar';
 import { formatMoney } from '../../components/money';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { PageHeader } from '../../components/PageHeader';
 import { useFormatDate } from '../../hooks/useFormatDate';
 import { PhotoViewer } from '../game/PhotoViewer';
-import { DEVICE_KIND_ICON } from './deviceIcons';
+import { DEVICE_KIND_ICON, HARDWARE_NAV_ICON } from './deviceIcons';
 import { HardwareForm } from './HardwareForm';
 import classes from './HardwarePage.module.css';
 
@@ -203,7 +204,36 @@ export function HardwarePage() {
       ) : devices.isError ? (
         <Text c="red">{errorMessage(t, devices.error)}</Text>
       ) : shown.length === 0 ? (
-        <div className={classes.empty}>{hasFilter ? t('hardware.noMatches') : t('hardware.empty')}</div>
+        <EmptyState
+          icon={HARDWARE_NAV_ICON}
+          title={
+            hasFilter
+              ? t('hardware.noMatchesTitle')
+              : show === 'wanted'
+                ? t('hardware.emptyWantedTitle')
+                : t('hardware.emptyTitle')
+          }
+          description={
+            hasFilter
+              ? t('hardware.noMatches')
+              : show === 'wanted'
+                ? t(canManage ? 'hardware.emptyWanted' : 'hardware.emptyWantedViewer')
+                : t(canManage ? 'hardware.empty' : 'hardware.emptyViewer')
+          }
+          action={
+            hasFilter ? (
+              <Button
+                variant="default"
+                onClick={() => {
+                  setQuery('');
+                  setKind(null);
+                }}
+              >
+                {t('library.clearFilters')}
+              </Button>
+            ) : undefined
+          }
+        />
       ) : showGroups ? (
         <div className={classes.groups}>
           {groups.map(({ kind: groupKind, items }) => {

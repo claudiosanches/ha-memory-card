@@ -1,6 +1,6 @@
 import { ActionIcon, Badge, Group, Loader, MultiSelect, Select, Stack, Switch, Text, Textarea, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconTrash, IconUserCircle } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useAccounts, usePeople, usePlatforms, useStores } from '../../api/queries';
 import type { Account, AccountInput, Platform } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { EmptyState } from '../../components/EmptyState';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
@@ -55,7 +56,7 @@ export function AccountsTab() {
       <ManageToolbar addLabel={t('accounts.add')} onAdd={() => setEditing({})} />
 
       {accounts.data.length === 0 ? (
-        <div className={classes.empty}>{t('accounts.empty')}</div>
+        <EmptyState icon={IconUserCircle} title={t('accounts.emptyTitle')} description={t('accounts.empty')} />
       ) : (
         <ul className={classes.grid}>
           {accounts.data.map((account) => {

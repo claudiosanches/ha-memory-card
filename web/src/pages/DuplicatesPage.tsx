@@ -1,10 +1,12 @@
 import { Badge, Group, Loader, Stack, Text } from '@mantine/core';
+import { IconCopy } from '@tabler/icons-react';
 import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../api/errors';
 import { useAccounts, useDevices, useDuplicates, usePlatforms, useStores } from '../api/queries';
 import { DUPLICATE_LABELS, type DuplicateCopy, type DuplicateGroup, type DuplicateLabel } from '../api/types';
+import { EmptyState } from '../components/EmptyState';
 import { FilterBar, FilterButton } from '../components/FilterBar';
 import { Cover } from '../components/Cover';
 import classes from './DuplicatesPage.module.css';
@@ -65,7 +67,7 @@ export function DuplicatesTab() {
       ) : duplicates.isError ? (
         <Text c="red">{errorMessage(t, duplicates.error)}</Text>
       ) : all.length === 0 ? (
-        <div className={classes.empty}>{t('duplicates.empty')}</div>
+        <EmptyState icon={IconCopy} title={t('duplicates.emptyTitle')} description={t('duplicates.empty')} />
       ) : (
         <div className={classes.groups}>
           {shown.map((group) => (

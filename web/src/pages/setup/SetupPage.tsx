@@ -1,7 +1,7 @@
 import { Badge, Button, Card, Chip, Group, Loader, MultiSelect, Progress, Select, Stack, Text, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useLocalStorage } from '@mantine/hooks';
-import { IconLink, IconPlus } from '@tabler/icons-react';
+import { IconChecklist, IconCircleCheck, IconLink, IconPlus } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,7 @@ import {
   type MissingField,
   type ReleaseDetail,
 } from '../../api/types';
+import { EmptyState } from '../../components/EmptyState';
 import { notifyError } from '../../components/notify';
 import { CoverPicker } from '../game/CoverPicker';
 import { checkedOrNull, CopyForm, gameInput, numberOrNull, PlayerFields } from '../game/forms';
@@ -67,12 +68,12 @@ export function SetupTab() {
     const id = run.ids[run.index];
     if (id === undefined) {
       return (
-        <Stack gap="md">
-          <Text>{t('setup.done')}</Text>
-          <Button w="fit-content" onClick={() => setRun(null)}>
-            {t('setup.again')}
-          </Button>
-        </Stack>
+        <EmptyState
+          icon={IconCircleCheck}
+          title={t('setup.doneTitle')}
+          description={t('setup.done')}
+          action={<Button onClick={() => setRun(null)}>{t('setup.again')}</Button>}
+        />
       );
     }
     return (
@@ -84,6 +85,16 @@ export function SetupTab() {
         fields={lacking(missing.data.find((game) => game.game_id === id)?.fields ?? [])}
         onNext={() => setRun({ ...run, index: run.index + 1 })}
         onStop={() => setRun(null)}
+      />
+    );
+  }
+
+  if (missing.data.length === 0) {
+    return (
+      <EmptyState
+        icon={IconChecklist}
+        title={t('setup.emptyTitle')}
+        description={t('setup.empty')}
       />
     );
   }

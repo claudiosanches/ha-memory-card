@@ -133,4 +133,13 @@ describe('Setup wizard', () => {
     expect(screen.getByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') })).toBeInTheDocument();
     expect(localStorage.getItem('memory-card-setup-fields')).not.toContain('"cover"');
   });
+
+  it('shows an empty state instead of the filter card when nothing is missing', async () => {
+    mockApi({ ...SETUP, 'GET /api/missing-details': [] });
+    renderAt('/maintenance?tab=missing');
+
+    expect(await screen.findByText(en.setup.emptyTitle)).toBeInTheDocument();
+    expect(screen.getByText(en.setup.empty)).toBeInTheDocument();
+    expect(screen.queryByText(en.setup.lookFor)).not.toBeInTheDocument();
+  });
 });

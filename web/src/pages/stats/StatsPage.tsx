@@ -1,4 +1,5 @@
 import { Badge, Card, Loader, SegmentedControl, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { IconChartBar } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { TFunction } from 'i18next';
@@ -6,8 +7,9 @@ import { type ReactNode, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
-import { queryKeys, usePlatforms, useStores } from '../../api/queries';
+import { queryKeys, useCanManage, usePlatforms, useStores } from '../../api/queries';
 import type { Stats, StatusGroup } from '../../api/types';
+import { EmptyState } from '../../components/EmptyState';
 import { formatMoney } from '../../components/money';
 import { PageHeader } from '../../components/PageHeader';
 import { usePlayStatusList } from '../../components/playStatuses';
@@ -47,6 +49,7 @@ function hasHardware(stats: Stats) {
 
 export function StatsPage() {
   const { t, i18n } = useTranslation();
+  const canManage = useCanManage();
   const stats = useStats();
 
   return (
@@ -57,7 +60,11 @@ export function StatsPage() {
       ) : stats.isError ? (
         <Text c="red">{errorMessage(t, stats.error)}</Text>
       ) : stats.data.copies === 0 && stats.data.wishlist === 0 && !hasHardware(stats.data) ? (
-        <Text c="dimmed">{t('stats.empty')}</Text>
+        <EmptyState
+          icon={IconChartBar}
+          title={t('stats.emptyTitle')}
+          description={t(canManage ? 'stats.empty' : 'stats.emptyViewer')}
+        />
       ) : (
         <StatsView stats={stats.data} locale={i18n.language} />
       )}

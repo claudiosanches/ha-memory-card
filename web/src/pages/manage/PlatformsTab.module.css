@@ -10,7 +10,6 @@
 .actions { flex-shrink: 0; }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .groupTitle { letter-spacing: 0.06em; padding-top: 6px; }
-.empty { padding: 32px 24px; text-align: center; color: var(--mc-muted); border: 1px dashed var(--mc-border); border-radius: var(--mantine-radius-lg); }
 
 @media (max-width: 36em) {
   .grid { grid-template-columns: minmax(0, 1fr); }

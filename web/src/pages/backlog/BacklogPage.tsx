@@ -4,6 +4,7 @@ import {
   IconPlayerPause,
   IconPlayerPlay,
   IconSparkles,
+  IconStack2,
   IconTrophy,
   IconX,
 } from '@tabler/icons-react';
@@ -16,6 +17,7 @@ import type { BuiltinStatus, GameSummary, StatusGroup } from '../../api/types';
 import { PageHeader } from '../../components/PageHeader';
 import { Description } from '../../components/Description';
 import { Cover } from '../../components/Cover';
+import { EmptyState } from '../../components/EmptyState';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { useFormatDate } from '../../hooks/useFormatDate';
 import { playTime } from '../stats/StatsPage';
@@ -60,6 +62,8 @@ export function BacklogPage() {
   const cleared = groups.finished.length;
   const open = groups.backlog.length + groups.playing.length + groups.paused.length;
   const total = cleared + open;
+  const allCleared = cleared > 0 && open === 0;
+  const completelyEmpty = total === 0 && groups.unsorted.length === 0;
 
   return (
     <div className={classes.page}>
@@ -87,36 +91,51 @@ export function BacklogPage() {
         </section>
       )}
 
-      {!canTrack && <Text c="dimmed">{t('backlog.noPlay')}</Text>}
+      {completelyEmpty ? (
+        <EmptyState
+          icon={IconStack2}
+          title={t('backlog.emptyTitle')}
+          description={canTrack ? t('backlog.empty') : t('backlog.noPlay')}
+        />
+      ) : (
+        <>
+          {!canTrack && <Text c="dimmed">{t('backlog.noPlay')}</Text>}
 
-      {canTrack && groups.backlog.length > 0 && <Picker />}
+          {canTrack && groups.backlog.length > 0 && <Picker />}
 
-      {groups.playing.length > 0 && (
-        <Section title={t('backlog.playing')} count={groups.playing.length}>
-          <RowList games={groups.playing} platformNames={platformNames} actions={canTrack ? PLAYING_ACTIONS : []} />
-        </Section>
+          {groups.playing.length > 0 && (
+            <Section title={t('backlog.playing')} count={groups.playing.length}>
+              <RowList games={groups.playing} platformNames={platformNames} actions={canTrack ? PLAYING_ACTIONS : []} />
+            </Section>
+          )}
+
+          {groups.paused.length > 0 && (
+            <Section title={t('backlog.paused')} count={groups.paused.length}>
+              <RowList games={groups.paused} platformNames={platformNames} actions={canTrack ? PAUSED_ACTIONS : []} />
+            </Section>
+          )}
+
+          {allCleared ? (
+            <EmptyState
+              icon={IconTrophy}
+              title={t('backlog.clearedTitle')}
+              description={t('backlog.cleared')}
+            />
+          ) : (
+            <Section title={t('backlog.queue')} count={groups.backlog.length}>
+              {groups.backlog.length === 0 ? (
+                <EmptyState compact icon={IconStack2} description={t('backlog.emptyQueue')} />
+              ) : (
+                <ul className={classes.grid}>
+                  {groups.backlog.map((game) => (
+                    <BacklogCard key={game.id} game={game} platformNames={platformNames} canStart={canTrack} />
+                  ))}
+                </ul>
+              )}
+            </Section>
+          )}
+        </>
       )}
-
-      {groups.paused.length > 0 && (
-        <Section title={t('backlog.paused')} count={groups.paused.length}>
-          <RowList games={groups.paused} platformNames={platformNames} actions={canTrack ? PAUSED_ACTIONS : []} />
-        </Section>
-      )}
-
-      <Section title={t('backlog.queue')} count={groups.backlog.length}>
-        {groups.backlog.length === 0 ? (
-          <div className={classes.empty}>
-            {cleared > 0 && open === 0 && <IconTrophy size={32} stroke={1.5} aria-hidden />}
-            <Text c="dimmed">{cleared > 0 && open === 0 ? t('backlog.cleared') : t('backlog.empty')}</Text>
-          </div>
-        ) : (
-          <ul className={classes.grid}>
-            {groups.backlog.map((game) => (
-              <BacklogCard key={game.id} game={game} platformNames={platformNames} canStart={canTrack} />
-            ))}
-          </ul>
-        )}
-      </Section>
 
       {sorting && <SortModal games={sorting} platformNames={platformNames} onClose={() => setSorting(null)} />}
     </div>

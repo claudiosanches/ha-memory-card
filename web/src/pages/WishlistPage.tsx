@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Loader, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { ActionIcon, Button, Group, Loader, Stack, Text, Tooltip } from '@mantine/core';
 import { IconCheck, IconHeart, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -10,6 +10,7 @@ import { queryKeys, useCanManage, useCopies, useGame, usePlatforms, useStores } 
 import type { CopyRow } from '../api/types';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Cover } from '../components/Cover';
+import { EmptyState } from '../components/EmptyState';
 import { formatMoney } from '../components/money';
 import { PageHeader } from '../components/PageHeader';
 import { notifyError, notifySuccess } from '../components/notify';
@@ -66,13 +67,11 @@ export function WishlistPage() {
           {errorMessage(t, copies.error)}
         </Text>
       ) : wishes.length === 0 ? (
-        <Stack align="center" className={classes.empty}>
-          <IconHeart size={48} stroke={1.2} />
-          <Title order={3}>{t('wishlist.empty')}</Title>
-          <Text c="dimmed" ta="center">
-            {canManage ? t('wishlist.emptyHint') : t('wishlist.emptyViewer')}
-          </Text>
-        </Stack>
+        <EmptyState
+          icon={IconHeart}
+          title={t('wishlist.empty')}
+          description={canManage ? t('wishlist.emptyHint') : t('wishlist.emptyViewer')}
+        />
       ) : (
         <ul className={classes.list}>
           {wishes.map((row) => {

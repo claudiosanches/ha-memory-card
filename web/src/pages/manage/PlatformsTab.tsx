@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ActionIcon, Badge, Button, Group, Loader, Select, Stack, Text, TextInput, Tooltip } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import {
+  IconDeviceGamepad2,
   IconGripVertical,
   IconMinus,
   IconPencil,
@@ -34,6 +35,7 @@ import { call, errorMessage } from '../../api/errors';
 import { queryKeys, usePlatforms } from '../../api/queries';
 import { PLATFORM_CATEGORIES, type Platform, type PlatformCategory, type PlatformInput } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { EmptyState } from '../../components/EmptyState';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
@@ -152,7 +154,7 @@ export function PlatformsTab() {
           />
         </ManageToolbar>
         {active.length === 0 ? (
-          <div className={classes.empty}>{t('platforms.yourEmpty')}</div>
+          <EmptyState compact icon={IconDeviceGamepad2} title={t('platforms.yourEmptyTitle')} description={t('platforms.yourEmpty')} />
         ) : (
           <DndContext
             sensors={sensors}
@@ -322,7 +324,7 @@ function Catalog({ platforms, busy, onAdd, actions }: CatalogProps) {
         ))}
       </FilterBar>
       {groups.length === 0 ? (
-        <div className={classes.empty}>{t('platforms.noMatch')}</div>
+        <EmptyState compact icon={IconSearch} description={t('platforms.noMatch')} />
       ) : (
         groups.map((group) => (
           <div key={group.category} className={classes.group}>

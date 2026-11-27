@@ -245,14 +245,6 @@
   color: var(--mantine-primary-color-light-color);
 }
 
-.empty {
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--mc-muted);
-  border: 1px dashed var(--mc-border);
-  border-radius: var(--mantine-radius-lg);
-}
-
 @media (max-width: 48em) {
   .toolbar {
     flex-wrap: wrap;

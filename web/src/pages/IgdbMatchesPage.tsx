@@ -1,4 +1,5 @@
 import { Anchor, Badge, Button, Card, Group, Loader, Radio, Stack, Text } from '@mantine/core';
+import { IconLink } from '@tabler/icons-react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { api } from '../api/client';
 import { ApiError, call, errorMessage } from '../api/errors';
 import { queryKeys } from '../api/queries';
 import type { MatchGroup } from '../api/types';
+import { EmptyState } from '../components/EmptyState';
 import { notifyError } from '../components/notify';
 import { CardPage } from '../components/CardPage';
 
@@ -51,7 +53,7 @@ export function IgdbMatchesPage() {
         </Button>
       )}
       {!loading && !pages.hasNextPage && groups.length === 0 && !pages.isError && (
-        <Text c="dimmed">{t('matches.none')}</Text>
+        <EmptyState icon={IconLink} title={t('matches.noneTitle')} description={t('matches.none')} />
       )}
     </CardPage>
   );

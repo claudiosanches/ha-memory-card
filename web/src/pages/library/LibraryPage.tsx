@@ -9,7 +9,6 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDebouncedCallback, useDisclosure, useLocalStorage } from '@mantine/hooks';
@@ -35,6 +34,7 @@ import type { GameSummary, Platform } from '../../api/types';
 import { FilterBar, FilterButton } from '../../components/FilterBar';
 import { PageHeader } from '../../components/PageHeader';
 import { Cover } from '../../components/Cover';
+import { EmptyState } from '../../components/EmptyState';
 import { FormModal } from '../../components/FormModal';
 import { usePlayStatusList } from '../../components/playStatuses';
 import { useApiErrorHandler } from '../../hooks/useApiForm';
@@ -196,12 +196,18 @@ export function LibraryPage() {
       ) : shown.isError ? (
         <Text c="red" role="alert">{errorMessage(t, shown.error)}</Text>
       ) : shown.data.length === 0 ? (
-        <Stack align="center" className={classes.empty}>
-          <IconDeviceGamepad2 size={48} stroke={1.2} />
-          <Title order={3}>{filtered ? t('library.noMatchTitle') : t('library.emptyTitle')}</Title>
-          <Text c="dimmed" ta="center">{!filtered ? t(canManage ? 'library.empty' : 'library.emptyViewer') : showCopies ? t('library.noCopiesMatch') : t('library.noMatch')}</Text>
-          {filtered && <Button variant="default" onClick={clearFilters}>{t('library.clearFilters')}</Button>}
-        </Stack>
+        <EmptyState
+          icon={IconDeviceGamepad2}
+          title={filtered ? t('library.noMatchTitle') : t('library.emptyTitle')}
+          description={
+            !filtered
+              ? t(canManage ? 'library.empty' : 'library.emptyViewer')
+              : showCopies
+                ? t('library.noCopiesMatch')
+                : t('library.noMatch')
+          }
+          action={filtered ? <Button variant="default" onClick={clearFilters}>{t('library.clearFilters')}</Button> : undefined}
+        />
       ) : showCopies ? (
         <CopiesView copies={copies.data ?? []} platformsById={platformsById} wanted={search.ownership === 'wanted'} />
       ) : (

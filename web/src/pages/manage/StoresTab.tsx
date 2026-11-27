@@ -1,6 +1,6 @@
 import { ActionIcon, Group, Loader, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconBuildingStore, IconPencil, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { call, errorMessage } from '../../api/errors';
 import { queryKeys, useStores } from '../../api/queries';
 import type { Store, StoreInput } from '../../api/types';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { EmptyState } from '../../components/EmptyState';
 import { FormModal } from '../../components/FormModal';
 import { notifyError, notifySuccess } from '../../components/notify';
 import { SlugInput, slugRule, useSlugInputs } from '../../components/SlugInput';
@@ -46,7 +47,7 @@ export function StoresTab() {
       <ManageToolbar addLabel={t('stores.add')} onAdd={() => setEditing({})} />
 
       {stores.data.length === 0 ? (
-        <div className={classes.empty}>{t('stores.empty')}</div>
+        <EmptyState icon={IconBuildingStore} title={t('stores.emptyTitle')} description={t('stores.empty')} />
       ) : (
         <ul className={classes.grid}>
           {stores.data.map((store) => (
