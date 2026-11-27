@@ -63,5 +63,7 @@ jobs:
           context: .
           file: memory-card/Dockerfile
           platforms: linux/amd64,linux/arm64
-          outputs: type=oci,dest=${{ runner.temp }}/memory-card.tar
+          # gzip throughout, base layers included: skopeo on the runner annotates zstd
+          # images in the index, which --preserve-digests then refuses to push.
+          outputs: type=oci,dest=${{ runner.temp }}/memory-card.tar,compression=gzip,force-compression=true
       - run: ./scripts/smoke-archive.sh "$RUNNER_TEMP/memory-card.tar"
