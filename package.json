@@ -18,7 +18,7 @@
     "licenses": "node scripts/check-npm-licenses.mjs"
   },
   "devDependencies": {
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.2"
   },
   "overrides": {
     "openapi-typescript": {
