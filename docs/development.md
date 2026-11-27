@@ -15,7 +15,7 @@ Docker. `make ha-up` also needs an x86-64 Linux machine with KVM.
 | `make web-dev` | Vite with live reload, `/api` proxied to `make run` |
 | `make test` | Rust and web unit tests |
 | `make e2e` | Playwright tests behind the ingress stand-in |
-| `make check` | Everything CI runs except the image |
+| `make check` | Everything the CI workflow runs. The Image workflow builds both architectures on pushes to `dev` and `main`, and on pull requests that change `memory-card/`, the Rust build or its scripts |
 | `make smoke` | Builds the amd64 image and runs it like Home Assistant |
 | `make api` | Regenerates the OpenAPI document and TypeScript types after an API change |
 | `make sqlx` | Regenerates `server/.sqlx` after adding or changing a query |
