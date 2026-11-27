@@ -54,8 +54,8 @@ async fn compares_everyone_who_keeps_play() {
     .unwrap();
     for sql in [
         "INSERT INTO play_progress (user_id, game_id, play_status) VALUES ('ana', ?, 'completed')",
-        "INSERT INTO play_status_changes (user_id, game_id, play_status, source)
-         VALUES ('ana', ?, 'completed', 'manual')",
+        "INSERT INTO play_status_changes (user_id, game_id, play_status, counts_as, source)
+         VALUES ('ana', ?, 'completed', 'finished', 'manual')",
     ] {
         sqlx::query(sql)
             .bind(tetris)
@@ -140,7 +140,8 @@ async fn finished_all_time(app: &TestApp) -> i64 {
 
 async fn history(app: &TestApp, game: i64) -> Vec<(String, String)> {
     sqlx::query_as(
-        "SELECT play_status, source FROM play_status_changes WHERE game_id = ? ORDER BY id",
+        "SELECT IFNULL(play_status, 'deleted'), source FROM play_status_changes
+         WHERE game_id = ? ORDER BY id",
     )
     .bind(game)
     .fetch_all(&app.pool)
@@ -185,8 +186,8 @@ async fn a_game_counts_as_finished_when_its_owner_finishes_it() {
         "the same status saved again"
     );
 
+    // A status picked this month, then moved by a manager, keeps its group.
     set_status(&app, hades, "someday").await;
-    changed_long_ago(&app).await;
     let (status, _) = app
         .json(
             "DELETE",
@@ -296,9 +297,12 @@ async fn imported_and_logged_statuses_go_in_the_history() {
 }
 
 #[tokio::test]
-async fn deleting_a_status_moves_or_drops_its_history() {
+async fn deleting_a_status_keeps_the_finishes_it_counted() {
     let app = TestApp::new().await;
     app.post_csv("/api/import", COLLECTION).await;
+    let hades = app
+        .scalar("SELECT id FROM games WHERE title = 'Hades'")
+        .await;
     let tetris = app
         .scalar("SELECT id FROM games WHERE title = 'Tetris'")
         .await;
@@ -312,11 +316,9 @@ async fn deleting_a_status_moves_or_drops_its_history() {
             .await;
         assert_eq!(status, StatusCode::CREATED, "{body}");
     }
+    changed_long_ago(&app).await;
     set_status(&app, tetris, "speedrun").await;
-    changed_long_ago(&app).await;
-    set_status(&app, tetris, "gifted").await;
-    changed_long_ago(&app).await;
-    set_status(&app, tetris, "playing").await;
+    set_status(&app, hades, "gifted").await;
 
     let (status, _) = app
         .json(
@@ -333,8 +335,14 @@ async fn deleting_a_status_moves_or_drops_its_history() {
         [
             ("backlog".into(), "csv".into()),
             ("completed".into(), "manual".into()),
-            ("playing".into(), "manual".into()),
         ]
     );
-    assert_eq!(finished_all_time(&app).await, 1);
+    assert_eq!(
+        history(&app, hades).await,
+        [
+            ("playing".into(), "csv".into()),
+            ("deleted".into(), "manual".into()),
+        ]
+    );
+    assert_eq!(finished_this_month(&app).await, 2);
 }

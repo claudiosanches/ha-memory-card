@@ -85,7 +85,9 @@ pub(super) async fn put(
     // one row.
     let replaced = sqlx::query!(
         "UPDATE play_status_changes
-         SET play_status = ?1, changed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         SET play_status = ?1,
+             counts_as = (SELECT counts_as FROM play_statuses WHERE key = ?1),
+             changed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = (SELECT id FROM play_status_changes
                      WHERE user_id = ?3 AND game_id = ?4 ORDER BY id DESC LIMIT 1)
            AND source = ?2 AND date(changed_at) = date('now')",
@@ -99,12 +101,12 @@ pub(super) async fn put(
     .rows_affected();
     if replaced == 0 {
         sqlx::query!(
-            "INSERT INTO play_status_changes (user_id, game_id, play_status, source)
-             VALUES (?, ?, ?, ?)",
+            "INSERT INTO play_status_changes (user_id, game_id, play_status, counts_as, source)
+             SELECT ?1, ?2, key, counts_as, ?3 FROM play_statuses WHERE key = ?4",
             user,
             game_id,
-            status,
-            source
+            source,
+            status
         )
         .execute(&mut *conn)
         .await?;

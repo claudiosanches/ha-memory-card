@@ -1641,7 +1641,7 @@ export interface components {
             days: number;
             /**
              * Format: int64
-             * @description Games they gave a status that counts as finished during the period,
+             * @description Games they gave a status that counted as finished during the period,
              *     even if it changed since. An import's statuses do not count.
              */
             finished: number;

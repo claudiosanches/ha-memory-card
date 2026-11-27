@@ -186,8 +186,8 @@ pub async fn delete(pool: &SqlitePool, key: &str, move_to: Option<&str>) -> ApiR
 
     match move_to {
         Some(move_to) => {
-            // Keeps updated_at and the history's dates: the owners did not
-            // change their play.
+            // Keeps updated_at, and the history's dates and groups: the
+            // owners did not change their play.
             sqlx::query!(
                 "UPDATE play_progress SET play_status = ? WHERE play_status = ?",
                 move_to,
@@ -205,9 +205,6 @@ pub async fn delete(pool: &SqlitePool, key: &str, move_to: Option<&str>) -> ApiR
         }
         None => {
             sqlx::query!("DELETE FROM play_progress WHERE play_status = ?", key)
-                .execute(&mut *tx)
-                .await?;
-            sqlx::query!("DELETE FROM play_status_changes WHERE play_status = ?", key)
                 .execute(&mut *tx)
                 .await?;
         }

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_status_changes (user_id, game_id, play_status, counts_as, source)\n             SELECT ?1, ?2, key, counts_as, ?3 FROM play_statuses WHERE key = ?4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "438dc95b1bd0b1954abcf3ad4ac7dfdc427941fc83add66112c5b44aa90f6bf5"
+}

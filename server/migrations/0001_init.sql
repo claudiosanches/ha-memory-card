@@ -363,8 +363,7 @@ INSERT INTO play_statuses (key, color, counts_as, sort_order, builtin) VALUES
 -- Play belongs to each person: their status for each game, their sessions and
 -- their picks. The household shares the collection.
 
--- No row means no status. Deleting a status first moves or deletes its rows,
--- here and in play_status_changes.
+-- No row means no status. Deleting a status first moves or deletes its rows.
 CREATE TABLE play_progress (
     user_id     TEXT    NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     game_id     INTEGER NOT NULL REFERENCES games (id) ON DELETE CASCADE,
@@ -378,14 +377,16 @@ CREATE INDEX play_progress_status ON play_progress (play_status);
 
 -- Each status a person gave a game, so a finish still counts after the status
 -- changes again. Clearing a status adds nothing, and a change from the same
--- source on the same day replaces that day's row. source is manual (in the
--- app), scan (an NFC tag) or csv (an import, which restates statuses rather
--- than changing them then).
+-- source on the same day replaces that day's row. counts_as keeps the
+-- status's group at the time, so editing or deleting statuses later changes
+-- no finish. source is manual (in the app), scan (an NFC tag) or csv (an
+-- import, which restates statuses rather than changing them then).
 CREATE TABLE play_status_changes (
     id          INTEGER PRIMARY KEY,
     user_id     TEXT    NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     game_id     INTEGER NOT NULL REFERENCES games (id) ON DELETE CASCADE,
-    play_status TEXT    NOT NULL REFERENCES play_statuses (key),
+    play_status TEXT    REFERENCES play_statuses (key) ON DELETE SET NULL,
+    counts_as   TEXT    NOT NULL,
     source      TEXT    NOT NULL,
     changed_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );

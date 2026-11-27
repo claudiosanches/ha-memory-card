@@ -6344,7 +6344,7 @@
           "finished": {
             "type": "integer",
             "format": "int64",
-            "description": "Games they gave a status that counts as finished during the period,\neven if it changed since. An import's statuses do not count."
+            "description": "Games they gave a status that counted as finished during the period,\neven if it changed since. An import's statuses do not count."
           },
           "games": {
             "type": "integer",

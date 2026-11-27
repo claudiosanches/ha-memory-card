@@ -42,7 +42,7 @@ pub struct PersonTotals {
     pub days: i64,
     /// Different games played.
     pub games: i64,
-    /// Games they gave a status that counts as finished during the period,
+    /// Games they gave a status that counted as finished during the period,
     /// even if it changed since. An import's statuses do not count.
     pub finished: i64,
     /// Their most played game in the period, by sessions.
@@ -70,10 +70,9 @@ pub async fn totals(pool: &SqlitePool, period: Period) -> sqlx::Result<Vec<Perso
                   (SELECT COALESCE(SUM(minutes), 0) FROM played WHERE user_id = u.id) AS "minutes!: i64",
                   (SELECT COUNT(DISTINCT played_on) FROM played WHERE user_id = u.id) AS "days!: i64",
                   (SELECT COUNT(DISTINCT game_id) FROM played WHERE user_id = u.id) AS "games!: i64",
-                  (SELECT COUNT(DISTINCT c.game_id)
-                   FROM play_status_changes c JOIN play_statuses s ON s.key = c.play_status
-                   WHERE c.user_id = u.id AND s.counts_as = 'finished' AND c.source != 'csv'
-                     AND c.changed_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?1)) AS "finished!: i64"
+                  (SELECT COUNT(DISTINCT game_id) FROM play_status_changes
+                   WHERE user_id = u.id AND counts_as = 'finished' AND source != 'csv'
+                     AND changed_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?1)) AS "finished!: i64"
            FROM users u
            WHERE EXISTS (SELECT 1 FROM play_progress WHERE user_id = u.id)
               OR EXISTS (SELECT 1 FROM play_sessions WHERE user_id = u.id)
