@@ -54,6 +54,5 @@
   .hero { padding: 14px; }
   .identity { gap: 12px; }
   .gameTitle { font-size: 1.25rem; }
-  .identity :global(.mc-cover) { border-radius: var(--mantine-radius-md); }
   .releasesHeading { align-items: flex-start; flex-direction: column; }
 }
