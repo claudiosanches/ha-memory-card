@@ -17,7 +17,8 @@ Both are released under the Apache License 2.0.
 
 If you find Memory Card useful, you can support its development on
 [GitHub Sponsors](https://github.com/sponsors/claudiosanches) or
-[Ko-fi](https://ko-fi.com/claudiosanches).
+[Ko-fi](https://ko-fi.com/claudiosanches). The [roadmap](./roadmap.md) lists what
+may come next.
 
 ## Help and feedback
 

@@ -1,6 +1,6 @@
 // The docs site, built with `make docs`. docs/index.md is the landing page,
-// docs/about.md the About page, docs/README.md the guide's index, and the
-// guide's pages sit under /docs/. Translated locales live under docs/<locale>/.
+// docs/about.md the About page, docs/roadmap.md the Roadmap, docs/README.md
+// the guide's index, and the guide's pages sit under /docs/. Translated locales live under docs/<locale>/.
 import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -8,7 +8,7 @@ const docsDir = fileURLToPath(new URL('..', import.meta.url));
 
 // Developer pages stay on GitHub, linked from the root README.
 const developer = ['development.md', 'local-home-assistant.md', 'releasing.md'];
-const site = ['index.md', 'about.md'];
+const site = ['index.md', 'about.md', 'roadmap.md'];
 const translatedLocales = ['pt-br', 'es'];
 
 const guideFiles = (dir) =>
@@ -135,6 +135,7 @@ export default {
         nav: [
           { text: 'Guide', link: '/docs/' },
           { text: 'Get started', link: '/docs/getting-started' },
+          { text: 'Roadmap', link: '/roadmap' },
           { text: 'About', link: '/about' },
         ],
         sidebar: buildSidebar('', {
@@ -178,6 +179,7 @@ export default {
         nav: [
           { text: 'Guia', link: '/pt-br/docs/' },
           { text: 'Primeiros passos', link: '/pt-br/docs/getting-started' },
+          { text: 'Roadmap', link: '/pt-br/roadmap' },
           { text: 'Sobre', link: '/pt-br/about' },
         ],
         sidebar: buildSidebar('/pt-br', {
@@ -235,6 +237,7 @@ export default {
         nav: [
           { text: 'Guía', link: '/es/docs/' },
           { text: 'Primeros pasos', link: '/es/docs/getting-started' },
+          { text: 'Hoja de ruta', link: '/es/roadmap' },
           { text: 'Acerca de', link: '/es/about' },
         ],
         sidebar: buildSidebar('/es', {
