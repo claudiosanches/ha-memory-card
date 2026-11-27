@@ -9,6 +9,7 @@ import { api } from '../../api/client';
 import { call, errorMessage } from '../../api/errors';
 import {
   queryKeys,
+  useAccounts,
   useGameDevices,
   useGame,
   useGameModes,
@@ -161,7 +162,12 @@ function Step(props: StepProps) {
   return <StepForm {...props} game={game.data} />;
 }
 
-type CopyEdit = { device_id?: string | null; store_id?: string | null; condition?: string | null };
+type CopyEdit = {
+  device_id?: string | null;
+  account_id?: string | null;
+  store_id?: string | null;
+  condition?: string | null;
+};
 type OwnedCopy = { copy: CopyDetail; release: ReleaseDetail };
 
 function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { game: GameDetail }) {
@@ -170,6 +176,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   const gameModes = useGameModes();
   const platforms = usePlatforms();
   const devices = useGameDevices();
+  const accounts = useAccounts();
   const stores = useStores();
   const [dialog, setDialog] = useState<'copy' | 'igdb' | null>(null);
   const [copyEdits, setCopyEdits] = useState<Record<number, CopyEdit>>({});
@@ -232,7 +239,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
           product_code: release.product_code,
           format: copy.format,
           device_id: edit.device_id ? Number(edit.device_id) : copy.device_id,
-          account_id: copy.account_id,
+          account_id: edit.account_id ? Number(edit.account_id) : copy.account_id,
           store_id: edit.store_id ? Number(edit.store_id) : copy.store_id,
           condition: (edit.condition as CopyInput['condition']) || copy.condition,
           notes: copy.notes,
@@ -264,6 +271,10 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
     const fitting = active.filter((d) => d.platform_ids.includes(release.platform_id));
     return (fitting.length ? fitting : active).map((d) => ({ value: String(d.id), label: d.name }));
   };
+  const accountOptions = (release: ReleaseDetail) =>
+    (accounts.data ?? [])
+      .filter((a) => a.active && (a.platform_ids.length === 0 || a.platform_ids.includes(release.platform_id)))
+      .map((a) => ({ value: String(a.id), label: a.name }));
 
   return (
     <Stack gap="card">
@@ -352,6 +363,17 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
                         clearable
                         value={edit.device_id ?? null}
                         onChange={(value) => editCopy(copy.id, { device_id: value })}
+                      />
+                    )}
+                    {gap.device && copy.format === 'digital' && (
+                      <Select
+                        label={t('game.account')}
+                        placeholder={t('game.noAccount')}
+                        data={accountOptions(release)}
+                        searchable
+                        clearable
+                        value={edit.account_id ?? null}
+                        onChange={(value) => editCopy(copy.id, { account_id: value })}
                       />
                     )}
                     {gap.store && (

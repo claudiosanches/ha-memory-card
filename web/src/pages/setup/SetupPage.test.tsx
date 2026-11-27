@@ -125,6 +125,34 @@ describe('Setup wizard', () => {
     expect(calls.find((c) => c.path === '/api/copies/21')?.body).toMatchObject({ account_id: 7, store_id: 3 });
   });
 
+  it('fills a digital copy\'s place with an account', async () => {
+    const base = detail(4, 'Metroid Dread');
+    const game: GameDetail = {
+      ...base,
+      releases: base.releases.map((release) => ({
+        ...release,
+        copies: release.copies.map((copy) => ({ ...copy, format: 'digital' as const, condition: null, account_id: null })),
+      })),
+    };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/missing-details': [{ game_id: 4, title: 'Metroid Dread', fields: ['device'] }],
+      'GET /api/games/4': game,
+      'GET /api/accounts': [{ id: 8, name: 'Steam', active: true, platform_ids: [] }],
+      'PUT /api/copies/21': () => game,
+    });
+    renderAt('/maintenance?tab=missing');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') }));
+    const copy = await screen.findByTestId('setup-copy-21');
+    fireEvent.click(within(copy).getByRole('combobox', { name: en.game.account }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Steam', hidden: true }));
+    fireEvent.click(screen.getByRole('button', { name: en.setup.saveNext }));
+
+    expect(await screen.findByText(en.setup.done)).toBeInTheDocument();
+    expect(calls.find((c) => c.path === '/api/copies/21')?.body).toMatchObject({ account_id: 8, device_id: null });
+  });
+
   it('only goes through games lacking the chosen details', async () => {
     mockApi(SETUP);
     renderAt('/maintenance?tab=missing');
