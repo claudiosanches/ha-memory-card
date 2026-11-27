@@ -14,6 +14,8 @@ test('stores: add, rename, delete', async ({ page }, testInfo) => {
 
   await page.getByRole('button', { name: en.stores.add }).click();
   const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('textbox', { name: en.slug.label })).toHaveCount(0);
+  await expect(dialog.getByTestId('slug-readonly')).toHaveCount(0);
   await dialog.getByLabel(en.common.name).fill(name);
   await dialog.getByLabel(en.common.notes).fill('Prime');
   await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
@@ -23,6 +25,8 @@ test('stores: add, rename, delete', async ({ page }, testInfo) => {
   await expect(row).toContainText('Prime');
 
   await row.getByRole('button', { name: en.common.edit }).click();
+  await expect(dialog.getByRole('textbox', { name: en.slug.label })).toHaveCount(0);
+  await expect(dialog.getByTestId('slug-readonly')).toContainText(`amazon-${testInfo.project.name}`);
   await dialog.getByLabel(en.common.name).fill(`${name} BR`);
   await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
   const renamed = page.getByTestId(`store-${name} BR`);

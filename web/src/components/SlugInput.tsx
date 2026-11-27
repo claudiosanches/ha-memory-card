@@ -1,20 +1,22 @@
-import { Alert, TextInput } from '@mantine/core';
+import { ActionIcon, Alert, Code, CopyButton, Group, Text, TextInput, Tooltip } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
-import { IconAlertTriangle } from '@tabler/icons-react';
+import { IconAlertTriangle, IconCheck, IconCopy } from '@tabler/icons-react';
 import type { TFunction } from 'i18next';
 import { type ChangeEvent, type FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { inIngress } from '../api/client';
 import { isSlug, sanitizeSlug, slugify, trimSlug } from '../slug';
 
 type Named = { name: string; slug: string };
 
 /**
  * Input props for a form's name and slug. A new record's slug follows its
- * name until someone types a slug of their own.
+ * name until someone types a slug of their own; under ingress the server
+ * picks a free slug from the name instead.
  */
 export function useSlugInputs<Values extends Named>(form: UseFormReturnType<Values>, saved?: string) {
   const named = form as unknown as UseFormReturnType<Named>;
-  const [follows, setFollows] = useState(saved === undefined);
+  const [follows, setFollows] = useState(saved === undefined && !inIngress());
   const name = named.getInputProps('name');
   const slug = named.getInputProps('slug');
   return {
@@ -59,6 +61,26 @@ type Props = ReturnType<typeof useSlugInputs>['slug'] & {
 
 export function SlugInput({ param, saved, ...props }: Props) {
   const { t } = useTranslation();
+  if (inIngress()) {
+    if (saved === undefined) return null;
+    return (
+      <Group gap="xs" align="center" data-testid="slug-readonly">
+        <Text size="xs" c="dimmed">
+          {t('slug.label')}
+        </Text>
+        <Code>{saved}</Code>
+        <CopyButton value={saved}>
+          {({ copied, copy }) => (
+            <Tooltip label={copied ? t('settings.copied') : t('slug.copy')}>
+              <ActionIcon variant="subtle" size="sm" aria-label={t('slug.copy')} onClick={copy}>
+                {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+              </ActionIcon>
+            </Tooltip>
+          )}
+        </CopyButton>
+      </Group>
+    );
+  }
   const value = String(props.value ?? '');
   return (
     <>

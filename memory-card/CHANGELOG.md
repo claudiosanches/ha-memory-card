@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Memory Card integration is in the Marketplace's catalog, so the docs
   install it by searching for it there.
+- Inside Home Assistant, the slug field is hidden when adding an item and
+  shown read-only when editing one; slugs are still made from the name.
 
 ### Fixed
 

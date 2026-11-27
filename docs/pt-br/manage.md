@@ -5,9 +5,10 @@ gestores veem esta página.
 
 ![Gerenciar, na aba Plataformas](https://ha-memory-card.pages.dev/images/manage.webp)
 
-Os formulários de conta, loja, plataforma e etiqueta, assim como o formulário
-de dispositivo em [Hardware](hardware.md), mostram o slug de cada item: o nome
-curto usado pelos links da biblioteca e pelos sorteios no Home Assistant.
+Ao editar uma conta, loja, plataforma ou etiqueta, ou um dispositivo em
+[Hardware](hardware.md), o formulário mostra o slug: o nome curto gerado a
+partir do nome, usado pelos links da biblioteca e pelos sorteios no Home
+Assistant.
 
 Consoles, portáteis e PCs ficam na página [Hardware](hardware.md), junto com o
 restante do seu equipamento.

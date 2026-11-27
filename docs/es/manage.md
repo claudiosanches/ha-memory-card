@@ -5,10 +5,10 @@ colección. Solo los gestores la ven.
 
 ![Gestionar, en la pestaña Plataformas](https://ha-memory-card.pages.dev/images/manage.webp)
 
-Los formularios de cuenta, tienda, plataforma y categoría, así como el de
-dispositivo en [Hardware](hardware.md), muestran el slug de cada elemento: el
-nombre corto que usan los enlaces de la biblioteca y los sorteos de Home
-Assistant.
+Al editar una cuenta, tienda, plataforma o categoría, o un dispositivo en
+[Hardware](hardware.md), se muestra su slug: el nombre corto generado a
+partir de su nombre que usan los enlaces de la biblioteca y los sorteos de
+Home Assistant.
 
 Las consolas, las portátiles y los PC están en la página [Hardware](hardware.md),
 junto con el resto de tu hardware.
