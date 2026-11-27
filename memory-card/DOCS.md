@@ -352,10 +352,10 @@ whether the sensors are connected.
 
 - **`integration`**: the Memory Card integration, installed from the
   Marketplace. No broker is needed.
-  1. Add the
-     [Memory Card integration](https://my.home-assistant.io/redirect/marketplace_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
-     to the Marketplace as a custom repository, which needs the Marketplace
-     connected to GitHub. Download it and restart Home Assistant.
+  1. Install the Memory Card integration from **Settings > Marketplace**:
+     search for **Memory Card**, select **Install** and restart Home Assistant
+     if it asks.
+     [This link](https://my.home-assistant.io/redirect/marketplace_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration) opens it there directly.
   2. Set `sensors` to `integration` and restart Memory Card.
   3. Under **Settings > Devices & services**, Home Assistant shows Memory
      Card as discovered. Select **Add**.

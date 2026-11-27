@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Memory Card integration is in the Marketplace's catalog, so the docs
+  install it by searching for it there.
+
 ### Fixed
 
 - Hardware in Spanish and Brazilian Portuguese calls a loose console one

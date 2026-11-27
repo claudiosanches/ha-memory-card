@@ -29,18 +29,16 @@ mais recente.
 
 ## Instalar
 
-[![Abrir sua instância do Home Assistant e abrir um repositório no Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
-
-1. Selecione o botão acima para adicionar
-   [o repositório da integração](https://github.com/claudiosanches/ha-memory-card-integration)
-   ao Marketplace como repositório personalizado. O Marketplace precisa estar
-   conectado ao GitHub para isso.
-2. Baixe **Memory Card** no Marketplace e reinicie o Home Assistant.
-3. No Home Assistant, vá em **Configurações > Aplicativos > Memory Card** e
+1. No Home Assistant, vá em **Configurações > Marketplace**, pesquise
+   **Memory Card** e abra-o. Selecione **Instalar**, depois **Instalar** de novo
+   na janela, e reinicie o Home Assistant se ele pedir. Se a configuração da
+   integração abrir logo em seguida, ela avisa que o Memory Card se configura
+   sozinho: feche-a e siga em frente.
+2. No Home Assistant, vá em **Configurações > Aplicativos > Memory Card** e
    abra a aba **Configuração**. Defina **Sensores do Home Assistant**
    (`sensors`) como `integration`, salve e reinicie o aplicativo na aba
    **Informações**.
-4. Vá em **Configurações > Dispositivos e serviços**. O Memory Card aparece em
+3. Vá em **Configurações > Dispositivos e serviços**. O Memory Card aparece em
    **Descoberto**. Selecione **Adicionar** e depois **Enviar**.
 
 Não é preciso digitar nada: o aplicativo informa ao Home Assistant onde
@@ -50,6 +48,13 @@ encontrá-lo e qual token usar. **Configurações > Status** no Memory Card most
 Tentar adicionar o Memory Card à mão por **Adicionar integração** para com uma
 mensagem avisando que ele se configura sozinho: use a opção do aplicativo em
 vez disso.
+
+Este botão abre o Memory Card no seu Marketplace. Um Marketplace que ainda não o
+lista oferece adicionar
+[o repositório da integração](https://github.com/claudiosanches/ha-memory-card-integration)
+como repositório personalizado, o que exige o Marketplace conectado ao GitHub.
+
+[![Abrir sua instância do Home Assistant e abrir um repositório no Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=claudiosanches&repository=ha-memory-card-integration&category=integration)
 
 ## O que ela adiciona
 
