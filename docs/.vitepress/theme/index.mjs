@@ -2,6 +2,7 @@ import DefaultTheme from 'vitepress/theme';
 import Layout from './Layout.vue';
 import HomeThemes from './HomeThemes.vue';
 import HomeInstall from './HomeInstall.vue';
+import { getCopy } from './i18n.mjs';
 import './style.css';
 
 /** Visible page screenshots: images in the docs or zoomable home frames, not in links. */
@@ -19,10 +20,13 @@ function show(at) {
   index = (at + images.length) % images.length;
   const image = images[index];
   const full = dialog.querySelector('img');
+  const zoomCopy = getCopy(document.documentElement.lang).zoom;
   full.src = image.currentSrc || image.src;
   full.alt = image.alt;
+  dialog.querySelector('[data-step="-1"]').setAttribute('aria-label', zoomCopy.prev);
+  dialog.querySelector('[data-step="1"]').setAttribute('aria-label', zoomCopy.next);
   dialog.querySelector('figcaption').textContent =
-    images.length > 1 ? `${image.alt} (${index + 1} of ${images.length})` : image.alt;
+    images.length > 1 ? `${image.alt} (${zoomCopy.of(index + 1, images.length)})` : image.alt;
 }
 
 /**

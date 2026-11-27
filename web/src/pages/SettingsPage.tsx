@@ -105,9 +105,16 @@ function LanguagePicker() {
   );
 }
 
+const DOCS_URL: Record<Language, string> = {
+  en: 'https://ha-memory-card.pages.dev/docs/',
+  'pt-BR': 'https://ha-memory-card.pages.dev/pt-br/docs/',
+  es: 'https://ha-memory-card.pages.dev/es/docs/',
+};
+
 function Status() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const status = useStatus();
+  const docsUrl = DOCS_URL[i18n.language as Language] ?? DOCS_URL.en;
   const [terminalOpen, setTerminalOpen] = useState(false);
   const versionTaps = useRef<{ count: number; lastAt: number }>({ count: 0, lastAt: 0 });
 
@@ -196,7 +203,7 @@ function Status() {
             <dt>{t('settings.help')}</dt>
             <dd>
               <Group gap="sm">
-                <Anchor href="https://ha-memory-card.pages.dev/docs/" target="_blank" rel="noreferrer">
+                <Anchor href={docsUrl} target="_blank" rel="noreferrer">
                   {t('settings.documentation')}
                 </Anchor>
                 <Divider orientation="vertical" />

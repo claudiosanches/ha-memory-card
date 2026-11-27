@@ -9,7 +9,7 @@ base=https://ha-memory-card.pages.dev/images/
 site=docs/.vitepress/dist/images
 
 urls=$(grep -rhoE 'https://ha-memory-card\.pages\.dev/images/[A-Za-z0-9/._-]+' \
-    docs/*.md docs/.vitepress/theme memory-card/DOCS.md memory-card/README.md README.md | sort -u)
+    docs/*.md docs/pt-br/*.md docs/es/*.md docs/.vitepress/theme memory-card/DOCS.md memory-card/README.md README.md | sort -u)
 [ -n "$urls" ] || {
     echo "Found no screenshot links" >&2
     exit 1

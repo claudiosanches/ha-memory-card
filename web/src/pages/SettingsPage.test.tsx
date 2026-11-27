@@ -111,7 +111,14 @@ describe('Settings language', () => {
     expect(document.documentElement.lang).toBe('pt-BR');
     expect(localStorage.getItem('memory-card-language')).toBe('pt-BR');
 
-    fireEvent.click(screen.getByRole('combobox', { name: ptBR.settings.language }));
+    fireEvent.click(screen.getByRole('tab', { name: ptBR.settings.status }));
+    expect(await screen.findByRole('link', { name: ptBR.settings.documentation })).toHaveAttribute(
+      'href',
+      'https://ha-memory-card.pages.dev/pt-br/docs/',
+    );
+    fireEvent.click(screen.getByRole('tab', { name: ptBR.settings.appearance }));
+
+    fireEvent.click(await screen.findByRole('combobox', { name: ptBR.settings.language }));
     fireEvent.click(await screen.findByRole('option', { name: 'Automático (English)', hidden: true }));
     expect(await screen.findByRole('link', { name: en.nav.library })).toBeInTheDocument();
     expect(localStorage.getItem('memory-card-language')).toBeNull();

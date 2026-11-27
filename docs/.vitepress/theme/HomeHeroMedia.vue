@@ -1,9 +1,12 @@
 <script setup>
 import { useData } from 'vitepress';
+import { useThemeCopy } from './i18n.mjs';
+
 const libraryLight = 'https://ha-memory-card.pages.dev/images/library.webp';
 const libraryDark = 'https://ha-memory-card.pages.dev/images/library-dark.webp';
 
 const { frontmatter } = useData();
+const copy = useThemeCopy();
 </script>
 
 <template>
@@ -15,7 +18,7 @@ const { frontmatter } = useData();
         height="900"
         loading="lazy"
         :src="libraryLight"
-        alt="The library in Memory Card, light theme"
+        :alt="copy.hero.lightAlt"
       />
       <img
         class="mc-dark-only"
@@ -23,11 +26,11 @@ const { frontmatter } = useData();
         height="900"
         loading="lazy"
         :src="libraryDark"
-        alt="The library in Memory Card, dark theme"
+        :alt="copy.hero.darkAlt"
       />
     </div>
     <p class="mc-trademark">
-      <em>Game titles and cover art belong to their respective owners.</em>
+      <em>{{ copy.hero.trademark }}</em>
     </p>
   </div>
 </template>

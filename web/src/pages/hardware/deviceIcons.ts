@@ -50,7 +50,7 @@ function IconConsole(props: DeviceIconProps) {
 }
 
 /** Navigation icon for the Hardware section. */
-export const HARDWARE_NAV_ICON: DeviceIcon = IconConsole;
+export const HARDWARE_NAV_ICON: DeviceIcon = IconDeviceGamepad2;
 
 /** Icon representing each hardware kind across cards and group headings. */
 export const DEVICE_KIND_ICON: Record<DeviceKind, DeviceIcon> = {
