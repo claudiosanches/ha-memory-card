@@ -48,8 +48,8 @@ goes through every page step by step.
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
-[library]: https://ha-memory-card.pages.dev/images/library.webp
-[phone]: https://ha-memory-card.pages.dev/images/phone.webp
+[library]: https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/library.webp
+[phone]: https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/phone.webp
 [releases-shield]: https://img.shields.io/github/v/release/claudiosanches/ha-memory-card.svg
 [releases]: https://github.com/claudiosanches/ha-memory-card/releases
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg

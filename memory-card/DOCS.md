@@ -7,7 +7,7 @@ This page covers the setup and the options. The
 [full guide](https://ha-memory-card.pages.dev/docs/)
 goes through every page step by step, with screenshots and the themes.
 
-![The library, with covers from IGDB](https://ha-memory-card.pages.dev/images/library.webp)
+![The library, with covers from IGDB](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/library.webp)
 
 _Game titles and cover art belong to their respective owners._
 
@@ -127,7 +127,7 @@ one.
 
 ## Library and games
 
-![A game page with its progress, details and labels](https://ha-memory-card.pages.dev/images/game.webp)
+![A game page with its progress, details and labels](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/game.webp)
 
 _Game titles and cover art belong to their respective owners._
 
@@ -154,7 +154,7 @@ never replaces an uploaded cover. Removing it brings back IGDB's.
 
 ## Backlog and play statuses
 
-![The backlog with a random pick](https://ha-memory-card.pages.dev/images/backlog.webp)
+![The backlog with a random pick](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/backlog.webp)
 
 _Game titles and cover art belong to their respective owners._
 
@@ -324,7 +324,7 @@ names for each game, to link with a click or mark as not on IGDB.
 
 ## Stats
 
-![Stats in the dark theme](https://ha-memory-card.pages.dev/images/stats.webp)
+![Stats in the dark theme](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/stats.webp)
 
 _Game titles belong to their respective owners._
 
@@ -334,7 +334,7 @@ your games by play status, your most played games and a calendar of your
 play, copies by platform and by store, and what was paid next to what the
 copies are worth now. A **Hardware** group does the same for your hardware.
 
-![The Household page comparing everyone's play this month](https://ha-memory-card.pages.dev/images/household.webp)
+![The Household page comparing everyone's play this month](https://raw.githubusercontent.com/claudiosanches/ha-memory-card/main/images/household.webp)
 
 _Game titles and cover art belong to their respective owners._
 

@@ -12,6 +12,10 @@ import { chromium } from '@playwright/test';
 
 const root = join(import.meta.dirname, '..');
 const out = join(root, 'docs/public/images');
+// Smaller copies, kept in git, for README.md, memory-card/README.md and DOCS.md.
+const small = join(root, 'images');
+const SMALL = new Set(['library', 'phone', 'game', 'backlog', 'stats', 'household']);
+const SMALL_WIDTH = 1440;
 const data = join(root, 'target/screenshots');
 const user = { 'x-remote-user-id': 'morgan', 'x-remote-user-name': 'morgan', 'x-remote-user-display-name': 'Morgan' };
 const hiddenThemes = new Set(['cursed-90s']);
@@ -37,6 +41,7 @@ const base = `http://127.0.0.1:${port}`;
 rmSync(data, { recursive: true, force: true });
 mkdirSync(join(data, 'tmp'), { recursive: true });
 mkdirSync(join(out, 'themes'), { recursive: true });
+mkdirSync(small, { recursive: true });
 copyFileSync(join(root, '.data/options.json'), join(data, 'options.json'));
 chmodSync(join(data, 'options.json'), 0o600);
 const server = spawn(join(root, 'target/debug/memory-card'), ['serve'], {
@@ -109,8 +114,8 @@ try {
   async function save(name, shots, { scale = 1, gap = 0, pad = 0 } = {}) {
     if (only.length && !only.some((prefix) => name.startsWith(prefix))) return;
     const pngs = await shots();
-    const url = await encoder.evaluate(
-      async ({ images, scale, gap, pad }) => {
+    const [url, smallUrl] = await encoder.evaluate(
+      async ({ images, scale, gap, pad, smallWidth }) => {
         const bitmaps = await Promise.all(
           images.map(async (b64) => createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob())),
         );
@@ -128,13 +133,31 @@ try {
           context.drawImage(b, x * scale, pad * scale, b.width * scale, b.height * scale);
           x += b.width + gap;
         }
-        return canvas.toDataURL('image/webp', 0.82);
+        if (!smallWidth) return [canvas.toDataURL('image/webp', 0.82)];
+        const shrink = Math.min(1, smallWidth / canvas.width);
+        const copy = document.createElement('canvas');
+        copy.width = Math.round(canvas.width * shrink);
+        copy.height = Math.round(canvas.height * shrink);
+        const copyContext = copy.getContext('2d');
+        copyContext.imageSmoothingQuality = 'high';
+        copyContext.drawImage(canvas, 0, 0, copy.width, copy.height);
+        return [canvas.toDataURL('image/webp', 0.82), copy.toDataURL('image/webp', 0.8)];
       },
-      { images: pngs.map((png) => png.toString('base64')), scale, gap, pad },
+      {
+        images: pngs.map((png) => png.toString('base64')),
+        scale,
+        gap,
+        pad,
+        smallWidth: SMALL.has(name) ? SMALL_WIDTH : 0,
+      },
     );
     if (!url.startsWith('data:image/webp')) throw new Error('This Chromium cannot write WebP');
     writeFileSync(join(out, `${name}.webp`), Buffer.from(url.split(',')[1], 'base64'));
     console.log(`docs/public/images/${name}.webp`);
+    if (smallUrl) {
+      writeFileSync(join(small, `${name}.webp`), Buffer.from(smallUrl.split(',')[1], 'base64'));
+      console.log(`images/${name}.webp`);
+    }
   }
 
   // The seed leaves a few games for this page. Linking each to its closest
