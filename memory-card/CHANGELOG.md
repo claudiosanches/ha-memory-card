@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-11-27
-
 First release.
 
 ### Added
@@ -67,5 +65,4 @@ First release.
 - 12 themes, each in light and dark.
 - `date_format` and `currency` options.
 
-[Unreleased]: https://github.com/claudiosanches/ha-memory-card/compare/v0.1.0...dev
-[0.1.0]: https://github.com/claudiosanches/ha-memory-card/releases/tag/v0.1.0
+[Unreleased]: https://github.com/claudiosanches/ha-memory-card/commits/dev
