@@ -38,6 +38,9 @@ const HANDOVER: Duration = Duration::from_secs(5);
 const RETRY: Duration = Duration::from_secs(15);
 /// A person's rolls closer together than this are dropped.
 const ROLL_GAP: Duration = Duration::from_secs(1);
+/// Rolls of any kind read in a second, valid or not; the rest are dropped
+/// unread, so a busy publisher costs no lookups or log lines.
+const ROLLS_PER_SECOND: u32 = 4;
 const STOP_TIMEOUT: Duration = Duration::from_millis(500);
 const REMOVE_TIMEOUT: Duration = Duration::from_secs(10);
 /// How long the broker gets to hand back a device it kept.
@@ -256,7 +259,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
     let slug = broker.ingress_slug.as_deref();
     let mut connected = false;
     let mut sent = Published::default();
-    let mut last_rolls: HashMap<String, Instant> = HashMap::new();
+    let mut rolls = Rolls::default();
 
     loop {
         tokio::select! {
@@ -280,7 +283,7 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     send(&client, AVAILABILITY_TOPIC, "online");
                 }
                 Some(Signal::Roll(payload, arrived)) => {
-                    if roll(state, &payload, arrived, &mut last_rolls).await && connected {
+                    if roll(state, &payload, arrived, &mut rolls).await && connected {
                         send_state(&client, state, slug, &mut sent).await;
                     }
                 }
@@ -330,15 +333,37 @@ fn too_soon(last_rolls: &mut HashMap<String, Instant>, person: &str, arrived: In
     last_rolls.contains_key(person)
 }
 
+/// Recent rolls: each person's last one, and how many arrived this second.
+#[derive(Default)]
+struct Rolls {
+    by_person: HashMap<String, Instant>,
+    window: Option<(Instant, u32)>,
+}
+
+impl Rolls {
+    /// Whether a roll that arrived at `arrived` may be read at all.
+    fn admit(&mut self, arrived: Instant) -> bool {
+        let (start, count) = match self.window {
+            Some((start, count))
+                if arrived.saturating_duration_since(start) < Duration::from_secs(1) =>
+            {
+                (start, count)
+            }
+            _ => (arrived, 0),
+        };
+        self.window = Some((start, count + 1));
+        count < ROLLS_PER_SECOND
+    }
+}
+
 /// Picks a game from the backlog of the person the payload names, as Pick
 /// for me does; the sensors show it. MQTT cannot tell who sent the roll, so it
 /// must name them. Returns whether it picked.
-async fn roll(
-    state: &AppState,
-    payload: &[u8],
-    arrived: Instant,
-    last_rolls: &mut HashMap<String, Instant>,
-) -> bool {
+async fn roll(state: &AppState, payload: &[u8], arrived: Instant, rolls: &mut Rolls) -> bool {
+    if !rolls.admit(arrived) {
+        tracing::debug!("dropped a roll over the limit for all rolls");
+        return false;
+    }
     let request = match entities::roll_request(payload) {
         Ok(request) => request,
         Err(err) => {
@@ -353,7 +378,7 @@ async fn roll(
         tracing::info!("ignored a roll from Home Assistant that names no person");
         return false;
     };
-    if too_soon(last_rolls, &person, arrived) {
+    if too_soon(&mut rolls.by_person, &person, arrived) {
         tracing::debug!("ignored a roll right after another");
         return false;
     }
@@ -368,7 +393,7 @@ async fn roll(
             return false;
         }
     }
-    last_rolls.insert(person.clone(), arrived);
+    rolls.by_person.insert(person.clone(), arrived);
     match db::suggestions::suggest(&state.db, &person, request.filter).await {
         Ok(pick) => {
             tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant");
@@ -515,5 +540,16 @@ mod tests {
         assert!(too_soon(&mut last, "ana", second));
         assert!(!too_soon(&mut last, "bo", second));
         assert!(!too_soon(&mut last, "ana", first + ROLL_GAP));
+    }
+
+    #[test]
+    fn rolls_past_the_limit_are_dropped_unread() {
+        let mut rolls = Rolls::default();
+        let start = Instant::now();
+        for _ in 0..ROLLS_PER_SECOND {
+            assert!(rolls.admit(start));
+        }
+        assert!(!rolls.admit(start + Duration::from_millis(500)));
+        assert!(rolls.admit(start + Duration::from_secs(1)));
     }
 }
