@@ -22,9 +22,10 @@ export function useLiveUpdates() {
     let withMe = false;
     const refetch = (reconnected: boolean) => {
       withMe ||= reconnected;
-      // Changes in a row, such as an import, refetch once.
-      window.clearTimeout(timer);
+      // Changes in a row, such as an import, refetch once, 300 ms after the first.
+      if (timer !== undefined) return;
       timer = window.setTimeout(() => {
+        timer = undefined;
         const me = withMe;
         withMe = false;
         void queryClient.invalidateQueries({

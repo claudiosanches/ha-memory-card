@@ -40,6 +40,23 @@ describe('Live updates', () => {
     expect(calls.filter((c) => c.path === '/api/me')).toHaveLength(1);
   });
 
+  it('refetches while changes keep coming', async () => {
+    vi.stubGlobal('EventSource', FakeEventSource);
+    const calls = mockApi({ 'GET /api/games': [], 'GET /api/platforms': [] });
+    renderAt('/');
+    await screen.findByText(en.library.empty);
+    const gamesLoaded = () => calls.filter((c) => c.path === '/api/games').length;
+    const before = gamesLoaded();
+
+    const changed = FakeEventSource.last?.listeners.get('changed');
+    const steady = setInterval(() => changed?.(), 100);
+    try {
+      await waitFor(() => expect(gamesLoaded()).toBeGreaterThan(before), { timeout: 900 });
+    } finally {
+      clearInterval(steady);
+    }
+  });
+
   it('refetches after the stream reconnects, but not when it first opens', async () => {
     vi.stubGlobal('EventSource', FakeEventSource);
     const calls = mockApi({ 'GET /api/games': [], 'GET /api/platforms': [] });
