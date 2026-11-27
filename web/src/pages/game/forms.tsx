@@ -18,9 +18,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
 import { call } from '../../api/errors';
-import { queryKeys, useAccounts, useGameDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
+import { queryKeys, useAccounts, useDevices, useGameModes, useLabels, usePlatforms, useStatus, useStores } from '../../api/queries';
 import {
   CONDITIONS,
+  holdsGames,
   type CopyDetail,
   type CopyInput,
   type CopyStatus,
@@ -89,7 +90,7 @@ type CopyFormProps = {
 export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, title, onClose }: CopyFormProps) {
   const { t, i18n } = useTranslation();
   const platforms = usePlatforms();
-  const devices = useGameDevices();
+  const devices = useDevices();
   const accounts = useAccounts();
   const stores = useStores();
   const appStatus = useStatus();
@@ -132,12 +133,14 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
   const platformOptions = (platforms.data ?? [])
     .filter((p) => p.active || p.id === release?.platform_id)
     .map((p) => ({ value: String(p.id), label: p.name }));
+  // The copy's own device stays listed, even once it moved to the wishlist.
   const deviceOptions = (devices.data ?? [])
     .filter(
       (d) =>
-        allDevices ||
         d.id === copy?.device_id ||
-        (d.active && (!platformId || d.platform_ids.includes(platformId))),
+        (holdsGames(d.kind) &&
+          d.status === 'owned' &&
+          (allDevices || (d.active && (!platformId || d.platform_ids.includes(platformId))))),
     )
     .map((d) => ({ value: String(d.id), label: d.name }));
   const accountOptions = (accounts.data ?? [])

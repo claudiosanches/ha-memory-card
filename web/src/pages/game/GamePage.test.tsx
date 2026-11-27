@@ -703,6 +703,27 @@ describe('Game page', () => {
     expect(calls.find((c) => c.path === '/api/copies/22')?.body).toMatchObject({ status: 'owned' });
   });
 
+  it('keeps a copy on a console that moved to the wishlist', async () => {
+    const onConsole = { ...GAME.releases[0]!.copies[0]!, device_id: 5 };
+    const game = { ...GAME, releases: [{ ...GAME.releases[0]!, copies: [onConsole] }] };
+    const calls = mockApi({
+      ...SETUP,
+      'GET /api/games/4': game,
+      'GET /api/devices': [
+        { id: 5, name: 'Old Switch', kind: 'console', status: 'wanted', active: true, platform_ids: [1], platform_id: null, photos: [], copy_count: 1 },
+      ],
+      'PUT /api/copies/21': game,
+    });
+    renderAt('/games/4');
+
+    fireEvent.click(await screen.findByRole('button', { name: en.game.editCopy }));
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByDisplayValue('Old Switch')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: en.common.save }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/copies/21')).toBe(true));
+    expect(calls.find((c) => c.path === '/api/copies/21')?.body).toMatchObject({ device_id: 5 });
+  });
+
   it('logs the only copy as played today', async () => {
     const calls = mockApi({
       ...SETUP,
