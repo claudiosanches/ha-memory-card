@@ -1,5 +1,5 @@
 name: Memory Card
-version: "0.1.0"
+version: "0.1.1"
 slug: memory_card
 description: Track your video game collection across consoles
 url: https://github.com/claudiosanches/ha-memory-card
