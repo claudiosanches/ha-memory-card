@@ -405,22 +405,28 @@ pub async fn run(state: &AppState, stop: &Notify) {
     }));
     let handover = tokio::spawn(hand_over(state.clone(), token, port));
 
-    // Feeds wait for the first read, so it is retried until it works.
+    // A failed read is retried until it works: feeds wait for the first one,
+    // and Home Assistant would keep stale values after a later one.
+    const RETRY_FIRST: Duration = Duration::from_secs(1);
     let mut stopped = false;
-    let mut retry = Duration::from_secs(1);
-    while !stopped && !feed.refresh().await {
-        tokio::select! {
-            () = stop.notified() => stopped = true,
-            () = tokio::time::sleep(retry) => retry = (retry * 2).min(Duration::from_secs(60)),
-        }
-    }
+    let mut failed = !feed.refresh().await;
+    let mut retry = RETRY_FIRST;
     while !stopped {
         tokio::select! {
             () = stop.notified() => stopped = true,
+            () = tokio::time::sleep(retry), if failed => {
+                failed = !feed.refresh().await;
+                retry = if failed { (retry * 2).min(Duration::from_secs(60)) } else { RETRY_FIRST };
+            }
             () = state.changes.next_for_sensors() => {
                 tokio::select! {
                     () = stop.notified() => stopped = true,
-                    () = tokio::time::sleep(super::DEBOUNCE) => { feed.refresh().await; }
+                    () = tokio::time::sleep(super::DEBOUNCE) => {
+                        failed = !feed.refresh().await;
+                        if !failed {
+                            retry = RETRY_FIRST;
+                        }
+                    }
                 }
             }
         }

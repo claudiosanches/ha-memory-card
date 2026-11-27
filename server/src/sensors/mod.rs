@@ -114,8 +114,9 @@ impl Sensors {
 
 enum Signal {
     Connected,
-    /// An automation asked for a pick for a person, maybe with filters.
-    Roll(Vec<u8>),
+    /// An automation asked for a pick for a person, maybe with filters, and
+    /// when the request arrived.
+    Roll(Vec<u8>, Instant),
     /// The broker still holds a device an earlier run published.
     Published,
     Lost,
@@ -203,7 +204,7 @@ async fn poll(mut eventloop: EventLoop, signals: mpsc::Sender<Signal>) {
             Ok(Event::Incoming(Packet::Publish(message)))
                 if message.topic == PICK_TOPIC && !message.retain =>
             {
-                Signal::Roll(message.payload.to_vec())
+                Signal::Roll(message.payload.to_vec(), Instant::now())
             }
             Ok(Event::Incoming(Packet::Publish(message)))
                 if message.topic == DISCOVERY_TOPIC && !message.payload.is_empty() =>
@@ -278,8 +279,8 @@ async fn publish(state: &AppState, stop: &Notify, broker: Broker) {
                     send_state(&client, state, slug, &mut sent).await;
                     send(&client, AVAILABILITY_TOPIC, "online");
                 }
-                Some(Signal::Roll(payload)) => {
-                    if roll(state, &payload, &mut last_rolls).await && connected {
+                Some(Signal::Roll(payload, arrived)) => {
+                    if roll(state, &payload, arrived, &mut last_rolls).await && connected {
                         send_state(&client, state, slug, &mut sent).await;
                     }
                 }
@@ -322,10 +323,22 @@ pub(crate) async fn may_roll_for(state: &AppState, person: &str) -> sqlx::Result
     Ok(policy.managers.iter().any(|m| m == person) || db::users::known(&state.db, person).await?)
 }
 
-/// Picks a game from the named person's backlog, as Pick for me does; the
-/// sensors show it. MQTT cannot tell who sent the roll, so it must name them.
-/// Rolls a pick for the person the payload names. Returns whether it did.
-async fn roll(state: &AppState, payload: &[u8], last_rolls: &mut HashMap<String, Instant>) -> bool {
+/// Whether `person` rolled less than [`ROLL_GAP`] before `arrived`. Goes by
+/// arrival, so rolls queued behind a slow one cannot all pass.
+fn too_soon(last_rolls: &mut HashMap<String, Instant>, person: &str, arrived: Instant) -> bool {
+    last_rolls.retain(|_, at| arrived.saturating_duration_since(*at) < ROLL_GAP);
+    last_rolls.contains_key(person)
+}
+
+/// Picks a game from the backlog of the person the payload names, as Pick
+/// for me does; the sensors show it. MQTT cannot tell who sent the roll, so it
+/// must name them. Returns whether it picked.
+async fn roll(
+    state: &AppState,
+    payload: &[u8],
+    arrived: Instant,
+    last_rolls: &mut HashMap<String, Instant>,
+) -> bool {
     let request = match entities::roll_request(payload) {
         Ok(request) => request,
         Err(err) => {
@@ -340,8 +353,7 @@ async fn roll(state: &AppState, payload: &[u8], last_rolls: &mut HashMap<String,
         tracing::info!("ignored a roll from Home Assistant that names no person");
         return false;
     };
-    last_rolls.retain(|_, at| at.elapsed() < ROLL_GAP);
-    if last_rolls.contains_key(&person) {
+    if too_soon(last_rolls, &person, arrived) {
         tracing::debug!("ignored a roll right after another");
         return false;
     }
@@ -356,7 +368,7 @@ async fn roll(state: &AppState, payload: &[u8], last_rolls: &mut HashMap<String,
             return false;
         }
     }
-    last_rolls.insert(person.clone(), Instant::now());
+    last_rolls.insert(person.clone(), arrived);
     match db::suggestions::suggest(&state.db, &person, request.filter).await {
         Ok(pick) => {
             tracing::info!(title = %pick.game.title, "rolled a pick for Home Assistant");
@@ -486,4 +498,22 @@ pub(crate) async fn remove(broker: &MqttBroker) {
         closed(&mut events).await;
     }
     poller.abort();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rolls_queued_together_count_as_one() {
+        let mut last = HashMap::new();
+        let first = Instant::now();
+        assert!(!too_soon(&mut last, "ana", first));
+        last.insert("ana".to_owned(), first);
+        // Read long after both arrived, as behind a slow refresh.
+        let second = first + Duration::from_millis(10);
+        assert!(too_soon(&mut last, "ana", second));
+        assert!(!too_soon(&mut last, "bo", second));
+        assert!(!too_soon(&mut last, "ana", first + ROLL_GAP));
+    }
 }
