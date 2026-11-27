@@ -13,7 +13,7 @@ use super::UTF8_BOM;
 use super::export::{plain, unplain};
 use super::parse::{FileIssue, detect_delimiter, too_wide};
 use crate::api::devices::DeviceInput;
-use crate::api::input::{NAME_MAX, required};
+use crate::api::input::{IDS_MAX, NAME_MAX, required};
 use crate::db::devices::{self, Device, DeviceFields};
 use crate::db::labels::SEPARATORS;
 use crate::db::platforms::{self, Platform};
@@ -402,11 +402,17 @@ fn plan_row(
     }
     if let Some(text) = cell("plays") {
         let mut ids = Vec::new();
-        for part in text
+        for (i, part) in text
             .split(SEPARATORS)
             .map(str::trim)
             .filter(|p| !p.is_empty())
+            .enumerate()
         {
+            // Each part is looked up against every platform, so a huge cell stops early.
+            if i == IDS_MAX || part.chars().count() > NAME_MAX {
+                issue("plays", "too_long");
+                break;
+            }
             match platform_id(part) {
                 Ok(id) => ids.push(id),
                 Err(code) => issue("plays", code),

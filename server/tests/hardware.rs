@@ -409,3 +409,17 @@ async fn hardware_csv_keeps_platform_names_apart_from_slugs_and_separators() {
     plays.sort_unstable();
     assert_eq!(plays, [lookalike, upstairs], "{csv}");
 }
+
+#[tokio::test]
+async fn hardware_import_stops_reading_a_huge_plays_cell() {
+    let app = TestApp::new().await;
+    let plays = vec!["switch"; 1001].join(";");
+    let file = format!("name,kind,plays\nBox,console,{plays}\n");
+    let (status, preview) = app.post_csv("/api/hardware/import/preview", &file).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        preview["rows"][0]["issues"],
+        json!([{"column": "plays", "code": "too_long"}]),
+        "{preview}"
+    );
+}
