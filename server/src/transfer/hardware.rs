@@ -17,7 +17,8 @@ use crate::api::input::{IDS_MAX, NAME_MAX, required};
 use crate::db::devices::{self, Device, DeviceFields};
 use crate::db::labels::SEPARATORS;
 use crate::db::platforms::{self, Platform};
-use crate::db::stores::{self, Store, StoreFields};
+use crate::db::slugs::{self, Table};
+use crate::db::stores::{self, StoreFields};
 use crate::db::{Pool, write_tx};
 use crate::domain::{Condition, CopyStatus, DeviceKind, Region};
 use crate::error::{ApiError, ApiResult};
@@ -190,11 +191,15 @@ pub async fn plan(conn: &mut SqliteConnection, bytes: &[u8]) -> ApiResult<Plan> 
     let devices = devices::list(&mut *conn).await?;
     let platforms = platforms::list(&mut *conn).await?;
     let stores = stores::list(&mut *conn).await?;
+    let known = Known {
+        devices: devices.iter().map(|d| (key(&d.name), d)).collect(),
+        stores: stores.iter().map(|s| (key(&s.name), s.id)).collect(),
+    };
     let mut seen = Seen::default();
     let mut rows = Vec::new();
     for (line, cells) in records {
         rows.push(plan_row(
-            line, &cells, &devices, &platforms, &stores, &mut seen,
+            line, &cells, &devices, &known, &platforms, &mut seen,
         ));
     }
     Ok(Plan {
@@ -210,6 +215,12 @@ pub async fn import(pool: &Pool, bytes: &[u8]) -> ApiResult<HardwareResult> {
     let result = apply(&mut tx, plan).await?;
     tx.commit().await?;
     Ok(result)
+}
+
+/// Stored devices and store ids by name key, read once per file.
+struct Known<'a> {
+    devices: HashMap<String, &'a Device>,
+    stores: HashMap<String, i64>,
 }
 
 /// Names and devices earlier rows already took.
@@ -286,8 +297,8 @@ fn plan_row(
     line: u64,
     cells: &Cells,
     devices: &[Device],
+    known: &Known,
     platforms: &[Platform],
-    stores: &[Store],
     seen: &mut Seen,
 ) -> (HardwareRow, Option<Planned>) {
     let mut issues: Vec<HardwareIssue> = Vec::new();
@@ -303,6 +314,8 @@ fn plan_row(
     let filled = |column: &str| cell(column).filter(|v| !v.is_empty());
 
     let name = filled("name").unwrap_or_default();
+    // Too long to be a name: nothing to look up, and the check below says why.
+    let name_key = (name.chars().count() <= NAME_MAX).then(|| key(&name));
     let by_id = filled("device_id");
     // A row with an unknown ID matches nothing, not a device of the same name.
     let existing = match &by_id {
@@ -316,7 +329,9 @@ fn plan_row(
             }
             found
         }
-        None => devices.iter().find(|d| key(&d.name) == key(&name)),
+        None => name_key
+            .as_ref()
+            .and_then(|k| known.devices.get(k).copied()),
     };
     if let Some(device) = existing
         && !seen.devices.insert(device.id)
@@ -328,14 +343,15 @@ fn plan_row(
     }
     if name.is_empty() {
         issue("name", "required");
-    } else {
-        if !seen.names.insert(key(&name)) {
+    } else if let Some(name_key) = name_key {
+        let taken = known
+            .devices
+            .get(&name_key)
+            .is_some_and(|other| Some(other.id) != existing.map(|e| e.id));
+        if !seen.names.insert(name_key) {
             issue("name", "duplicate_row");
         }
-        if devices
-            .iter()
-            .any(|d| key(&d.name) == key(&name) && Some(d.id) != existing.map(|e| e.id))
-        {
+        if taken {
             issue("name", "name_taken");
         }
     }
@@ -450,8 +466,11 @@ fn plan_row(
     if let Some(text) = cell("store") {
         input.store_id = None;
         if !text.is_empty() {
-            match stores.iter().find(|s| key(&s.name) == key(&text)) {
-                Some(store) => input.store_id = Some(store.id),
+            let found = (text.chars().count() <= NAME_MAX)
+                .then(|| known.stores.get(&key(&text)))
+                .flatten();
+            match found {
+                Some(id) => input.store_id = Some(*id),
                 None => match required(&text, "store", NAME_MAX) {
                     Ok(name) => new_store = Some(name),
                     Err(ApiError::Invalid { code, .. }) => issue("store", code),
@@ -539,17 +558,22 @@ async fn apply(conn: &mut SqliteConnection, plan: Plan) -> ApiResult<HardwareRes
         new_stores: 0,
     };
     let mut added_stores: HashMap<String, i64> = HashMap::new();
+    // Many new names can share a slug; these hand out the next one without
+    // reading the table each time.
+    let mut store_slugs = slugs::Allocator::new(Table::Stores);
+    let mut device_slugs = slugs::Allocator::new(Table::Devices);
     for (_, planned) in plan.rows {
         let Some(mut planned) = planned else { continue };
         if let Some(name) = planned.new_store.take() {
             let id = match added_stores.get(&key(&name)) {
                 Some(id) => *id,
                 None => {
+                    let slug = store_slugs.free(conn, &name).await?;
                     let id = stores::insert(
                         conn,
                         &StoreFields {
                             name: name.clone(),
-                            slug: None,
+                            slug: Some(slug),
                             notes: None,
                         },
                     )
@@ -568,6 +592,10 @@ async fn apply(conn: &mut SqliteConnection, plan: Plan) -> ApiResult<HardwareRes
                 result.updated += 1;
             }
             None => {
+                let fields = DeviceFields {
+                    slug: Some(device_slugs.free(conn, &fields.name).await?),
+                    ..fields
+                };
                 devices::insert(conn, &fields).await?;
                 result.created += 1;
             }

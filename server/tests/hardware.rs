@@ -423,3 +423,29 @@ async fn hardware_import_stops_reading_a_huge_plays_cell() {
         "{preview}"
     );
 }
+
+#[tokio::test]
+async fn hardware_import_gives_names_that_share_a_slug_their_own() {
+    let app = TestApp::new().await;
+    add(&app, json!({"name": "Box", "kind": "accessory"})).await;
+    let rows: String = ["Box!", "Box?", "Box.", "BOX #"]
+        .iter()
+        .map(|name| format!("{name},accessory,Shop!\n"))
+        .collect();
+    let file = format!("name,kind,store\n{rows}Other,accessory,Shop?\n");
+    let (status, result) = app.post_csv("/api/hardware/import", &file).await;
+    assert_eq!(status, StatusCode::OK, "{result}");
+    let slugs: Vec<String> = sqlx::query_scalar("SELECT slug FROM devices ORDER BY id")
+        .fetch_all(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(slugs, ["box", "box-2", "box-3", "box-4", "box-5", "other"]);
+    let stores: Vec<String> = sqlx::query_scalar("SELECT slug FROM stores ORDER BY id")
+        .fetch_all(&app.pool)
+        .await
+        .unwrap();
+    assert!(
+        stores.ends_with(&["shop".to_owned(), "shop-2".to_owned()]),
+        "{stores:?}"
+    );
+}
