@@ -206,6 +206,9 @@ struct Planner<'a> {
     /// the rows so far leave them.
     bundle_of: HashMap<i64, i64>,
     contents: HashMap<i64, usize>,
+    /// How many copies of each game each bundle holds, as the rows so far
+    /// leave them.
+    bundle_games: HashMap<(i64, Ref), usize>,
     game_statuses: HashMap<Ref, String>,
     release_titles: HashMap<Ref, String>,
     /// Where each existing release's new title sits in `plan.release_titles`.
@@ -241,6 +244,19 @@ impl<'a> Planner<'a> {
                 .push(Ref::Existing(g.id));
             if let Some(igdb_id) = g.igdb_id {
                 games_by_igdb.insert(igdb_id, Ref::Existing(g.id));
+            }
+        }
+        let release_games: HashMap<i64, i64> = snapshot
+            .releases
+            .iter()
+            .map(|r| (r.id, r.game_id))
+            .collect();
+        let mut bundle_games = HashMap::new();
+        for c in &snapshot.copies {
+            if let (Some(bundle), Some(game)) = (c.bundle_id, release_games.get(&c.release_id)) {
+                *bundle_games
+                    .entry((bundle, Ref::Existing(*game)))
+                    .or_default() += 1;
             }
         }
 
@@ -339,6 +355,7 @@ impl<'a> Planner<'a> {
                     counts
                 },
             ),
+            bundle_games,
             game_statuses: snapshot
                 .games
                 .iter()
@@ -592,6 +609,18 @@ impl<'a> Planner<'a> {
         {
             issues.error("bundle_copy_id", "same_game");
         }
+        if let (Some(bundle), Some((game, _))) = (bundle, game) {
+            // The row's own copy, already in that bundle as this game, is no
+            // second one.
+            let itself = existing_copy.is_some_and(|c| {
+                self.bundle_of.get(&c.id) == Some(&bundle.id)
+                    && self.copy_game(c).map(|g| Ref::Existing(g.id)) == Some(game)
+            });
+            let held = self.bundle_games.get(&(bundle.id, game)).copied();
+            if held.unwrap_or(0) > usize::from(itself) {
+                issues.error("bundle_copy_id", "already_in_bundle");
+            }
+        }
         if let (Some(status), Some(game)) = (play_status.as_deref(), game.map(|g| g.0))
             && self
                 .game_statuses
@@ -675,12 +704,19 @@ impl<'a> Planner<'a> {
             && let Some(old) = self.bundle_of.remove(&copy.id)
         {
             *self.contents.entry(old).or_default() -= 1;
+            if let Some(old_game) = self.copy_game(copy) {
+                *self
+                    .bundle_games
+                    .entry((old, Ref::Existing(old_game.id)))
+                    .or_default() -= 1;
+            }
         }
         if let Some(bundle) = write.bundle {
             if let Some(copy) = existing_copy {
                 self.bundle_of.insert(copy.id, bundle);
             }
             *self.contents.entry(bundle).or_default() += 1;
+            *self.bundle_games.entry((bundle, game)).or_default() += 1;
         }
         let action = match existing_copy {
             None => RowAction::NewCopy,

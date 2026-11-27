@@ -430,6 +430,7 @@
     "unknown_bundle": "No copy has this ID.",
     "nested_bundle": "A bundle cannot go inside another bundle.",
     "same_game": "The bundle copy is of this same game.",
+    "already_in_bundle": "The bundle already holds a copy of this game.",
     "ignored_in_bundle": "Left out: price, estimated value and purchase date stay on the bundle copy.",
     "too_many_labels": "More than 50 labels.",
     "device_holds_no_games": "That device is hardware that holds no games.",

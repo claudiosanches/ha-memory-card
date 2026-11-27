@@ -289,6 +289,24 @@ async fn csv_rows_put_copies_in_bundles() {
     assert_eq!(row_issues(&preview, 4), error("nested_bundle"));
     assert_eq!(row_issues(&preview, 5), error("same_game"));
 
+    let twice = format!(
+        "{header}\n\
+         ,Super Mario Sunshine,Switch,eu,physical,,,,{bundle}\n\
+         ,Galaxy,Switch,eu,physical,,,,{bundle}\n\
+         ,Galaxy,Switch,eu,physical,,,,{bundle}\n\
+         {sunshine},Super Mario Sunshine,Switch,eu,physical,,,,{bundle}\n"
+    );
+    let (_, preview) = app.post_csv("/api/import/preview", &twice).await;
+    let in_bundle = |line: u64| {
+        row_issues(&preview, line)
+            .iter()
+            .any(|(_, code, _)| code == "already_in_bundle")
+    };
+    assert!(in_bundle(2), "Sunshine is in it already");
+    assert!(!in_bundle(3));
+    assert!(in_bundle(4), "an earlier row put Galaxy in it");
+    assert!(!in_bundle(5), "the copy that is in it");
+
     let csv = format!("{header}\n{sunshine},Super Mario Sunshine,Switch,eu,physical,loose,,,\n");
     app.post_csv("/api/import", &csv).await;
     assert_eq!(sunshine_now().await.1, None, "a blank cell takes it out");

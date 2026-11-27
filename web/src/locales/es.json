@@ -430,6 +430,7 @@
     "unknown_bundle": "Ninguna copia tiene este ID.",
     "nested_bundle": "Un recopilatorio no puede ir dentro de otro.",
     "same_game": "La copia del recopilatorio es de este mismo juego.",
+    "already_in_bundle": "El recopilatorio ya tiene una copia de este juego.",
     "ignored_in_bundle": "Se omite: el precio, el valor estimado y la fecha de compra se quedan en la copia del recopilatorio.",
     "too_many_labels": "Más de 50 categorías.",
     "device_holds_no_games": "Ese dispositivo es hardware sin juegos.",

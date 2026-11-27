@@ -430,6 +430,7 @@
     "unknown_bundle": "Nenhuma cópia tem este ID.",
     "nested_bundle": "Uma coletânea não pode ficar dentro de outra.",
     "same_game": "A cópia da coletânea é deste mesmo jogo.",
+    "already_in_bundle": "A coletânea já tem uma cópia deste jogo.",
     "ignored_in_bundle": "Ignorado: preço, valor estimado e data de compra ficam na cópia da coletânea.",
     "too_many_labels": "Mais de 50 etiquetas.",
     "device_holds_no_games": "Esse dispositivo é um hardware sem jogos.",
