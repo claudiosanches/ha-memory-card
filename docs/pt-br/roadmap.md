@@ -45,9 +45,8 @@ tags NFC continuam sendo o jeito de registrar partidas.
 ## Só APIs oficiais
 
 O Memory Card usa apenas APIs oficiais e as integrações do próprio Home
-Assistant, para que uma mudança em outro serviço não o quebre sem aviso. Lojas
-sem um jeito oficial de ler a biblioteca, como Nintendo, PlayStation e GOG,
-continuam com a [importação CSV](./docs/import-export.md), a
+Assistant. Lojas sem um jeito oficial de ler a biblioteca, como Nintendo,
+PlayStation e GOG, continuam com a [importação CSV](./docs/import-export.md), a
 [leitura de códigos de barras](./docs/barcodes.md) ou o cadastro manual.
 
 ## Apoie o desenvolvimento

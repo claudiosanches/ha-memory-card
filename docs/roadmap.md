@@ -43,11 +43,10 @@ to log play.
 
 ## Official APIs only
 
-Memory Card reads only official APIs and Home Assistant's own integrations, so
-a change on another service can't break it without notice. Stores with no
-official way to read a library, such as Nintendo, PlayStation and GOG, stay with
-[CSV import](./docs/import-export.md), [barcode scans](./docs/barcodes.md) or
-adding games by hand.
+Memory Card uses only official APIs and Home Assistant's own integrations.
+Stores with no official way to read a library, such as Nintendo, PlayStation and
+GOG, stay with [CSV import](./docs/import-export.md),
+[barcode scans](./docs/barcodes.md) or adding games by hand.
 
 ## Support development
 
