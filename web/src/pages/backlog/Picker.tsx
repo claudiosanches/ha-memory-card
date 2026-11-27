@@ -15,7 +15,7 @@ import classes from './BacklogPage.module.css';
 import { useSetPlayStatus } from './usePlayStatus';
 
 /** Hours to beat the main story, at most, offered in the picker. */
-const HOUR_LIMITS = [2, 5, 10, 20, 40];
+const HOUR_LIMITS = [2, 5, 10, 20, 40, 60, 100];
 
 /** Rolls a random game from your own backlog, optionally one a device can play or a short one. */
 export function Picker() {
