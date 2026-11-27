@@ -359,10 +359,6 @@ pub fn push_game_filters(qb: &mut Sql, filter: &LibraryFilter) {
         qb.push(" AND g.id IN (SELECT value FROM json_each(")
             .push_bind(ids)
             .push("))");
-    } else if let Some(text) = filter.q.as_deref().map(str::trim).filter(|t| !t.is_empty()) {
-        qb.push(" AND instr(lower(g.title), lower(")
-            .push_bind(text.to_owned())
-            .push(")) > 0");
     }
 }
 
