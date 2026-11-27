@@ -57,9 +57,14 @@ export function HardwareTransfer() {
     onError: (error) => notifyError(errorMessage(t, error)),
   });
   const run = useMutation({
-    mutationFn: (body: string) => call(api.POST('/api/hardware/import', { body, ...asCsv })),
-    onSuccess: (result) => {
+    mutationFn: async (body: string) => {
+      const turn = chosen.current;
+      return { result: await call(api.POST('/api/hardware/import', { body, ...asCsv })), turn };
+    },
+    onSuccess: ({ result, turn }) => {
       void queryClient.invalidateQueries();
+      // A file chosen meanwhile stays.
+      if (turn !== chosen.current) return;
       setDone(result);
       setFile(null);
       setText(null);
