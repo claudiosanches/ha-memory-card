@@ -7,6 +7,7 @@ use utoipa::ToSchema;
 
 use super::found;
 use super::photos::CopyPhoto;
+use super::progress::{self, Replace, Source};
 use super::sessions::{self, PersonPlay, PlaySession};
 use super::tags::CopyTag;
 use super::users::Person;
@@ -458,7 +459,7 @@ pub async fn get(pool: &SqlitePool, id: i64, viewer: &str) -> ApiResult<GameDeta
         first_release_date: game.first_release_date,
         developers: game.developers.0,
         publishers: game.publishers.0,
-        play_status: super::progress::get(pool, viewer, id).await?,
+        play_status: progress::get(pool, viewer, id).await?,
         local_max_players: game.local_max_players,
         online_max_players: game.online_max_players,
         local_coop: game.local_coop,
@@ -510,14 +511,7 @@ pub async fn create(
     .fetch_one(&mut *tx)
     .await?;
     if let Some(status) = play_status {
-        sqlx::query!(
-            "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)",
-            by,
-            id,
-            status
-        )
-        .execute(&mut *tx)
-        .await?;
+        progress::put(&mut tx, by, id, status, Source::Manual, Replace::Any).await?;
     }
     tx.commit().await?;
     Ok(id)

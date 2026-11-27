@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM play_status_changes WHERE play_status = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "95ec5c6f145afc65afc96cbbee28b15daebfc5f6c34b0918130f2d73f9d36e1c"
+}

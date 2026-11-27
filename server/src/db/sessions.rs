@@ -4,6 +4,7 @@ use serde::Serialize;
 use sqlx::{SqliteConnection, SqlitePool};
 use utoipa::ToSchema;
 
+use super::progress::{self, Replace, Source};
 use super::users::{self, Person};
 use crate::config::FinishedScan;
 use crate::error::{ApiError, ApiResult};
@@ -137,16 +138,14 @@ pub async fn add(
     )
     .execute(&mut *tx)
     .await?;
-    sqlx::query!(
-        "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, 'playing')
-         ON CONFLICT (user_id, game_id) DO UPDATE
-         SET play_status = 'playing', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         WHERE (SELECT counts_as FROM play_statuses WHERE key = play_progress.play_status)
-               = 'backlog'",
+    progress::put(
+        &mut tx,
         by,
-        game_id
+        game_id,
+        "playing",
+        Source::Manual,
+        Replace::Backlog,
     )
-    .execute(&mut *tx)
     .await?;
     tx.commit().await?;
     Ok(())
@@ -211,15 +210,14 @@ pub async fn start_from_tag(
         _ => false,
     };
     if !keep {
-        sqlx::query!(
-            "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, 'playing')
-             ON CONFLICT (user_id, game_id) DO UPDATE
-             SET play_status = 'playing', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-             WHERE play_status IS NOT 'playing'",
+        progress::put(
+            &mut tx,
             person,
-            copy.game_id
+            copy.game_id,
+            "playing",
+            Source::Scan,
+            Replace::Any,
         )
-        .execute(&mut *tx)
         .await?;
     }
     tx.commit().await?;

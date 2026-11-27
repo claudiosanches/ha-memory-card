@@ -57,6 +57,7 @@ async fn fresh_database_has_schema_and_seed() {
             "platforms",
             "play_progress",
             "play_sessions",
+            "play_status_changes",
             "play_statuses",
             "releases",
             "stores",

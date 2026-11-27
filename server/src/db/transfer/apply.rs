@@ -3,6 +3,7 @@ use sqlx::SqliteConnection;
 use std::collections::HashSet;
 
 use crate::db::games::sync_contents;
+use crate::db::progress::{self, Replace, Source};
 use crate::db::slugs::{self, Table};
 use crate::domain::sort_title;
 use crate::transfer::plan::{Plan, Ref};
@@ -296,17 +297,5 @@ async fn set_status(
     game_id: i64,
     status: &str,
 ) -> sqlx::Result<()> {
-    sqlx::query!(
-        "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)
-         ON CONFLICT (user_id, game_id) DO UPDATE
-         SET play_status = excluded.play_status,
-             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-         WHERE play_status IS NOT excluded.play_status",
-        by,
-        game_id,
-        status
-    )
-    .execute(conn)
-    .await?;
-    Ok(())
+    progress::put(conn, by, game_id, status, Source::Csv, Replace::Any).await
 }

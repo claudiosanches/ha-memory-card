@@ -1,9 +1,116 @@
-//! Each person's play status for the games they keep track of.
+//! Each person's play status for the games they keep track of, and the
+//! history of the statuses they gave.
 
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 
 use super::{play_statuses, users};
 use crate::error::{ApiError, ApiResult};
+
+/// Where a status change came from, kept in the history.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Source {
+    /// Set in Memory Card, or by logging a session.
+    Manual,
+    /// An NFC tag scan.
+    Scan,
+    /// A CSV import.
+    Csv,
+}
+
+impl Source {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Manual => "manual",
+            Self::Scan => "scan",
+            Self::Csv => "csv",
+        }
+    }
+}
+
+/// Which status [`put`] replaces.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Replace {
+    Any,
+    /// Only one that counts as backlog.
+    Backlog,
+}
+
+/// Gives `user`'s game `status`, or leaves it when `replace` keeps the one
+/// they have, and adds the change to the history.
+pub(super) async fn put(
+    conn: &mut SqliteConnection,
+    user: &str,
+    game_id: i64,
+    status: &str,
+    source: Source,
+    replace: Replace,
+) -> sqlx::Result<()> {
+    let changed = match replace {
+        Replace::Any => {
+            sqlx::query!(
+                "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)
+                 ON CONFLICT (user_id, game_id) DO UPDATE
+                 SET play_status = excluded.play_status,
+                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                 WHERE play_status IS NOT excluded.play_status",
+                user,
+                game_id,
+                status
+            )
+            .execute(&mut *conn)
+            .await?
+        }
+        Replace::Backlog => {
+            sqlx::query!(
+                "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)
+                 ON CONFLICT (user_id, game_id) DO UPDATE
+                 SET play_status = excluded.play_status,
+                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                 WHERE (SELECT counts_as FROM play_statuses WHERE key = play_progress.play_status)
+                       = 'backlog'",
+                user,
+                game_id,
+                status
+            )
+            .execute(&mut *conn)
+            .await?
+        }
+    }
+    .rows_affected();
+    if changed == 0 {
+        return Ok(());
+    }
+    let source = source.as_str();
+    // Second thoughts the same day, such as a status picked by mistake, keep
+    // one row.
+    let replaced = sqlx::query!(
+        "UPDATE play_status_changes
+         SET play_status = ?1, changed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE id = (SELECT id FROM play_status_changes
+                     WHERE user_id = ?3 AND game_id = ?4 ORDER BY id DESC LIMIT 1)
+           AND source = ?2 AND date(changed_at) = date('now')",
+        status,
+        source,
+        user,
+        game_id
+    )
+    .execute(&mut *conn)
+    .await?
+    .rows_affected();
+    if replaced == 0 {
+        sqlx::query!(
+            "INSERT INTO play_status_changes (user_id, game_id, play_status, source)
+             VALUES (?, ?, ?, ?)",
+            user,
+            game_id,
+            status,
+            source
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+    Ok(())
+}
 
 /// Sets `user`'s status for the game; `None` clears it.
 pub async fn set(
@@ -26,18 +133,7 @@ pub async fn set(
     users::ensure(&mut tx, user).await?;
     match status {
         Some(status) => {
-            sqlx::query!(
-                "INSERT INTO play_progress (user_id, game_id, play_status) VALUES (?, ?, ?)
-                 ON CONFLICT (user_id, game_id) DO UPDATE
-                 SET play_status = excluded.play_status,
-                     updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-                 WHERE play_status IS NOT excluded.play_status",
-                user,
-                game_id,
-                status
-            )
-            .execute(&mut *tx)
-            .await?;
+            put(&mut tx, user, game_id, status, Source::Manual, Replace::Any).await?;
         }
         None => {
             sqlx::query!(

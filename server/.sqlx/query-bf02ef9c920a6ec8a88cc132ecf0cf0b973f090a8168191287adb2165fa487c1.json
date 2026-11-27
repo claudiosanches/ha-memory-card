@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "WITH played AS (\n             SELECT * FROM play_sessions WHERE played_on >= date('now', ?1)\n           )\n           SELECT u.id AS \"id!\", COALESCE(u.display_name, u.name) AS name,\n                  (SELECT COUNT(*) FROM played WHERE user_id = u.id) AS \"sessions!: i64\",\n                  (SELECT COALESCE(SUM(minutes), 0) FROM played WHERE user_id = u.id) AS \"minutes!: i64\",\n                  (SELECT COUNT(DISTINCT played_on) FROM played WHERE user_id = u.id) AS \"days!: i64\",\n                  (SELECT COUNT(DISTINCT game_id) FROM played WHERE user_id = u.id) AS \"games!: i64\",\n                  (SELECT COUNT(DISTINCT c.game_id)\n                   FROM play_status_changes c JOIN play_statuses s ON s.key = c.play_status\n                   WHERE c.user_id = u.id AND s.counts_as = 'finished' AND c.source != 'csv'\n                     AND c.changed_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?1)) AS \"finished!: i64\"\n           FROM users u\n           WHERE EXISTS (SELECT 1 FROM play_progress WHERE user_id = u.id)\n              OR EXISTS (SELECT 1 FROM play_sessions WHERE user_id = u.id)\n           ORDER BY 4 DESC, 3 DESC, 2",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "name": "sessions!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "minutes!: i64",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "days!: i64",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "games!: i64",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "finished!: i64",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bf02ef9c920a6ec8a88cc132ecf0cf0b973f090a8168191287adb2165fa487c1"
+}

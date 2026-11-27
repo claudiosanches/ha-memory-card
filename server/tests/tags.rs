@@ -113,6 +113,20 @@ async fn a_scanned_tag_starts_its_copy() {
     );
     assert_eq!(sessions[0]["copy_id"], copy);
     assert_eq!(detail["play_status"], "playing");
+    let history: Vec<(String, String)> = sqlx::query_as(
+        "SELECT play_status, source FROM play_status_changes WHERE game_id = ? ORDER BY id",
+    )
+    .bind(game)
+    .fetch_all(&app.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        history,
+        [
+            ("completed".into(), "manual".into()),
+            ("playing".into(), "scan".into()),
+        ]
+    );
 
     assert_eq!(
         tags::scanned(&app.state, "unknown", None, None).await,

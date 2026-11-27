@@ -15,7 +15,8 @@ Below, each person who logged play has a card, the most play time first:
 - **Sessions** and **Days** played.
 - **Games** they played.
 - **Finished:** games they moved to a status that counts as finished in that
-  period.
+  period, even if they changed it since. Statuses from a CSV import do not
+  count, and a status changed again the same day counts as the last one.
 - **Most played:** the game they played most in that period.
 
 Your own card is marked **You**. Names come from Home Assistant, so a person

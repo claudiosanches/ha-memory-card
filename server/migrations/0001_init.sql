@@ -363,7 +363,8 @@ INSERT INTO play_statuses (key, color, counts_as, sort_order, builtin) VALUES
 -- Play belongs to each person: their status for each game, their sessions and
 -- their picks. The household shares the collection.
 
--- No row means no status. Deleting a status first moves or deletes its rows.
+-- No row means no status. Deleting a status first moves or deletes its rows,
+-- here and in play_status_changes.
 CREATE TABLE play_progress (
     user_id     TEXT    NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     game_id     INTEGER NOT NULL REFERENCES games (id) ON DELETE CASCADE,
@@ -374,6 +375,24 @@ CREATE TABLE play_progress (
 
 CREATE INDEX play_progress_game ON play_progress (game_id);
 CREATE INDEX play_progress_status ON play_progress (play_status);
+
+-- Each status a person gave a game, so a finish still counts after the status
+-- changes again. Clearing a status adds nothing, and a change from the same
+-- source on the same day replaces that day's row. source is manual (in the
+-- app), scan (an NFC tag) or csv (an import, which restates statuses rather
+-- than changing them then).
+CREATE TABLE play_status_changes (
+    id          INTEGER PRIMARY KEY,
+    user_id     TEXT    NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    game_id     INTEGER NOT NULL REFERENCES games (id) ON DELETE CASCADE,
+    play_status TEXT    NOT NULL REFERENCES play_statuses (key),
+    source      TEXT    NOT NULL,
+    changed_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX play_status_changes_person ON play_status_changes (user_id, changed_at);
+CREATE INDEX play_status_changes_game ON play_status_changes (game_id, user_id);
+CREATE INDEX play_status_changes_status ON play_status_changes (play_status);
 
 -- Each time someone played a game. A game's last played is its latest session.
 CREATE TABLE play_sessions (

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO play_status_changes (user_id, game_id, play_status, source)\n             VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "801897283971a83fcab869cc393fa0429c35f097beeb2b6df10735d924dd1d97"
+}

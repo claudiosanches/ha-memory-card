@@ -44,6 +44,8 @@ First release.
   or not counted.
 - Stats for the collection and your own play.
 - Household page comparing everyone's play this month, this year or all time.
+- A history of each person's play statuses, so a finished game still counts
+  after its status changes again.
 - Sidebar app, signed in as your Home Assistant user.
 - Managers who change the collection while everyone else browses it, and
   `viewers_track_progress` for viewers to keep their own play.

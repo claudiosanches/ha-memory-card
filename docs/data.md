@@ -15,4 +15,4 @@ state. The app starts again on its own when the backup finishes.
 To keep a copy outside Home Assistant, **Export collection** under
 [Import & export](import-export.md) downloads every copy as a CSV file, and
 its **Hardware** tab every item of hardware. They leave out play sessions,
-photos and covers.
+status history, photos and covers.
