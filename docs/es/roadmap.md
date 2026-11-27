@@ -45,8 +45,9 @@ juego. Las etiquetas NFC siguen siendo la forma de registrar partidas.
 
 ## Solo API oficiales
 
-Memory Card usa solo API oficiales y las integraciones del propio Home
-Assistant. Las tiendas sin una forma oficial de leer la biblioteca, como
+Memory Card tiene como política conectarse solo mediante API oficiales y las
+integraciones del propio Home Assistant, nunca mediante endpoints no oficiales
+ni scraping. Las tiendas sin una forma oficial de leer la biblioteca, como
 Nintendo, PlayStation y GOG, siguen con la
 [importación CSV](./docs/import-export.md), la
 [lectura de códigos de barras](./docs/barcodes.md) o el alta a mano.

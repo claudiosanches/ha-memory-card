@@ -43,7 +43,8 @@ to log play.
 
 ## Official APIs only
 
-Memory Card uses only official APIs and Home Assistant's own integrations.
+Memory Card has a policy of connecting only through official APIs and Home
+Assistant's own integrations, never through unofficial endpoints or scraping.
 Stores with no official way to read a library, such as Nintendo, PlayStation and
 GOG, stay with [CSV import](./docs/import-export.md),
 [barcode scans](./docs/barcodes.md) or adding games by hand.
