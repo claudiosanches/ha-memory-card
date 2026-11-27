@@ -74,9 +74,15 @@ const ALIASES: [(&str, &[&str]); 19] = [
     ("edition", &["variant"]),
 ];
 
+/// Longer than any column name or alias, so a longer header matches nothing.
+const HEADER_MAX: usize = 64;
+
 /// The column a header names: its own name, ignoring case, or a common alias.
 pub fn column_for(header: &str) -> Option<&'static str> {
     let header = header.trim();
+    if header.len() > HEADER_MAX {
+        return None;
+    }
     if let Some(column) = COLUMNS.iter().find(|c| header.eq_ignore_ascii_case(c)) {
         return Some(column);
     }
@@ -261,15 +267,13 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<RawRow>, FileIssue> {
             ..FileIssue::new("malformed")
         })?
         .clone();
-    let index: HashMap<&'static str, usize> = COLUMNS
-        .iter()
-        .filter_map(|column| {
-            headers
-                .iter()
-                .position(|header| column_for(header) == Some(column))
-                .map(|position| (*column, position))
-        })
-        .collect();
+    // The first header that names a column takes it.
+    let mut index: HashMap<&'static str, usize> = HashMap::new();
+    for (position, header) in headers.iter().enumerate() {
+        if let Some(column) = column_for(header) {
+            index.entry(column).or_insert(position);
+        }
+    }
     let absent: Arc<[&'static str]> = COLUMNS
         .iter()
         .copied()
@@ -403,6 +407,26 @@ mod tests {
             assert_eq!(column_for(header), Some(column), "{header}");
         }
         assert_eq!(column_for("Rating"), None);
+        assert_eq!(
+            column_for(&format!("Game Title{}", " ".repeat(HEADER_MAX))),
+            Some("game_title")
+        );
+        assert_eq!(
+            column_for(&"game_title".repeat(10)),
+            None,
+            "too long to be a name"
+        );
+    }
+
+    #[test]
+    fn the_first_header_naming_a_column_takes_it() {
+        let rows = parse(
+            b"Title,game_title,platform
+Celeste,Hades,Switch
+",
+        )
+        .unwrap();
+        assert_eq!(rows[0].game_title.as_deref(), Some("Celeste"));
     }
 
     #[test]
