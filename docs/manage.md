@@ -20,6 +20,9 @@ the device it is installed on, so a game bought on a PlayStation Network
 account and played on the PS5 has both. **Add account** asks for:
 
 - a name, which picks the account for a copy;
+- **Username:** optional handle or profile name, such as a PSN Online ID,
+  Xbox gamertag, Nintendo Account or Steam profile name. Never store a
+  password here;
 - **Store:** where it buys games. A new copy on the account takes it as its
   store;
 - **Person:** whose account it is in the household;

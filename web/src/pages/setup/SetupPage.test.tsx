@@ -138,7 +138,7 @@ describe('Setup wizard', () => {
       ...SETUP,
       'GET /api/missing-details': [{ game_id: 4, title: 'Metroid Dread', fields: ['device'] }],
       'GET /api/games/4': game,
-      'GET /api/accounts': [{ id: 8, name: 'Steam', active: true, platform_ids: [] }],
+      'GET /api/accounts': [{ id: 8, name: 'Steam', username: 'ana_steam', active: true, platform_ids: [] }],
       'PUT /api/copies/21': () => game,
     });
     renderAt('/maintenance?tab=missing');
@@ -146,7 +146,7 @@ describe('Setup wizard', () => {
     fireEvent.click(await screen.findByRole('button', { name: en.setup.start_one.replace('{{count}}', '1') }));
     const copy = await screen.findByTestId('setup-copy-21');
     fireEvent.click(within(copy).getByRole('combobox', { name: en.game.account }));
-    fireEvent.click(await screen.findByRole('option', { name: 'Steam', hidden: true }));
+    fireEvent.click(await screen.findByRole('option', { name: `Steam${en.common.separator}ana_steam`, hidden: true }));
     fireEvent.click(screen.getByRole('button', { name: en.setup.saveNext }));
 
     expect(await screen.findByText(en.setup.done)).toBeInTheDocument();

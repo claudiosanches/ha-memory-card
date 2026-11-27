@@ -15,6 +15,8 @@ pub struct Account {
     pub name: String,
     /// Names the account in library links.
     pub slug: String,
+    /// Optional handle or profile name, such as a PSN Online ID or gamertag.
+    pub username: Option<String>,
     /// The store it buys from.
     pub store_id: Option<i64>,
     /// Whose account it is.
@@ -31,6 +33,7 @@ pub struct AccountFields {
     pub name: String,
     /// `None` makes one from the name for a new account and keeps it on update.
     pub slug: Option<String>,
+    pub username: Option<String>,
     pub store_id: Option<i64>,
     pub user_id: Option<String>,
     pub notes: Option<String>,
@@ -42,6 +45,7 @@ struct AccountRow {
     id: i64,
     name: String,
     slug: String,
+    username: Option<String>,
     store_id: Option<i64>,
     user_id: Option<String>,
     person_name: Option<String>,
@@ -57,6 +61,7 @@ impl From<AccountRow> for Account {
             id: row.id,
             name: row.name,
             slug: row.slug,
+            username: row.username,
             store_id: row.store_id,
             person: Person::from_columns(row.user_id, row.person_name),
             notes: row.notes,
@@ -70,7 +75,7 @@ impl From<AccountRow> for Account {
 pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Account>> {
     let rows = sqlx::query_as!(
         AccountRow,
-        r#"SELECT a.id AS "id!", a.name, a.slug, a.store_id, a.user_id,
+        r#"SELECT a.id AS "id!", a.name, a.slug, a.username, a.store_id, a.user_id,
                   COALESCE(u.display_name, u.name) AS person_name, a.notes,
                   a.active AS "active: bool",
                   (SELECT json_group_array(platform_id) FROM (
@@ -90,7 +95,7 @@ pub async fn list(pool: &SqlitePool) -> sqlx::Result<Vec<Account>> {
 pub async fn get(pool: &SqlitePool, id: i64) -> ApiResult<Account> {
     sqlx::query_as!(
         AccountRow,
-        r#"SELECT a.id AS "id!", a.name, a.slug, a.store_id, a.user_id,
+        r#"SELECT a.id AS "id!", a.name, a.slug, a.username, a.store_id, a.user_id,
                   COALESCE(u.display_name, u.name) AS person_name, a.notes,
                   a.active AS "active: bool",
                   (SELECT json_group_array(platform_id) FROM (
@@ -121,11 +126,12 @@ pub async fn create(pool: &SqlitePool, fields: &AccountFields) -> ApiResult<i64>
     )
     .await?;
     let id = sqlx::query_scalar!(
-        r#"INSERT INTO accounts (name, slug, store_id, user_id, notes, active)
-           VALUES (?, ?, ?, ?, ?, ?)
+        r#"INSERT INTO accounts (name, slug, username, store_id, user_id, notes, active)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            RETURNING id AS "id!""#,
         fields.name,
         slug,
+        fields.username,
         fields.store_id,
         fields.user_id,
         fields.notes,
@@ -145,11 +151,12 @@ pub async fn update(pool: &SqlitePool, id: i64, fields: &AccountFields) -> ApiRe
     let platform_ids = checked(&mut tx, fields).await?;
     let result = sqlx::query!(
         "UPDATE accounts
-         SET name = ?, slug = COALESCE(?, slug), store_id = ?, user_id = ?, notes = ?,
-             active = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         SET name = ?, slug = COALESCE(?, slug), username = ?, store_id = ?, user_id = ?,
+             notes = ?, active = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
          WHERE id = ?",
         fields.name,
         fields.slug,
+        fields.username,
         fields.store_id,
         fields.user_id,
         fields.notes,

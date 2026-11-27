@@ -34,11 +34,12 @@ const PLATFORMS = [
 ];
 
 describe('Manage accounts', () => {
-  it('lists accounts with their store and person, and adds one', async () => {
+  it('lists accounts with their username, store and person, and adds one', async () => {
     const steam = {
       id: 3,
       name: 'Steam',
       slug: 'steam',
+      username: 'ana_steam',
       store_id: 5,
       person: { id: 'ana', name: 'Ana' },
       notes: null,
@@ -56,14 +57,21 @@ describe('Manage accounts', () => {
     renderAt('/manage');
 
     const row = await screen.findByTestId('account-Steam');
+    expect(row).toHaveTextContent('ana_steam');
     expect(row).toHaveTextContent('2 copies');
     await waitFor(() => expect(row).toHaveTextContent(`Steam store${en.common.separator}Ana`));
 
     fireEvent.click(screen.getByRole('button', { name: en.accounts.add }));
     fireEvent.change(screen.getByRole('textbox', { name: en.common.name }), { target: { value: 'GOG' } });
+    fireEvent.change(screen.getByRole('textbox', { name: en.accounts.username }), { target: { value: 'ana_gog' } });
     fireEvent.click(screen.getByRole('button', { name: en.common.save }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
-    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ name: 'GOG', store_id: null, user_id: null });
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      name: 'GOG',
+      username: 'ana_gog',
+      store_id: null,
+      user_id: null,
+    });
   });
 });
 

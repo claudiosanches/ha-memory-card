@@ -22,6 +22,9 @@ en una cuenta de PlayStation Network y jugado en la PS5 conserva ambos datos.
 **Añadir cuenta** pide:
 
 - un nombre, con el que eliges esta cuenta para una copia;
+- **Nombre de usuario:** identificador o nombre de perfil opcional, como un
+  ID online de PSN, gamertag de Xbox, Cuenta Nintendo o nombre de perfil de
+  Steam. Nunca guardes una contraseña aquí;
 - **Tienda:** dónde compra juegos. Una copia nueva en esta cuenta la toma como
   su tienda;
 - **Persona:** de quién es la cuenta en la casa;

@@ -74,6 +74,11 @@ export function AccountsTab() {
                       </Badge>
                     )}
                   </Group>
+                  {account.username && (
+                    <Text size="sm" c="dimmed" className={classes.username}>
+                      {account.username}
+                    </Text>
+                  )}
                   {about.length > 0 && (
                     <Text size="sm" c="dimmed">
                       {about.join(t('common.separator'))}
@@ -152,6 +157,7 @@ function AccountForm({
     initialValues: {
       name: account?.name ?? '',
       slug: account?.slug ?? '',
+      username: account?.username ?? '',
       store_id: account?.store_id ? String(account.store_id) : '',
       user_id: account?.person?.id ?? '',
       notes: account?.notes ?? '',
@@ -195,6 +201,7 @@ function AccountForm({
         save.mutate({
           name: values.name,
           slug: trimSlug(values.slug) || null,
+          username: values.username.trim() || null,
           store_id: values.store_id ? Number(values.store_id) : null,
           user_id: values.user_id || null,
           notes: values.notes.trim() || null,
@@ -212,6 +219,13 @@ function AccountForm({
         {...inputs.name}
       />
       <SlugInput param="account" saved={account?.slug} {...inputs.slug} />
+      <TextInput
+        label={t('accounts.username')}
+        description={t('accounts.usernameDescription')}
+        placeholder={t('accounts.usernamePlaceholder')}
+        autoComplete="off"
+        {...form.getInputProps('username')}
+      />
       <Select
         label={t('accounts.store')}
         description={t('accounts.storeDescription')}

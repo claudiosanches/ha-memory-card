@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT a.id AS \"id!\", a.name, a.slug, a.store_id, a.user_id,\n                  COALESCE(u.display_name, u.name) AS person_name, a.notes,\n                  a.active AS \"active: bool\",\n                  (SELECT json_group_array(platform_id) FROM (\n                       SELECT ap.platform_id FROM account_platforms ap\n                       JOIN platforms p ON p.id = ap.platform_id\n                       WHERE ap.account_id = a.id\n                       ORDER BY p.sort_order, p.name)) AS \"platform_ids!: Json<Vec<i64>>\",\n                  (SELECT COUNT(*) FROM copies c WHERE c.account_id = a.id) AS \"copy_count!: i64\"\n           FROM accounts a LEFT JOIN users u ON u.id = a.user_id\n           ORDER BY a.name COLLATE NOCASE",
+  "query": "SELECT a.id AS \"id!\", a.name, a.slug, a.username, a.store_id, a.user_id,\n                  COALESCE(u.display_name, u.name) AS person_name, a.notes,\n                  a.active AS \"active: bool\",\n                  (SELECT json_group_array(platform_id) FROM (\n                       SELECT ap.platform_id FROM account_platforms ap\n                       JOIN platforms p ON p.id = ap.platform_id\n                       WHERE ap.account_id = a.id\n                       ORDER BY p.sort_order, p.name)) AS \"platform_ids!: Json<Vec<i64>>\",\n                  (SELECT COUNT(*) FROM copies c WHERE c.account_id = a.id) AS \"copy_count!: i64\"\n           FROM accounts a LEFT JOIN users u ON u.id = a.user_id\n           ORDER BY a.name COLLATE NOCASE",
   "describe": {
     "columns": [
       {
@@ -37,8 +37,19 @@
         }
       },
       {
-        "name": "store_id",
+        "name": "username",
         "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "username"
+          }
+        }
+      },
+      {
+        "name": "store_id",
+        "ordinal": 4,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -49,7 +60,7 @@
       },
       {
         "name": "user_id",
-        "ordinal": 4,
+        "ordinal": 5,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -60,13 +71,13 @@
       },
       {
         "name": "person_name",
-        "ordinal": 5,
+        "ordinal": 6,
         "type_info": "Text",
         "origin": "Expression"
       },
       {
         "name": "notes",
-        "ordinal": 6,
+        "ordinal": 7,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -77,7 +88,7 @@
       },
       {
         "name": "active: bool",
-        "ordinal": 7,
+        "ordinal": 8,
         "type_info": "Integer",
         "origin": {
           "Table": {
@@ -88,13 +99,13 @@
       },
       {
         "name": "platform_ids!: Json<Vec<i64>>",
-        "ordinal": 8,
+        "ordinal": 9,
         "type_info": "Integer",
         "origin": "Expression"
       },
       {
         "name": "copy_count!: i64",
-        "ordinal": 9,
+        "ordinal": 10,
         "type_info": "Integer",
         "origin": "Expression"
       }
@@ -110,10 +121,11 @@
       true,
       true,
       true,
+      true,
       false,
       true,
       false
     ]
   },
-  "hash": "07bdac8832b7f5267499161742c11aef368fce8e8eacfe457b32fc2e8fbda9bc"
+  "hash": "590bfe657249eb6016ff8ea8d6ee89e8c4b41c64ecf3c995643aa189e128dfcf"
 }

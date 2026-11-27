@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Optional username on store accounts (such as a PSN Online ID, Xbox
+  gamertag, Nintendo Account or Steam profile name), shown on the account
+  card and when picking an account for a copy.
+
 ### Changed
 
 - The Memory Card integration is in the Marketplace's catalog, so the docs

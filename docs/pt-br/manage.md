@@ -21,6 +21,9 @@ separadamente do dispositivo em que está instalada, então um jogo comprado na
 PlayStation Network e jogado no PS5 tem ambos. **Adicionar conta** pede:
 
 - um nome, usado para escolher a conta de uma cópia;
+- **Nome de usuário:** identificador ou nome de perfil opcional, como um ID
+  online da PSN, gamertag do Xbox, Conta Nintendo ou nome de perfil da Steam.
+  Nunca guarde uma senha aqui;
 - **Loja:** onde compra jogos. Uma cópia nova nesta conta a usa como loja;
 - **Pessoa:** de quem é a conta na casa;
 - **Plataformas:** as plataformas cujos jogos esta conta guarda. Cópias de

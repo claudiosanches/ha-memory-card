@@ -210,8 +210,9 @@ toys, such as amiibo, you own or want. Consoles, handhelds and
 PCs hold games: each copy can say which one it lives on, and **Plays** lists
 the platforms they run. Store accounts, such as Steam, are under **Manage >
 Accounts**: a digital copy names the account that owns it and, apart from
-that, the device it is installed on. Each account can name its store, whose
-account it is and the platforms it holds. Controllers, accessories and
+that, the device it is installed on. Each account can name its username
+(never a password), its store, whose account it is and the platforms it
+holds. Controllers, accessories and
 toys hold no games and name the platform they are for. Each item keeps its
 region, condition, where and when it was bought, what it cost and what it
 would sell for now, serial number, barcode, notes and up to 20 photos.

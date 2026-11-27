@@ -18,6 +18,9 @@ pub struct AccountInput {
     /// one and keeps the current one on update.
     #[serde(default)]
     pub slug: Option<String>,
+    /// Optional handle or profile name, such as a PSN Online ID or gamertag.
+    #[serde(default)]
+    pub username: Option<String>,
     #[serde(default)]
     pub store_id: Option<i64>,
     /// The Home Assistant user whose account it is.
@@ -48,6 +51,7 @@ impl AccountInput {
         Ok(AccountFields {
             name: required(&self.name, "name", NAME_MAX)?,
             slug: crate::slug::input(self.slug.as_deref())?,
+            username: optional(self.username.as_deref(), "username", NAME_MAX)?,
             store_id: self.store_id,
             user_id: user_id.map(str::to_owned),
             notes: optional(self.notes.as_deref(), "notes", NOTES_MAX)?,

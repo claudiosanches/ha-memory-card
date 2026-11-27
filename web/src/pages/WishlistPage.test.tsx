@@ -153,7 +153,7 @@ describe('Wishlist', () => {
     const calls = mockApi({
       ...SETUP,
       'GET /api/accounts': [
-        { id: 7, name: 'Steam', slug: 'steam', store_id: null, person: null, notes: null, active: true, platform_ids: [], copy_count: 1 },
+        { id: 7, name: 'Steam', slug: 'steam', username: null, store_id: null, person: null, notes: null, active: true, platform_ids: [], copy_count: 1 },
       ],
       'GET /api/copies': [wish],
       'PUT /api/copies/31': detail(8, 'Hades II', 1),

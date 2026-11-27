@@ -39,24 +39,29 @@ async fn accounts_are_added_changed_and_deleted() {
     let steam = steam_id(&app).await;
     let account = new_account(
         &app,
-        json!({"name": "Steam account", "store_id": steam, "user_id": MANAGER, "platform_ids": [pc]}),
+        json!({"name": "Steam account", "username": "  player_one  ", "store_id": steam, "user_id": MANAGER, "platform_ids": [pc]}),
     )
     .await;
     let id = account["id"].as_i64().unwrap();
     assert_eq!(account["slug"], "steam-account");
+    assert_eq!(account["username"], "player_one");
     assert_eq!(account["store_id"], steam);
     assert_eq!(account["person"]["id"], MANAGER);
     assert_eq!(account["platform_ids"], json!([pc]));
+
+    let (_, accounts) = app.json("GET", "/api/accounts", None).await;
+    assert_eq!(accounts[0]["username"], "player_one");
 
     let (status, updated) = app
         .json(
             "PUT",
             &format!("/api/accounts/{id}"),
-            Some(json!({"name": "Steam", "active": false})),
+            Some(json!({"name": "Steam", "username": "   ", "active": false})),
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{updated}");
     assert_eq!(updated["slug"], "steam-account", "slug is stable");
+    assert_eq!(updated["username"], Value::Null);
     assert_eq!(updated["active"], false);
     assert_eq!(updated["person"], Value::Null);
     assert_eq!(updated["platform_ids"], json!([]));
@@ -94,6 +99,11 @@ async fn accounts_refuse_what_does_not_exist() {
             json!({"name": "A", "user_id": "fedcba9876543210fedcba9876543210"}),
             "unknown_user",
             "user_id",
+        ),
+        (
+            json!({"name": "A", "username": "a".repeat(101)}),
+            "too_long",
+            "username",
         ),
     ] {
         let (status, error) = app.json("POST", "/api/accounts", Some(body)).await;

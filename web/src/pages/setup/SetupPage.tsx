@@ -29,7 +29,7 @@ import {
 import { EmptyState } from '../../components/EmptyState';
 import { notifyError } from '../../components/notify';
 import { CoverPicker } from '../game/CoverPicker';
-import { checkedOrNull, CopyForm, gameInput, numberOrNull, PlayerFields } from '../game/forms';
+import { accountLabel, checkedOrNull, CopyForm, gameInput, numberOrNull, PlayerFields } from '../game/forms';
 import { IgdbLinkModal } from '../game/IgdbLink';
 import classes from './SetupPage.module.css';
 
@@ -274,7 +274,7 @@ function StepForm({ game, index, total, fields, onNext, onStop }: StepProps & { 
   const accountOptions = (release: ReleaseDetail) =>
     (accounts.data ?? [])
       .filter((a) => a.active && (a.platform_ids.length === 0 || a.platform_ids.includes(release.platform_id)))
-      .map((a) => ({ value: String(a.id), label: a.name }));
+      .map((a) => ({ value: String(a.id), label: accountLabel(a, t('common.separator')) }));
 
   return (
     <Stack gap="card">

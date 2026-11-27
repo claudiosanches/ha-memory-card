@@ -986,6 +986,8 @@ export interface components {
              * @description The store it buys from.
              */
             store_id?: number | null;
+            /** @description Optional handle or profile name, such as a PSN Online ID or gamertag. */
+            username?: string | null;
         };
         AccountInput: {
             active?: boolean;
@@ -1001,6 +1003,8 @@ export interface components {
             store_id?: number | null;
             /** @description The Home Assistant user whose account it is. */
             user_id?: string | null;
+            /** @description Optional handle or profile name, such as a PSN Online ID or gamertag. */
+            username?: string | null;
         };
         Amount: {
             /** @description Decimal text, such as `59.99`. */

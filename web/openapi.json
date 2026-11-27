@@ -4040,6 +4040,13 @@
             ],
             "format": "int64",
             "description": "The store it buys from."
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional handle or profile name, such as a PSN Online ID or gamertag."
           }
         }
       },
@@ -4088,6 +4095,13 @@
               "null"
             ],
             "description": "The Home Assistant user whose account it is."
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional handle or profile name, such as a PSN Online ID or gamertag."
           }
         }
       },

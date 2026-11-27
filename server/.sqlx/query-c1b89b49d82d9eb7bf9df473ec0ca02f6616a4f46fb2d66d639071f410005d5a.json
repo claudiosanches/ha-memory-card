@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO accounts (name, slug, store_id, user_id, notes, active)\n           VALUES (?, ?, ?, ?, ?, ?)\n           RETURNING id AS \"id!\"",
+  "query": "INSERT INTO accounts (name, slug, username, store_id, user_id, notes, active)\n           VALUES (?, ?, ?, ?, ?, ?, ?)\n           RETURNING id AS \"id!\"",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 6
+      "Right": 7
     },
     "nullable": [
       false
     ]
   },
-  "hash": "b55c94c252aa44f5731bea45e8b8188d897555fe871c9e84db349011ac0c8a68"
+  "hash": "c1b89b49d82d9eb7bf9df473ec0ca02f6616a4f46fb2d66d639071f410005d5a"
 }

@@ -22,6 +22,7 @@ import { queryKeys, useAccounts, useDevices, useGameModes, useLabels, usePlatfor
 import {
   CONDITIONS,
   holdsGames,
+  type Account,
   type CopyDetail,
   type CopyInput,
   type CopyStatus,
@@ -69,6 +70,11 @@ export function gameInput(game: GameDetail): GameInput {
 
 export const numberOrNull = (value: string | number) => (value === '' ? null : Number(value));
 const textOrNull = (value: string) => (value.trim() ? value : null);
+/** Option text for an account picker: name, followed by username when set. */
+export function accountLabel(account: Pick<Account, 'name' | 'username'>, separator: string): string {
+  return account.username ? `${account.name}${separator}${account.username}` : account.name;
+}
+
 /** Checkbox state for an optional boolean: unknown and false look the same, so keep null unless checked. */
 export const checkedOrNull = (value: boolean, before?: boolean | null) => (value ? true : before === false ? false : null);
 
@@ -149,7 +155,7 @@ export function CopyForm({ gameId, resolveGame, copy, release, status, scanned, 
         a.id === copy?.account_id ||
         (a.active && (!platformId || a.platform_ids.length === 0 || a.platform_ids.includes(platformId))),
     )
-    .map((a) => ({ value: String(a.id), label: a.name }));
+    .map((a) => ({ value: String(a.id), label: accountLabel(a, t('common.separator')) }));
 
   // Until a list loads, its choice is kept as it is.
   const shown = (list: unknown[] | undefined, options: { value: string }[], value: string) =>
