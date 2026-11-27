@@ -8,7 +8,7 @@ persona de la casa puede abrir esta página.
 _Los títulos de juegos y las portadas pertenecen a sus respectivos propietarios._
 
 Elige **Este mes**, **Este año** o **Todo el tiempo** arriba. Los totales
-muestran el tiempo de juego, las sesiones y los juegos terminados de la casa en
+muestran el tiempo de juego, las sesiones y los juegos terminados de todos en
 ese periodo.
 
 Debajo, cada persona que registró partidas tiene una tarjeta, ordenada de mayor

@@ -1,7 +1,7 @@
 # Documentación de Memory Card
 
-Memory Card lleva el control de los videojuegos que tiene una casa en distintas
-consolas, físicos o digitales, y de lo que juega cada persona. Funciona como
+Memory Card lleva el control de tu colección de videojuegos en distintas
+consolas, físicos o digitales, y de lo que juega cada persona en casa. Funciona como
 aplicación de Home Assistant y se abre desde la barra lateral.
 
 ![La biblioteca, con portadas de IGDB](https://ha-memory-card.pages.dev/images/library.webp)

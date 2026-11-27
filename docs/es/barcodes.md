@@ -2,7 +2,7 @@
 
 **Leer código de barras** en la [Biblioteca](library.md) y la [Lista de
 deseos](wishlist.md) lee el código de barras de una caja, para que en una tienda
-puedas ver si la casa ya tiene ese juego.
+puedas ver si ya tienes ese juego.
 
 1. Selecciona **Leer código de barras**.
 2. Apunta la cámara al código de barras. Cuando abres Home Assistant por HTTPS,
@@ -21,7 +21,7 @@ Memory Card lee el código en el navegador y comprueba primero tus copias:
   la lista de deseos, la copia se añade a la lista de deseos.
 
 UPCitemdb permite 100 consultas al día sin cuenta. Los lectores solo comprueban
-las copias de la casa, así que no consumen las consultas diarias. Con la opción
+las copias de la colección, así que no consumen las consultas diarias. Con la opción
 `external_services` desactivada, las lecturas solo comprueban tus copias.
 
 Para guardar un código de barras en una copia que ya tienes, edita la copia en

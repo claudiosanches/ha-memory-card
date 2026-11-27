@@ -1,7 +1,7 @@
 # Memory Card documentation
 
-Memory Card keeps track of the video games a household owns across consoles,
-physical or digital, and of what each person plays. It runs as a Home
+Memory Card keeps track of your video game collection across consoles,
+physical or digital, and what everyone at home plays. It runs as a Home
 Assistant app and opens from the sidebar.
 
 ![The library, with covers from IGDB](https://ha-memory-card.pages.dev/images/library.webp)

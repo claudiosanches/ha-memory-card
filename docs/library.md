@@ -45,7 +45,7 @@ The row of platforms under the search shows one platform at a time.
 - **IGDB:** linked or not.
 
 **Clear filters** resets them. Filters stay in the page's address, so a
-filtered library can be bookmarked or shared with the household.
+filtered library can be bookmarked or shared with others at home.
 
 The sort menu orders games by **Title**, **Recently added** or **Recently
 played**. Recently added counts a game from when you first owned it, so a

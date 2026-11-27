@@ -13,10 +13,10 @@ Memory Card necesita Home Assistant 2026.11 o posterior.
 2. Busca **Memory Card** en la lista, selecciónalo y elige **Instalar**.
 3. Inicia la aplicación. **Memory Card** aparecerá en la barra lateral.
 
-## Cómo lo usa una casa
+## Compartir en casa
 
-Memory Card mantiene una colección para toda la casa y el registro de juego de
-cada persona por separado.
+Memory Card mantiene una colección compartida para todos en casa y el registro
+de juego de cada persona por separado.
 
 - La colección es compartida: juegos, copias, hardware, cuentas, tiendas,
   plataformas, categorías, la lista de estados de juego, etiquetas NFC, fotos y

@@ -1,7 +1,7 @@
 # Stats
 
 **Stats** in the sidebar sums up the collection and your own play. The totals
-at the top count the household's games, copies and wishlist.
+at the top count the collection's games, copies and wishlist.
 
 ![Stats in the dark version of the Default theme](https://ha-memory-card.pages.dev/images/stats.webp)
 
@@ -41,7 +41,7 @@ Prices keep their currency. Totals show one line per currency.
 
 ## Hardware
 
-When the household keeps [hardware](hardware.md), a **Hardware** group shows
+When you track [hardware](hardware.md), a **Hardware** group shows
 how many items you own by kind and how many are on the wishlist, what they
 cost and what they would sell for now. The games' totals above leave hardware
 out.

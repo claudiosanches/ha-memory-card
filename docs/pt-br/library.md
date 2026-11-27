@@ -47,8 +47,8 @@ A linha de plataformas abaixo da busca mostra uma plataforma por vez.
 - **IGDB:** vinculado ou não.
 
 **Limpar filtros** redefine tudo. Os filtros ficam no endereço da página, então
-você pode salvar uma biblioteca filtrada nos favoritos ou compartilhar com a
-casa.
+você pode salvar uma biblioteca filtrada nos favoritos ou compartilhar com
+outras pessoas em casa.
 
 O menu de ordenação organiza os jogos por **Título**,
 **Adicionados recentemente** ou **Jogados recentemente**. Adicionados

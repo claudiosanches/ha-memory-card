@@ -1,7 +1,7 @@
 # Hardware
 
 **Hardware** en la barra lateral lista las consolas, mandos, accesorios y
-juguetes que la casa tiene o quiere. Todos pueden explorarlo; los gestores lo
+juguetes que tienes o quieres. Todos pueden explorarlo; los gestores lo
 añaden y modifican.
 
 ![Hardware, con consolas, mandos y amiibo](https://ha-memory-card.pages.dev/images/hardware.webp)

@@ -1,7 +1,7 @@
 # Hardware
 
 **Hardware** in the sidebar lists the consoles, controllers, accessories and
-toys the household owns or wants. Everyone can browse it;
+toys you own or want. Everyone can browse it;
 managers add and change it.
 
 ![Hardware, with consoles, controllers and amiibo](https://ha-memory-card.pages.dev/images/hardware.webp)

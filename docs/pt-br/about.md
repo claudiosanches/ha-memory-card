@@ -1,8 +1,8 @@
 # Sobre
 
 O Memory Card é um gerenciador de coleção de jogos que roda como aplicativo no
-Home Assistant. Ele mantém uma coleção única para toda a casa e separa as
-partidas de cada pessoa. É gratuito e de código aberto, criado por
+Home Assistant. Ele mantém uma coleção compartilhada por quem mora na casa e
+separa as partidas de cada pessoa. É gratuito e de código aberto, criado por
 [Claudio Sanches](https://github.com/claudiosanches).
 
 ## Código-fonte
@@ -16,7 +16,7 @@ Ambos são distribuídos sob a licença Apache 2.0.
 
 ## Apoie o desenvolvimento
 
-Se o Memory Card for útil para a sua casa, você pode apoiar o desenvolvimento no
+Se o Memory Card é útil para você, você pode apoiar o desenvolvimento no
 [GitHub Sponsors](https://github.com/sponsors/claudiosanches) ou no
 [Ko-fi](https://ko-fi.com/claudiosanches).
 

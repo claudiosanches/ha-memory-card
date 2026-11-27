@@ -1,8 +1,8 @@
 # Barcodes
 
 **Scan barcode** on the [Library](library.md) and [Wishlist](wishlist.md)
-reads the barcode on a box, so in a shop you can see whether the household
-already owns a game.
+reads the barcode on a box, so in a shop you can see whether you
+already own a game.
 
 1. Select **Scan barcode**.
 2. Point the camera at the barcode. When you open Home Assistant over HTTPS,
@@ -20,7 +20,7 @@ Memory Card reads the code in the browser and checks your copies first:
   the wishlist.
 
 UPCitemdb allows 100 lookups a day without an account. Viewers only check
-the household's copies, so they cannot use up the daily lookups. With the
+copies in the collection, so they cannot use up the daily lookups. With the
 `external_services` option off, scans only check your copies.
 
 To save a barcode on a copy you already have, edit the copy on its

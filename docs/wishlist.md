@@ -1,6 +1,6 @@
 # Wishlist
 
-**Wishlist** in the sidebar lists the copies the household wants, each with
+**Wishlist** in the sidebar lists the copies you want, each with
 its platform, region, format, where to buy it and the expected price.
 
 ![The wishlist](https://ha-memory-card.pages.dev/images/wishlist.webp)

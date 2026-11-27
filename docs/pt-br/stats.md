@@ -1,7 +1,7 @@
 # Estatísticas
 
 **Estatísticas** na barra lateral resume a coleção e as suas partidas. Os totais
-no topo contam os jogos, as cópias e a lista de desejos da casa.
+no topo contam os jogos, as cópias e a lista de desejos da coleção.
 
 ![Estatísticas na versão escura do tema Padrão](https://ha-memory-card.pages.dev/images/stats.webp)
 
@@ -42,7 +42,7 @@ Os preços mantêm a própria moeda. Os totais mostram uma linha por moeda.
 
 ## Hardware
 
-Quando a casa registra [hardware](hardware.md), um grupo **Hardware** mostra
+Quando você registra [hardware](hardware.md), um grupo **Hardware** mostra
 quantos itens você tem por tipo e quantos estão na lista de desejos, quanto
 custaram e quanto venderiam hoje. Os totais de jogos acima deixam o hardware de
 fora.

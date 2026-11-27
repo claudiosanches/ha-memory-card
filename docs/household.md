@@ -8,7 +8,7 @@ the house can open it.
 _Game titles and cover art belong to their respective owners._
 
 Pick **This month**, **This year** or **All time** at the top. The totals
-show the household's play time, sessions and games finished in that period.
+show everyone's combined play time, sessions and games finished in that period.
 
 Below, each person who logged play has a card, the most play time first:
 

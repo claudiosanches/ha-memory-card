@@ -206,7 +206,7 @@ lists the games on it.
 ## Hardware
 
 **Hardware** in the sidebar lists the consoles, controllers, accessories and
-toys, such as amiibo, the household owns or wants. Consoles, handhelds and
+toys, such as amiibo, you own or want. Consoles, handhelds and
 PCs hold games: each copy can say which one it lives on, and **Plays** lists
 the platforms they run. Store accounts, such as Steam, are under **Manage >
 Accounts**: a digital copy names the account that owns it and, apart from

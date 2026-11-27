@@ -2,7 +2,7 @@
 
 **Ler código de barras**, na [Biblioteca](library.md) e na
 [Lista de desejos](wishlist.md), lê o código de barras da caixa para você
-conferir numa loja se a casa já tem o jogo.
+conferir numa loja se você já tem o jogo.
 
 1. Selecione **Ler código de barras**.
 2. Aponte a câmera para o código de barras. Quando você abre o Home Assistant
@@ -21,7 +21,7 @@ O Memory Card lê o código no navegador e verifica suas cópias primeiro:
   A partir da lista de desejos, a cópia vai para a lista de desejos.
 
 O UPCitemdb permite 100 consultas por dia sem conta. Visualizadores só
-verificam as cópias da casa, então não gastam o limite diário de consultas. Com
+verificam as cópias da coleção, então não gastam o limite diário de consultas. Com
 a opção `external_services` desligada, a leitura só verifica as suas cópias.
 
 Para salvar um código de barras em uma cópia que você já tem, edite a cópia na

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Memory Card
   text: Tu colección de videojuegos en Home Assistant
-  tagline: Lleva el control de los juegos que tiene tu casa en distintas consolas, físicos o digitales, y de lo que juega cada persona.
+  tagline: Lleva el control de tu colección de videojuegos en distintas consolas, físicos o digitales, y de lo que juega cada persona en casa.
   actions:
     - theme: brand
       text: Añadir a Home Assistant
@@ -26,7 +26,7 @@ features:
     linkText: Ver sincronización con IGDB
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>'
     title: El progreso de cada persona
-    details: La casa comparte la colección. Cada persona lleva su propio estado de juego, sesiones, pendientes y sorteos.
+    details: Todos en casa comparten la misma colección, mientras cada persona lleva su propio estado de juego, sesiones, pendientes y sorteos.
     link: /es/docs/household
     linkText: Juego en casa
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 0 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v1"/><path d="M16 20h2a2 2 0 0 0 2 -2v-1"/><path d="M5 11h1v2h-1z"/><path d="M10 11l0 2"/><path d="M14 11h1v2h-1z"/><path d="M19 11l0 2"/></svg>'

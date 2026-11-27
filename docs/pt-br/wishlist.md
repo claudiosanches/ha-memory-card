@@ -1,6 +1,6 @@
 # Lista de desejos
 
-**Lista de desejos** na barra lateral lista as cópias que a casa quer comprar,
+**Lista de desejos** na barra lateral lista as cópias que você quer comprar,
 cada uma com plataforma, região, formato, onde comprar e preço esperado.
 
 ![A lista de desejos](https://ha-memory-card.pages.dev/images/wishlist.webp)

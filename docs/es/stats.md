@@ -2,7 +2,7 @@
 
 **Estadísticas** en la barra lateral resume la colección y tu propio juego. Los
 totales de arriba cuentan los juegos, las copias y la lista de deseos de la
-casa.
+colección.
 
 ![Estadísticas en la versión oscura del tema Predeterminado](https://ha-memory-card.pages.dev/images/stats.webp)
 
@@ -44,7 +44,7 @@ Los precios conservan su moneda. Los totales muestran una línea por moneda.
 
 ## Hardware
 
-Cuando la casa guarda [hardware](hardware.md), un grupo **Hardware** muestra
+Cuando registras [hardware](hardware.md), un grupo **Hardware** muestra
 cuántos artículos tienes por tipo y cuántos están en la lista de deseos, cuánto
 costaron y por cuánto se venderían hoy. Los totales de juegos de arriba dejan el
 hardware fuera.

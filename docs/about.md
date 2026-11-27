@@ -1,7 +1,7 @@
 # About
 
 Memory Card is a video game collection manager that runs as a Home Assistant
-app. It keeps one collection for the whole household, and each person's play
+app. It keeps one shared collection for everyone at home, and each person's play
 apart. It is free and open source, made by [Claudio Sanches](https://github.com/claudiosanches).
 
 ## Source code
@@ -15,7 +15,7 @@ Both are released under the Apache License 2.0.
 
 ## Support development
 
-If Memory Card is useful to your household, you can support its development on
+If you find Memory Card useful, you can support its development on
 [GitHub Sponsors](https://github.com/sponsors/claudiosanches) or
 [Ko-fi](https://ko-fi.com/claudiosanches).
 

@@ -8,7 +8,7 @@ pessoas da casa podem abrir a página.
 _Títulos de jogos e capas pertencem aos seus respectivos proprietários._
 
 Escolha **Este mês**, **Este ano** ou **Desde sempre** no topo. Os totais
-mostram o tempo de jogo, as sessões e os jogos concluídos pela casa no período.
+mostram o tempo de jogo, as sessões e os jogos concluídos de todo mundo no período.
 
 Abaixo, cada pessoa que registrou partidas tem um cartão, começando por quem
 jogou mais tempo:

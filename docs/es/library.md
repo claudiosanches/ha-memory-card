@@ -47,8 +47,8 @@ La fila de plataformas debajo de la búsqueda muestra una plataforma a la vez.
 - **IGDB:** vinculado o sin vincular.
 
 **Quitar filtros** los restablece. Los filtros se guardan en la dirección de la
-página, así que puedes guardar en marcadores o compartir con la casa una
-biblioteca filtrada.
+página, así que puedes guardar en marcadores o compartir con otras personas en
+casa una biblioteca filtrada.
 
 El menú de orden organiza los juegos por **Título**, **Añadidos recientemente**
 o **Jugados recientemente**. Añadidos recientemente cuenta un juego desde que lo

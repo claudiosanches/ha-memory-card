@@ -1,7 +1,7 @@
 # Documentação do Memory Card
 
-O Memory Card acompanha os jogos que a casa tem em vários consoles, físicos ou
-digitais, e o que cada pessoa joga. Ele roda como aplicativo no Home Assistant
+O Memory Card acompanha sua coleção de jogos em vários consoles, físicos ou
+digitais, e o que cada pessoa em casa joga. Ele roda como aplicativo no Home Assistant
 e abre pela barra lateral.
 
 ![A biblioteca, com capas do IGDB](https://ha-memory-card.pages.dev/images/library.webp)
